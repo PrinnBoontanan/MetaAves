@@ -9162,30 +9162,32 @@
     "Eurypyga helias": [
       "Neornithes",
       "Neognathae",
-      "Neoaves"
+      "Neoaves",
+      "Eurypygimorphae"
     ],
     "Rhynochetos jubatus": [
       "Neornithes",
       "Neognathae",
-      "Neoaves"
+      "Neoaves",
+      "Eurypygimorphae"
     ],
     "Phaethon aethereus": [
       "Neornithes",
       "Neognathae",
       "Neoaves",
-      "Phaethontimorphae"
+      "Eurypygimorphae"
     ],
     "Phaethon rubricauda": [
       "Neornithes",
       "Neognathae",
       "Neoaves",
-      "Phaethontimorphae"
+      "Eurypygimorphae"
     ],
     "Phaethon lepturus": [
       "Neornithes",
       "Neognathae",
       "Neoaves",
-      "Phaethontimorphae"
+      "Eurypygimorphae"
     ],
     "Gavia stellata": [
       "Neornithes",
