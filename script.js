@@ -13,7 +13,8 @@ const gameState = {
     taxonInfo: null,
     clades: null,
     selectedTaxonId: null,
-    gameStatus: "playing"
+    gameStatus: "playing",
+    taxonomyView: "tree"
 };
 
 const guessCountElement = document.getElementById("guess-count");
@@ -21,6 +22,8 @@ const searchInput = document.getElementById("bird-search");
 const guessButton = document.getElementById("guess-button");
 const taxonomyTree = document.getElementById("taxonomy-tree");
 const suggestions = document.getElementById("suggestions");
+const treeViewButton = document.getElementById("tree-view-button");
+const tableViewButton = document.getElementById("table-view-button");
 
 // AviList currently uses order/family/genus/species as its core
 // ranks, but the game reads rankOrder from the taxonomy dataset so future
@@ -96,7 +99,7 @@ async function loadGameData() {
             gameState.birds[Math.floor(Math.random() * gameState.birds.length)];
 
         updateGuessCounter();
-        renderTaxonomyTree();
+        renderTaxonomyView();
         updateAutomaticTaxonCard();
 
         console.log("Bird database loaded:", gameState.birds);
@@ -378,7 +381,7 @@ function makeGuess() {
     suggestions.innerHTML = "";
 
     updateGuessCounter();
-    renderTaxonomyTree();
+    renderTaxonomyView();
     updateAutomaticTaxonCard();
 
     if (gameState.gameStatus === "won") {
@@ -669,6 +672,24 @@ function renderBirdCard(bird, wiki) {
     rank.textContent = "SPECIES";
     card.appendChild(rank);
 
+    const taxonomyHeading = document.createElement("h4");
+    taxonomyHeading.textContent = "Taxonomy";
+    card.appendChild(taxonomyHeading);
+
+    const taxonomyText = document.createElement("p");
+    const taxonomyParts = [
+        bird.class,
+        ...((Array.isArray(bird.cladePath) && bird.cladePath.length)
+            ? bird.cladePath
+            : []),
+        bird.order,
+        bird.family,
+        bird.genus,
+        bird.species || bird.scientificName
+    ].filter(Boolean);
+    taxonomyText.textContent = taxonomyParts.join(" → ");
+    card.appendChild(taxonomyText);
+
     if (wiki?.thumbnail?.source) {
         const image = document.createElement("img");
         image.className = "taxon-card-image";
@@ -877,6 +898,126 @@ function updateAutomaticTaxonCard() {
     }
 }
 
+
+
+function getBirdRankValue(bird, level) {
+    if (!bird) return "";
+
+    if (level === "class") {
+        return bird.class || "Aves";
+    }
+
+    return bird[level] || "";
+}
+
+function getCladeText(bird) {
+    if (!bird || !Array.isArray(bird.cladePath) || !bird.cladePath.length) {
+        return "";
+    }
+
+    return bird.cladePath.join(" → ");
+}
+
+function renderTaxonomyTable() {
+    taxonomyTree.innerHTML = "";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "taxonomy-table-wrap";
+
+    const table = document.createElement("table");
+    table.className = "taxonomy-table";
+
+    const levels = ["class", "order", "family", "genus"];
+
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+
+    ["Bird", "Clades", ...levels.map(level => level[0].toUpperCase() + level.slice(1)), "Shared with mystery"].forEach(label => {
+        const th = document.createElement("th");
+        th.textContent = label;
+        headerRow.appendChild(th);
+    });
+
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+
+    if (!gameState.guesses.length) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.className = "table-placeholder";
+        cell.colSpan = 7;
+        cell.textContent = "Your guesses will appear here.";
+        row.appendChild(cell);
+        tbody.appendChild(row);
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+        taxonomyTree.appendChild(wrapper);
+        return;
+    }
+
+    gameState.guesses.forEach(bird => {
+        const row = document.createElement("tr");
+        const shared = getDeepestSharedTaxon(bird, gameState.mysteryBird);
+
+        const birdCell = document.createElement("td");
+        birdCell.className = "table-bird";
+        birdCell.textContent = bird.commonName;
+        row.appendChild(birdCell);
+
+        const cladeCell = document.createElement("td");
+        cladeCell.className = "clade-cell";
+        cladeCell.textContent = getCladeText(bird) || "—";
+        if (shared.level === "clade") cladeCell.classList.add("shared-cell");
+        row.appendChild(cladeCell);
+
+        levels.forEach(level => {
+            const td = document.createElement("td");
+            const value = getBirdRankValue(bird, level);
+            td.textContent = value || "—";
+
+            const sharedNode = shared.level === level
+                ? shared
+                : getBirdPhylogenyPath(bird).find(node => node.level === level);
+
+            const mysteryNode = getBirdPhylogenyPath(gameState.mysteryBird)
+                .find(node => node.level === level);
+
+            if (sharedNode && mysteryNode && sharedNode.id === mysteryNode.id) {
+                td.classList.add("shared-cell");
+            } else if (level !== "class") {
+                td.classList.add("not-shared-cell");
+            }
+
+            row.appendChild(td);
+        });
+
+        const sharedCell = document.createElement("td");
+        sharedCell.textContent = shared.value || "Aves";
+        sharedCell.classList.add("shared-cell");
+        row.appendChild(sharedCell);
+
+        tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    taxonomyTree.appendChild(wrapper);
+}
+
+function renderTaxonomyView() {
+    if (gameState.taxonomyView === "table") {
+        renderTaxonomyTable();
+    } else {
+        renderTaxonomyTree();
+    }
+
+    if (treeViewButton && tableViewButton) {
+        treeViewButton.classList.toggle("active", gameState.taxonomyView === "tree");
+        tableViewButton.classList.toggle("active", gameState.taxonomyView === "table");
+    }
+}
 
 function renderTaxonomyTree() {
     taxonomyTree.innerHTML = "";
@@ -1236,6 +1377,10 @@ function showGameOverCard(result) {
     thaiName.textContent =
         bird.thaiName || "No established Thai name found.";
     taxonomy.textContent = [
+        bird.class,
+        ...((Array.isArray(bird.cladePath) && bird.cladePath.length)
+            ? bird.cladePath
+            : []),
         bird.order,
         bird.family,
         bird.genus,
@@ -1389,7 +1534,7 @@ function replayGame() {
     suggestions.innerHTML = "";
 
     updateGuessCounter();
-    renderTaxonomyTree();
+    renderTaxonomyView();
     updateAutomaticTaxonCard();
 }
 
@@ -1434,6 +1579,16 @@ searchInput.addEventListener("input", () => {
     showSuggestions(searchInput.value);
 });
 
+
+treeViewButton?.addEventListener("click", () => {
+    gameState.taxonomyView = "tree";
+    renderTaxonomyView();
+});
+
+tableViewButton?.addEventListener("click", () => {
+    gameState.taxonomyView = "table";
+    renderTaxonomyView();
+});
 
 // ========================================
 // Start game
