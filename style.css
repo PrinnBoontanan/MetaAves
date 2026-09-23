@@ -834,6 +834,14 @@ body {
     background: linear-gradient(135deg, #5c9947, #477d37);
 }
 
+/* Clades use the same visual treatment as taxonomic tree nodes. */
+.meta-tree-node[data-level="clade"] {
+    background: linear-gradient(135deg, #70852e, #596c21);
+    color: #fff;
+    border: 1px solid #596c21;
+    font-weight: 700;
+}
+
 .meta-species-node {
     background: rgba(255, 253, 248, 0.98);
     border-radius: 9px;
