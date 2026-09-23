@@ -742,8 +742,13 @@ function renderTaxonomyTree() {
 
             const startX = parent.x;
             const startY = parent.y + parent.height / 2 - 1;
-            const endX = childPosition.x;
             const endY = childPosition.y - childPosition.height / 2 + 1;
+
+            // A taxon with a single child should connect straight down.
+            // Force the child onto the exact same X coordinate instead of
+            // relying on two separately measured DOM centers.
+            const isSingleChild = node.children.length === 1;
+            const endX = isSingleChild ? startX : childPosition.x;
 
             const curve = Math.max(
                 30,
@@ -759,7 +764,7 @@ function renderTaxonomyTree() {
             // perfectly vertical connector. This keeps the line visually
             // centered through both node centers instead of introducing
             // a tiny curve that can look off-center.
-            const isVerticallyAligned = Math.abs(startX - endX) < 8;
+            const isVerticallyAligned = isSingleChild || Math.abs(startX - endX) < 1;
 
             path.setAttribute(
                 "d",
