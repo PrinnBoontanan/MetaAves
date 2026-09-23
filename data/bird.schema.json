@@ -39,86 +39,14 @@
     "class": {
       "type": "string"
     },
-    "subclass": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "infraclass": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "cohort": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "superorder": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
     "order": {
       "type": "string"
-    },
-    "suborder": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "infraorder": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "parvorder": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "superfamily": {
-      "type": [
-        "string",
-        "null"
-      ]
     },
     "family": {
       "type": "string"
     },
-    "subfamily": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "tribe": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "subtribe": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
     "genus": {
       "type": "string"
-    },
-    "subgenus": {
-      "type": [
-        "string",
-        "null"
-      ]
     },
     "species": {
       "type": "string"

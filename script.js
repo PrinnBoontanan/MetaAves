@@ -25,10 +25,10 @@ const suggestions = document.getElementById("suggestions");
 const treeViewButton = document.getElementById("tree-view-button");
 const tableViewButton = document.getElementById("table-view-button");
 
-// AviList currently uses order/family/genus/species as its core
-// ranks, but the game reads rankOrder from the taxonomy dataset so future
-// intermediate ranks can be supported without changing the tree engine.
-let taxonomyLevels = [
+// MetaAves uses a deliberately simple ranked taxonomy:
+// Class → Order → Family → Genus → Species.
+// Phylogenetic clades are a separate layer and are never treated as ranks.
+const taxonomyLevels = [
     "class",
     "order",
     "family",
@@ -80,18 +80,8 @@ async function loadGameData() {
             bird.cladePath = membershipBySpecies[bird.scientificName] || [];
         });
 
-        // Read the canonical rank order from the generated taxonomy when
-        // available. This keeps the game engine independent of a fixed
-        // order/family/genus-only hierarchy.
-        const rankOrder = gameState.taxonomy?._meta?.rankOrder;
-
-        if (Array.isArray(rankOrder) && rankOrder.length) {
-            const classIndex = rankOrder.indexOf("class");
-
-            taxonomyLevels = rankOrder
-                .slice(classIndex >= 0 ? classIndex : 0)
-                .filter(level => level !== "species");
-        }
+        // The ranked hierarchy is intentionally fixed to the classic game model.
+        // Do not derive extra ranks from the dataset.
 
         // Select a random species from the full imported dataset.
         // The mystery remains hidden from the player until it is guessed.

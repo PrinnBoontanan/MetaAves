@@ -7,7 +7,6 @@ on:
       - "scripts/**"
       - "build_metaves_local.py"
       - "requirements.txt"
-      - "data/supplemental_taxonomy.json"
       - "data/data_sources.json"
       - ".github/workflows/build-taxonomy.yml"
   workflow_dispatch:
@@ -30,31 +29,12 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      - name: Install NCBI Datasets CLI
-        run: |
-          curl -L -o datasets https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/linux-amd64/datasets
-          chmod +x datasets
-          sudo mv datasets /usr/local/bin/datasets
-          datasets --version
-
       - name: Download AviList v2025b extended
         run: |
           curl -L -o AviList-v2025b-extended.xlsx             https://www.avilist.org/wp-content/uploads/2026/06/AviList-v2025b-10Jun2026-extended.xlsx
 
       - name: Build AviList base dataset
         run: python scripts/import_avilist.py AviList-v2025b-extended.xlsx
-
-      - name: Download NCBI Aves taxonomy
-        run: |
-          datasets summary taxonomy taxon 8782             --children             --as-json-lines             > data/ncbi_aves.jsonl
-
-      - name: Enrich intermediary taxonomy ranks
-        run: |
-          python scripts/enrich_ncbi_taxonomy.py             --ncbi-jsonl data/ncbi_aves.jsonl
-
-      - name: Apply supplemental taxonomy
-        run: |
-          python scripts/apply_supplemental_taxonomy.py
 
       - name: Validate generated data
         run: |
@@ -84,5 +64,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/birds.generated.json data/taxonomy.generated.json data/clade_membership.generated.json
           git diff --cached --quiet && exit 0
-          git commit -m "Build detailed bird taxonomy from AviList and NCBI"
+          git commit -m "Rebuild classic MetaAves taxonomy from AviList"
           git push

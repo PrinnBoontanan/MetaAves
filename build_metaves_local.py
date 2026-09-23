@@ -60,10 +60,10 @@ def validate():
     print(f"\nVALIDATION PASSED: {len(birds):,} birds, {len(taxonomy)-1:,} taxonomy nodes.")
 
 def main():
-    print("MetaAves LOCAL taxonomy builder v2")
-    print("Runs on this PC only. Nothing is pushed to GitHub.")
+    print("MetaAves LOCAL taxonomy builder v3 — classic taxonomy + separate clades")
+    print("Runs on this PC only. Nothing is pushed to GitHub.")\n    print("Taxonomy: Class → Order → Family → Genus → Species. No suborder/infraorder/etc.");
 
-    for p in [SCRIPTS/"import_avilist.py", SCRIPTS/"enrich_ncbi_taxonomy.py", DATA]:
+    for p in [SCRIPTS/"import_avilist.py", DATA]:
         if not p.exists():
             print(f"ERROR: missing {p}")
             return 1
@@ -87,29 +87,6 @@ def main():
 
         run([sys.executable, str(SCRIPTS/"import_avilist.py"), str(avilist)],
             "Build AviList base dataset")
-
-        datasets = datasets_cli(tmp)
-        cmd = [str(datasets),"summary","taxonomy","taxon","8782","--children"]
-        for rank in RANKS:
-            cmd += ["--rank", rank]
-        cmd += ["--as-json-lines"]
-
-        print("\n==> Downloading NCBI Aves taxonomy")
-        with open(ncbi, "w", encoding="utf-8") as f:
-            subprocess.run(cmd, cwd=REPO, check=True, stdout=f)
-
-        print("\n==> NCBI download diagnostic")
-        lines = ncbi.read_text(encoding="utf-8", errors="replace").splitlines()
-        print(f"NCBI JSONL lines: {len(lines):,}")
-        for i, line in enumerate(lines[:3], 1):
-            print(f"--- line {i} ---")
-            print(line[:3000])
-
-        run([sys.executable, str(SCRIPTS/"enrich_ncbi_taxonomy.py"),
-             "--ncbi-jsonl", str(ncbi)], "Enrich intermediary taxonomy ranks")
-
-        run([sys.executable, str(SCRIPTS/"apply_supplemental_taxonomy.py")],
-            "Apply supplemental taxonomy ranks")
 
         validate()
         print("\nDONE. Generated files are ready in data/.")
