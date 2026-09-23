@@ -203,7 +203,13 @@ function getDeepestSharedTaxon(guessedBird, mysteryBird) {
         if (guessedPath[i].id !== mysteryPath[i].id) {
             break;
         }
-        deepest = mysteryPath[i];
+
+        // Clades are kept in the data as phylogenetic information,
+        // but they are not displayed as nodes in the guessing tree.
+        // The tree reveals the deepest shared ranked taxon instead.
+        if (mysteryPath[i].level !== "clade") {
+            deepest = mysteryPath[i];
+        }
     }
 
     return deepest;
@@ -384,16 +390,11 @@ function buildTreeModel() {
     function getDisplayPath(bird, endpoint) {
         const path = getEndpointPath(bird, endpoint);
 
-        // The game intentionally hides intermediate ranked taxa.
-        // Keep only Aves, the common clade anchor, and the deepest
-        // shared taxon revealed for this bird.
+        // Clades are not displayed in the game tree.
+        // Keep only Aves and the deepest shared ranked taxon.
         const result = [path[0]];
 
-        if (commonAnchor.level !== "class") {
-            result.push(commonAnchor);
-        }
-
-        if (endpoint.level !== "class" && endpoint.id !== commonAnchor.id) {
+        if (endpoint.level !== "class") {
             result.push(endpoint);
         }
 
