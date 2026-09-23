@@ -585,9 +585,11 @@ function renderTaxonomyTree() {
                     nodeRevealDuration
             );
 
-            // Set the delay BEFORE adding the SVG path so the
-            // animation starts at the correct generation.
-            path.style.animationDelay = animationDelay + "s";
+            // Start each branch explicitly. This prevents the browser
+            // from starting every SVG animation when the tree is rendered.
+            setTimeout(() => {
+                path.classList.add("active");
+            }, animationDelay * 1000);
 
             drawConnections(child);
         });
