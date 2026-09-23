@@ -78,9 +78,16 @@ def taxonomy_record(line):
     elif scientific is None:
         scientific = tax.get("scientificName")
 
+    # NCBI Datasets taxonomy reports expose lineage through the parents array.
+    # The first parent is the immediate parent; support parentTaxId too for
+    # compatibility with other taxonomy exports.
     parent = tax.get("parentTaxId")
     if parent is None:
         parent = tax.get("parentTaxID")
+    if parent is None:
+        parents = tax.get("parents")
+        if isinstance(parents, list) and parents:
+            parent = parents[0]
 
     if taxid is None or not rank or not scientific:
         return None
