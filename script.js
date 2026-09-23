@@ -510,6 +510,7 @@ function renderTaxonomyTree() {
             y: y + nodeHeight / 2,
             width: position.width,
             height: nodeHeight,
+            depth: position.depth,
             element
         });
     });
@@ -575,15 +576,16 @@ function renderTaxonomyTree() {
             // the depth-1 taxon/species nodes have appeared.
             //
             // This prevents all branches from growing together.
-            const childDepth = positioned.get(child).depth;
+            const parentDepth = positioned.get(node).depth;
             const generationDuration = 0.95;
             const nodeRevealDuration = 0.32;
 
-            const animationDelay = Math.max(
-                0,
-                (childDepth - 1) * generationDuration +
-                    nodeRevealDuration
-            );
+            // A branch starts only after its parent node has finished
+            // appearing. This makes the growth happen generation by
+            // generation from the top of the tree.
+            const animationDelay =
+                parentDepth * generationDuration +
+                nodeRevealDuration;
 
             // Start each branch explicitly. This prevents the browser
             // from starting every SVG animation when the tree is rendered.
