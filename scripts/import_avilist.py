@@ -5,12 +5,17 @@ Build MetaAves bird/taxonomy data from the official AviList v2025b XLSX.
 Usage:
   python scripts/import_avilist.py path/to/AviList-v2025b-extended.xlsx
 
-The importer intentionally keeps enrichment fields (Thai name, habitat, diet,
-behavior, breeding, interesting facts) separate because AviList does not
-provide those fields.
+The importer treats AviList as the authoritative ranked taxonomy. AviList
+v2025b currently publishes the classic order/family/genus/species ranks, but
+the importer is deliberately rank-aware so future AviList releases can add
+intermediate ranks without requiring another importer rewrite.
+
+Enrichment fields (Thai name, habitat, diet, behavior, breeding, interesting
+facts) are intentionally kept separate because AviList does not provide them.
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -23,33 +28,67 @@ RANKS = [
     "genus", "subgenus", "species"
 ]
 
+# AviList currently publishes order/family/genus/species as its core
+# taxonomic ranks. Keeping this list separate makes the importer forward
+# compatible with future intermediate-rank columns.
+CORE_AVILIST_RANKS = ["order", "family", "genus", "species"]
+
+
 def clean(value):
     if value is None:
         return None
     value = str(value).strip()
     return value or None
 
+
+def normalize_header(value):
+    if value is None:
+        return ""
+    return re.sub(r"[^a-z0-9]+", "_", str(value).strip().lower()).strip("_")
+
+
 def find_col(headers, candidates):
-    normalized = {str(h).strip().lower(): i for i, h in enumerate(headers) if h is not None}
+    normalized = {
+        normalize_header(header): index
+        for index, header in enumerate(headers)
+        if header is not None
+    }
+
     for candidate in candidates:
-        if candidate.lower() in normalized:
-            return normalized[candidate.lower()]
-    for key, idx in normalized.items():
-        if any(candidate.lower() in key for candidate in candidates):
-            return idx
+        key = normalize_header(candidate)
+        if key in normalized:
+            return normalized[key]
+
+    for key, index in normalized.items():
+        if any(normalize_header(candidate) in key for candidate in candidates):
+            return index
+
     return None
+
+
+def taxon_id(rank, name):
+    safe_name = re.sub(r"[^A-Za-z0-9_-]+", "_", name).strip("_")
+    return f"{rank}:{safe_name}"
+
 
 def main():
     if len(sys.argv) != 2:
-        raise SystemExit("Usage: python scripts/import_avilist.py <AviList-extended.xlsx>")
+        raise SystemExit(
+            "Usage: python scripts/import_avilist.py <AviList-extended.xlsx>"
+        )
 
     xlsx = Path(sys.argv[1])
     if not xlsx.exists():
         raise SystemExit(f"File not found: {xlsx}")
 
     wb = load_workbook(xlsx, read_only=True, data_only=True)
-    ws = wb["AviList v2025b"]
 
+    if "AviList v2025b" not in wb.sheetnames:
+        raise SystemExit(
+            "Could not find the 'AviList v2025b' worksheet in the XLSX."
+        )
+
+    ws = wb["AviList v2025b"]
     rows = ws.iter_rows(values_only=True)
     headers = next(rows)
 
@@ -65,38 +104,48 @@ def main():
         "iucn": find_col(headers, ["IUCN_Red_List_Category"]),
     }
 
-    missing = [k for k, v in cols.items() if v is None and k in {"rank", "english", "scientific"}]
+    missing = [
+        key for key, value in cols.items()
+        if value is None and key in {"rank", "english", "scientific"}
+    ]
     if missing:
-        raise SystemExit(f"Could not find required AviList columns: {', '.join(missing)}")
+        raise SystemExit(
+            "Could not find required AviList columns: "
+            + ", ".join(missing)
+        )
 
     birds = []
-    taxa = {"class:Aves": {
-        "id": "class:Aves", "rank": "class", "name": "Aves",
-        "parent": None, "children": []
-    }}
 
-    last_by_rank = {}
+    taxa = {
+        "class:Aves": {
+            "id": "class:Aves",
+            "rank": "class",
+            "name": "Aves",
+            "parent": None,
+            "children": []
+        }
+    }
 
     for row in rows:
         rank = clean(row[cols["rank"]])
+
+        # MetaAves guesses species. Subspecies and higher-rank rows are
+        # represented through the species records and generated taxonomy.
         if rank != "species":
             continue
 
         common = clean(row[cols["english"]])
         scientific = clean(row[cols["scientific"]])
+
         if not common or not scientific:
             continue
 
-        order = clean(row[cols["order"]])
-        family = clean(row[cols["family"]])
-        genus = clean(row[cols["genus"]])
-        extinct_value = clean(row[cols["extinct"]])
-
+        # Start with the fixed biological backbone used by MetaAves.
         bird = {
             "commonName": common,
             "scientificName": scientific,
             "thaiName": None,
-            "isExtinct": bool(extinct_value and extinct_value.lower() in {"yes", "true", "extinct"}),
+            "isExtinct": False,
             "kingdom": "Animalia",
             "phylum": "Chordata",
             "class": "Aves",
@@ -104,75 +153,129 @@ def main():
             "infraclass": None,
             "cohort": None,
             "superorder": None,
-            "order": order,
+            "order": clean(row[cols["order"]]) if cols["order"] is not None else None,
             "suborder": None,
             "infraorder": None,
             "parvorder": None,
             "superfamily": None,
-            "family": family,
+            "family": clean(row[cols["family"]]) if cols["family"] is not None else None,
             "subfamily": None,
             "tribe": None,
             "subtribe": None,
-            "genus": genus,
+            "genus": clean(row[cols["genus"]]) if cols["genus"] is not None else None,
             "subgenus": None,
             "species": scientific,
             "habitat": None,
-            "distribution": clean(row[cols["range"]]) if cols["range"] is not None else None,
+            "distribution": (
+                clean(row[cols["range"]])
+                if cols["range"] is not None else None
+            ),
             "diet": None,
             "behavior": None,
             "breeding": None,
-            "conservation": clean(row[cols["iucn"]]) if cols["iucn"] is not None else None,
+            "conservation": (
+                clean(row[cols["iucn"]])
+                if cols["iucn"] is not None else None
+            ),
             "interestingFacts": [],
             "wikipediaTitle": common,
             "genusCharacteristics": []
         }
+
+        extinct_value = (
+            clean(row[cols["extinct"]])
+            if cols["extinct"] is not None else None
+        )
+        bird["isExtinct"] = bool(
+            extinct_value
+            and extinct_value.lower() in {
+                "yes", "true", "extinct", "possibly extinct"
+            }
+        )
+
         birds.append(bird)
 
-        path = [("class", "Aves"), ("order", order), ("family", family), ("genus", genus)]
-        parent = "class:Aves"
-        for tax_rank, name in path[1:]:
-            if not name:
-                continue
-            tax_id = f"{tax_rank}:{name}"
-            if tax_id not in taxa:
-                taxa[tax_id] = {
-                    "id": tax_id, "rank": tax_rank, "name": name,
-                    "parent": parent, "children": []
-                }
-                taxa[parent]["children"].append(tax_id)
-            parent = tax_id
+        # Build the ranked hierarchy using every populated rank in the
+        # canonical order. This is intentionally not hard-coded to
+        # order -> family -> genus.
+        parent_id = "class:Aves"
 
-        species_id = "species:" + scientific.replace(" ", "_")
-        taxa[species_id] = {
-            "id": species_id, "rank": "species", "name": scientific,
-            "parent": parent, "children": []
-        }
-        taxa[parent]["children"].append(species_id)
+        for tax_rank in RANKS:
+            if tax_rank == "class":
+                continue
+
+            value = bird.get(tax_rank)
+            if not value:
+                continue
+
+            current_id = taxon_id(tax_rank, value)
+
+            if current_id not in taxa:
+                taxa[current_id] = {
+                    "id": current_id,
+                    "rank": tax_rank,
+                    "name": value,
+                    "parent": parent_id,
+                    "children": []
+                }
+
+                if parent_id in taxa:
+                    if current_id not in taxa[parent_id]["children"]:
+                        taxa[parent_id]["children"].append(current_id)
+
+            parent_id = current_id
+
+        species_id = taxon_id("species", scientific)
+
+        # Species always becomes the terminal node. If a future AviList
+        # release supplies subgenus/subspecies-style intermediary fields,
+        # those are already inserted before this point.
+        if species_id not in taxa:
+            taxa[species_id] = {
+                "id": species_id,
+                "rank": "species",
+                "name": scientific,
+                "commonName": common,
+                "parent": parent_id,
+                "children": []
+            }
+            taxa[parent_id]["children"].append(species_id)
 
     out = Path("data")
     out.mkdir(exist_ok=True)
+
     (out / "birds.generated.json").write_text(
-        json.dumps(birds, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps(birds, ensure_ascii=False, indent=2),
+        encoding="utf-8"
     )
 
     taxonomy = {
         "_meta": {
-            "version": 3,
+            "version": 4,
             "masterSource": {
                 "name": "AviList: The Global Avian Checklist",
                 "version": "2025b"
             },
             "generatedBy": "scripts/import_avilist.py",
-            "clades": "Maintained separately from ranked taxonomy."
+            "rankOrder": RANKS,
+            "rootTaxa": ["class:Aves"],
+            "nodeTypes": ["ranked_taxon", "species"],
+            "clades": (
+                "Maintained separately from ranked taxonomy. "
+                "The game can insert clade nodes between ranked taxa."
+            )
         }
     }
     taxonomy.update(taxa)
+
     (out / "taxonomy.generated.json").write_text(
-        json.dumps(taxonomy, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps(taxonomy, ensure_ascii=False, indent=2),
+        encoding="utf-8"
     )
 
     print(f"Imported {len(birds):,} species")
-    print(f"Generated {len(taxa):,} taxonomy nodes")
+    print(f"Generated {len(taxa):,} ranked taxonomy nodes")
+
 
 if __name__ == "__main__":
     main()
