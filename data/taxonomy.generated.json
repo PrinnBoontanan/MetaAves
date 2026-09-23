@@ -50,113 +50,6 @@
       "superorder:Palaeognathae",
       "infraclass:Neognathae",
       "genus:Nettapus",
-      "order:Phoenicopteriformes",
-      "order:Podicipediformes",
-      "order:Musophagiformes",
-      "order:Otidiformes",
-      "order:Cuculiformes",
-      "order:Mesitornithiformes",
-      "order:Pterocliformes",
-      "order:Columbiformes",
-      "order:Opisthocomiformes",
-      "order:Gruiformes",
-      "order:Charadriiformes",
-      "species:Attagis_malouinus",
-      "species:Attagis_gayi",
-      "species:Thinocorus_orbignyianus",
-      "species:Thinocorus_rumicivorus",
-      "order:Eurypygiformes",
-      "order:Phaethontiformes",
-      "order:Gaviiformes",
-      "order:Sphenisciformes",
-      "order:Procellariiformes",
-      "order:Ciconiiformes",
-      "order:Suliformes",
-      "order:Pelecaniformes",
-      "order:Caprimulgiformes",
-      "species:Steatornis_caripensis",
-      "order:Nyctibiiformes",
-      "species:Rigidipenna_inexpectata",
-      "species:Podargus_strigoides",
-      "species:Podargus_ocellatus",
-      "species:Podargus_papuensis",
-      "species:Batrachostomus_auritus",
-      "species:Batrachostomus_septimus",
-      "species:Batrachostomus_moniliger",
-      "species:Batrachostomus_hodgsoni",
-      "species:Batrachostomus_cornutus",
-      "species:Aegotheles_savesi",
-      "species:Aegotheles_insignis",
-      "species:Aegotheles_tatei",
-      "species:Aegotheles_wallacii",
-      "species:Aegotheles_albertisi",
-      "species:Aegotheles_crinifrons",
-      "species:Aegotheles_cristatus",
-      "species:Aegotheles_affinis",
-      "species:Aegotheles_bennettii",
-      "species:Aegotheles_terborghi",
-      "order:Apodiformes",
-      "order:Strigiformes",
-      "species:Gymnogyps_californianus",
-      "species:Sarcoramphus_papa",
-      "species:Vultur_gryphus",
-      "species:Coragyps_atratus",
-      "species:Cathartes_aura",
-      "species:Cathartes_burrovianus",
-      "species:Cathartes_melambrotus",
-      "order:Accipitriformes",
-      "order:Coliiformes",
-      "order:Leptosomiformes",
-      "order:Trogoniformes",
-      "order:Bucerotiformes",
-      "order:Coraciiformes",
-      "species:Jacamaralcyon_tridactyla",
-      "species:Brachygalba_albogularis",
-      "species:Brachygalba_lugubris",
-      "species:Jacamerops_aureus",
-      "species:Galbula_albirostris",
-      "species:Galbula_cyanicollis",
-      "species:Galbula_ruficauda",
-      "species:Galbula_galbula",
-      "species:Galbula_tombacea",
-      "species:Galbula_cyanescens",
-      "species:Galbula_pastazae",
-      "species:Galbula_chalcothorax",
-      "species:Galbula_leucogastra",
-      "species:Galbula_dea",
-      "species:Bucco_macrodactylus",
-      "species:Bucco_tamatia",
-      "species:Bucco_capensis",
-      "species:Nystalus_obamai",
-      "species:Nystalus_striolatus",
-      "species:Nystalus_chacuru",
-      "species:Nystalus_maculatus",
-      "species:Chelidoptera_tenebrosa",
-      "species:Monasa_atra",
-      "species:Monasa_nigrifrons",
-      "species:Monasa_morphoeus",
-      "species:Monasa_flavirostris",
-      "species:Nonnula_rubecula",
-      "species:Nonnula_brunnea",
-      "species:Nonnula_frontalis",
-      "species:Nonnula_ruficapilla",
-      "species:Nonnula_amaurocephala",
-      "species:Malacoptila_fusca",
-      "species:Malacoptila_semicincta",
-      "species:Malacoptila_striata",
-      "species:Malacoptila_rufa",
-      "species:Malacoptila_panamensis",
-      "species:Malacoptila_fulvogularis",
-      "species:Hapaloptila_castanea",
-      "species:Micromonacha_lanceolata",
-      "species:Notharchus_hyperrhynchus",
-      "species:Notharchus_macrorhynchos",
-      "species:Notharchus_tectus",
-      "order:Piciformes",
-      "order:Cariamiformes",
-      "order:Falconiformes",
-      "order:Psittaciformes",
-      "order:Passeriformes",
       "genus:Calyptura",
       "genus:Panurus",
       "genus:Neolestes",
@@ -1000,7 +893,114 @@
     "name": "Neognathae",
     "parent": "class:Aves",
     "children": [
-      "superorder:Galloanserae"
+      "superorder:Galloanserae",
+      "order:Phoenicopteriformes",
+      "order:Podicipediformes",
+      "order:Musophagiformes",
+      "order:Otidiformes",
+      "order:Cuculiformes",
+      "order:Mesitornithiformes",
+      "order:Pterocliformes",
+      "order:Columbiformes",
+      "order:Opisthocomiformes",
+      "order:Gruiformes",
+      "order:Charadriiformes",
+      "species:Attagis_malouinus",
+      "species:Attagis_gayi",
+      "species:Thinocorus_orbignyianus",
+      "species:Thinocorus_rumicivorus",
+      "order:Eurypygiformes",
+      "order:Phaethontiformes",
+      "order:Gaviiformes",
+      "order:Sphenisciformes",
+      "order:Procellariiformes",
+      "order:Ciconiiformes",
+      "order:Suliformes",
+      "order:Pelecaniformes",
+      "order:Caprimulgiformes",
+      "species:Steatornis_caripensis",
+      "order:Nyctibiiformes",
+      "species:Rigidipenna_inexpectata",
+      "species:Podargus_strigoides",
+      "species:Podargus_ocellatus",
+      "species:Podargus_papuensis",
+      "species:Batrachostomus_auritus",
+      "species:Batrachostomus_septimus",
+      "species:Batrachostomus_moniliger",
+      "species:Batrachostomus_hodgsoni",
+      "species:Batrachostomus_cornutus",
+      "species:Aegotheles_savesi",
+      "species:Aegotheles_insignis",
+      "species:Aegotheles_tatei",
+      "species:Aegotheles_wallacii",
+      "species:Aegotheles_albertisi",
+      "species:Aegotheles_crinifrons",
+      "species:Aegotheles_cristatus",
+      "species:Aegotheles_affinis",
+      "species:Aegotheles_bennettii",
+      "species:Aegotheles_terborghi",
+      "order:Apodiformes",
+      "order:Strigiformes",
+      "species:Gymnogyps_californianus",
+      "species:Sarcoramphus_papa",
+      "species:Vultur_gryphus",
+      "species:Coragyps_atratus",
+      "species:Cathartes_aura",
+      "species:Cathartes_burrovianus",
+      "species:Cathartes_melambrotus",
+      "order:Accipitriformes",
+      "order:Coliiformes",
+      "order:Leptosomiformes",
+      "order:Trogoniformes",
+      "order:Bucerotiformes",
+      "order:Coraciiformes",
+      "species:Jacamaralcyon_tridactyla",
+      "species:Brachygalba_albogularis",
+      "species:Brachygalba_lugubris",
+      "species:Jacamerops_aureus",
+      "species:Galbula_albirostris",
+      "species:Galbula_cyanicollis",
+      "species:Galbula_ruficauda",
+      "species:Galbula_galbula",
+      "species:Galbula_tombacea",
+      "species:Galbula_cyanescens",
+      "species:Galbula_pastazae",
+      "species:Galbula_chalcothorax",
+      "species:Galbula_leucogastra",
+      "species:Galbula_dea",
+      "species:Bucco_macrodactylus",
+      "species:Bucco_tamatia",
+      "species:Bucco_capensis",
+      "species:Nystalus_obamai",
+      "species:Nystalus_striolatus",
+      "species:Nystalus_chacuru",
+      "species:Nystalus_maculatus",
+      "species:Chelidoptera_tenebrosa",
+      "species:Monasa_atra",
+      "species:Monasa_nigrifrons",
+      "species:Monasa_morphoeus",
+      "species:Monasa_flavirostris",
+      "species:Nonnula_rubecula",
+      "species:Nonnula_brunnea",
+      "species:Nonnula_frontalis",
+      "species:Nonnula_ruficapilla",
+      "species:Nonnula_amaurocephala",
+      "species:Malacoptila_fusca",
+      "species:Malacoptila_semicincta",
+      "species:Malacoptila_striata",
+      "species:Malacoptila_rufa",
+      "species:Malacoptila_panamensis",
+      "species:Malacoptila_fulvogularis",
+      "species:Hapaloptila_castanea",
+      "species:Micromonacha_lanceolata",
+      "species:Notharchus_hyperrhynchus",
+      "species:Notharchus_macrorhynchos",
+      "species:Notharchus_tectus",
+      "order:Piciformes",
+      "order:Cariamiformes",
+      "order:Falconiformes",
+      "order:Psittaciformes",
+      "order:Passeriformes"
     ],
     "source": "NCBI Taxonomy"
   },
@@ -7046,7 +7046,7 @@
     "id": "order:Phoenicopteriformes",
     "rank": "order",
     "name": "Phoenicopteriformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Phoenicopteridae"
     ],
@@ -7155,7 +7155,7 @@
     "id": "order:Podicipediformes",
     "rank": "order",
     "name": "Podicipediformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Podicipedidae"
     ],
@@ -7404,7 +7404,7 @@
     "id": "order:Musophagiformes",
     "rank": "order",
     "name": "Musophagiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Musophagidae"
     ],
@@ -7623,7 +7623,7 @@
     "id": "order:Otidiformes",
     "rank": "order",
     "name": "Otidiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Otididae"
     ],
@@ -7982,7 +7982,7 @@
     "id": "order:Cuculiformes",
     "rank": "order",
     "name": "Cuculiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "species:Guira_guira",
       "species:Crotophaga_major",
@@ -9631,7 +9631,7 @@
     "id": "order:Mesitornithiformes",
     "rank": "order",
     "name": "Mesitornithiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Mesitornithidae"
     ],
@@ -9700,7 +9700,7 @@
     "id": "order:Pterocliformes",
     "rank": "order",
     "name": "Pterocliformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Pteroclidae"
     ],
@@ -9849,7 +9849,7 @@
     "id": "order:Columbiformes",
     "rank": "order",
     "name": "Columbiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Columbidae",
       "species:Raphus_cucullatus",
@@ -13628,7 +13628,7 @@
     "id": "order:Opisthocomiformes",
     "rank": "order",
     "name": "Opisthocomiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Opisthocomidae"
     ],
@@ -13667,7 +13667,7 @@
     "id": "order:Gruiformes",
     "rank": "order",
     "name": "Gruiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Psophiidae",
       "family:Aramidae",
@@ -15406,7 +15406,7 @@
     "id": "order:Charadriiformes",
     "rank": "order",
     "name": "Charadriiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "species:Pluvianellus_socialis",
       "species:Chionis_albus",
@@ -16466,7 +16466,7 @@
     "rank": "species",
     "name": "Attagis malouinus",
     "commonName": "White-bellied Seedsnipe",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -16475,7 +16475,7 @@
     "rank": "species",
     "name": "Attagis gayi",
     "commonName": "Rufous-bellied Seedsnipe",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -16484,7 +16484,7 @@
     "rank": "species",
     "name": "Thinocorus orbignyianus",
     "commonName": "Grey-breasted Seedsnipe",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -16493,7 +16493,7 @@
     "rank": "species",
     "name": "Thinocorus rumicivorus",
     "commonName": "Least Seedsnipe",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -19551,7 +19551,7 @@
     "id": "order:Eurypygiformes",
     "rank": "order",
     "name": "Eurypygiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Eurypygidae",
       "family:Rhynochetidae"
@@ -19620,7 +19620,7 @@
     "id": "order:Phaethontiformes",
     "rank": "order",
     "name": "Phaethontiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Phaethontidae"
     ],
@@ -19679,7 +19679,7 @@
     "id": "order:Gaviiformes",
     "rank": "order",
     "name": "Gaviiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Gaviidae"
     ],
@@ -19758,7 +19758,7 @@
     "id": "order:Sphenisciformes",
     "rank": "order",
     "name": "Sphenisciformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Spheniscidae"
     ],
@@ -20027,7 +20027,7 @@
     "id": "order:Procellariiformes",
     "rank": "order",
     "name": "Procellariiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Diomedeidae",
       "subfamily:Hydrobatidae",
@@ -21566,7 +21566,7 @@
     "id": "order:Ciconiiformes",
     "rank": "order",
     "name": "Ciconiiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Ciconiidae"
     ],
@@ -21845,7 +21845,7 @@
     "id": "order:Suliformes",
     "rank": "order",
     "name": "Suliformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Fregatidae",
       "family:Sulidae",
@@ -22414,7 +22414,7 @@
     "id": "order:Pelecaniformes",
     "rank": "order",
     "name": "Pelecaniformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Threskiornithidae",
       "family:Balaenicipitidae",
@@ -23703,7 +23703,7 @@
     "id": "order:Caprimulgiformes",
     "rank": "order",
     "name": "Caprimulgiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "species:Eurostopodus_argus",
       "species:Eurostopodus_nigripennis",
@@ -24673,7 +24673,7 @@
     "rank": "species",
     "name": "Steatornis caripensis",
     "commonName": "Oilbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24681,7 +24681,7 @@
     "id": "order:Nyctibiiformes",
     "rank": "order",
     "name": "Nyctibiiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Nyctibiidae"
     ],
@@ -24771,7 +24771,7 @@
     "rank": "species",
     "name": "Rigidipenna inexpectata",
     "commonName": "Solomons Frogmouth",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24780,7 +24780,7 @@
     "rank": "species",
     "name": "Podargus strigoides",
     "commonName": "Tawny Frogmouth",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24789,7 +24789,7 @@
     "rank": "species",
     "name": "Podargus ocellatus",
     "commonName": "Marbled Frogmouth",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24798,7 +24798,7 @@
     "rank": "species",
     "name": "Podargus papuensis",
     "commonName": "Papuan Frogmouth",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24807,7 +24807,7 @@
     "rank": "species",
     "name": "Batrachostomus auritus",
     "commonName": "Large Frogmouth",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24816,7 +24816,7 @@
     "rank": "species",
     "name": "Batrachostomus septimus",
     "commonName": "Philippine Frogmouth",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24825,7 +24825,7 @@
     "rank": "species",
     "name": "Batrachostomus moniliger",
     "commonName": "Sri Lanka Frogmouth",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24834,7 +24834,7 @@
     "rank": "species",
     "name": "Batrachostomus hodgsoni",
     "commonName": "Hodgson's Frogmouth",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24843,7 +24843,7 @@
     "rank": "species",
     "name": "Batrachostomus cornutus",
     "commonName": "Sunda Frogmouth",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24852,7 +24852,7 @@
     "rank": "species",
     "name": "Aegotheles savesi",
     "commonName": "New Caledonian Owlet-nightjar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24861,7 +24861,7 @@
     "rank": "species",
     "name": "Aegotheles insignis",
     "commonName": "Feline Owlet-nightjar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24870,7 +24870,7 @@
     "rank": "species",
     "name": "Aegotheles tatei",
     "commonName": "Starry Owlet-nightjar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24879,7 +24879,7 @@
     "rank": "species",
     "name": "Aegotheles wallacii",
     "commonName": "Wallace's Owlet-nightjar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24888,7 +24888,7 @@
     "rank": "species",
     "name": "Aegotheles albertisi",
     "commonName": "Mountain Owlet-nightjar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24897,7 +24897,7 @@
     "rank": "species",
     "name": "Aegotheles crinifrons",
     "commonName": "Moluccan Owlet-nightjar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24906,7 +24906,7 @@
     "rank": "species",
     "name": "Aegotheles cristatus",
     "commonName": "Australian Owlet-nightjar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24915,7 +24915,7 @@
     "rank": "species",
     "name": "Aegotheles affinis",
     "commonName": "Vogelkop Owlet-nightjar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24924,7 +24924,7 @@
     "rank": "species",
     "name": "Aegotheles bennettii",
     "commonName": "Barred Owlet-nightjar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24933,7 +24933,7 @@
     "rank": "species",
     "name": "Aegotheles terborghi",
     "commonName": "Karimui Owlet-nightjar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -24941,7 +24941,7 @@
     "id": "order:Apodiformes",
     "rank": "order",
     "name": "Apodiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "species:Hemiprocne_longipennis",
       "species:Hemiprocne_comata",
@@ -30580,7 +30580,7 @@
     "id": "order:Strigiformes",
     "rank": "order",
     "name": "Strigiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Tytonidae",
       "family:Strigidae"
@@ -32550,7 +32550,7 @@
     "rank": "species",
     "name": "Gymnogyps californianus",
     "commonName": "California Condor",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -32559,7 +32559,7 @@
     "rank": "species",
     "name": "Sarcoramphus papa",
     "commonName": "King Vulture",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -32568,7 +32568,7 @@
     "rank": "species",
     "name": "Vultur gryphus",
     "commonName": "Andean Condor",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -32577,7 +32577,7 @@
     "rank": "species",
     "name": "Coragyps atratus",
     "commonName": "Black Vulture",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -32586,7 +32586,7 @@
     "rank": "species",
     "name": "Cathartes aura",
     "commonName": "Turkey Vulture",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -32595,7 +32595,7 @@
     "rank": "species",
     "name": "Cathartes burrovianus",
     "commonName": "Lesser Yellow-headed Vulture",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -32604,7 +32604,7 @@
     "rank": "species",
     "name": "Cathartes melambrotus",
     "commonName": "Greater Yellow-headed Vulture",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -32612,7 +32612,7 @@
     "id": "order:Accipitriformes",
     "rank": "order",
     "name": "Accipitriformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Sagittariidae",
       "family:Pandionidae",
@@ -35451,7 +35451,7 @@
     "id": "order:Coliiformes",
     "rank": "order",
     "name": "Coliiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Coliidae"
     ],
@@ -35540,7 +35540,7 @@
     "id": "order:Leptosomiformes",
     "rank": "order",
     "name": "Leptosomiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Leptosomidae"
     ],
@@ -35579,7 +35579,7 @@
     "id": "order:Trogoniformes",
     "rank": "order",
     "name": "Trogoniformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Trogonidae"
     ],
@@ -36058,7 +36058,7 @@
     "id": "order:Bucerotiformes",
     "rank": "order",
     "name": "Bucerotiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Upupidae",
       "species:Rhinopomastus_cyanomelas",
@@ -36887,7 +36887,7 @@
     "id": "order:Coraciiformes",
     "rank": "order",
     "name": "Coraciiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Brachypteraciidae",
       "family:Coraciidae",
@@ -39037,7 +39037,7 @@
     "rank": "species",
     "name": "Jacamaralcyon tridactyla",
     "commonName": "Three-toed Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39046,7 +39046,7 @@
     "rank": "species",
     "name": "Brachygalba albogularis",
     "commonName": "White-throated Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39055,7 +39055,7 @@
     "rank": "species",
     "name": "Brachygalba lugubris",
     "commonName": "Brown Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39064,7 +39064,7 @@
     "rank": "species",
     "name": "Jacamerops aureus",
     "commonName": "Great Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39073,7 +39073,7 @@
     "rank": "species",
     "name": "Galbula albirostris",
     "commonName": "Yellow-billed Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39082,7 +39082,7 @@
     "rank": "species",
     "name": "Galbula cyanicollis",
     "commonName": "Blue-necked Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39091,7 +39091,7 @@
     "rank": "species",
     "name": "Galbula ruficauda",
     "commonName": "Rufous-tailed Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39100,7 +39100,7 @@
     "rank": "species",
     "name": "Galbula galbula",
     "commonName": "Green-tailed Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39109,7 +39109,7 @@
     "rank": "species",
     "name": "Galbula tombacea",
     "commonName": "White-chinned Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39118,7 +39118,7 @@
     "rank": "species",
     "name": "Galbula cyanescens",
     "commonName": "Bluish-fronted Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39127,7 +39127,7 @@
     "rank": "species",
     "name": "Galbula pastazae",
     "commonName": "Coppery-chested Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39136,7 +39136,7 @@
     "rank": "species",
     "name": "Galbula chalcothorax",
     "commonName": "Purplish Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39145,7 +39145,7 @@
     "rank": "species",
     "name": "Galbula leucogastra",
     "commonName": "Bronzy Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39154,7 +39154,7 @@
     "rank": "species",
     "name": "Galbula dea",
     "commonName": "Paradise Jacamar",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39163,7 +39163,7 @@
     "rank": "species",
     "name": "Bucco macrodactylus",
     "commonName": "Chestnut-capped Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39172,7 +39172,7 @@
     "rank": "species",
     "name": "Bucco tamatia",
     "commonName": "Spotted Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39181,7 +39181,7 @@
     "rank": "species",
     "name": "Bucco capensis",
     "commonName": "Collared Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39190,7 +39190,7 @@
     "rank": "species",
     "name": "Nystalus obamai",
     "commonName": "Western Striolated Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39199,7 +39199,7 @@
     "rank": "species",
     "name": "Nystalus striolatus",
     "commonName": "Eastern Striolated Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39208,7 +39208,7 @@
     "rank": "species",
     "name": "Nystalus chacuru",
     "commonName": "White-eared Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39217,7 +39217,7 @@
     "rank": "species",
     "name": "Nystalus maculatus",
     "commonName": "Spot-backed Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39226,7 +39226,7 @@
     "rank": "species",
     "name": "Chelidoptera tenebrosa",
     "commonName": "Swallow-winged Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39235,7 +39235,7 @@
     "rank": "species",
     "name": "Monasa atra",
     "commonName": "Black Nunbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39244,7 +39244,7 @@
     "rank": "species",
     "name": "Monasa nigrifrons",
     "commonName": "Black-fronted Nunbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39253,7 +39253,7 @@
     "rank": "species",
     "name": "Monasa morphoeus",
     "commonName": "White-fronted Nunbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39262,7 +39262,7 @@
     "rank": "species",
     "name": "Monasa flavirostris",
     "commonName": "Yellow-billed Nunbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39271,7 +39271,7 @@
     "rank": "species",
     "name": "Nonnula rubecula",
     "commonName": "Rusty-breasted Nunlet",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39280,7 +39280,7 @@
     "rank": "species",
     "name": "Nonnula brunnea",
     "commonName": "Brown Nunlet",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39289,7 +39289,7 @@
     "rank": "species",
     "name": "Nonnula frontalis",
     "commonName": "Grey-cheeked Nunlet",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39298,7 +39298,7 @@
     "rank": "species",
     "name": "Nonnula ruficapilla",
     "commonName": "Rufous-capped Nunlet",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39307,7 +39307,7 @@
     "rank": "species",
     "name": "Nonnula amaurocephala",
     "commonName": "Chestnut-headed Nunlet",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39316,7 +39316,7 @@
     "rank": "species",
     "name": "Malacoptila fusca",
     "commonName": "White-chested Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39325,7 +39325,7 @@
     "rank": "species",
     "name": "Malacoptila semicincta",
     "commonName": "Semicollared Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39334,7 +39334,7 @@
     "rank": "species",
     "name": "Malacoptila striata",
     "commonName": "Crescent-chested Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39343,7 +39343,7 @@
     "rank": "species",
     "name": "Malacoptila rufa",
     "commonName": "Rufous-necked Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39352,7 +39352,7 @@
     "rank": "species",
     "name": "Malacoptila panamensis",
     "commonName": "White-whiskered Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39361,7 +39361,7 @@
     "rank": "species",
     "name": "Malacoptila fulvogularis",
     "commonName": "Black-streaked Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39370,7 +39370,7 @@
     "rank": "species",
     "name": "Hapaloptila castanea",
     "commonName": "White-faced Nunbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39379,7 +39379,7 @@
     "rank": "species",
     "name": "Micromonacha lanceolata",
     "commonName": "Lanceolated Monklet",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39388,7 +39388,7 @@
     "rank": "species",
     "name": "Notharchus hyperrhynchus",
     "commonName": "White-necked Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39397,7 +39397,7 @@
     "rank": "species",
     "name": "Notharchus macrorhynchos",
     "commonName": "Guianan Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39406,7 +39406,7 @@
     "rank": "species",
     "name": "Notharchus tectus",
     "commonName": "Pied Puffbird",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [],
     "source": "AviList"
   },
@@ -39414,7 +39414,7 @@
     "id": "order:Piciformes",
     "rank": "order",
     "name": "Piciformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Megalaimidae",
       "family:Lybiidae",
@@ -43213,7 +43213,7 @@
     "id": "order:Cariamiformes",
     "rank": "order",
     "name": "Cariamiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Cariamidae"
     ],
@@ -43272,7 +43272,7 @@
     "id": "order:Falconiformes",
     "rank": "order",
     "name": "Falconiformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Falconidae"
     ],
@@ -43951,7 +43951,7 @@
     "id": "order:Psittaciformes",
     "rank": "order",
     "name": "Psittaciformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "species:Nestor_notabilis",
       "species:Nestor_productus",
@@ -48180,7 +48180,7 @@
     "id": "order:Passeriformes",
     "rank": "order",
     "name": "Passeriformes",
-    "parent": "class:Aves",
+    "parent": "infraclass:Neognathae",
     "children": [
       "family:Acanthisittidae",
       "family:Philepittidae",
