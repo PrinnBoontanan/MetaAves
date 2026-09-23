@@ -200,10 +200,7 @@ def main():
         # order -> family -> genus.
         parent_id = "class:Aves"
 
-        for tax_rank in RANKS:
-            if tax_rank == "class":
-                continue
-
+        for tax_rank in RANKS[RANKS.index("class") + 1:]:
             value = bird.get(tax_rank)
             if not value:
                 continue
