@@ -804,6 +804,7 @@ body {
 }
 
 .meta-tree-canvas {
+    position: relative;
     min-height: 100%;
 }
 
