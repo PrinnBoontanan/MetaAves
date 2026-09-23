@@ -143,6 +143,159 @@
     "status": "backbone_external",
     "note": "Named clade containing hummingbirds, swifts and several nocturnal bird lineages."
   },
+  "clade:Eurypygimorphae": {
+    "id": "clade:Eurypygimorphae",
+    "name": "Eurypygimorphae",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [],
+    "status": "backbone",
+    "description": "Named Neoaves clade containing tropicbirds (Phaethontiformes) and sunbitterns/kagu (Eurypygiformes) in phylogenomic classifications."
+  },
+"_meta": {
+    "version": 1,
+    "status": "backbone",
+    "description": "Named phylogenetic clades used by MetaAves. Clades are not forced into Linnaean rank fields.",
+    "sources": [
+      {
+        "name": "AviList v2025b",
+        "url": "https://www.avilist.org/checklist/v2025b/"
+      },
+      {
+        "name": "Jarvis et al. 2014",
+        "note": "Genome-scale avian phylogeny supporting major clades including Telluraves, Afroaves and Australaves."
+      }
+    ],
+    "uncertaintyPolicy": "Only relationships with useful broad support are encoded in the backbone. Contested deep Neoaves relationships remain explicitly unresolved rather than presented as certain."
+  },
+  "clade:Neornithes": {
+    "id": "clade:Neornithes",
+    "name": "Neornithes",
+    "rank": "clade",
+    "parent": null,
+    "children": [
+      "clade:Palaeognathae",
+      "clade:Neognathae"
+    ]
+  },
+  "clade:Palaeognathae": {
+    "id": "clade:Palaeognathae",
+    "name": "Palaeognathae",
+    "rank": "clade",
+    "parent": "clade:Neornithes",
+    "children": [],
+    "description": "Living birds traditionally comprising ratites and tinamous."
+  },
+  "clade:Neognathae": {
+    "id": "clade:Neognathae",
+    "name": "Neognathae",
+    "rank": "clade",
+    "parent": "clade:Neornithes",
+    "children": [
+      "clade:Galloanserae",
+      "clade:Neoaves"
+    ]
+  },
+  "clade:Galloanserae": {
+    "id": "clade:Galloanserae",
+    "name": "Galloanserae",
+    "rank": "clade",
+    "parent": "clade:Neognathae",
+    "children": [],
+    "description": "Major clade containing Anseriformes and Galliformes."
+  },
+  "clade:Neoaves": {
+    "id": "clade:Neoaves",
+    "name": "Neoaves",
+    "rank": "clade",
+    "parent": "clade:Neognathae",
+    "children": [
+      "clade:Telluraves"
+    ],
+    "description": "Large clade containing most living bird species."
+  },
+  "clade:Telluraves": {
+    "id": "clade:Telluraves",
+    "name": "Telluraves",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [
+      "clade:Afroaves",
+      "clade:Australaves"
+    ],
+    "description": "Core landbird clade containing Afroaves and Australaves."
+  },
+  "clade:Afroaves": {
+    "id": "clade:Afroaves",
+    "name": "Afroaves",
+    "rank": "clade",
+    "parent": "clade:Telluraves",
+    "children": [],
+    "description": "A major Telluraves lineage including groups such as Accipitriformes, Strigiformes, Coliiformes and several cavity-nesting bird lineages. Deep relationships within Afroaves remain an active phylogenetic research topic."
+  },
+  "clade:Australaves": {
+    "id": "clade:Australaves",
+    "name": "Australaves",
+    "rank": "clade",
+    "parent": "clade:Telluraves",
+    "children": [
+      "clade:Psittacopasserae"
+    ],
+    "description": "A major Telluraves lineage containing Cariamiformes, Falconiformes, Psittaciformes and Passeriformes."
+  },
+  "clade:Psittacopasserae": {
+    "id": "clade:Psittacopasserae",
+    "name": "Psittacopasserae",
+    "rank": "clade",
+    "parent": "clade:Australaves",
+    "children": [],
+    "description": "Clade containing parrots and passerines."
+  },
+  "clade:Aequornithes": {
+    "id": "clade:Aequornithes",
+    "name": "Aequornithes",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [],
+    "status": "backbone_external",
+    "note": "Included as a named Neoaves clade, but its exact placement relative to other major Neoaves lineages is not hard-coded here."
+  },
+  "clade:Mirandornithes": {
+    "id": "clade:Mirandornithes",
+    "name": "Mirandornithes",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [],
+    "status": "backbone_external",
+    "note": "Flamingos and grebes; placement among major Neoaves lineages is kept separate from the simplified backbone."
+  },
+  "clade:Columbimorphae": {
+    "id": "clade:Columbimorphae",
+    "name": "Columbimorphae",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [],
+    "status": "backbone_external",
+    "note": "Named clade associated with Columbiformes, Pterocliformes and Mesitornithiformes in major phylogenomic treatments."
+  },
+  "clade:Otidimorphae": {
+    "id": "clade:Otidimorphae",
+    "name": "Otidimorphae",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [],
+    "status": "backbone_external",
+    "note": "Named clade containing Cuculiformes, Musophagiformes and Otidiformes in major phylogenomic treatments."
+  },
+  "clade:Strisores": {
+    "id": "clade:Strisores",
+    "name": "Strisores",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [],
+    "status": "backbone_external",
+    "note": "Named clade containing hummingbirds, swifts and several nocturnal bird lineages."
+  },
   "clade:Phaethontimorphae": {
     "id": "clade:Phaethontimorphae",
     "name": "Phaethontimorphae",
