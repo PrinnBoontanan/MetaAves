@@ -46,22 +46,19 @@ async function loadGameData() {
             birdResponse,
             taxonomyResponse,
             infoResponse,
-            cladeResponse,
-            cladeMembershipResponse
+            cladeResponse
         ] = await Promise.all([
             fetch("data/birds.generated.json"),
             fetch("data/taxonomy.generated.json"),
             fetch("data/taxon_info.json"),
-            fetch("data/clades.json"),
-            fetch("data/clade_membership.generated.json")
+            fetch("data/clades.json")
         ]);
 
         if (
             !birdResponse.ok ||
             !taxonomyResponse.ok ||
             !infoResponse.ok ||
-            !cladeResponse.ok ||
-            !cladeMembershipResponse.ok
+            !cladeResponse.ok
         ) {
             throw new Error("Could not load MetaAves data.");
         }
@@ -71,21 +68,16 @@ async function loadGameData() {
         gameState.taxonInfo = await infoResponse.json();
         gameState.clades = await cladeResponse.json();
 
-        const cladeMembership = await cladeMembershipResponse.json();
-        const membershipBySpecies = cladeMembership.species || {};
+        // Clade membership is derived from the canonical order → clade
+        // backbone. Do not make the optional generated membership cache a
+        // prerequisite for starting the game.
         const canonicalCladePaths =
             gameState.clades?._meta?.orderCladePaths || {};
 
-        // The generated species membership file is a compatibility/cache
-        // layer. The canonical order → clade relationship lives in
-        // clades.json, so a stale generated membership file cannot override
-        // the current phylogenetic backbone.
         gameState.birds.forEach(bird => {
-            const canonicalPath = canonicalCladePaths[bird.order];
-
-            bird.cladePath = canonicalPath
-                ? [...canonicalPath]
-                : (membershipBySpecies[bird.scientificName] || []);
+            bird.cladePath = canonicalCladePaths[bird.order]
+                ? [...canonicalCladePaths[bird.order]]
+                : [];
         });
 
         // The ranked hierarchy is intentionally fixed to the classic game model.
