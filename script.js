@@ -73,11 +73,22 @@ async function loadGameData() {
 
         const cladeMembership = await cladeMembershipResponse.json();
         const membershipBySpecies = cladeMembership.species || {};
+        const canonicalCladePaths =
+            gameState.clades?._meta?.orderCladePaths || {};
 
-        // Join the generated clade layer to the generated bird records.
-        // The scientific name is the stable species key produced by AviList.
+        // The generated species membership file is a build artifact, but the
+        // canonical order → clade relationship lives in clades.json so the
+        // game cannot silently keep using a stale generated path.
+        //
+        // In particular, Passeriformes must be:
+        // Neoaves → Telluraves → Australaves → Psittacopasserae
+        // (see the Telluraves phylogeny).
         gameState.birds.forEach(bird => {
-            bird.cladePath = membershipBySpecies[bird.scientificName] || [];
+            const canonicalPath = canonicalCladePaths[bird.order];
+
+            bird.cladePath = canonicalPath
+                ? [...canonicalPath]
+                : (membershipBySpecies[bird.scientificName] || []);
         });
 
         // The ranked hierarchy is intentionally fixed to the classic game model.
