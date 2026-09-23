@@ -542,6 +542,7 @@ function renderTaxonomyTree() {
             const pathLength = path.getTotalLength();
             path.style.strokeDasharray = pathLength;
             path.style.strokeDashoffset = pathLength;
+            path.style.setProperty("--branch-length", pathLength);
 
             if (child.type === "taxon") {
                 path.classList.add("meta-connection-taxon");
