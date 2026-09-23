@@ -418,6 +418,11 @@ function renderBirdCard(bird, wiki) {
     scientific.textContent = bird.scientificName || "Scientific name unavailable";
     card.appendChild(scientific);
 
+    const rank = document.createElement("p");
+    rank.classList.add("taxon-card-rank");
+    rank.textContent = "SPECIES";
+    card.appendChild(rank);
+
     if (wiki?.thumbnail?.source) {
         const image = document.createElement("img");
         image.className = "taxon-card-image";
@@ -427,56 +432,11 @@ function renderBirdCard(bird, wiki) {
         card.appendChild(image);
     }
 
-    const thai = document.createElement("p");
-    thai.innerHTML = "<strong>Thai name</strong><br>";
-    thai.appendChild(document.createTextNode(
-        bird.thaiName || "No established Thai name found."
-    ));
-    card.appendChild(thai);
-
-    const taxonomy = document.createElement("p");
-    taxonomy.innerHTML = "<strong>Taxonomy</strong><br>" +
-        getBirdTaxonomyText(bird);
-    card.appendChild(taxonomy);
-
     const description = document.createElement("p");
     description.textContent =
         wiki?.extract ||
         "No Wikipedia summary is available for this species yet.";
     card.appendChild(description);
-
-    const addBirdInfoSection = (heading, value) => {
-        if (!value) return;
-
-        const sectionHeading = document.createElement("h4");
-        sectionHeading.textContent = heading;
-        card.appendChild(sectionHeading);
-
-        const sectionText = document.createElement("p");
-        sectionText.textContent = value;
-        card.appendChild(sectionText);
-    };
-
-    addBirdInfoSection("Habitat", bird.habitat);
-    addBirdInfoSection("Distribution", bird.distribution);
-    addBirdInfoSection("Diet", bird.diet);
-    addBirdInfoSection("Behavior", bird.behavior);
-    addBirdInfoSection("Breeding", bird.breeding);
-    addBirdInfoSection("Conservation", bird.conservation);
-
-    if (Array.isArray(bird.interestingFacts) && bird.interestingFacts.length) {
-        const heading = document.createElement("h4");
-        heading.textContent = "Interesting facts";
-        card.appendChild(heading);
-
-        const list = document.createElement("ul");
-        bird.interestingFacts.forEach(fact => {
-            const item = document.createElement("li");
-            item.textContent = fact;
-            list.appendChild(item);
-        });
-        card.appendChild(list);
-    }
 
     if (wiki?.content_urls?.desktop?.page) {
         const link = document.createElement("a");
