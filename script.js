@@ -190,29 +190,60 @@ function getDeepestSharedTaxon(guessedBird, mysteryBird) {
     const guessedPath = getBirdPhylogenyPath(guessedBird);
     const mysteryPath = getBirdPhylogenyPath(mysteryBird);
 
-    let deepest = mysteryPath[0] || {
+    // First compare the formal ranked taxonomy independently of the
+    // phylogenetic clades. Clades are inserted into the path, so comparing
+    // the paths by array index would make a shared family/order look like
+    // Aves whenever the two birds have different clade branches.
+    let deepestRanked = guessedPath[0] || {
         id: "class:Aves",
         level: "class",
         value: "Aves",
         depth: 0
     };
 
-    const limit = Math.min(guessedPath.length, mysteryPath.length);
-
-    for (let i = 0; i < limit; i++) {
-        if (guessedPath[i].id !== mysteryPath[i].id) {
-            break;
+    for (const level of taxonomyLevels) {
+        if (level === "class") {
+            continue;
         }
 
-        // Clades are kept in the data as phylogenetic information,
-        // but they are not displayed as nodes in the guessing tree.
-        // The tree reveals the deepest shared ranked taxon instead.
-        if (mysteryPath[i].level !== "clade") {
-            deepest = mysteryPath[i];
+        const guessedNode = guessedPath.find(node => node.level === level);
+        const mysteryNode = mysteryPath.find(node => node.level === level);
+
+        if (
+            guessedNode &&
+            mysteryNode &&
+            guessedNode.id === mysteryNode.id
+        ) {
+            deepestRanked = mysteryNode;
+        } else {
+            break;
         }
     }
 
-    return deepest;
+    // If the birds only share Aves as a formal rank, use their deepest
+    // shared clade as the visible branch point. This is what lets a bird
+    // such as House Sparrow terminate at Telluraves while a hornbill branch
+    // continues deeper to Bucerotidae.
+    const guessedClades = guessedPath.filter(node => node.level === "clade");
+    const mysteryClades = mysteryPath.filter(node => node.level === "clade");
+
+    let deepestSharedClade = null;
+
+    for (const clade of guessedClades) {
+        if (mysteryClades.some(node => node.id === clade.id)) {
+            deepestSharedClade = clade;
+        } else {
+            break;
+        }
+    }
+
+    // A shared ranked taxon takes precedence over a clade. For example,
+    // two hornbills share Bucerotidae, so Afroaves should not replace it.
+    if (deepestRanked.level !== "class") {
+        return deepestRanked;
+    }
+
+    return deepestSharedClade || deepestRanked;
 }
 
 
