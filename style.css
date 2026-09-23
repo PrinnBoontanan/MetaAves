@@ -1516,3 +1516,125 @@ body {
         max-height: 220px;
     }
 }
+
+
+/* ========================================
+   MetaAves tree — restored visual treatment
+   ======================================== */
+
+.meta-tree-node {
+    min-height: 34px;
+    padding: 6px 13px;
+    border-radius: 9px;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    font-size: 14px;
+    box-shadow:
+        0 3px 0 rgba(67, 57, 35, 0.10),
+        0 7px 15px rgba(67, 57, 35, 0.08);
+}
+
+.meta-tree-node[data-level="class"] {
+    background: linear-gradient(135deg, #bd4b36, #a93827);
+    color: #fff;
+    border: 1px solid #8d281b;
+    font-weight: 700;
+}
+
+.meta-tree-node[data-level="order"] {
+    background: linear-gradient(135deg, #d58a2c, #bd6b17);
+    color: #fff;
+    border: 1px solid #a65e0e;
+    font-weight: 700;
+}
+
+.meta-tree-node[data-level="family"] {
+    background: linear-gradient(135deg, #81983a, #667d29);
+    color: #fff;
+    border: 1px solid #596c21;
+    font-weight: 700;
+}
+
+.meta-tree-node[data-level="genus"] {
+    background: linear-gradient(135deg, #5c9947, #477d37);
+    color: #fff;
+    border: 1px solid #3b6e2c;
+    font-weight: 700;
+}
+
+.meta-tree-node[data-level="clade"],
+.meta-tree-node[data-level="suborder"],
+.meta-tree-node[data-level="infraorder"],
+.meta-tree-node[data-level="parvorder"],
+.meta-tree-node[data-level="superfamily"],
+.meta-tree-node[data-level="subfamily"],
+.meta-tree-node[data-level="tribe"] {
+    background: linear-gradient(135deg, #70852e, #596c21);
+    color: #fff;
+    border: 1px solid #596c21;
+    font-weight: 700;
+}
+
+.meta-species-node {
+    background: rgba(255, 253, 248, 0.98);
+    color: #555;
+    border: 1px solid #c9b98f;
+    border-radius: 9px;
+    box-shadow:
+        0 3px 0 rgba(67, 57, 35, 0.08),
+        0 6px 13px rgba(67, 57, 35, 0.07);
+}
+
+.meta-species-guess {
+    color: #587331;
+}
+
+.meta-species-mystery {
+    color: #777;
+    border-color: #d5c7aa;
+    border-style: dashed;
+    font-weight: 700;
+}
+
+.meta-species-correct,
+.meta-species-revealed-lost {
+    background: #4d8d39 !important;
+    color: #fff !important;
+    border: 1px solid #3b6d2c !important;
+    font-weight: 700;
+}
+
+/* Curved branches + sequential growing animation. */
+.meta-tree-connection {
+    fill: none;
+    stroke-linecap: round;
+}
+
+.meta-tree-connection.active {
+    animation: grow-tree-branch 0.65s ease-out forwards;
+}
+
+@keyframes grow-tree-branch {
+    from {
+        stroke-dashoffset: var(--branch-length, 1000);
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.meta-connection-taxon {
+    stroke: #7d641f;
+    stroke-width: 5;
+}
+
+.meta-connection-species {
+    stroke: #7b8c4b;
+    stroke-width: 3.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .meta-tree-connection.active {
+        animation: none;
+        stroke-dashoffset: 0;
+    }
+}
