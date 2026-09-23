@@ -119,125 +119,162 @@ body {
    Taxonomy Tree
 ======================================== */
 
-/*
-   The tree itself is not made from nested
-   boxes. The lines are the structure.
-*/
+.taxonomy-tree {
+    position: relative;
+}
+
+
+/* Every node is a small UI card */
 
 .taxon-node,
 .species-node {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 7px 14px;
+
+    background: #fff;
+    border: 1px solid #c8cdd2;
+    border-radius: 9px;
+
     white-space: nowrap;
+    font-size: 15px;
+
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 
-/* Taxon names */
+/* Taxon cards */
 
 .taxon-node {
-    padding: 3px 0;
     font-weight: 700;
 }
 
 
-/* Aves root */
+/* Aves is the root card */
 
 .tree-root-node {
-    font-size: 18px;
+    font-size: 17px;
+    border-color: #aeb4ba;
 }
 
 
 /* ========================================
-   Branch container
+   Branch containers
 ======================================== */
 
 .tree-branch {
     position: relative;
-    margin-left: 18px;
-    padding-left: 30px;
+    margin-left: 24px;
+    padding-left: 34px;
 
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
 }
 
 
-/* Vertical branch line */
+/* Vertical trunk */
 
 .tree-branch::before {
     content: "";
 
     position: absolute;
     left: 0;
-    top: 0;
-    bottom: 0;
+    top: 18px;
+    bottom: 18px;
 
     width: 2px;
-    background: #aaa;
+    background: #b7bcc1;
 }
 
 
-/* ========================================
-   Horizontal branch lines
-======================================== */
+/* Horizontal connector into each node */
 
 .tree-branch > .taxon-node::before,
 .tree-branch > .species-node::before {
     content: "";
 
     position: absolute;
-    left: -30px;
+    left: -34px;
     top: 50%;
 
-    width: 30px;
+    width: 34px;
     height: 2px;
 
-    background: #aaa;
+    background: #b7bcc1;
 }
 
 
-/* ========================================
-   Species
-======================================== */
+/* Make the last branch look like a real tree elbow */
+
+.tree-branch > .taxon-node:last-child::after,
+.tree-branch > .species-node:last-child::after {
+    content: "";
+
+    position: absolute;
+    left: -36px;
+    top: 0;
+    bottom: 50%;
+
+    width: 4px;
+    background: #fafafa;
+}
+
+
+/* Species cards */
 
 .species-node {
-    margin: 4px 0;
-    padding: 4px 0;
-
     font-weight: 600;
 }
 
 
-/* ========================================
-   Guessed species
-======================================== */
+/* Guessed species */
 
 .guessed-species {
     color: #222;
 }
 
 
-/* ========================================
-   Mystery species
-======================================== */
+/* Hidden mystery */
 
 .mystery-species {
-    color: #888;
+    color: #858a90;
+    background: #f8f9fa;
+    border-style: dashed;
+}
+
+
+/* Correct answer */
+
+.correct-species {
+    color: #222;
+    border-width: 2px;
+    border-color: #555;
     font-weight: 700;
 }
 
 
 /* ========================================
-   Correct answer
+   Tree spacing
 ======================================== */
 
-.correct-species {
-    font-weight: 700;
+.tree-root-node > .tree-branch {
+    margin-top: 8px;
+}
+
+.tree-branch > .tree-branch {
+    margin-top: 0;
 }
 
 
 /* ========================================
    Empty tree
+======================================== */
+
+
 ======================================== */
 
 .tree-placeholder {
