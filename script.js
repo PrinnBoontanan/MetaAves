@@ -390,21 +390,34 @@ function buildTreeModel() {
     function getDisplayPath(bird, endpoint) {
         const path = getEndpointPath(bird, endpoint);
 
-        // Clades are not displayed in the game tree.
-        // Keep only Aves and the deepest shared ranked taxon.
+        // Clades are displayed only when they lead to a revealed
+        // ranked taxon below Aves. If the deepest shared ranked
+        // taxon is Aves itself (for example Sparrow vs. Hornbill),
+        // the branch comes directly from Aves.
         const result = [path[0]];
 
-        if (endpoint.level !== "class") {
-            result.push(endpoint);
+        if (endpoint.level === "class") {
+            return result;
         }
 
+        const endpointIndex = path.findIndex(node => node.id === endpoint.id);
+        const cladeBeforeEndpoint = path
+            .slice(1, endpointIndex)
+            .filter(node => node.level === "clade");
+
+        if (cladeBeforeEndpoint.length > 0) {
+            result.push(cladeBeforeEndpoint[cladeBeforeEndpoint.length - 1]);
+        }
+
+        result.push(endpoint);
         return result;
     }
 
     function insertBird(bird, endpoint, nodeType) {
         const leaf = {
             type: "species",
-            name: bird.commonName,
+            // Keep the mystery hidden until it is actually guessed.
+            name: nodeType === "mystery" ? "???" : bird.commonName,
             nodeType,
             bird: nodeType === "correct" ? bird : bird
         };
