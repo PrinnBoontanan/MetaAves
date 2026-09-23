@@ -839,6 +839,12 @@ function showGameOverCard(result) {
     const bird = gameState.mysteryBird;
     if (!overlay || !bird) return;
 
+    // Reset dynamic study-card sections from any previous game.
+    const details = document.querySelector(".study-card-details");
+    if (details) {
+        details.innerHTML = "";
+    }
+
     if (result === "won") {
         title.textContent = "You found the mystery bird!";
         message.textContent = "Congratulations!";
@@ -851,7 +857,58 @@ function showGameOverCard(result) {
     scientificName.textContent = bird.scientificName || "Unknown";
     thaiName.textContent =
         bird.thaiName || "No established Thai name found.";
-    taxonomy.textContent = getBirdTaxonomyText(bird);
+    taxonomy.textContent = [
+        bird.order,
+        bird.family,
+        bird.genus,
+        bird.species || bird.scientificName
+    ].filter(Boolean).join(" → ");
+
+    const details = document.querySelector(".study-card-details");
+
+    const addStudySection = (heading, value) => {
+        if (!details || !value) return;
+
+        const section = document.createElement("div");
+        section.className = "study-card-section";
+
+        const title = document.createElement("h4");
+        title.textContent = heading;
+
+        const text = document.createElement("p");
+        text.textContent = value;
+
+        section.appendChild(title);
+        section.appendChild(text);
+        details.appendChild(section);
+    };
+
+    addStudySection("Description", bird.description);
+    addStudySection("Habitat", bird.habitat);
+    addStudySection("Distribution", bird.distribution);
+    addStudySection("Diet", bird.diet);
+    addStudySection("Behavior", bird.behavior);
+    addStudySection("Breeding", bird.breeding);
+    addStudySection("Conservation", bird.conservation);
+
+    if (Array.isArray(bird.interestingFacts) && bird.interestingFacts.length) {
+        const section = document.createElement("div");
+        section.className = "study-card-section";
+
+        const title = document.createElement("h4");
+        title.textContent = "Interesting facts";
+
+        const list = document.createElement("ul");
+        bird.interestingFacts.forEach(fact => {
+            const item = document.createElement("li");
+            item.textContent = fact;
+            list.appendChild(item);
+        });
+
+        section.appendChild(title);
+        section.appendChild(list);
+        details.appendChild(section);
+    }
 
     const studyImage = document.getElementById("study-bird-image");
     const studyDescription = document.getElementById("study-bird-description");
@@ -886,7 +943,20 @@ function showGameOverCard(result) {
             const details = document.querySelector(".study-card-details");
             if (details) {
                 if (image) details.before(image);
-                if (wiki.extract) details.before(description);
+
+                const descriptionHeading = document.createElement("h4");
+                descriptionHeading.textContent = "Description";
+
+                const descriptionSection = document.createElement("div");
+                descriptionSection.className = "study-card-section study-card-wiki-description";
+                descriptionSection.appendChild(descriptionHeading);
+                descriptionSection.appendChild(description);
+
+                // Use the Wikipedia introduction as the description only
+                // when the dataset does not already contain one.
+                if (!bird.description && wiki.extract) {
+                    details.prepend(descriptionSection);
+                }
             }
         })
         .catch(() => {});
