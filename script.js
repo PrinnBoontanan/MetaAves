@@ -76,29 +76,16 @@ async function loadGameData() {
         const canonicalCladePaths =
             gameState.clades?._meta?.orderCladePaths || {};
 
-<<<<<<< HEAD
-        // Use the corrected phylogenetic backbone at runtime. The generated
-        // membership file remains a compatibility/cache layer, but the game
-        // must not inherit an outdated clade assignment from it.
-        gameState.birds.forEach(bird => {
-            bird.cladePath = getCorrectedCladePath(bird)
-                || membershipBySpecies[bird.scientificName]
-                || ["Neornithes", "Neognathae", "Neoaves"];
-=======
-        // The generated species membership file is a build artifact, but the
-        // canonical order → clade relationship lives in clades.json so the
-        // game cannot silently keep using a stale generated path.
-        //
-        // In particular, Passeriformes must be:
-        // Neoaves → Telluraves → Australaves → Psittacopasserae
-        // (see the Telluraves phylogeny).
+        // The generated species membership file is a compatibility/cache
+        // layer. The canonical order → clade relationship lives in
+        // clades.json, so a stale generated membership file cannot override
+        // the current phylogenetic backbone.
         gameState.birds.forEach(bird => {
             const canonicalPath = canonicalCladePaths[bird.order];
 
             bird.cladePath = canonicalPath
                 ? [...canonicalPath]
                 : (membershipBySpecies[bird.scientificName] || []);
->>>>>>> 8af37c9cfb00f2b9e131d7048d66ebfa9b58cd8d
         });
 
         // The ranked hierarchy is intentionally fixed to the classic game model.
@@ -130,77 +117,6 @@ async function loadGameData() {
 // Neoaves has a partially unresolved deep phylogeny, so MetaAves uses the
 // well-supported named supraordinal groups without pretending that all of
 // their relationships form one settled ladder.
-
-const CLADE_PATHS_BY_ORDER = {
-    Struthioniformes: ["Neornithes", "Palaeognathae"],
-    Casuariiformes: ["Neornithes", "Palaeognathae"],
-    Apterygiformes: ["Neornithes", "Palaeognathae"],
-    Rheiformes: ["Neornithes", "Palaeognathae"],
-    Tinamiformes: ["Neornithes", "Palaeognathae"],
-
-    Anseriformes: ["Neornithes", "Neognathae", "Galloanserae"],
-    Galliformes: ["Neornithes", "Neognathae", "Galloanserae"],
-
-    Mirandornithes: ["Neornithes", "Neognathae", "Neoaves", "Mirandornithes"],
-    Phoenicopteriformes: ["Neornithes", "Neognathae", "Neoaves", "Mirandornithes"],
-    Podicipediformes: ["Neornithes", "Neognathae", "Neoaves", "Mirandornithes"],
-
-    Otidimorphae: ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
-    Musophagiformes: ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
-    Otidiformes: ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
-    Cuculiformes: ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
-
-    Columbimorphae: ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
-    Mesitornithiformes: ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
-    Pterocliformes: ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
-    Columbiformes: ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
-
-    Strisores: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-    Caprimulgiformes: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-    Steatornithiformes: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-    Nyctibiiformes: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-    Podargiformes: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-    Aegotheliformes: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-    Apodiformes: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-
-    Aequornithes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-    Gaviiformes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-    Sphenisciformes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-    Procellariiformes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-    Ciconiiformes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-    Suliformes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-    Pelecaniformes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-
-    Eurypygimorphae: ["Neornithes", "Neognathae", "Neoaves", "Eurypygimorphae"],
-    Eurypygiformes: ["Neornithes", "Neognathae", "Neoaves", "Eurypygimorphae"],
-    Phaethontiformes: ["Neornithes", "Neognathae", "Neoaves", "Eurypygimorphae"],
-
-    Telluraves: ["Neornithes", "Neognathae", "Neoaves", "Telluraves"],
-    Accipitriformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    Cathartiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    Strigiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    Coliiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    Leptosomiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    Trogoniformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    Bucerotiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    Coraciiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    Galbuliformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    Piciformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-
-    Cariamiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves"],
-    Falconiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves"],
-    Psittaciformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves", "Psittacopasserae"],
-    Passeriformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves", "Psittacopasserae"],
-
-    Opisthocomiformes: ["Neornithes", "Neognathae", "Neoaves", "Opisthocomiformes"],
-    Gruiformes: ["Neornithes", "Neognathae", "Neoaves", "Gruiformes"],
-    Charadriiformes: ["Neornithes", "Neognathae", "Neoaves", "Charadriiformes"]
-};
-
-function getCorrectedCladePath(bird) {
-    if (!bird || !bird.order) return null;
-    return CLADE_PATHS_BY_ORDER[bird.order] || null;
-}
 
 // ========================================
 // Guess counter
