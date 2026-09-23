@@ -49,6 +49,10 @@ jobs:
         run: |
           python scripts/enrich_ncbi_taxonomy.py             --ncbi-jsonl data/ncbi_aves.jsonl
 
+      - name: Apply supplemental taxonomy
+        run: |
+          python scripts/apply_supplemental_taxonomy.py
+
       - name: Validate generated data
         run: |
           python - <<'PY'
