@@ -1089,3 +1089,14 @@ body {
 .meta-tree-canvas {
     min-height: 100%;
 }
+
+
+/* Solved mystery species must remain clearly visible after the
+   study card is closed. */
+.meta-species-correct {
+    background: #4d8d39 !important;
+    color: #ffffff !important;
+    border: 1px solid #3b6d2c !important;
+    font-weight: 700;
+    opacity: 1;
+}
