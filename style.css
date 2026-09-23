@@ -834,6 +834,69 @@ body {
     background: linear-gradient(135deg, #5c9947, #477d37);
 }
 
+.meta-tree-node[data-level="suborder"],
+.meta-tree-node[data-level="infraorder"],
+.meta-tree-node[data-level="parvorder"],
+.meta-tree-node[data-level="superfamily"],
+.meta-tree-node[data-level="subfamily"],
+.meta-tree-node[data-level="tribe"] {
+    background: linear-gradient(135deg, #6f8b3c, #58712e);
+    color: #fff;
+    border: 1px solid #58712e;
+    font-weight: 700;
+}
+
+.meta-tree-node[data-level="species"] {
+    background: rgba(255, 253, 248, 0.98);
+}
+
+.meta-tree-nodes {
+    position: absolute;
+    inset: 0;
+}
+
+.meta-tree-lines {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.meta-tree-connection {
+    fill: none;
+    stroke: #8b7a5d;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    animation: meta-branch-draw 0.42s ease-out both;
+}
+
+.meta-connection-taxon {
+    stroke-width: 2.4;
+}
+
+.meta-connection-species {
+    stroke-width: 1.8;
+}
+
+@keyframes meta-branch-draw {
+    from {
+        stroke-dashoffset: var(--branch-length);
+        opacity: 0;
+    }
+    to {
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .meta-tree-connection {
+        animation: none;
+        stroke-dashoffset: 0;
+    }
+}
+
 /* Clades use the same visual treatment as taxonomic tree nodes. */
 .meta-tree-node[data-level="clade"] {
     background: linear-gradient(135deg, #70852e, #596c21);
