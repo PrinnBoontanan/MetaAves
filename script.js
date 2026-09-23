@@ -11,7 +11,8 @@ const gameState = {
     guesses: [],
     taxonomy: null,
     taxonInfo: null,
-    selectedTaxonId: null
+    selectedTaxonId: null,
+    gameStatus: "playing"
 };
 
 const guessCountElement = document.getElementById("guess-count");
@@ -201,7 +202,11 @@ function getMysteryRevealTaxon() {
 function makeGuess() {
     const input = searchInput.value.trim();
 
-    if (input === "" || gameState.guessesRemaining <= 0) {
+    if (
+        input === "" ||
+        gameState.guessesRemaining <= 0 ||
+        gameState.gameStatus !== "playing"
+    ) {
         return;
     }
 
@@ -222,6 +227,15 @@ function makeGuess() {
     gameState.guesses.push(bird);
     gameState.guessesRemaining--;
 
+    const isCorrect =
+        bird.commonName === gameState.mysteryBird.commonName;
+
+    if (isCorrect) {
+        gameState.gameStatus = "won";
+    } else if (gameState.guessesRemaining <= 0) {
+        gameState.gameStatus = "lost";
+    }
+
     updateGuessCounter();
     renderTaxonomyTree();
     updateAutomaticTaxonCard();
@@ -229,8 +243,10 @@ function makeGuess() {
     searchInput.value = "";
     suggestions.innerHTML = "";
 
-    if (bird.commonName === gameState.mysteryBird.commonName) {
-        console.log("Correct!");
+    if (gameState.gameStatus === "won") {
+        showGameOverCard("won");
+    } else if (gameState.gameStatus === "lost") {
+        showGameOverCard("lost");
     }
 }
 
@@ -717,6 +733,97 @@ function renderTaxonomyTree() {
 
     drawConnections(model);
 }
+
+
+// ========================================
+// Game Over Card
+// ========================================
+
+function getBirdTaxonomyText(bird) {
+    return [
+        bird.class,
+        bird.order,
+        bird.family,
+        bird.genus
+    ].filter(Boolean).join(" → ");
+}
+
+function showGameOverCard(result) {
+    const overlay = document.getElementById("game-over-overlay");
+    const title = document.getElementById("game-over-title");
+    const message = document.getElementById("game-over-message");
+    const birdName = document.getElementById("study-bird-name");
+    const scientificName = document.getElementById("study-scientific-name");
+    const thaiName = document.getElementById("study-thai-name");
+    const taxonomy = document.getElementById("study-taxonomy");
+
+    const bird = gameState.mysteryBird;
+    if (!overlay || !bird) return;
+
+    if (result === "won") {
+        title.textContent = "You found the mystery bird!";
+        message.textContent = "Congratulations!";
+    } else {
+        title.textContent = "Out of guesses!";
+        message.textContent = "Here is the mystery bird.";
+    }
+
+    birdName.textContent = bird.commonName;
+    scientificName.textContent = bird.scientificName || "Unknown";
+    thaiName.textContent =
+        bird.thaiName || "No established Thai name found.";
+    taxonomy.textContent = getBirdTaxonomyText(bird);
+
+    overlay.classList.add("visible");
+}
+
+function closeGameOverCard() {
+    const overlay = document.getElementById("game-over-overlay");
+    if (overlay) {
+        overlay.classList.remove("visible");
+    }
+}
+
+function replayGame() {
+    closeGameOverCard();
+
+    gameState.guessesRemaining = gameState.maxGuesses;
+    gameState.guesses = [];
+    gameState.selectedTaxonId = null;
+    gameState.gameStatus = "playing";
+
+    // Temporary mystery selection until the full game
+    // uses a randomized bird dataset.
+    gameState.mysteryBird = gameState.birds.find(
+        bird => bird.commonName === "Oriental Pied Hornbill"
+    );
+
+    searchInput.value = "";
+    suggestions.innerHTML = "";
+
+    updateGuessCounter();
+    renderTaxonomyTree();
+    updateAutomaticTaxonCard();
+}
+
+document.getElementById("game-over-close").addEventListener(
+    "click",
+    closeGameOverCard
+);
+
+document.getElementById("game-over-replay").addEventListener(
+    "click",
+    replayGame
+);
+
+document.getElementById("game-over-overlay").addEventListener(
+    "click",
+    event => {
+        if (event.target.id === "game-over-overlay") {
+            closeGameOverCard();
+        }
+    }
+);
 
 
 // ========================================
