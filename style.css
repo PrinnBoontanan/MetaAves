@@ -116,8 +116,6 @@ body {
     padding: 10px 0;
     overflow-x: auto;
     overflow-y: hidden;
-
-    /* Warm background similar to the reference image. */
     background: #f8ead5;
     border-radius: 4px;
 }
@@ -150,8 +148,6 @@ body {
 
 .meta-tree-node {
     position: absolute;
-    transform: translateX(0);
-
     display: flex;
     align-items: center;
     justify-content: center;
@@ -165,14 +161,12 @@ body {
     font-size: 14px;
     line-height: 20px;
 
-    box-shadow:
-        0 2px 3px rgba(0, 0, 0, 0.16);
-
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.16);
     z-index: 2;
 }
 
 
-/* Root / class */
+/* Taxonomic levels */
 
 .meta-tree-node[data-level="class"] {
     background: #b43b28;
@@ -181,9 +175,6 @@ body {
     font-weight: 700;
 }
 
-
-/* Order */
-
 .meta-tree-node[data-level="order"] {
     background: #c97817;
     color: #fff;
@@ -191,18 +182,12 @@ body {
     font-weight: 700;
 }
 
-
-/* Family */
-
 .meta-tree-node[data-level="family"] {
     background: #70852e;
     color: #fff;
     border: 1px solid #596c21;
     font-weight: 700;
 }
-
-
-/* Genus */
 
 .meta-tree-node[data-level="genus"] {
     background: #4f8b3b;
@@ -218,19 +203,12 @@ body {
     background: #fffdf8;
     color: #555;
     border: 1px solid #c9b98f;
-    box-shadow:
-        0 2px 3px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.12);
 }
-
-
-/* Normal guesses */
 
 .meta-species-guess {
     color: #587331;
 }
-
-
-/* Hidden mystery */
 
 .meta-species-mystery {
     color: #777;
@@ -238,9 +216,6 @@ body {
     border-style: dashed;
     font-weight: 700;
 }
-
-
-/* Correct answer stays in the SAME branch */
 
 .meta-species-correct {
     background: #4d8d39;
@@ -274,11 +249,6 @@ body {
    Empty tree
 ======================================== */
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 328497a29e918cad35967c3ffd317ad986008b2c
 .tree-placeholder {
     margin: 0;
     padding: 170px 20px;
