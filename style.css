@@ -542,3 +542,33 @@ body {
     margin: 18px 0 0;
     line-height: 1.65;
 }
+
+
+.study-card-section {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #e4d9c4;
+}
+
+.study-card-section h4 {
+    margin: 0 0 7px;
+    color: #5d563f;
+    font-size: 16px;
+}
+
+.study-card-section p {
+    margin: 0;
+    line-height: 1.65;
+    color: #555;
+}
+
+.study-card-section ul {
+    margin: 0;
+    padding-left: 22px;
+    color: #555;
+}
+
+.study-card-section li {
+    margin: 6px 0;
+    line-height: 1.55;
+}
