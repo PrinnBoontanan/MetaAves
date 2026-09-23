@@ -42,11 +42,7 @@
       "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia",
       "scope": "Passeriformes only",
       "mappedFamilies": 154,
-<<<<<<< HEAD
-      "coveredFamilies": 144
-=======
       "coveredFamilies": 145
->>>>>>> 49a982786e602e85863ea8f05cefc23bf56ae301
     }
   },
   "class:Aves": {
@@ -56225,10 +56221,7 @@
       "family:Meliphagidae",
       "family:Cinclosomatidae",
       "family:Campephagidae",
-<<<<<<< HEAD
       "family:Pityriasidae",
-=======
->>>>>>> 49a982786e602e85863ea8f05cefc23bf56ae301
       "family:Malaconotidae",
       "family:Paramythiidae",
       "family:Dicruridae",
@@ -138564,10 +138557,7 @@
       "family:Machaerirhynchidae",
       "family:Artamidae",
       "family:Rhagologidae",
-<<<<<<< HEAD
-=======
       "family:Pityriasidae",
->>>>>>> 49a982786e602e85863ea8f05cefc23bf56ae301
       "family:Aegithinidae",
       "family:Malaconotidae",
       "family:Platysteiridae",
