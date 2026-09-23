@@ -759,7 +759,7 @@ function renderTaxonomyTree() {
             // perfectly vertical connector. This keeps the line visually
             // centered through both node centers instead of introducing
             // a tiny curve that can look off-center.
-            const isVerticallyAligned = Math.abs(startX - endX) < 0.5;
+            const isVerticallyAligned = Math.abs(startX - endX) < 8;
 
             path.setAttribute(
                 "d",
