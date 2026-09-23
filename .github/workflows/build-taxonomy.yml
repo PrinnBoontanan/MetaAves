@@ -1,0 +1,81 @@
+name: Build MetaAves taxonomy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "data/birds.generated.json"
+      - "data/taxonomy.generated.json"
+      - "data/clade_membership.generated.json"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-taxonomy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install NCBI Datasets CLI
+        run: |
+          curl -L -o datasets https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/linux-amd64/datasets
+          chmod +x datasets
+          sudo mv datasets /usr/local/bin/datasets
+          datasets --version
+
+      - name: Download AviList v2025b extended
+        run: |
+          curl -L -o AviList-v2025b-extended.xlsx             https://www.avilist.org/wp-content/uploads/2026/06/AviList-v2025b-10Jun2026-extended.xlsx
+
+      - name: Build AviList base dataset
+        run: python scripts/import_avilist.py AviList-v2025b-extended.xlsx
+
+      - name: Download NCBI Aves taxonomy
+        run: |
+          datasets summary taxonomy taxon 8782             --children             --as-json-lines             > data/ncbi_aves.jsonl
+
+      - name: Enrich intermediary taxonomy ranks
+        run: |
+          python scripts/enrich_ncbi_taxonomy.py             --ncbi-jsonl data/ncbi_aves.jsonl
+
+      - name: Validate generated data
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          taxonomy = json.loads(Path("data/taxonomy.generated.json").read_text())
+          birds = json.loads(Path("data/birds.generated.json").read_text())
+
+          assert taxonomy["class:Aves"]["name"] == "Aves"
+          assert taxonomy["_meta"]["rankOrder"]
+          assert len(birds) >= 10000
+
+          ranks = {node.get("rank") for node in taxonomy.values() if isinstance(node, dict)}
+          required = {"class", "order", "family", "genus", "species"}
+          missing = required - ranks
+          assert not missing, f"Missing required ranks: {sorted(missing)}"
+
+          print(f"Validated {len(birds):,} birds and {len(taxonomy)-1:,} taxonomy nodes.")
+          PY
+
+      - name: Commit generated taxonomy
+        run: |
+          rm -f data/ncbi_aves.jsonl AviList-v2025b-extended.xlsx
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/birds.generated.json data/taxonomy.generated.json data/clade_membership.generated.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Build detailed bird taxonomy from AviList and NCBI"
+          git push
