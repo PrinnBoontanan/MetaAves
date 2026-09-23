@@ -756,12 +756,20 @@ function renderTaxonomyTree() {
                 "path"
             );
 
+            // When the child is directly below the parent, use a
+            // perfectly vertical connector. This keeps the line visually
+            // centered through both node centers instead of introducing
+            // a tiny curve that can look off-center.
+            const isVerticallyAligned = Math.abs(startX - endX) < 0.5;
+
             path.setAttribute(
                 "d",
-                `M ${startX} ${startY}
-                 C ${startX} ${startY + curve},
-                   ${endX} ${endY - curve},
-                   ${endX} ${endY}`
+                isVerticallyAligned
+                    ? `M ${startX} ${startY} L ${endX} ${endY}`
+                    : `M ${startX} ${startY}
+                       C ${startX} ${startY + curve},
+                         ${endX} ${endY - curve},
+                         ${endX} ${endY}`
             );
 
             path.classList.add("meta-tree-connection");
