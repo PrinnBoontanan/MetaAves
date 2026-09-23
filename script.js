@@ -552,12 +552,22 @@ function renderTaxonomyTree() {
 
             svg.appendChild(path);
 
-            // Deeper branches start shortly after their parent branch.
-            const animationDelay = child.type === "taxon"
-                ? child.children.length * 0.04
-                : 0.12;
+            // Grow the tree from top to bottom.
+            // Every level waits for the level above it to finish.
+            const childDepth = positioned.get(child).depth;
+            const levelDuration = 0.65;
+            const animationDelay = Math.max(
+                0,
+                (childDepth - 1) * levelDuration
+            );
 
             path.style.animationDelay = `${animationDelay}s`;
+
+            // Pass the same timing information to the child node.
+            childPosition.element.style.setProperty(
+                "--node-delay",
+                `${animationDelay + 0.48}s`
+            );
 
             drawConnections(child);
         });
