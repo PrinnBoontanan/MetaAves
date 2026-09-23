@@ -95,6 +95,38 @@
     </main>
 
 
+    <div id="game-over-overlay" class="game-over-overlay">
+        <div class="game-over-card" role="dialog" aria-modal="true">
+
+            <button id="game-over-close" class="game-over-close" type="button" aria-label="Close">×</button>
+
+            <p class="study-card-label">Bird Study Card</p>
+            <h2 id="game-over-title">Game Over</h2>
+            <p id="game-over-message"></p>
+
+            <div class="study-card-bird">
+                <h3 id="study-bird-name"></h3>
+                <p id="study-scientific-name" class="scientific-name"></p>
+            </div>
+
+            <div class="study-card-details">
+                <div>
+                    <strong>Thai name</strong>
+                    <p id="study-thai-name"></p>
+                </div>
+                <div>
+                    <strong>Taxonomy</strong>
+                    <p id="study-taxonomy"></p>
+                </div>
+            </div>
+
+            <div class="game-over-actions">
+                <button id="game-over-replay" type="button">Replay</button>
+                <button id="game-over-close-bottom" type="button" class="secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 
 </body>
