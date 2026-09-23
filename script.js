@@ -847,10 +847,13 @@ function showGameOverCard(result) {
     const bird = gameState.mysteryBird;
     if (!overlay || !bird) return;
 
-    // Reset dynamic study-card sections from any previous game.
+    // Reset only the dynamic sections from any previous game.
+    // Keep the permanent Thai name and taxonomy fields.
     const details = document.querySelector(".study-card-details");
     if (details) {
-        details.innerHTML = "";
+        details.querySelectorAll(".study-card-section").forEach(section => {
+            section.remove();
+        });
     }
 
     if (result === "won") {
@@ -871,8 +874,6 @@ function showGameOverCard(result) {
         bird.genus,
         bird.species || bird.scientificName
     ].filter(Boolean).join(" → ");
-
-    const details = document.querySelector(".study-card-details");
 
     const addStudySection = (heading, value) => {
         if (!details || !value) return;
@@ -964,6 +965,20 @@ function showGameOverCard(result) {
                 // when the dataset does not already contain one.
                 if (!bird.description && wiki.extract) {
                     details.prepend(descriptionSection);
+                }
+
+                if (wiki.content_urls?.desktop?.page) {
+                    const wikiSection = document.createElement("div");
+                    wikiSection.className = "study-card-section";
+
+                    const wikiLink = document.createElement("a");
+                    wikiLink.href = wiki.content_urls.desktop.page;
+                    wikiLink.target = "_blank";
+                    wikiLink.rel = "noopener noreferrer";
+                    wikiLink.textContent = "Wikipedia →";
+
+                    wikiSection.appendChild(wikiLink);
+                    details.appendChild(wikiSection);
                 }
             }
         })
