@@ -477,14 +477,7 @@ function renderTaxonomyTree() {
         return;
     }
 
-    if (gameState.guesses.length === 0) {
-        const placeholder = document.createElement("div");
-        placeholder.classList.add("tree-placeholder");
-        placeholder.textContent = "Your guesses will appear here.";
-        taxonomyTree.appendChild(placeholder);
-        return;
-    }
-
+    // Aves is always visible from the start.
     const model = buildTreeModel();
 
     const canvas = document.createElement("div");
