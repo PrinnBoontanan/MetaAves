@@ -20,30 +20,6 @@ with taxonomy_file.open("r", encoding="utf-8") as f:
 print(f"\nBirds:    {len(birds):,}")
 print(f"Taxa:     {len(taxonomy):,}")
 
-# ------------------------------------------------------------
-# 1. Count ranks
-# ------------------------------------------------------------
-
-rank_counts = Counter(
-    taxon.get("rank")
-    for taxon in taxonomy.values()
-    if isinstance(taxon, dict)
-)
-
-print("\nRANK COUNTS")
-print("-" * 60)
-
-for rank, count in sorted(
-    rank_counts.items(),
-    key=lambda item: str(item[0])
-):
-    rank_name = str(rank) if rank is not None else "(no rank)"
-    print(f"{rank_name:15} {count:>6,}")
-
-# ------------------------------------------------------------
-# 2. Look specifically for intermediary ranks
-# ------------------------------------------------------------
-
 interesting_ranks = [
     "subclass",
     "infraclass",
@@ -63,29 +39,71 @@ interesting_ranks = [
     "species",
 ]
 
+rank_counts = Counter(
+    taxon.get("rank")
+    for taxon in taxonomy.values()
+    if isinstance(taxon, dict)
+)
+
+print("\nRANK COUNTS")
+print("-" * 60)
+
+for rank, count in sorted(rank_counts.items(), key=lambda item: str(item[0])):
+    rank_name = str(rank) if rank is not None else "(no rank)"
+    print(f"{rank_name:15} {count:>6,}")
+
 print("\nINTERMEDIARY RANKS")
 print("-" * 60)
 
 for rank in interesting_ranks:
-    count = rank_counts.get(rank, 0)
-    print(f"{rank:15} {count:>6,}")
+    print(f"{rank:15} {rank_counts.get(rank, 0):>6,}")
+
+def get_species_taxon(bird):
+    scientific = bird.get("scientificName")
+    if not scientific:
+        return None
+
+    for taxon_id in (
+        f"species:{scientific.replace(' ', '_')}",
+        f"species:{scientific}",
+    ):
+        if taxon_id in taxonomy:
+            return taxonomy[taxon_id]
+
+    return None
+
+def get_ancestry(bird):
+    current = get_species_taxon(bird)
+    path = []
+    seen = set()
+
+    while current and current.get("id") not in seen:
+        seen.add(current.get("id"))
+        path.append(current)
+
+        parent_id = current.get("parent")
+        if not parent_id:
+            break
+
+        current = taxonomy.get(parent_id)
+
+    return path
 
 # ------------------------------------------------------------
-# 3. Find Passeriformes and everything underneath it
+# Passeriformes
 # ------------------------------------------------------------
 
 print("\nPASSERIFORMES HIERARCHY")
 print("-" * 60)
 
-passeriformes = []
-
-for taxon in taxonomy.values():
+passeriformes = [
+    taxon for taxon in taxonomy.values()
     if (
         isinstance(taxon, dict)
         and taxon.get("name") == "Passeriformes"
         and taxon.get("rank") == "order"
-    ):
-        passeriformes.append(taxon)
+    )
+]
 
 if not passeriformes:
     print("Passeriformes was NOT found.")
@@ -113,7 +131,7 @@ else:
             )
 
 # ------------------------------------------------------------
-# 4. Check birds whose taxonomy path is broken
+# Broken paths
 # ------------------------------------------------------------
 
 print("\nBROKEN TAXONOMY PATHS")
@@ -123,27 +141,13 @@ broken = []
 
 for bird in birds:
     scientific = bird.get("scientificName")
-
     if not scientific:
         continue
 
-    # Support both possible ID styles.
-    possible_ids = [
-        f"species:{scientific}",
-        f"species:{scientific.replace(' ', '_')}"
-    ]
-
-    species_taxon = None
-
-    for taxon_id in possible_ids:
-        if taxon_id in taxonomy:
-            species_taxon = taxonomy[taxon_id]
-            break
+    species_taxon = get_species_taxon(bird)
 
     if species_taxon is None:
-        broken.append(
-            (scientific, "species node missing")
-        )
+        broken.append((scientific, "species node missing"))
         continue
 
     current = species_taxon
@@ -153,9 +157,7 @@ for bird in birds:
         taxon_id = current.get("id")
 
         if taxon_id in seen:
-            broken.append(
-                (scientific, "taxonomy cycle")
-            )
+            broken.append((scientific, "taxonomy cycle"))
             break
 
         seen.add(taxon_id)
@@ -186,49 +188,33 @@ if len(broken) > 30:
     print(f"  ... and {len(broken) - 30:,} more")
 
 # ------------------------------------------------------------
-# 5. Check how many species have each rank in their ancestry
+# Overall ancestry coverage
 # ------------------------------------------------------------
 
 print("\nSPECIES ANCESTRY COVERAGE")
 print("-" * 60)
 
 species_rank_coverage = Counter()
+missing_by_rank = defaultdict(list)
 
 for bird in birds:
-    scientific = bird.get("scientificName")
+    ancestry = get_ancestry(bird)
 
-    if not scientific:
+    if not ancestry:
         continue
 
-    species_taxon = taxonomy.get(
-        f"species:{scientific.replace(' ', '_')}"
-    )
+    ranks_present = {
+        taxon.get("rank")
+        for taxon in ancestry
+        if taxon.get("rank")
+    }
 
-    if not species_taxon:
-        species_taxon = taxonomy.get(
-            f"species:{scientific}"
-        )
+    for rank in ranks_present:
+        species_rank_coverage[rank] += 1
 
-    if not species_taxon:
-        continue
-
-    current = species_taxon
-    seen = set()
-
-    while current and current.get("id") not in seen:
-        seen.add(current.get("id"))
-
-        rank = current.get("rank")
-
-        if rank:
-            species_rank_coverage[rank] += 1
-
-        parent_id = current.get("parent")
-
-        if not parent_id:
-            break
-
-        current = taxonomy.get(parent_id)
+    for rank in interesting_ranks:
+        if rank not in ranks_present:
+            missing_by_rank[rank].append(bird)
 
 for rank in interesting_ranks:
     print(
@@ -238,7 +224,69 @@ for rank in interesting_ranks:
     )
 
 # ------------------------------------------------------------
-# 6. Show a complete example path
+# Missing-rank analysis
+# ------------------------------------------------------------
+
+print("\nMISSING INTERMEDIARY RANK ANALYSIS")
+print("-" * 60)
+print("This groups missing ranks by the bird's actual order and family.")
+print("It tells us whether a missing rank is concentrated in certain groups")
+print("or broadly absent across orders.")
+
+for rank in ("suborder", "infraorder", "parvorder"):
+    missing = missing_by_rank.get(rank, [])
+
+    print(f"\n{rank.upper()}: {len(missing):,} species missing")
+
+    by_order = Counter()
+    by_family = Counter()
+    by_order_family = Counter()
+
+    for bird in missing:
+        ancestry = get_ancestry(bird)
+
+        order_name = next(
+            (
+                taxon.get("name")
+                for taxon in ancestry
+                if taxon.get("rank") == "order"
+            ),
+            "(no order)",
+        )
+
+        family_name = next(
+            (
+                taxon.get("name")
+                for taxon in ancestry
+                if taxon.get("rank") == "family"
+            ),
+            "(no family)",
+        )
+
+        by_order[order_name] += 1
+        by_family[family_name] += 1
+        by_order_family[(order_name, family_name)] += 1
+
+    print("\n  By order:")
+    for name, count in by_order.most_common():
+        print(f"    {name:25} {count:>5,}")
+
+    print("\n  By family (largest first):")
+    for name, count in by_family.most_common(25):
+        print(f"    {name:25} {count:>5,}")
+
+    if len(by_family) > 25:
+        print(f"    ... and {len(by_family) - 25:,} more families")
+
+    print("\n  Largest order/family groups:")
+    for (order_name, family_name), count in by_order_family.most_common(20):
+        print(
+            f"    {order_name:20} / "
+            f"{family_name:25} {count:>5,}"
+        )
+
+# ------------------------------------------------------------
+# Example paths
 # ------------------------------------------------------------
 
 print("\nEXAMPLE TAXONOMY PATH")
@@ -256,7 +304,7 @@ for common_name in example_names:
             b for b in birds
             if b.get("commonName") == common_name
         ),
-        None
+        None,
     )
 
     if not bird:
@@ -264,39 +312,16 @@ for common_name in example_names:
         continue
 
     scientific = bird.get("scientificName")
-
-    species_taxon = taxonomy.get(
-        f"species:{scientific.replace(' ', '_')}"
-    )
-
-    if not species_taxon:
-        species_taxon = taxonomy.get(
-            f"species:{scientific}"
-        )
+    ancestry = get_ancestry(bird)
 
     print(f"\n{common_name}")
     print(f"Scientific: {scientific}")
 
-    if not species_taxon:
+    if not ancestry:
         print("  Species taxonomy node NOT FOUND")
         continue
 
-    path = []
-    current = species_taxon
-    seen = set()
-
-    while current and current.get("id") not in seen:
-        seen.add(current.get("id"))
-        path.append(current)
-
-        parent_id = current.get("parent")
-
-        if not parent_id:
-            break
-
-        current = taxonomy.get(parent_id)
-
-    for taxon in reversed(path):
+    for taxon in reversed(ancestry):
         print(
             f"  {taxon.get('rank'):15} "
             f"{taxon.get('name')}"
