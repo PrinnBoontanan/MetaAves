@@ -17,6 +17,66 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
+
+# Broad phylogenetic backbone used by MetaAves. These assignments intentionally
+# stop at stable/useful named clades rather than encoding every disputed deep
+# Neoaves relationship.
+CLADE_PATHS_BY_ORDER = {
+    "Struthioniformes": ["Neornithes", "Palaeognathae"],
+    "Casuariiformes": ["Neornithes", "Palaeognathae"],
+    "Apterygiformes": ["Neornithes", "Palaeognathae"],
+    "Rheiformes": ["Neornithes", "Palaeognathae"],
+    "Tinamiformes": ["Neornithes", "Palaeognathae"],
+
+    "Anseriformes": ["Neornithes", "Neognathae", "Galloanserae"],
+    "Galliformes": ["Neornithes", "Neognathae", "Galloanserae"],
+
+    "Phoenicopteriformes": ["Neornithes", "Neognathae", "Neoaves", "Mirandornithes"],
+    "Podicipediformes": ["Neornithes", "Neognathae", "Neoaves", "Mirandornithes"],
+
+    "Musophagiformes": ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
+    "Otidiformes": ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
+    "Cuculiformes": ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
+
+    "Mesitornithiformes": ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
+    "Pterocliformes": ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
+    "Columbiformes": ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
+
+    "Aequornithes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+    "Gaviiformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+    "Sphenisciformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+    "Procellariiformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+    "Ciconiiformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+    "Suliformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+    "Pelecaniformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+
+    "Caprimulgiformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+    "Steatornithiformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+    "Nyctibiiformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+    "Podargiformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+    "Aegotheliformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+    "Apodiformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+
+    "Phaethontiformes": ["Neornithes", "Neognathae", "Neoaves", "Phaethontimorphae"],
+
+    "Accipitriformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    "Cathartiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    "Strigiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    "Coliiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    "Leptosomiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    "Trogoniformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    "Bucerotiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    "Coraciiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    "Galbuliformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    "Piciformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+
+    "Cariamiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves"],
+    "Falconiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves"],
+    "Psittaciformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves", "Psittacopasserae"],
+    "Passeriformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves", "Psittacopasserae"],
+}
+
+
 RANKS = [
     "kingdom", "phylum", "class", "subclass", "infraclass", "cohort",
     "superorder", "order", "suborder", "infraorder", "parvorder",
@@ -216,6 +276,8 @@ def main():
         )
 
     birds = []
+    clade_membership = {}
+    unmapped_orders = set()
 
     taxa = {
         "class:Aves": {
@@ -296,6 +358,13 @@ def main():
 
         birds.append(bird)
 
+        order_name = bird.get("order")
+        clade_path = CLADE_PATHS_BY_ORDER.get(order_name)
+        if clade_path:
+            clade_membership[scientific] = clade_path
+        elif order_name:
+            unmapped_orders.add(order_name)
+
         parent_id = "class:Aves"
 
         for tax_rank in RANKS[RANKS.index("class") + 1:]:
@@ -336,6 +405,23 @@ def main():
     out = Path("data")
     out.mkdir(exist_ok=True)
 
+    (out / "clade_membership.generated.json").write_text(
+        json.dumps(
+            {
+                "_meta": {
+                    "version": 1,
+                    "generatedBy": "scripts/import_avilist.py",
+                    "source": "MetaAves broad phylogenetic backbone",
+                    "policy": "Broad named clades only; contested deep Neoaves relationships are not forced."
+                },
+                "species": clade_membership
+            },
+            ensure_ascii=False,
+            indent=2
+        ),
+        encoding="utf-8"
+    )
+
     (out / "birds.generated.json").write_text(
         json.dumps(birds, ensure_ascii=False, indent=2),
         encoding="utf-8"
@@ -367,8 +453,13 @@ def main():
 
     print(f"Imported {len(birds):,} species")
     print(f"Generated {len(taxa):,} ranked taxonomy nodes")
+    print(f"Clade memberships: {len(clade_membership):,}")
+    print(f"Orders without a clade mapping: {len(unmapped_orders):,}")
+    if unmapped_orders:
+        print("Unmapped orders:", ", ".join(sorted(unmapped_orders)))
     print("Wrote data/birds.generated.json")
     print("Wrote data/taxonomy.generated.json")
+    print("Wrote data/clade_membership.generated.json")
 
     validate_import(birds, taxa)
 
