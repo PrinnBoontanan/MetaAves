@@ -442,10 +442,26 @@ function renderTaxonomyTree() {
         ...positions.map(position => position.depth)
     );
 
+    const minimumTreeWidth =
+        sidePadding * 2 +
+        Math.max(0, leafIndex - 1) * horizontalGap;
+
     const canvasWidth = Math.max(
         taxonomyTree.clientWidth - 20,
-        sidePadding * 2 + Math.max(0, leafIndex - 1) * horizontalGap
+        minimumTreeWidth
     );
+
+    // Center the whole tree inside the available area.
+    // The layout starts with a fixed left padding, so shift every
+    // node equally after we know the actual canvas width.
+    const centerShift = Math.max(
+        0,
+        (canvasWidth - minimumTreeWidth) / 2
+    );
+
+    positions.forEach(position => {
+        position.x += centerShift;
+    });
 
     const canvasHeight =
         50 + (maxDepth + 1) * levelGap;
@@ -521,6 +537,12 @@ function renderTaxonomyTree() {
 
             path.classList.add("meta-tree-connection");
 
+            // Draw the branch progressively instead of making it
+            // appear instantly.
+            const pathLength = path.getTotalLength();
+            path.style.strokeDasharray = pathLength;
+            path.style.strokeDashoffset = pathLength;
+
             if (child.type === "taxon") {
                 path.classList.add("meta-connection-taxon");
             } else {
@@ -528,6 +550,13 @@ function renderTaxonomyTree() {
             }
 
             svg.appendChild(path);
+
+            // Deeper branches start shortly after their parent branch.
+            const animationDelay = child.type === "taxon"
+                ? child.children.length * 0.04
+                : 0.12;
+
+            path.style.animationDelay = `${animationDelay}s`;
 
             drawConnections(child);
         });
