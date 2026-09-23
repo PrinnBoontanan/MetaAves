@@ -1316,13 +1316,19 @@ function renderTaxonomyTree() {
         });
     });
 
-    function drawConnections(node) {
+    // Draw each branch from parent to child. Branches stay invisible until
+    // their parent branch has finished, so the tree grows outward from Aves
+    // instead of every branch starting at the same time.
+    const branchDuration = 620;
+    const branchGap = 90;
+
+    function drawConnections(node, parentReadyAt = 0) {
         if (node.type !== "taxon") return;
 
         const parent = positioned.get(node);
         if (!parent) return;
 
-        node.children.forEach(child => {
+        node.children.forEach((child, childIndex) => {
             const childPosition = positioned.get(child);
             if (!childPosition) return;
 
@@ -1357,9 +1363,9 @@ function renderTaxonomyTree() {
             path.classList.add("meta-tree-connection");
 
             const pathLength = path.getTotalLength();
+            path.style.setProperty("--branch-length", pathLength);
             path.style.strokeDasharray = pathLength;
             path.style.strokeDashoffset = pathLength;
-            path.style.setProperty("--branch-length", pathLength);
 
             if (child.type === "taxon") {
                 path.classList.add("meta-connection-taxon");
@@ -1369,15 +1375,20 @@ function renderTaxonomyTree() {
 
             svg.appendChild(path);
 
+            // Siblings can grow together. A child waits until its parent
+            // connection has completed, giving a natural root-to-leaf growth.
             const branchDelay =
-                positioned.get(node).depth * 0.95 + 0.28;
+                parentReadyAt + (childIndex > 0 ? branchGap : 0);
 
             setTimeout(() => {
                 path.classList.add("active");
-            }, branchDelay * 1000);
+            }, branchDelay);
 
             if (child.type === "taxon") {
-                drawConnections(child);
+                drawConnections(
+                    child,
+                    branchDelay + branchDuration
+                );
             }
         });
     }
