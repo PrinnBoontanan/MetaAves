@@ -8,7 +8,10 @@ const gameState = {
     guessesRemaining: 12,
     birds: [],
     mysteryBird: null,
-    guesses: []
+    guesses: [],
+    taxonomy: null,
+    taxonInfo: null,
+    selectedTaxonId: null
 };
 
 const guessCountElement = document.getElementById("guess-count");
@@ -29,15 +32,21 @@ const taxonomyLevels = [
 // Load bird database
 // ========================================
 
-async function loadBirdData() {
+async function loadGameData() {
     try {
-        const response = await fetch("data/birds.json");
+        const [birdResponse, taxonomyResponse, infoResponse] = await Promise.all([
+            fetch("data/birds.json"),
+            fetch("data/taxonomy.json"),
+            fetch("data/taxon_info.json")
+        ]);
 
-        if (!response.ok) {
-            throw new Error("Could not load bird database.");
+        if (!birdResponse.ok || !taxonomyResponse.ok || !infoResponse.ok) {
+            throw new Error("Could not load MetaAves data.");
         }
 
-        gameState.birds = await response.json();
+        gameState.birds = await birdResponse.json();
+        gameState.taxonomy = await taxonomyResponse.json();
+        gameState.taxonInfo = await infoResponse.json();
 
         // Temporary mystery for testing.
         gameState.mysteryBird = gameState.birds.find(
@@ -48,6 +57,8 @@ async function loadBirdData() {
         renderTaxonomyTree();
 
         console.log("Bird database loaded:", gameState.birds);
+        console.log("Taxonomy loaded:", gameState.taxonomy);
+        console.log("Taxon information loaded:", gameState.taxonInfo);
         console.log("Mystery bird:", gameState.mysteryBird);
     } catch (error) {
         console.error("Error loading bird database:", error);
@@ -230,6 +241,7 @@ function buildTreeModel() {
     const root = {
         type: "taxon",
         name: "Aves",
+        taxonId: "class:Aves",
         level: "class",
         children: []
     };
@@ -265,6 +277,7 @@ function buildTreeModel() {
             taxon = {
                 type: "taxon",
                 name: sharedTaxon.value,
+                taxonId: `${sharedTaxon.level}:${sharedTaxon.value}`,
                 level: sharedTaxon.level,
                 children: []
             };
@@ -325,8 +338,11 @@ function createTreeNodeElement(node) {
     if (node.type === "taxon") {
         element.classList.add("meta-taxon-node");
         element.dataset.taxon = node.name;
+        element.dataset.taxonId = node.taxonId || "";
         element.dataset.level = node.level;
         element.textContent = node.name;
+        element.addEventListener("click", () => selectTaxon(node));
+        element.style.pointerEvents = "auto";
     } else {
         element.classList.add("meta-species-node");
         element.classList.add(`meta-species-${node.nodeType}`);
@@ -334,6 +350,55 @@ function createTreeNodeElement(node) {
     }
 
     return element;
+}
+
+function selectTaxon(node) {
+    if (node.type !== "taxon" || !gameState.taxonomy) return;
+
+    const taxon = Object.values(gameState.taxonomy).find(
+        entry => entry.id === node.taxonId
+    );
+
+    if (!taxon) return;
+
+    gameState.selectedTaxonId = taxon.id;
+    renderTaxonCard(taxon);
+}
+
+function renderTaxonCard(taxon) {
+    const card = document.getElementById("taxon-card");
+    const info = gameState.taxonInfo?.[taxon.id] || {};
+
+    card.innerHTML = "";
+
+    const title = document.createElement("h3");
+    title.textContent = info.name || taxon.name;
+
+    const rank = document.createElement("p");
+    rank.classList.add("taxon-card-rank");
+    rank.textContent = (info.rank || taxon.rank || "").toUpperCase();
+
+    const common = document.createElement("p");
+    if (info.commonName) {
+        common.textContent = info.commonName;
+    }
+
+    const description = document.createElement("p");
+    description.textContent = info.description || "No information available for this taxon yet.";
+
+    card.appendChild(title);
+    card.appendChild(rank);
+    if (info.commonName) card.appendChild(common);
+    card.appendChild(description);
+
+    if (info.wikipedia) {
+        const link = document.createElement("a");
+        link.href = info.wikipedia;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Wikipedia";
+        card.appendChild(link);
+    }
 }
 
 function renderTaxonomyTree() {
@@ -624,7 +689,7 @@ searchInput.addEventListener("input", () => {
 
 async function startGame() {
     updateGuessCounter();
-    await loadBirdData();
+    await loadGameData();
 }
 
 startGame();
