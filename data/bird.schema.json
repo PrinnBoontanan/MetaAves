@@ -176,6 +176,37 @@
       "items": {
         "type": "string"
       }
+    },
+    "nodeType": {
+      "enum": [
+        "ranked_taxon",
+        "clade",
+        "species"
+      ]
+    },
+    "cladeId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cladeName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parentTaxonId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "childrenTaxonIds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   }
 }
