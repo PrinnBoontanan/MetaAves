@@ -341,16 +341,12 @@ function createBranchContainer() {
 //
 
 function addGuessToTree(rootContainer, guessedBird) {
+    // The mystery bird is rendered by addMysteryMarker().
+    // Do NOT create a second branch for a correct guess.
     if (
         guessedBird.commonName ===
         gameState.mysteryBird.commonName
     ) {
-        const correctSpecies = createSpeciesNode(
-            guessedBird.commonName,
-            "correct"
-        );
-
-        rootContainer.appendChild(correctSpecies);
         return;
     }
 
@@ -424,8 +420,28 @@ function addMysteryMarker(rootContainer) {
 
     const revealTaxon = getMysteryRevealTaxon();
 
+    const solved = gameState.guesses.some(
+        bird =>
+            bird.commonName ===
+            gameState.mysteryBird.commonName
+    );
+
+    // If the answer has been guessed, the mystery node
+    // becomes the real species name in the SAME position.
+    const mysteryName = solved
+        ? gameState.mysteryBird.commonName
+        : "???";
+
+    const mysteryType = solved
+        ? "correct"
+        : "mystery";
+
     if (revealTaxon.level === "class") {
-        addMysterySpeciesToContainer(rootContainer);
+        addMysterySpeciesToContainer(
+            rootContainer,
+            mysteryName,
+            mysteryType
+        );
         return;
     }
 
@@ -443,7 +459,11 @@ function addMysteryMarker(rootContainer) {
         ":scope > .tree-branch"
     );
 
-    addMysterySpeciesToContainer(branchContainer);
+    addMysterySpeciesToContainer(
+        branchContainer,
+        mysteryName,
+        mysteryType
+    );
 }
 
 
@@ -451,9 +471,13 @@ function addMysteryMarker(rootContainer) {
 // Add mystery species
 // ========================================
 
-function addMysterySpeciesToContainer(container) {
+function addMysterySpeciesToContainer(
+    container,
+    name = "???",
+    type = "mystery"
+) {
     const existing = container.querySelector(
-        ":scope > .mystery-species"
+        ":scope > .mystery-species, :scope > .correct-species"
     );
 
     if (existing) {
@@ -461,8 +485,8 @@ function addMysterySpeciesToContainer(container) {
     }
 
     const mystery = createSpeciesNode(
-        "???",
-        "mystery"
+        name,
+        type
     );
 
     container.appendChild(mystery);
