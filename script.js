@@ -55,6 +55,7 @@ async function loadGameData() {
 
         updateGuessCounter();
         renderTaxonomyTree();
+        updateAutomaticTaxonCard();
 
         console.log("Bird database loaded:", gameState.birds);
         console.log("Taxonomy loaded:", gameState.taxonomy);
@@ -223,6 +224,7 @@ function makeGuess() {
 
     updateGuessCounter();
     renderTaxonomyTree();
+    updateAutomaticTaxonCard();
 
     searchInput.value = "";
     suggestions.innerHTML = "";
@@ -391,6 +393,30 @@ function renderTaxonCard(taxon) {
     if (info.commonName) card.appendChild(common);
     card.appendChild(description);
 
+    if (Array.isArray(info.keyCharacteristics) && info.keyCharacteristics.length > 0) {
+        const heading = document.createElement("h4");
+        heading.textContent = "Key characteristics";
+        card.appendChild(heading);
+
+        const list = document.createElement("ul");
+        info.keyCharacteristics.forEach(item => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            list.appendChild(li);
+        });
+        card.appendChild(list);
+    }
+
+    if (info.distributionHabitat) {
+        const heading = document.createElement("h4");
+        heading.textContent = "Distribution & habitat";
+        card.appendChild(heading);
+
+        const text = document.createElement("p");
+        text.textContent = info.distributionHabitat;
+        card.appendChild(text);
+    }
+
     if (info.wikipedia) {
         const link = document.createElement("a");
         link.href = info.wikipedia;
@@ -399,6 +425,33 @@ function renderTaxonCard(taxon) {
         link.textContent = "Wikipedia";
         card.appendChild(link);
     }
+}
+
+function getMostUsefulTaxon() {
+    if (!gameState.mysteryBird) return null;
+
+    // Before any guess, the broadest useful taxon is Aves.
+    if (gameState.guesses.length === 0) {
+        return gameState.taxonomy?.["class:Aves"] || null;
+    }
+
+    // After guesses, show the deepest shared taxon currently revealed
+    // by the guesses. This matches the information the tree has actually
+    // learned about the mystery bird.
+    const reveal = getMysteryRevealTaxon();
+    const id = `${reveal.level}:${reveal.value}`;
+
+    return gameState.taxonomy?.[id]
+        || gameState.taxonomy?.["class:Aves"]
+        || null;
+}
+
+function updateAutomaticTaxonCard() {
+    const taxon = getMostUsefulTaxon();
+    if (!taxon) return;
+
+    gameState.selectedTaxonId = taxon.id;
+    renderTaxonCard(taxon);
 }
 
 function renderTaxonomyTree() {
