@@ -239,6 +239,18 @@ def main():
         if not common or not scientific:
             continue
 
+        # AviList's extended sheet may leave the Genus column blank even
+        # though the scientific name is binomial. Use the explicit Genus
+        # value when present; otherwise derive the genus from the first
+        # nomenclatural token of the scientific name.
+        genus = (
+            clean(row[cols["genus"]])
+            if cols["genus"] is not None
+            else None
+        )
+        if not genus:
+            genus = scientific.split()[0]
+
         bird = {
             "commonName": common,
             "scientificName": scientific,
@@ -260,7 +272,7 @@ def main():
             "subfamily": None,
             "tribe": None,
             "subtribe": None,
-            "genus": clean(row[cols["genus"]]) if cols["genus"] is not None else None,
+            "genus": genus,
             "subgenus": None,
             "species": scientific,
             "habitat": None,
