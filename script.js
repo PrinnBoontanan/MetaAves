@@ -22,7 +22,10 @@ const guessButton = document.getElementById("guess-button");
 const taxonomyTree = document.getElementById("taxonomy-tree");
 const suggestions = document.getElementById("suggestions");
 
-const taxonomyLevels = [
+// AviList currently uses order/family/genus/species as its core
+// ranks, but the game reads rankOrder from the taxonomy dataset so future
+// intermediate ranks can be supported without changing the tree engine.
+let taxonomyLevels = [
     "class",
     "order",
     "family",
@@ -51,6 +54,17 @@ async function loadGameData() {
         gameState.taxonomy = await taxonomyResponse.json();
         gameState.taxonInfo = await infoResponse.json();
         gameState.clades = await cladeResponse.json();
+
+        // Read the canonical rank order from the generated taxonomy when
+        // available. This keeps the game engine independent of a fixed
+        // order/family/genus-only hierarchy.
+        const rankOrder = gameState.taxonomy?._meta?.rankOrder;
+
+        if (Array.isArray(rankOrder) && rankOrder.length) {
+            taxonomyLevels = rankOrder.filter(
+                level => level !== "species"
+            );
+        }
 
         // Temporary mystery for testing.
         gameState.mysteryBird = gameState.birds.find(
@@ -144,19 +158,27 @@ function getBirdPhylogenyPath(bird) {
     if (!bird) return [];
 
     const path = [
-        { id: "class:Aves", level: "class", value: "Aves", depth: 0 }
+        {
+            id: "class:Aves",
+            level: "class",
+            value: "Aves",
+            depth: 0
+        }
     ];
 
+    // Clades remain a separate phylogenetic layer. They are inserted before
+    // the ranked taxonomy and are only used when a clade is actually shared
+    // deeply enough to matter to the current tree.
     const cladePath = Array.isArray(bird.cladePath)
         ? bird.cladePath
         : [];
 
-    cladePath.forEach((cladeName, index) => {
+    cladePath.forEach(cladeName => {
         const clade = Object.values(gameState.clades || {}).find(
             entry => entry.rank === "clade" && entry.name === cladeName
         );
 
-        if (clade) {
+        if (clade && !path.some(node => node.id === clade.id)) {
             path.push({
                 id: clade.id,
                 level: "clade",
@@ -166,26 +188,29 @@ function getBirdPhylogenyPath(bird) {
         }
     });
 
+    // Add every populated ranked level in canonical order. The renderer may
+    // later collapse intermediate nodes, but the underlying path retains the
+    // full taxonomy so any rank can become the deepest shared endpoint.
     taxonomyLevels.forEach(level => {
-        if (bird[level]) {
-            const id = level === "class"
-                ? "class:Aves"
-                : `${level}:${bird[level]}`;
+        if (level === "class") return;
 
-            if (!path.some(node => node.id === id)) {
-                path.push({
-                    id,
-                    level,
-                    value: bird[level],
-                    depth: path.length
-                });
-            }
+        const value = bird[level];
+        if (!value) return;
+
+        const id = `${level}:${value}`;
+
+        if (!path.some(node => node.id === id)) {
+            path.push({
+                id,
+                level,
+                value,
+                depth: path.length
+            });
         }
     });
 
     return path;
 }
-
 function getDeepestSharedTaxon(guessedBird, mysteryBird) {
     const guessedPath = getBirdPhylogenyPath(guessedBird);
     const mysteryPath = getBirdPhylogenyPath(mysteryBird);
@@ -202,20 +227,22 @@ function getDeepestSharedTaxon(guessedBird, mysteryBird) {
     };
 
     for (const level of taxonomyLevels) {
-        if (level === "class") {
+        if (level === "class" || level === "species") {
             continue;
         }
 
         const guessedNode = guessedPath.find(node => node.level === level);
         const mysteryNode = mysteryPath.find(node => node.level === level);
 
+        // A missing intermediate rank must not make a later populated rank
+        // appear to be shared. Stop as soon as the formal hierarchy diverges.
         if (
             guessedNode &&
             mysteryNode &&
             guessedNode.id === mysteryNode.id
         ) {
             deepestRanked = mysteryNode;
-        } else {
+        } else if (guessedNode || mysteryNode) {
             break;
         }
     }
@@ -1329,8 +1356,8 @@ function replayGame() {
     gameState.selectedTaxonId = null;
     gameState.gameStatus = "playing";
 
-    // Temporary mystery selection until the full game
-    // uses a randomized bird dataset.
+    // Temporary mystery selection until the game mode/random
+    // selection system is implemented.
     gameState.mysteryBird = gameState.birds.find(
         bird => bird.commonName === "Oriental Pied Hornbill"
     );
