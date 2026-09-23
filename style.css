@@ -1272,35 +1272,49 @@ body {
 
 
 /* ========================================
-   Custom MetaAves scrollbars
+   Usable scrolling
 ======================================== */
 
-.taxonomy-tree,
-.taxonomy-table-wrap,
-.game-over-card {
-    scrollbar-width: thin;
-    scrollbar-color: #9b8a66 #eee5d4;
+/*
+   The taxonomy canvas can be wider and taller than its viewport.
+   Keep both scroll directions available so large taxonomy trees can
+   be explored without losing the scrollbar controls.
+*/
+.taxonomy-tree {
+    overflow: auto;
+    overflow-x: auto;
+    overflow-y: auto;
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
     scrollbar-gutter: stable;
 }
 
+.taxonomy-table-wrap {
+    overflow: auto;
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
+    scrollbar-gutter: stable;
+}
+
+.game-over-card {
+    overflow-y: auto;
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
+    scrollbar-gutter: stable;
+}
+
+/* Keep the browser-native scrollbar visible and usable. */
 .taxonomy-tree::-webkit-scrollbar,
 .taxonomy-table-wrap::-webkit-scrollbar,
 .game-over-card::-webkit-scrollbar {
-    width: 11px;
-    height: 11px;
-}
-
-.taxonomy-tree::-webkit-scrollbar-track,
-.taxonomy-table-wrap::-webkit-scrollbar-track,
-.game-over-card::-webkit-scrollbar-track {
-    background: #eee5d4;
-    border-radius: 999px;
+    width: 12px;
+    height: 12px;
 }
 
 .taxonomy-tree::-webkit-scrollbar-thumb,
 .taxonomy-table-wrap::-webkit-scrollbar-thumb,
 .game-over-card::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #b8a67d, #887754);
+    background: #b8aa8c;
     border: 3px solid #eee5d4;
     border-radius: 999px;
 }
@@ -1308,7 +1322,14 @@ body {
 .taxonomy-tree::-webkit-scrollbar-thumb:hover,
 .taxonomy-table-wrap::-webkit-scrollbar-thumb:hover,
 .game-over-card::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #a79263, #746343);
+    background: #968663;
+}
+
+.taxonomy-tree::-webkit-scrollbar-track,
+.taxonomy-table-wrap::-webkit-scrollbar-track,
+.game-over-card::-webkit-scrollbar-track {
+    background: #eee5d4;
+    border-radius: 999px;
 }
 
 .meta-species-revealed-lost {
@@ -1327,22 +1348,15 @@ body {
 
 
 /* ========================================
-   Final Study Card + invisible scrolling
+   Final Study Card
 ======================================== */
 
+/* Scrolling is intentionally preserved for large trees, tables, and cards. */
 .taxonomy-tree,
 .taxonomy-table-wrap,
 .game-over-card {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.taxonomy-tree::-webkit-scrollbar,
-.taxonomy-table-wrap::-webkit-scrollbar,
-.game-over-card::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
 }
 
 .study-taxonomy {
