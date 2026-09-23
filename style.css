@@ -857,9 +857,7 @@ body {
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
-    stroke-dasharray: var(--branch-length, 1000);
-    stroke-dashoffset: var(--branch-length, 1000);
-    opacity: 1;
+    animation: meta-branch-draw 0.42s ease-out both;
 }
 
 .meta-connection-taxon {
@@ -870,16 +868,14 @@ body {
     stroke-width: 1.8;
 }
 
-.meta-tree-connection.active {
-    animation: meta-branch-draw 0.62s cubic-bezier(0.22, 0.75, 0.3, 1) forwards;
-}
-
 @keyframes meta-branch-draw {
     from {
-        stroke-dashoffset: var(--branch-length, 1000);
+        stroke-dashoffset: var(--branch-length);
+        opacity: 0;
     }
     to {
         stroke-dashoffset: 0;
+        opacity: 1;
     }
 }
 
