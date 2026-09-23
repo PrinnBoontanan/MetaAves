@@ -330,3 +330,21 @@ body {
     margin-top: 8px;
     color: #587331;
 }
+
+.taxon-card h4 {
+    margin: 18px 0 8px;
+    color: #5d563f;
+}
+
+.taxon-card ul {
+    margin: 0 0 12px;
+    padding-left: 22px;
+}
+
+.taxon-card li {
+    margin: 4px 0;
+}
+
+.taxon-card > p {
+    line-height: 1.65;
+}
