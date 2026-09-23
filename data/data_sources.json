@@ -1,9 +1,9 @@
 {
   "masterTaxonomy": {
-    "name": "IOC World Bird List",
-    "version": "15.2",
-    "url": "https://www.worldbirdnames.org/",
-    "notes": "Use IOC as MetaAves master taxonomy and English-name authority. IOC v15.2 lists 11,227 bird species including 164 extinct, in 44 orders, 251 families and 2,389 genera."
+    "name": "AviList: The Global Avian Checklist",
+    "version": "2025b",
+    "url": "https://www.avilist.org/checklist/v2025b/",
+    "notes": "Use AviList v2025b as the current consensus master checklist. IOC World Bird List v15.2 is retained only as a historical/reference source because IOC announced v15.2 as its final independent update and encouraged adoption of AviList."
   },
   "enrichment": {
     "name": "Wikipedia",
@@ -11,5 +11,9 @@
   },
   "thaiNames": {
     "notes": "Thai common names are enrichment data and are not accepted by the guessing input."
+  },
+  "phylogeny": {
+    "name": "MetaAves Phylogenetic Clade Layer",
+    "notes": "Maintain clades separately from ranked taxonomy. Example: Telluraves is a clade and must not be encoded as an order/family. Clades can contain multiple orders and can be nested between ranked nodes."
   }
 }
