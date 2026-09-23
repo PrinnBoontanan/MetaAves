@@ -482,6 +482,7 @@ body {
 ======================================== */
 
 .new-game-button {
+    display: none;
     padding: 11px 18px;
     border: none;
     border-radius: 8px;
@@ -489,6 +490,10 @@ body {
     color: #fff;
     font-size: 14px;
     cursor: pointer;
+}
+
+.new-game-button.visible {
+    display: inline-block;
 }
 
 .new-game-button:hover {
@@ -504,22 +509,33 @@ body {
     transform: translateY(-1px);
 }
 
-.taxon-card-image {
+.taxon-card-image,
+.study-card-image {
     display: block;
-    width: 100%;
-    max-height: 260px;
-    object-fit: cover;
-    border-radius: 10px;
-    margin: 16px 0;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 420px;
+    object-fit: contain;
+    margin-left: auto;
+    margin-right: auto;
+    background: #f4e8d4;
+    padding: 10px;
+    border: 1px solid #c9b98f;
+    border-radius: 14px;
+    box-shadow:
+        0 3px 0 #e8dfcf,
+        0 7px 18px rgba(0, 0, 0, 0.12);
+}
+
+.taxon-card-image {
+    margin-top: 16px;
+    margin-bottom: 16px;
 }
 
 .study-card-image {
-    display: block;
-    width: 100%;
-    max-height: 280px;
-    object-fit: cover;
-    border-radius: 10px;
     margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 #study-bird-description {
