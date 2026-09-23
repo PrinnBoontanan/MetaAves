@@ -937,3 +937,79 @@ body {
         height: 430px;
     }
 }
+
+
+/* ========================================
+   Typography + monochrome icon refinement
+======================================== */
+
+body {
+    font-family: "Nunito", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+}
+
+.game-header h1,
+.guess-section h2,
+.taxonomy-section h2,
+.taxon-section h2,
+.game-over-card h2,
+.taxon-card h3 {
+    font-family: "Nunito", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+}
+
+.game-header h1 {
+    font-weight: 800;
+    letter-spacing: -0.025em;
+}
+
+.title-bird {
+    width: 48px;
+    height: 30px;
+    display: inline-flex;
+    vertical-align: middle;
+    color: #587331;
+    transform: translateY(2px);
+}
+
+.title-bird svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+.mono-heading-icon {
+    display: inline-block;
+    width: 24px;
+    margin-right: 4px;
+    color: #587331;
+    font-size: 17px;
+    text-align: center;
+}
+
+.button-icon {
+    display: inline-block;
+    margin-right: 5px;
+    font-size: 19px;
+    line-height: 0;
+    vertical-align: -1px;
+    color: currentColor;
+}
+
+.mode-display::before,
+.guess-counter::before {
+    color: #587331;
+    filter: none;
+}
+
+.study-card-label {
+    color: #587331;
+}
+
+.game-over-card .study-card-label::first-letter {
+    color: #587331;
+}
+
+.game-over-card .study-card-label {
+    font-family: "Nunito", "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
