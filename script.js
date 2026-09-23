@@ -6,44 +6,31 @@ const gameState = {
     mode: "world",
     maxGuesses: 12,
     guessesRemaining: 12,
-
     birds: [],
     mysteryBird: null,
-
     guesses: []
 };
 
 
 // ========================================
-// Get HTML elements
+// HTML elements
 // ========================================
 
-const guessCountElement =
-    document.getElementById("guess-count");
-
-const searchInput =
-    document.getElementById("bird-search");
-
-const guessButton =
-    document.getElementById("guess-button");
-
-const taxonomyTree =
-    document.getElementById("taxonomy-tree");
-
-const suggestions =
-    document.getElementById("suggestions");
+const guessCountElement = document.getElementById("guess-count");
+const searchInput = document.getElementById("bird-search");
+const guessButton = document.getElementById("guess-button");
+const taxonomyTree = document.getElementById("taxonomy-tree");
+const suggestions = document.getElementById("suggestions");
 
 
 // ========================================
-// Temporary taxonomy levels
+// Temporary taxonomy
 // ========================================
 //
 // Aves is the root.
+// Later this will become the full taxonomy,
+// including clades, infraclasses, etc.
 //
-// Later we will replace this with the REAL
-// full taxonomy including clades, infraclass,
-// suborder, etc.
-// ========================================
 
 const taxonomyLevels = [
     "class",
@@ -58,99 +45,63 @@ const taxonomyLevels = [
 // ========================================
 
 async function loadBirdData() {
-
     try {
-
-        const response =
-            await fetch("data/birds.json");
+        const response = await fetch("data/birds.json");
 
         if (!response.ok) {
-            throw new Error(
-                "Could not load bird database."
-            );
+            throw new Error("Could not load bird database.");
         }
 
-        gameState.birds =
-            await response.json();
+        gameState.birds = await response.json();
 
-
-        // Temporary mystery bird
-        //
-        // Later this will be randomly selected.
-        gameState.mysteryBird =
-            gameState.birds.find(
-                bird =>
-                    bird.commonName ===
-                    "Oriental Pied Hornbill"
-            );
-
+        // Temporary mystery for testing.
+        // We will randomize this later.
+        gameState.mysteryBird = gameState.birds.find(
+            bird => bird.commonName === "Oriental Pied Hornbill"
+        );
 
         updateGuessCounter();
-
         renderTaxonomyTree();
 
-
-        console.log(
-            "Bird database loaded:",
-            gameState.birds
-        );
-
-        console.log(
-            "Mystery bird:",
-            gameState.mysteryBird
-        );
-
+        console.log("Bird database loaded:", gameState.birds);
+        console.log("Mystery bird:", gameState.mysteryBird);
     } catch (error) {
-
-        console.error(
-            "Error loading bird database:",
-            error
-        );
-
+        console.error("Error loading bird database:", error);
     }
-
 }
 
 
 // ========================================
-// Update guess counter
+// Guess counter
 // ========================================
 
 function updateGuessCounter() {
-
-    guessCountElement.textContent =
-        gameState.guessesRemaining;
-
+    guessCountElement.textContent = gameState.guessesRemaining;
 }
 
 
 // ========================================
-// Find bird by common name
+// Find bird
 // ========================================
 
 function findBirdByName(name) {
-
     return gameState.birds.find(
         bird =>
             bird.commonName.toLowerCase() ===
             name.toLowerCase()
     );
-
 }
 
 
 // ========================================
-// Check duplicate guess
+// Duplicate check
 // ========================================
 
 function hasAlreadyBeenGuessed(bird) {
-
     return gameState.guesses.some(
         guessedBird =>
-            guessedBird.commonName ===
-            bird.commonName
+            guessedBird.commonName === bird.commonName
     );
-
 }
 
 
@@ -159,77 +110,35 @@ function hasAlreadyBeenGuessed(bird) {
 // ========================================
 
 function showSuggestions(searchText) {
-
     suggestions.innerHTML = "";
-
 
     if (searchText.trim() === "") {
         return;
     }
 
+    const search = searchText.toLowerCase();
 
-    const search =
-        searchText.toLowerCase();
+    const matches = gameState.birds.filter(bird => {
+        const matchesSearch =
+            bird.commonName.toLowerCase().includes(search);
 
-
-    const matches =
-        gameState.birds.filter(bird => {
-
-            const matchesSearch =
-                bird.commonName
-                    .toLowerCase()
-                    .includes(search);
-
-
-            const alreadyGuessed =
-                hasAlreadyBeenGuessed(bird);
-
-
-            return (
-                matchesSearch &&
-                !alreadyGuessed
-            );
-
-        });
-
-
-    matches.forEach(bird => {
-
-        const suggestion =
-            document.createElement("div");
-
-
-        suggestion.classList.add(
-            "suggestion"
-        );
-
-
-        // Only show English common name
-        suggestion.textContent =
-            bird.commonName;
-
-
-        suggestion.addEventListener(
-            "click",
-            function () {
-
-                searchInput.value =
-                    bird.commonName;
-
-                suggestions.innerHTML = "";
-
-                searchInput.focus();
-
-            }
-        );
-
-
-        suggestions.appendChild(
-            suggestion
-        );
-
+        return matchesSearch && !hasAlreadyBeenGuessed(bird);
     });
 
+    matches.forEach(bird => {
+        const suggestion = document.createElement("div");
+
+        suggestion.classList.add("suggestion");
+        suggestion.textContent = bird.commonName;
+
+        suggestion.addEventListener("click", () => {
+            searchInput.value = bird.commonName;
+            suggestions.innerHTML = "";
+            searchInput.focus();
+        });
+
+        suggestions.appendChild(suggestion);
+    });
 }
 
 
@@ -237,183 +146,135 @@ function showSuggestions(searchText) {
 // Find deepest shared taxon
 // ========================================
 //
-// Example:
-//
-// Great Hornbill
-//       vs
-// Oriental Pied Hornbill
-//
-// Shared:
+// Great Hornbill vs Oriental Pied Hornbill:
 //
 // Aves
 // Bucerotiformes
-// Bucerotidae
+// Bucerotidae  <- deepest shared taxon
 //
-// Deepest shared taxon:
-// Bucerotidae
-//
-// Therefore:
+// The displayed tree therefore starts:
 //
 // Aves
 //  └── Bucerotidae
-//       ├── Great Hornbill
-//       └── ???
 //
-// Bucerotiformes is NOT displayed.
+// We intentionally do not display every
+// shared taxon on the way down.
 //
-// ========================================
 
-function getDeepestSharedTaxon(
-    guessedBird,
-    mysteryBird
-) {
-
-    let deepestSharedTaxon = {
-
+function getDeepestSharedTaxon(guessedBird, mysteryBird) {
+    let deepest = {
         level: "class",
-
-        value: "Aves"
-
+        value: "Aves",
+        depth: 0
     };
 
+    for (let i = 0; i < taxonomyLevels.length; i++) {
+        const level = taxonomyLevels[i];
 
-    for (
-        const level of taxonomyLevels
-    ) {
-
-        if (
-            guessedBird[level] !==
-            mysteryBird[level]
-        ) {
-
+        if (guessedBird[level] !== mysteryBird[level]) {
             break;
-
         }
 
-
-        deepestSharedTaxon = {
-
+        deepest = {
             level: level,
-
-            value: guessedBird[level]
-
+            value: guessedBird[level],
+            depth: i + 1
         };
-
     }
 
-
-    return deepestSharedTaxon;
-
+    return deepest;
 }
 
 
 // ========================================
-// Make a guess
+// Get the deepest revealed taxon
+// ========================================
+//
+// This is used to decide where the ONE
+// mystery marker belongs.
+//
+// Example:
+// Great Hornbill -> Bucerotidae
+// House Sparrow -> Aves
+//
+// The mystery belongs under Bucerotidae,
+// because that is the most specific clue
+// revealed so far.
+//
+
+function getMysteryRevealTaxon() {
+    let deepest = {
+        level: "class",
+        value: "Aves",
+        depth: 0
+    };
+
+    for (const guessedBird of gameState.guesses) {
+        if (
+            guessedBird.commonName ===
+            gameState.mysteryBird.commonName
+        ) {
+            continue;
+        }
+
+        const shared = getDeepestSharedTaxon(
+            guessedBird,
+            gameState.mysteryBird
+        );
+
+        if (shared.depth > deepest.depth) {
+            deepest = shared;
+        }
+    }
+
+    return deepest;
+}
+
+
+// ========================================
+// Make guess
 // ========================================
 
 function makeGuess() {
-
-    const input =
-        searchInput.value.trim();
-
+    const input = searchInput.value.trim();
 
     if (input === "") {
         return;
     }
 
-
-    if (
-        gameState.guessesRemaining <= 0
-    ) {
-
+    if (gameState.guessesRemaining <= 0) {
         return;
-
     }
 
-
-    const bird =
-        findBirdByName(input);
-
-
-    // ====================================
-    // Invalid bird
-    // ====================================
+    const bird = findBirdByName(input);
 
     if (!bird) {
-
-        console.log(
-            "Please select a valid bird."
-        );
-
+        console.log("Please select a valid bird.");
         return;
-
     }
 
-
-    // ====================================
-    // Duplicate bird
-    // ====================================
-
-    if (
-        hasAlreadyBeenGuessed(bird)
-    ) {
-
-        console.log(
-            "You already guessed this bird."
-        );
-
+    if (hasAlreadyBeenGuessed(bird)) {
+        console.log("You already guessed this bird.");
         searchInput.value = "";
-
         suggestions.innerHTML = "";
-
         return;
-
     }
-
-
-    // ====================================
-    // Save guess
-    // ====================================
 
     gameState.guesses.push(bird);
-
-
-    // One valid guess = one guess used
     gameState.guessesRemaining--;
 
-
     updateGuessCounter();
-
-
-    // ====================================
-    // Update tree
-    // ====================================
-
     renderTaxonomyTree();
 
-
-    // ====================================
-    // Clear search
-    // ====================================
-
     searchInput.value = "";
-
     suggestions.innerHTML = "";
-
-
-    // ====================================
-    // Correct answer
-    // ====================================
 
     if (
         bird.commonName ===
         gameState.mysteryBird.commonName
     ) {
-
         console.log("Correct!");
-
     }
-
 }
 
 
@@ -422,22 +283,12 @@ function makeGuess() {
 // ========================================
 
 function createTaxonNode(name) {
+    const node = document.createElement("div");
 
-    const node =
-        document.createElement("div");
-
-
-    node.classList.add(
-        "taxon-node"
-    );
-
-
-    node.textContent =
-        name;
-
+    node.classList.add("taxon-node");
+    node.textContent = name;
 
     return node;
-
 }
 
 
@@ -445,53 +296,26 @@ function createTaxonNode(name) {
 // Create species node
 // ========================================
 
-function createSpeciesNode(
-    name,
-    type
-) {
+function createSpeciesNode(name, type) {
+    const node = document.createElement("div");
 
-    const node =
-        document.createElement("div");
-
-
-    node.classList.add(
-        "species-node"
-    );
-
+    node.classList.add("species-node");
 
     if (type === "guess") {
-
-        node.classList.add(
-            "guessed-species"
-        );
-
+        node.classList.add("guessed-species");
     }
-
 
     if (type === "mystery") {
-
-        node.classList.add(
-            "mystery-species"
-        );
-
+        node.classList.add("mystery-species");
     }
-
 
     if (type === "correct") {
-
-        node.classList.add(
-            "correct-species"
-        );
-
+        node.classList.add("correct-species");
     }
 
-
-    node.textContent =
-        name;
-
+    node.textContent = name;
 
     return node;
-
 }
 
 
@@ -500,379 +324,206 @@ function createSpeciesNode(
 // ========================================
 
 function createBranchContainer() {
-
-    const container =
-        document.createElement("div");
-
-
-    container.classList.add(
-        "tree-branch"
-    );
-
-
+    const container = document.createElement("div");
+    container.classList.add("tree-branch");
     return container;
-
 }
 
 
 // ========================================
-// Add guess to tree
+// Add one guess
 // ========================================
+//
+// IMPORTANT:
+// A guess only creates its own species leaf.
+// The mystery marker is added separately once
+// after the whole tree has been built.
+//
 
-function addGuessToTree(
-    rootContainer,
-    guessedBird
-) {
-
-    const mysteryBird =
-        gameState.mysteryBird;
-
-
-    // ====================================
-    // Correct answer
-    // ====================================
-
+function addGuessToTree(rootContainer, guessedBird) {
     if (
         guessedBird.commonName ===
-        mysteryBird.commonName
+        gameState.mysteryBird.commonName
     ) {
-
-        const correctSpecies =
-            createSpeciesNode(
-                guessedBird.commonName,
-                "correct"
-            );
-
-
-        rootContainer.appendChild(
-            correctSpecies
+        const correctSpecies = createSpeciesNode(
+            guessedBird.commonName,
+            "correct"
         );
 
-
+        rootContainer.appendChild(correctSpecies);
         return;
-
     }
 
+    const sharedTaxon = getDeepestSharedTaxon(
+        guessedBird,
+        gameState.mysteryBird
+    );
 
-    // ====================================
-    // Find deepest shared taxon
-    // ====================================
-
-    const sharedTaxon =
-        getDeepestSharedTaxon(
-            guessedBird,
-            mysteryBird
-        );
-
-
-    // ====================================
-    // If only Aves is shared
-    // ====================================
-
-    if (
-        sharedTaxon.level === "class"
-    ) {
-
-        addSpeciesPair(
-            rootContainer,
-            guessedBird
-        );
-
+    if (sharedTaxon.level === "class") {
+        addSpeciesToContainer(rootContainer, guessedBird);
         return;
-
     }
 
-
-    // ====================================
-    // Find existing taxon node
-    // ====================================
-
-    let taxonNode =
-        [...rootContainer.children]
-            .find(
-                child =>
-
-                    child.classList.contains(
-                        "taxon-node"
-                    )
-
-                    &&
-
-                    child.dataset.taxon ===
-                    sharedTaxon.value
-            );
-
-
-    // ====================================
-    // Create taxon if necessary
-    // ====================================
+    let taxonNode = [...rootContainer.children].find(
+        child =>
+            child.classList.contains("taxon-node") &&
+            child.dataset.taxon === sharedTaxon.value
+    );
 
     if (!taxonNode) {
+        taxonNode = createTaxonNode(sharedTaxon.value);
+        taxonNode.dataset.taxon = sharedTaxon.value;
 
-        taxonNode =
-            createTaxonNode(
-                sharedTaxon.value
-            );
+        const branchContainer = createBranchContainer();
+        taxonNode.appendChild(branchContainer);
 
-
-        taxonNode.dataset.taxon =
-            sharedTaxon.value;
-
-
-        const branchContainer =
-            createBranchContainer();
-
-
-        taxonNode.appendChild(
-            branchContainer
-        );
-
-
-        rootContainer.appendChild(
-            taxonNode
-        );
-
+        rootContainer.appendChild(taxonNode);
     }
 
-
-    const branchContainer =
-        taxonNode.querySelector(
-            ":scope > .tree-branch"
-        );
-
-
-    // ====================================
-    // Add species
-    // ====================================
-
-    addSpeciesPair(
-        branchContainer,
-        guessedBird
+    const branchContainer = taxonNode.querySelector(
+        ":scope > .tree-branch"
     );
 
+    addSpeciesToContainer(branchContainer, guessedBird);
 }
 
 
 // ========================================
-// Add guessed species + mystery
+// Add guessed species
 // ========================================
 
-function addSpeciesPair(
-    container,
-    guessedBird
-) {
+function addSpeciesToContainer(container, guessedBird) {
+    const existing = [...container.children].find(
+        child =>
+            child.classList.contains("species-node") &&
+            child.dataset.species === guessedBird.commonName
+    );
 
-    // ====================================
-    // Prevent duplicate branch
-    // ====================================
-
-    const existingGuess =
-        [...container.children]
-            .find(
-                child =>
-
-                    child.classList.contains(
-                        "species-node"
-                    )
-
-                    &&
-
-                    child.dataset.species ===
-                    guessedBird.commonName
-            );
-
-
-    if (existingGuess) {
-
+    if (existing) {
         return;
-
     }
 
-
-    // ====================================
-    // Guessed bird
-    // ====================================
-
-    const guessedSpecies =
-        createSpeciesNode(
-            guessedBird.commonName,
-            "guess"
-        );
-
-
-    guessedSpecies.dataset.species =
-        guessedBird.commonName;
-
-
-    container.appendChild(
-        guessedSpecies
+    const species = createSpeciesNode(
+        guessedBird.commonName,
+        "guess"
     );
 
-
-    // ====================================
-    // Hidden mystery
-    // ====================================
-
-    const mysteryAlreadyExists =
-        [...container.children]
-            .some(
-                child =>
-                    child.classList.contains(
-                        "mystery-species"
-                    )
-            );
-
-
-    if (!mysteryAlreadyExists) {
-
-        const mysterySpecies =
-            createSpeciesNode(
-                "???",
-                "mystery"
-            );
-
-
-        container.appendChild(
-            mysterySpecies
-        );
-
-    }
-
+    species.dataset.species = guessedBird.commonName;
+    container.appendChild(species);
 }
 
 
 // ========================================
-// Render complete taxonomy tree
+// Add the ONE mystery marker
+// ========================================
+
+function addMysteryMarker(rootContainer) {
+    if (!gameState.mysteryBird || gameState.guesses.length === 0) {
+        return;
+    }
+
+    const revealTaxon = getMysteryRevealTaxon();
+
+    if (revealTaxon.level === "class") {
+        addMysterySpeciesToContainer(rootContainer);
+        return;
+    }
+
+    const taxonNode = [...rootContainer.children].find(
+        child =>
+            child.classList.contains("taxon-node") &&
+            child.dataset.taxon === revealTaxon.value
+    );
+
+    if (!taxonNode) {
+        return;
+    }
+
+    const branchContainer = taxonNode.querySelector(
+        ":scope > .tree-branch"
+    );
+
+    addMysterySpeciesToContainer(branchContainer);
+}
+
+
+// ========================================
+// Add mystery species
+// ========================================
+
+function addMysterySpeciesToContainer(container) {
+    const existing = container.querySelector(
+        ":scope > .mystery-species"
+    );
+
+    if (existing) {
+        return;
+    }
+
+    const mystery = createSpeciesNode(
+        "???",
+        "mystery"
+    );
+
+    container.appendChild(mystery);
+}
+
+
+// ========================================
+// Render complete tree
 // ========================================
 
 function renderTaxonomyTree() {
-
     taxonomyTree.innerHTML = "";
-
 
     if (!gameState.mysteryBird) {
         return;
     }
 
+    if (gameState.guesses.length === 0) {
+        const placeholder = document.createElement("div");
 
-    // ====================================
-    // No guesses
-    // ====================================
-
-    if (
-        gameState.guesses.length === 0
-    ) {
-
-        const placeholder =
-            document.createElement("div");
-
-
-        placeholder.classList.add(
-            "tree-placeholder"
-        );
-
-
+        placeholder.classList.add("tree-placeholder");
         placeholder.textContent =
             "Your guesses will appear here.";
 
-
-        taxonomyTree.appendChild(
-            placeholder
-        );
-
-
+        taxonomyTree.appendChild(placeholder);
         return;
-
     }
 
+    const root = createTaxonNode("Aves");
+    root.classList.add("tree-root-node");
 
-    // ====================================
-    // Aves is always root
-    // ====================================
+    const rootContainer = createBranchContainer();
 
-    const root =
-        createTaxonNode("Aves");
+    root.appendChild(rootContainer);
+    taxonomyTree.appendChild(root);
 
+    // First build all guessed species.
+    gameState.guesses.forEach(guessedBird => {
+        addGuessToTree(rootContainer, guessedBird);
+    });
 
-    root.classList.add(
-        "tree-root-node"
-    );
-
-
-    const rootContainer =
-        createBranchContainer();
-
-
-    root.appendChild(
-        rootContainer
-    );
-
-
-    taxonomyTree.appendChild(
-        root
-    );
-
-
-    // ====================================
-    // Add every guess
-    // ====================================
-
-    gameState.guesses.forEach(
-        guessedBird => {
-
-            addGuessToTree(
-                rootContainer,
-                guessedBird
-            );
-
-        }
-    );
-
+    // Then place the single mystery marker.
+    addMysteryMarker(rootContainer);
 }
 
 
 // ========================================
-// Guess button
+// Events
 // ========================================
 
-guessButton.addEventListener(
-    "click",
-    makeGuess
-);
+guessButton.addEventListener("click", makeGuess);
 
-
-// ========================================
-// Enter key
-// ========================================
-
-searchInput.addEventListener(
-    "keydown",
-    function (event) {
-
-        if (event.key === "Enter") {
-
-            makeGuess();
-
-        }
-
+searchInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+        makeGuess();
     }
-);
+});
 
-
-// ========================================
-// Search input
-// ========================================
-
-searchInput.addEventListener(
-    "input",
-    function () {
-
-        showSuggestions(
-            searchInput.value
-        );
-
-    }
-);
+searchInput.addEventListener("input", () => {
+    showSuggestions(searchInput.value);
+});
 
 
 // ========================================
@@ -880,12 +531,8 @@ searchInput.addEventListener(
 // ========================================
 
 async function startGame() {
-
     updateGuessCounter();
-
     await loadBirdData();
-
 }
-
 
 startGame();
