@@ -1134,3 +1134,138 @@ body {
     pointer-events: none;
     z-index: 2;
 }
+
+
+/* ========================================
+   Taxonomy view toggle + table
+======================================== */
+
+.taxonomy-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.taxonomy-heading-row h2 {
+    margin: 0;
+}
+
+.taxonomy-view-toggle {
+    display: inline-flex;
+    padding: 3px;
+    gap: 3px;
+    background: #eee5d4;
+    border: 1px solid #d7c7a8;
+    border-radius: 9px;
+}
+
+.taxonomy-view-button {
+    border: 0;
+    padding: 6px 12px;
+    border-radius: 7px;
+    background: transparent;
+    color: #6c6657;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.taxonomy-view-button.active {
+    background: #fffdf8;
+    color: #4f5d42;
+    box-shadow: 0 1px 3px rgba(74, 62, 37, 0.12);
+}
+
+.taxonomy-table-wrap {
+    min-height: 520px;
+    height: calc(100vh - 355px);
+    max-height: 760px;
+    overflow: auto;
+    border: 1px solid #e3d4b7;
+    border-radius: 14px;
+    background: #f6ead7;
+}
+
+.taxonomy-table {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: #4b4d43;
+    font-size: 13px;
+}
+
+.taxonomy-table th,
+.taxonomy-table td {
+    padding: 11px 12px;
+    border-right: 1px solid #e0d4bd;
+    border-bottom: 1px solid #e0d4bd;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.taxonomy-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #eee1ca;
+    color: #5d563f;
+    font-weight: 800;
+}
+
+.taxonomy-table th:last-child,
+.taxonomy-table td:last-child {
+    border-right: 0;
+}
+
+.taxonomy-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.taxonomy-table .table-bird {
+    font-weight: 700;
+    color: #4f5d42;
+}
+
+.taxonomy-table .table-mystery {
+    color: #777;
+    font-style: italic;
+}
+
+.taxonomy-table .shared-cell {
+    background: #e7efd9;
+    color: #4d6830;
+    font-weight: 700;
+}
+
+.taxonomy-table .not-shared-cell {
+    color: #aaa493;
+}
+
+.taxonomy-table .clade-cell {
+    white-space: normal;
+    min-width: 220px;
+    max-width: 340px;
+}
+
+.taxonomy-table .table-placeholder {
+    text-align: center;
+    padding: 80px 20px;
+    color: #888;
+}
+
+@media (max-width: 700px) {
+    .taxonomy-heading-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .taxonomy-table-wrap {
+        min-height: 420px;
+        height: auto;
+        max-height: 65vh;
+    }
+}
