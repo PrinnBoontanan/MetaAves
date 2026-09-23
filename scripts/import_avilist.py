@@ -80,12 +80,7 @@ CLADE_PATHS_BY_ORDER = {
 }
 
 
-RANKS = [
-    "kingdom", "phylum", "class", "subclass", "infraclass", "cohort",
-    "superorder", "order", "suborder", "infraorder", "parvorder",
-    "superfamily", "family", "subfamily", "tribe", "subtribe",
-    "genus", "subgenus", "species"
-]
+RANKS = ["class", "order", "family", "genus", "species"]
 
 
 def clean(value):
@@ -324,21 +319,9 @@ def main():
             "kingdom": "Animalia",
             "phylum": "Chordata",
             "class": "Aves",
-            "subclass": None,
-            "infraclass": None,
-            "cohort": None,
-            "superorder": None,
             "order": clean(row[cols["order"]]) if cols["order"] is not None else None,
-            "suborder": None,
-            "infraorder": None,
-            "parvorder": None,
-            "superfamily": None,
             "family": clean(row[cols["family"]]) if cols["family"] is not None else None,
-            "subfamily": None,
-            "tribe": None,
-            "subtribe": None,
             "genus": genus,
-            "subgenus": None,
             "species": scientific,
             "habitat": None,
             "distribution": clean(row[cols["range"]]) if cols["range"] is not None else None,
@@ -441,6 +424,7 @@ def main():
             "rankOrder": RANKS,
             "rootTaxa": ["class:Aves"],
             "nodeTypes": ["ranked_taxon", "species"],
+            "taxonomyPolicy": "Classic MetaAves taxonomy uses only Class → Order → Family → Genus → Species. Named phylogenetic clades are maintained separately."
             "clades": (
                 "Maintained separately from ranked taxonomy. "
                 "The game can insert clade nodes between ranked taxa."
