@@ -651,15 +651,6 @@ function renderCladeCard(clade, wiki) {
     rank.textContent = "CLADE";
     card.appendChild(rank);
 
-    if (wiki?.thumbnail?.source) {
-        const image = document.createElement("img");
-        image.className = "taxon-card-image";
-        image.src = wiki.thumbnail.source;
-        image.alt = clade.name;
-        image.loading = "lazy";
-        card.appendChild(image);
-    }
-
     const description = document.createElement("p");
     description.textContent =
         wiki?.extract ||
