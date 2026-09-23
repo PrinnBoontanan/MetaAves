@@ -374,7 +374,15 @@ function createTreeNodeElement(node) {
         if (node.bird) {
             element.classList.add("meta-species-clickable");
             element.style.pointerEvents = "auto";
+
             element.addEventListener("click", () => {
+                // The solved mystery species reopens the full Bird Study Card.
+                // Other species continue to open the lightweight Taxon Info card.
+                if (node.nodeType === "correct") {
+                    showGameOverCard("won");
+                    return;
+                }
+
                 showBirdInTaxonCard(node.bird);
             });
         }
