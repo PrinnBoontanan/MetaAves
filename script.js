@@ -763,11 +763,15 @@ function renderTaxonomyTree() {
             childCenters.length;
 
         position.x = centeredX;
-        position.element.style.left =
-            `${centeredX - position.width / 2}px`;
 
         const current = positioned.get(position.node);
         if (current) {
+            // Move the actual rendered element, not the temporary
+            // layout object. The previous code referenced
+            // position.element, which does not exist and stopped
+            // tree rendering before the branches were drawn.
+            current.element.style.left =
+                `${centeredX - current.width / 2}px`;
             current.x = centeredX;
         }
     });
