@@ -188,6 +188,53 @@ def add_taxon(taxa, node, parent_id):
     return tax_id
 
 
+def add_avilist_fallback(taxa, bird):
+    """Add the canonical AviList class/order/family/genus/species chain."""
+    parent_id = "class:Aves"
+
+    for rank in ("order", "family", "genus"):
+        name = bird.get(rank)
+        if not name:
+            continue
+
+        current_id = node_id(rank, name)
+
+        if current_id not in taxa:
+            taxa[current_id] = {
+                "id": current_id,
+                "rank": rank,
+                "name": name,
+                "parent": parent_id,
+                "children": [],
+                "source": "AviList",
+            }
+
+        if parent_id in taxa:
+            children = taxa[parent_id].setdefault("children", [])
+            if current_id not in children:
+                children.append(current_id)
+
+        parent_id = current_id
+
+    species_id = node_id("species", bird["scientificName"])
+
+    if species_id not in taxa:
+        taxa[species_id] = {
+            "id": species_id,
+            "rank": "species",
+            "name": bird["scientificName"],
+            "commonName": bird.get("commonName"),
+            "parent": parent_id,
+            "children": [],
+            "source": "AviList",
+        }
+
+    if parent_id in taxa:
+        children = taxa[parent_id].setdefault("children", [])
+        if species_id not in children:
+            children.append(species_id)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ncbi-jsonl", required=True)
@@ -199,7 +246,6 @@ def main():
     taxonomy_path = data_dir / "taxonomy.generated.json"
 
     birds = load_json(birds_path)
-    taxonomy = load_json(taxonomy_path)
 
     records = load_ncbi(args.ncbi_jsonl)
     if not records:
@@ -208,16 +254,17 @@ def main():
     by_name = {}
     for record in records.values():
         if record["rank"] == "species":
-            by_name.setdefault(normalize_name(record["name"]), []).append(record)
+            by_name.setdefault(
+                normalize_name(record["name"]), []
+            ).append(record)
 
     matched = 0
     unmatched = []
     enriched = 0
     used_ranks = set()
 
-    # Rebuild the ranked nodes from actual parent/child relationships rather
-    # than assuming that every rank is directly nested in the next rank.
-    # This is the important fix for suborder -> infraorder -> parvorder etc.
+    # AviList is the complete backbone. Every one of its 11,131 species
+    # must remain represented even when NCBI has no matching record.
     new_taxa = {
         "class:Aves": {
             "id": "class:Aves",
@@ -225,82 +272,102 @@ def main():
             "name": "Aves",
             "parent": None,
             "children": [],
-            "source": "AviList + NCBI Taxonomy",
+            "source": "AviList",
         }
     }
 
     for bird in birds:
-        candidates = by_name.get(normalize_name(bird["scientificName"]), [])
+        scientific_name = bird["scientificName"]
+        candidates = by_name.get(
+            normalize_name(scientific_name), []
+        )
         species_node = candidates[0] if candidates else None
 
+        # No NCBI match: preserve the complete AviList hierarchy.
         if species_node is None:
-            unmatched.append(bird["scientificName"])
+            unmatched.append(scientific_name)
+            add_avilist_fallback(new_taxa, bird)
             continue
 
-        lineage = lineage_for_taxid(species_node["taxId"], records)
+        lineage = lineage_for_taxid(
+            species_node["taxId"],
+            records
+        )
+
         ranked_lineage = [
             node for node in lineage
-            if node["rank"] in NCBI_RANKS and node["rank"] != "species"
+            if node["rank"] in NCBI_RANKS
+            and node["rank"] != "species"
         ]
 
-        # The species/checklist identity remains AviList. NCBI is only used
-        # when it can supply an intermediary lineage for that same species.
-        if not ranked_lineage:
-            unmatched.append(bird["scientificName"])
-            continue
-
-        # Ensure the lineage starts at Aves and preserve AviList's canonical
-        # order/family/genus values when they are available.
-        bird_by_rank = {
-            rank: bird.get(rank)
-            for rank in SUPPORTED_RANKS
-            if bird.get(rank)
+        # Verify the NCBI lineage against AviList's stable anchor ranks
+        # before using it. If an anchor is absent or disagrees, fall back
+        # completely to AviList for this species rather than constructing
+        # a partial/broken hierarchy.
+        ncbi_by_rank = {
+            node["rank"]: node["name"]
+            for node in ranked_lineage
         }
 
+        anchor_ok = all(
+            bird.get(rank)
+            and ncbi_by_rank.get(rank)
+            and normalize_name(bird[rank])
+            == normalize_name(ncbi_by_rank[rank])
+            for rank in ("order", "family", "genus")
+        )
+
+        if not anchor_ok:
+            unmatched.append(scientific_name)
+            add_avilist_fallback(new_taxa, bird)
+            continue
+
         parent_id = "class:Aves"
-        last_ranked_name = {"class": "Aves"}
 
         for node in ranked_lineage:
             rank = node["rank"]
             name = node["name"]
 
             if rank == "class":
-                if name != "Aves":
+                if normalize_name(name) != "aves":
                     continue
                 parent_id = "class:Aves"
                 continue
 
-            # Do not replace AviList's accepted order/family/genus names.
-            # For those anchor ranks, use the AviList name if it matches the
-            # NCBI lineage; otherwise stop enriching below that boundary.
-            if rank in {"order", "family", "genus"} and bird_by_rank.get(rank):
-                if normalize_name(bird_by_rank[rank]) != normalize_name(name):
-                    break
-                name = bird_by_rank[rank]
+            # AviList remains canonical for the anchor ranks.
+            if rank in {"order", "family", "genus"}:
+                name = bird[rank]
 
             node_copy = dict(node)
             node_copy["name"] = name
-            current_id = add_taxon(new_taxa, node_copy, parent_id)
+
+            current_id = add_taxon(
+                new_taxa,
+                node_copy,
+                parent_id
+            )
             parent_id = current_id
-            last_ranked_name[rank] = name
+
             used_ranks.add(rank)
 
-            if rank != "class":
+            if rank not in {"class", "order", "family", "genus"}:
                 bird[rank] = name
 
-        species_id = node_id("species", bird["scientificName"])
-        if parent_id not in new_taxa:
-            parent_id = node_id("genus", bird.get("genus") or bird["scientificName"].split()[0])
-            if parent_id not in new_taxa:
-                new_taxa[parent_id] = {
-                    "id": parent_id,
-                    "rank": "genus",
-                    "name": bird.get("genus") or bird["scientificName"].split()[0],
-                    "parent": "class:Aves",
-                    "children": [],
-                    "source": "AviList fallback",
-                }
-                new_taxa["class:Aves"]["children"].append(parent_id)
+        # The NCBI lineage is valid only if it reached the AviList genus.
+        # Otherwise preserve the complete AviList chain.
+        expected_genus_id = node_id("genus", bird["genus"])
+
+        if parent_id != expected_genus_id:
+            # Remove any partial NCBI-only nodes that may have been created
+            # for this species is unnecessarily complicated; instead, the
+            # species itself is attached to the canonical AviList genus.
+            add_avilist_fallback(new_taxa, bird)
+            continue
+
+        species_id = node_id(
+            "species",
+            bird["scientificName"]
+        )
 
         new_taxa[species_id] = {
             "id": species_id,
@@ -311,23 +378,35 @@ def main():
             "children": [],
             "source": "AviList",
         }
-        new_taxa[parent_id].setdefault("children", []).append(species_id)
+
+        children = new_taxa[parent_id].setdefault(
+            "children", []
+        )
+        if species_id not in children:
+            children.append(species_id)
 
         matched += 1
+
         if any(
             bird.get(rank)
             for rank in (
-                "subclass", "infraclass", "cohort", "superorder",
-                "suborder", "infraorder", "parvorder", "superfamily",
-                "subfamily", "tribe", "subtribe", "subgenus"
+                "subclass",
+                "infraclass",
+                "cohort",
+                "superorder",
+                "suborder",
+                "infraorder",
+                "parvorder",
+                "superfamily",
+                "subfamily",
+                "tribe",
+                "subtribe",
+                "subgenus",
             )
         ):
             enriched += 1
 
-    # Preserve the clade layer metadata while making the ranked dataset
-    # explicit about its source policy.
-    taxonomy_meta = dict(taxonomy.get("_meta", {}))
-    taxonomy_meta.update({
+    taxonomy_meta = {
         "version": 5,
         "masterSource": {
             "name": "AviList: The Global Avian Checklist",
@@ -337,17 +416,20 @@ def main():
             "name": "NCBI Taxonomy",
             "rootTaxId": ROOT_TAXID,
             "policy": (
-                "AviList remains authoritative for the species checklist and "
-                "canonical order/family/genus anchors. NCBI fills intermediary "
-                "rank nodes where the lineage matches those anchors."
+                "AviList remains authoritative for the complete species "
+                "checklist and canonical order/family/genus anchors. NCBI "
+                "fills intermediary ranks only when its lineage agrees "
+                "with those anchors. Unmatched or conflicting species "
+                "retain their complete AviList hierarchy."
             ),
         },
         "rankOrder": SUPPORTED_RANKS,
         "nodeTypes": ["ranked_taxon", "species"],
-    })
+    }
 
     output = {"_meta": taxonomy_meta}
     output.update(new_taxa)
+
     taxonomy_path.write_text(
         json.dumps(output, ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -362,19 +444,26 @@ def main():
     print(f"NCBI records:             {len(records):,}")
     print(f"AviList species:           {len(birds):,}")
     print(f"Matched species:           {matched:,}")
-    print(f"Unmatched species:         {len(unmatched):,}")
+    print(f"AviList fallback species:  {len(unmatched):,}")
     print(f"Species with extra ranks:  {enriched:,}")
     print(f"Taxonomy nodes:             {len(new_taxa):,}")
     print("Ranks observed:")
+
     for rank in SUPPORTED_RANKS:
-        count = sum(1 for node in new_taxa.values() if node.get("rank") == rank)
+        count = sum(
+            1
+            for node in new_taxa.values()
+            if node.get("rank") == rank
+        )
         if count:
             print(f"  {rank:12} {count:,}")
 
     if unmatched:
-        print("First unmatched species:")
+        print("First AviList fallback species:")
         for name in unmatched[:20]:
             print(f"  - {name}")
+
+
 
 
 if __name__ == "__main__":
