@@ -729,6 +729,35 @@ function renderTaxonomyTree() {
         });
     });
 
+    // Final alignment pass: use the actual rendered centers of the
+    // children to position every taxon. This guarantees that a parent
+    // taxon sits exactly over its branch group, even when text widths differ.
+    [...positions].reverse().forEach(position => {
+        if (position.node.type !== "taxon" || position.node.children.length === 0) {
+            return;
+        }
+
+        const childCenters = position.node.children
+            .map(child => positioned.get(child))
+            .filter(Boolean)
+            .map(child => child.x);
+
+        if (!childCenters.length) return;
+
+        const centeredX =
+            childCenters.reduce((sum, x) => sum + x, 0) /
+            childCenters.length;
+
+        position.x = centeredX;
+        position.element.style.left =
+            `${centeredX - position.width / 2}px`;
+
+        const current = positioned.get(position.node);
+        if (current) {
+            current.x = centeredX;
+        }
+    });
+
     function drawConnections(node) {
         if (node.type !== "taxon") {
             return;
