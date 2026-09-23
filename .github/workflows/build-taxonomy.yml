@@ -3,10 +3,13 @@ name: Build MetaAves taxonomy
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - "data/birds.generated.json"
-      - "data/taxonomy.generated.json"
-      - "data/clade_membership.generated.json"
+    paths:
+      - "scripts/**"
+      - "build_metaves_local.py"
+      - "requirements.txt"
+      - "data/supplemental_taxonomy.json"
+      - "data/data_sources.json"
+      - ".github/workflows/build-taxonomy.yml"
   workflow_dispatch:
 
 permissions:
