@@ -108,6 +108,9 @@ def main():
         run([sys.executable, str(SCRIPTS/"enrich_ncbi_taxonomy.py"),
              "--ncbi-jsonl", str(ncbi)], "Enrich intermediary taxonomy ranks")
 
+        run([sys.executable, str(SCRIPTS/"apply_supplemental_taxonomy.py")],
+            "Apply supplemental taxonomy ranks")
+
         validate()
         print("\nDONE. Generated files are ready in data/.")
         return 0
