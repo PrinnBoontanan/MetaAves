@@ -349,6 +349,12 @@ function buildTreeModel() {
         children: []
     };
 
+    // At the start of a game, show only the root Aves node.
+    // Do not reveal the mystery bird or any clade until the first guess.
+    if (gameState.guesses.length === 0) {
+        return root;
+    }
+
     const activeBirds = [
         ...gameState.guesses.filter(
             bird => bird.commonName !== gameState.mysteryBird.commonName
