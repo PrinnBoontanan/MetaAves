@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MetaAves Bird Record",
+  "type": "object",
+  "required": [
+    "commonName",
+    "scientificName",
+    "class",
+    "order",
+    "family",
+    "genus",
+    "species"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "commonName": {
+      "type": "string"
+    },
+    "scientificName": {
+      "type": "string"
+    },
+    "thaiName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "isExtinct": {
+      "type": "boolean"
+    },
+    "kingdom": {
+      "type": "string"
+    },
+    "phylum": {
+      "type": "string"
+    },
+    "class": {
+      "type": "string"
+    },
+    "subclass": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "infraclass": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cohort": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "superorder": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "order": {
+      "type": "string"
+    },
+    "suborder": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "infraorder": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parvorder": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "superfamily": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "family": {
+      "type": "string"
+    },
+    "subfamily": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tribe": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "subtribe": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "genus": {
+      "type": "string"
+    },
+    "subgenus": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "species": {
+      "type": "string"
+    },
+    "habitat": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "distribution": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "diet": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "behavior": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "breeding": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "conservation": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "interestingFacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "wikipediaTitle": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "genusCharacteristics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
