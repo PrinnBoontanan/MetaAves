@@ -592,17 +592,9 @@ function buildTreeModel() {
         for (let i = startIndex; i <= endpointIndex; i++) {
             const node = path[i];
 
-            // When the endpoint is a ranked taxon, intermediate clades are
-            // intentionally hidden unless the clade itself is the useful
-            // visible endpoint. This preserves the existing "deeper ranked
-            // taxon beats clade" behavior for cases such as hornbills.
-            if (
-                endpoint.level !== "clade" &&
-                node.level === "clade"
-            ) {
-                continue;
-            }
-
+            // Clades are part of the visible phylogenetic route to a
+            // ranked endpoint. Keep them in the tree instead of jumping
+            // directly from a broad clade to the Order/Family.
             if (!result.some(existing => existing.id === node.id)) {
                 result.push(node);
             }
