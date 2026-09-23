@@ -7,56 +7,120 @@
     "rank": "Class",
     "name": "Aves",
     "commonName": "Birds",
-    "description": "The taxonomic class containing all living birds and their extinct bird lineages.",
+    "description": "Birds are warm-blooded vertebrate animals in the class Aves. They are characterised by feathers, toothless beaks, hard-shelled eggs, high metabolic rates, four-chambered hearts, and lightweight skeletons. Birds occur worldwide and range greatly in size and lifestyle. They evolved from theropod dinosaurs and are the only living dinosaurs.",
+    "keyCharacteristics": [
+      "Feathers",
+      "Warm-blooded metabolism",
+      "Toothless beaked jaws",
+      "Hard-shelled eggs",
+      "Four-chambered heart",
+      "Lightweight skeleton"
+    ],
+    "distributionHabitat": "Birds live in ecosystems across the world, from polar regions to tropical forests, deserts, oceans, wetlands, grasslands, and cities.",
     "wikipedia": "https://en.wikipedia.org/wiki/Bird"
   },
   "order:Bucerotiformes": {
     "rank": "Order",
     "name": "Bucerotiformes",
     "commonName": "Bucerotiform birds",
-    "description": "An order of birds that includes hornbills and related groups.",
+    "description": "Bucerotiformes is an order of birds that includes hornbills and several closely related groups. Its members are generally characterised by distinctive bills and varied adaptations to life in forests and other habitats.",
+    "keyCharacteristics": [
+      "Includes hornbills and related bird groups",
+      "Distinctive bill morphology",
+      "Includes forest-dwelling species",
+      "Contains both terrestrial and arboreal forms"
+    ],
+    "distributionHabitat": "Members occur mainly across Africa and Asia, with different groups occupying forests, woodland, savanna, and other habitats.",
     "wikipedia": "https://en.wikipedia.org/wiki/Bucerotiformes"
   },
   "family:Bucerotidae": {
     "rank": "Family",
     "name": "Bucerotidae",
     "commonName": "Hornbills",
-    "description": "A family of birds commonly known as hornbills.",
+    "description": "Hornbills are birds of the family Bucerotidae found mainly in tropical and subtropical Africa, Asia, and Melanesia. They are characterised by long, down-curved bills, often brightly coloured, and many species have a horny casque on the upper mandible. Hornbills are generally omnivorous and commonly nest in natural cavities.",
+    "keyCharacteristics": [
+      "Long, down-curved bill",
+      "Many species have a casque",
+      "Generally omnivorous",
+      "Monogamous breeding is common",
+      "Often nest in natural tree cavities"
+    ],
+    "distributionHabitat": "Hornbills occur mainly in tropical and subtropical forests and woodlands of Africa, Asia, and Melanesia. Many Asian species depend heavily on primary forest.",
     "wikipedia": "https://en.wikipedia.org/wiki/Hornbill"
   },
   "genus:Buceros": {
     "rank": "Genus",
     "name": "Buceros",
     "commonName": "Great hornbills",
-    "description": "A genus of large hornbills.",
+    "description": "Buceros is a genus of large hornbills in the family Bucerotidae. Species in this genus are large-bodied forest hornbills with prominent bills and casques and are strongly associated with mature tropical forests.",
+    "keyCharacteristics": [
+      "Large-bodied hornbills",
+      "Large curved bills",
+      "Prominent casque",
+      "Fruit is an important food source",
+      "Strong association with mature forest"
+    ],
+    "distributionHabitat": "Species of Buceros occur in tropical South and Southeast Asia, particularly in forested habitats with large mature trees.",
     "wikipedia": "https://en.wikipedia.org/wiki/Buceros"
   },
   "genus:Anthracoceros": {
     "rank": "Genus",
     "name": "Anthracoceros",
     "commonName": "Asian pied hornbills",
-    "description": "A genus of hornbills.",
+    "description": "Anthracoceros is a genus of Asian hornbills in the family Bucerotidae. They are generally medium-sized hornbills with contrasting black-and-white plumage and prominent bills, and many species use forests and woodland habitats.",
+    "keyCharacteristics": [
+      "Asian hornbills",
+      "Often black-and-white plumage",
+      "Prominent bills",
+      "Fruit and small animals in the diet",
+      "Cavity-nesting species"
+    ],
+    "distributionHabitat": "Species occur in South and Southeast Asia, using forests, woodland, and other tree-rich habitats.",
     "wikipedia": "https://en.wikipedia.org/wiki/Anthracoceros"
   },
   "order:Passeriformes": {
     "rank": "Order",
     "name": "Passeriformes",
     "commonName": "Perching birds",
-    "description": "The order containing perching birds, including sparrows and many other familiar bird groups.",
+    "description": "Passeriformes, commonly called passerines or perching birds, is the largest order of birds and includes more than half of all bird species. Passerines generally have an anisodactyl toe arrangement, with three toes pointing forward and one backward, an arrangement well suited to perching.",
+    "keyCharacteristics": [
+      "Largest bird order",
+      "Includes more than half of bird species",
+      "Anisodactyl feet are typical",
+      "Highly diverse body forms and lifestyles",
+      "Many species are insectivorous or omnivorous"
+    ],
+    "distributionHabitat": "Passerines occur on every continent except Antarctica and occupy habitats ranging from forests and grasslands to deserts, wetlands, mountains, and urban environments.",
     "wikipedia": "https://en.wikipedia.org/wiki/Passerine"
   },
   "family:Passeridae": {
     "rank": "Family",
     "name": "Passeridae",
     "commonName": "Old World sparrows",
-    "description": "A family of passerine birds that includes the genus Passer.",
+    "description": "Passeridae is a family of passerine birds that includes the true sparrows and several closely related groups. Members are generally small to medium-sized birds with stout conical bills adapted for eating seeds and other foods.",
+    "keyCharacteristics": [
+      "Small to medium-sized passerines",
+      "Strong conical bills",
+      "Many species eat seeds",
+      "Often associated with open or human-modified habitats",
+      "Includes the genus Passer"
+    ],
+    "distributionHabitat": "Passerids are distributed mainly across Europe, Africa, and Asia, with several species adapted to agricultural areas, settlements, and other open habitats.",
     "wikipedia": "https://en.wikipedia.org/wiki/Old_World_sparrow"
   },
   "genus:Passer": {
     "rank": "Genus",
     "name": "Passer",
     "commonName": "True sparrows",
-    "description": "A genus of sparrows in the family Passeridae.",
+    "description": "Passer is a genus of sparrows in the family Passeridae. These birds are generally small, stout-bodied passerines with short tails and strong conical bills, and several species have adapted successfully to human settlements.",
+    "keyCharacteristics": [
+      "Small, stout-bodied sparrows",
+      "Short tails",
+      "Strong conical bills",
+      "Primarily seed-eating, with other foods also taken",
+      "Several species thrive around humans"
+    ],
+    "distributionHabitat": "Passer species occur across much of Europe, Africa, and Asia, occupying open country, farmland, villages, towns, and cities.",
     "wikipedia": "https://en.wikipedia.org/wiki/Passer_(bird)"
   }
 }
