@@ -89,6 +89,15 @@ def taxonomy_record(line):
         if isinstance(parents, list) and parents:
             parent = parents[0]
 
+    # NCBI Datasets can encode parent entries either as bare tax IDs
+    # or as objects such as {"taxId": 8782}. Normalize both forms.
+    if isinstance(parent, dict):
+        parent = (
+            parent.get("taxId")
+            or parent.get("taxID")
+            or parent.get("taxonId")
+        )
+
     if taxid is None or not rank or not scientific:
         return None
 
@@ -96,6 +105,9 @@ def taxonomy_record(line):
         taxid = int(taxid)
     except (TypeError, ValueError):
         return None
+
+    if isinstance(parent, dict):
+        parent = parent.get("taxId") or parent.get("taxID") or parent.get("taxonId")
 
     try:
         parent = int(parent) if parent is not None else None
