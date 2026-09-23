@@ -299,6 +299,7 @@ function getBirdPhylogenyPath(bird) {
         ...node,
         depth: index
     }));
+}
 
 function nodeIdForTaxon(rank, value) {
     const safe = String(value || "")
