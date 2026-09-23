@@ -387,22 +387,36 @@ function buildTreeModel() {
         return path.slice(0, endpointIndex + 1);
     }
 
+    // A clade is shown when it is the common branching point
+    // for the current tree. This matches the Metazooa-style behavior:
+    // if one branch ends at the shared clade (e.g. House Sparrow at
+    // Telluraves), that clade becomes the common parent of the other
+    // deeper branch (e.g. Bucerotidae).
+    const mysteryEndpointForTree = getMysteryRevealTaxon();
+
+    const branchEndpoints = [
+        ...gameState.guesses
+            .filter(bird => bird.commonName !== gameState.mysteryBird.commonName)
+            .map(bird => getDeepestSharedTaxon(bird, gameState.mysteryBird)),
+        mysteryEndpointForTree
+    ];
+
+    const showCommonClade =
+        commonAnchor.level !== "class" &&
+        branchEndpoints.some(endpoint => endpoint.id === commonAnchor.id);
+
     function getDisplayPath(bird, endpoint) {
         const path = getEndpointPath(bird, endpoint);
-
-        // Show whichever shared level is deeper:
-        // - If a ranked taxon (for example Bucerotidae) is deeper
-        //   than the shared clade, show the ranked taxon directly.
-        // - If the deepest shared ranked taxon is only Aves, but a
-        //   shared clade such as Telluraves is deeper, show that clade.
         const result = [path[0]];
 
-        if (commonAnchor.level !== "class" &&
-            commonAnchor.depth > endpoint.depth) {
+        if (showCommonClade) {
             result.push(commonAnchor);
         }
 
-        if (endpoint.level !== "class") {
+        if (
+            endpoint.level !== "class" &&
+            endpoint.id !== commonAnchor.id
+        ) {
             result.push(endpoint);
         }
 
