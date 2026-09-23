@@ -487,6 +487,15 @@ function renderTaxonomyTree() {
         element.style.left = `${x}px`;
         element.style.top = `${y}px`;
 
+        // Nodes are revealed by depth, not all at once.
+        // Depth 0 = Aves, depth 1 = its children,
+        // depth 2 = the next generation, etc.
+        const nodeDelay = position.depth * 0.8;
+        element.style.setProperty(
+            "--node-delay",
+            `${nodeDelay}s`
+        );
+
         nodeLayer.appendChild(element);
 
         positioned.set(position.node, {
@@ -558,16 +567,12 @@ function renderTaxonomyTree() {
             const levelDuration = 0.65;
             const animationDelay = Math.max(
                 0,
-                (childDepth - 1) * levelDuration
+                (childDepth - 1) * levelDuration + 0.12
             );
 
+            // Set the delay BEFORE adding the SVG path so the
+            // animation starts at the correct generation.
             path.style.animationDelay = `${animationDelay}s`;
-
-            // Pass the same timing information to the child node.
-            childPosition.element.style.setProperty(
-                "--node-delay",
-                `${animationDelay + 0.48}s`
-            );
 
             drawConnections(child);
         });
