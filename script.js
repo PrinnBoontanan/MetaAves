@@ -1438,4 +1438,4 @@ function renderTaxonomyTree() {
             position.depth * levelGap -
             nodeHeight / 2;
 
-        element.style.left = x + "px";
+        element.style.left = x + "px";})}
