@@ -1,0 +1,62 @@
+{
+  "_meta": {
+    "version": 1,
+    "description": "Display information for taxa in the MetaAves Taxon Information Card. Game logic should use taxonomy.json, not this file."
+  },
+  "class:Aves": {
+    "rank": "Class",
+    "name": "Aves",
+    "commonName": "Birds",
+    "description": "The taxonomic class containing all living birds and their extinct bird lineages.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Bird"
+  },
+  "order:Bucerotiformes": {
+    "rank": "Order",
+    "name": "Bucerotiformes",
+    "commonName": "Bucerotiform birds",
+    "description": "An order of birds that includes hornbills and related groups.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Bucerotiformes"
+  },
+  "family:Bucerotidae": {
+    "rank": "Family",
+    "name": "Bucerotidae",
+    "commonName": "Hornbills",
+    "description": "A family of birds commonly known as hornbills.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Hornbill"
+  },
+  "genus:Buceros": {
+    "rank": "Genus",
+    "name": "Buceros",
+    "commonName": "Great hornbills",
+    "description": "A genus of large hornbills.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Buceros"
+  },
+  "genus:Anthracoceros": {
+    "rank": "Genus",
+    "name": "Anthracoceros",
+    "commonName": "Asian pied hornbills",
+    "description": "A genus of hornbills.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Anthracoceros"
+  },
+  "order:Passeriformes": {
+    "rank": "Order",
+    "name": "Passeriformes",
+    "commonName": "Perching birds",
+    "description": "The order containing perching birds, including sparrows and many other familiar bird groups.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Passerine"
+  },
+  "family:Passeridae": {
+    "rank": "Family",
+    "name": "Passeridae",
+    "commonName": "Old World sparrows",
+    "description": "A family of passerine birds that includes the genus Passer.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Old_World_sparrow"
+  },
+  "genus:Passer": {
+    "rank": "Genus",
+    "name": "Passer",
+    "commonName": "True sparrows",
+    "description": "A genus of sparrows in the family Passeridae.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Passer_(bird)"
+  }
+}
