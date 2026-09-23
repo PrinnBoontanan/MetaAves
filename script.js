@@ -305,6 +305,41 @@ function makeGuess() {
 // Build the logical tree
 // ========================================
 
+function getCommonCladeAnchor(birds) {
+    if (!birds.length) {
+        return {
+            id: "class:Aves",
+            level: "class",
+            value: "Aves",
+            depth: 0
+        };
+    }
+
+    const paths = birds.map(getBirdPhylogenyPath);
+    const firstClades = paths[0].filter(node => node.level === "clade");
+
+    let deepest = {
+        id: "class:Aves",
+        level: "class",
+        value: "Aves",
+        depth: 0
+    };
+
+    for (const candidate of firstClades) {
+        const sharedByAll = paths.every(path =>
+            path.some(node => node.id === candidate.id)
+        );
+
+        if (sharedByAll) {
+            deepest = candidate;
+        } else {
+            break;
+        }
+    }
+
+    return deepest;
+}
+
 function buildTreeModel() {
     const root = {
         type: "taxon",
@@ -314,84 +349,122 @@ function buildTreeModel() {
         children: []
     };
 
-    function findTaxon(name, level) {
-        return root.children.find(
-            child =>
-                child.type === "taxon" &&
-                child.name === name &&
-                child.level === level
+    const activeBirds = [
+        ...gameState.guesses.filter(
+            bird => bird.commonName !== gameState.mysteryBird.commonName
+        ),
+        gameState.mysteryBird
+    ];
+
+    const commonAnchor = getCommonCladeAnchor(activeBirds);
+
+    function findChild(parent, id) {
+        return parent.children.find(
+            child => child.type === "taxon" && child.taxonId === id
         );
     }
 
-    function addBird(bird, nodeType) {
-        const sharedTaxon = getDeepestSharedTaxon(
-            bird,
-            gameState.mysteryBird
-        );
+    function getEndpointPath(bird, endpoint) {
+        const path = getBirdPhylogenyPath(bird);
+        const endpointIndex = path.findIndex(node => node.id === endpoint.id);
 
+        if (endpointIndex === -1) {
+            return [endpoint];
+        }
+
+        return path.slice(0, endpointIndex + 1);
+    }
+
+    function getDisplayPath(bird, endpoint) {
+        const path = getEndpointPath(bird, endpoint);
+
+        // The game intentionally hides intermediate ranked taxa.
+        // Keep only Aves, the common clade anchor, and the deepest
+        // shared taxon revealed for this bird.
+        const result = [path[0]];
+
+        if (commonAnchor.level !== "class") {
+            result.push(commonAnchor);
+        }
+
+        if (endpoint.level !== "class" && endpoint.id !== commonAnchor.id) {
+            result.push(endpoint);
+        }
+
+        return result;
+    }
+
+    function insertBird(bird, endpoint, nodeType) {
         const leaf = {
             type: "species",
             name: bird.commonName,
             nodeType,
-            bird
+            bird: nodeType === "correct" ? bird : bird
         };
 
-        if (sharedTaxon.level === "class") {
-            root.children.push(leaf);
-            return;
+        const displayPath = getDisplayPath(bird, endpoint);
+        let parent = root;
+
+        for (let i = 1; i < displayPath.length; i++) {
+            const taxon = displayPath[i];
+
+            let child = findChild(parent, taxon.id);
+
+            if (!child) {
+                child = {
+                    type: "taxon",
+                    name: taxon.value,
+                    taxonId: taxon.id,
+                    level: taxon.level,
+                    children: []
+                };
+                parent.children.push(child);
+            }
+
+            parent = child;
         }
 
-        let taxon = findTaxon(sharedTaxon.value, sharedTaxon.level);
-
-        if (!taxon) {
-            taxon = {
-                type: "taxon",
-                name: sharedTaxon.value,
-                taxonId: sharedTaxon.id,
-                level: sharedTaxon.level,
-                children: []
-            };
-            root.children.push(taxon);
-        }
-
-        taxon.children.push(leaf);
+        parent.children.push(leaf);
     }
 
+    // Guesses are placed at their deepest shared taxon.
     gameState.guesses.forEach(bird => {
-        if (bird.commonName !== gameState.mysteryBird.commonName) {
-            addBird(bird, "guess");
-        }
+        if (bird.commonName === gameState.mysteryBird.commonName) return;
+
+        const endpoint = getDeepestSharedTaxon(
+            bird,
+            gameState.mysteryBird
+        );
+
+        insertBird(bird, endpoint, "guess");
     });
 
     const solved = gameState.guesses.some(
         bird => bird.commonName === gameState.mysteryBird.commonName
     );
 
-    const revealTaxon = getMysteryRevealTaxon();
+    const mysteryEndpoint = getMysteryRevealTaxon();
 
-    const mysteryLeaf = {
-        type: "species",
-        name: solved ? gameState.mysteryBird.commonName : "???",
-        nodeType: solved ? "correct" : "mystery",
-        bird: solved ? gameState.mysteryBird : null
-    };
+    insertBird(
+        gameState.mysteryBird,
+        mysteryEndpoint,
+        solved ? "correct" : "mystery"
+    );
 
-    if (revealTaxon.level === "class") {
-        root.children.push(mysteryLeaf);
-    } else {
-        const taxon = findTaxon(revealTaxon.value, revealTaxon.level);
+    // The mystery placeholder must not have a bird object while unsolved.
+    if (!solved) {
+        function removeMysteryBirdReference(node) {
+            if (node.type === "species" && node.nodeType === "mystery") {
+                node.bird = null;
+                return;
+            }
 
-        if (taxon) {
-            taxon.children.push(mysteryLeaf);
-        } else {
-            root.children.push({
-                type: "taxon",
-                name: revealTaxon.value,
-                taxonId: revealTaxon.id,
-                level: revealTaxon.level,
-                children: [mysteryLeaf]
-            });
+            if (node.children) {
+                node.children.forEach(removeMysteryBirdReference);
+            }
         }
+
+        removeMysteryBirdReference(root);
     }
 
     return root;
@@ -525,7 +598,76 @@ function selectTaxon(node) {
     if (!taxon) return;
 
     gameState.selectedTaxonId = taxon.id;
-    renderTaxonCard(taxon);
+
+    if (taxon.rank === "clade") {
+        showCladeInTaxonCard(taxon);
+    } else {
+        renderTaxonCard(taxon);
+    }
+}
+
+async function showCladeInTaxonCard(clade) {
+    const card = document.getElementById("taxon-card");
+    if (!card || !clade) return;
+
+    card.innerHTML = "<p>Loading clade information...</p>";
+
+    const wikiTitle = clade.wikipediaTitle || clade.name;
+    let wiki = null;
+
+    try {
+        const response = await fetch(
+            "https://en.wikipedia.org/api/rest_v1/page/summary/" +
+            encodeURIComponent(wikiTitle)
+        );
+
+        if (response.ok) {
+            wiki = await response.json();
+        }
+    } catch (error) {
+        console.warn("Wikipedia information could not be loaded:", error);
+    }
+
+    renderCladeCard(clade, wiki);
+}
+
+function renderCladeCard(clade, wiki) {
+    const card = document.getElementById("taxon-card");
+    card.innerHTML = "";
+
+    const title = document.createElement("h3");
+    title.textContent = clade.name;
+    card.appendChild(title);
+
+    const rank = document.createElement("p");
+    rank.classList.add("taxon-card-rank");
+    rank.textContent = "CLADE";
+    card.appendChild(rank);
+
+    if (wiki?.thumbnail?.source) {
+        const image = document.createElement("img");
+        image.className = "taxon-card-image";
+        image.src = wiki.thumbnail.source;
+        image.alt = clade.name;
+        image.loading = "lazy";
+        card.appendChild(image);
+    }
+
+    const description = document.createElement("p");
+    description.textContent =
+        wiki?.extract ||
+        clade.description ||
+        "No Wikipedia summary is available for this clade yet.";
+    card.appendChild(description);
+
+    if (wiki?.content_urls?.desktop?.page) {
+        const link = document.createElement("a");
+        link.href = wiki.content_urls.desktop.page;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Wikipedia";
+        card.appendChild(link);
+    }
 }
 
 
@@ -624,8 +766,14 @@ function updateAutomaticTaxonCard() {
     if (!taxon) return;
 
     gameState.selectedTaxonId = taxon.id;
-    renderTaxonCard(taxon);
+
+    if (taxon.rank === "clade") {
+        showCladeInTaxonCard(taxon);
+    } else {
+        renderTaxonCard(taxon);
+    }
 }
+
 
 function renderTaxonomyTree() {
     taxonomyTree.innerHTML = "";
