@@ -69,31 +69,41 @@ def taxonomy_record(line):
     if not isinstance(tax, dict):
         return None
 
-    taxid = tax.get("taxId")
+    # Current NCBI Datasets JSONL uses snake_case field names
+    # (for example tax_id and current_scientific_name). Keep the
+    # camelCase variants for compatibility with older exports.
+    taxid = tax.get("tax_id")
+    if taxid is None:
+        taxid = tax.get("taxId")
+
     rank = str(tax.get("rank") or "").strip().lower()
 
-    scientific = tax.get("currentScientificName")
+    scientific = tax.get("current_scientific_name")
+    if scientific is None:
+        scientific = tax.get("currentScientificName")
+
     if isinstance(scientific, dict):
         scientific = scientific.get("name")
     elif scientific is None:
-        scientific = tax.get("scientificName")
+        scientific = tax.get("scientific_name") or tax.get("scientificName")
 
-    # NCBI Datasets taxonomy reports expose lineage through the parents array.
-    # The first parent is the immediate parent; support parentTaxId too for
-    # compatibility with other taxonomy exports.
-    parent = tax.get("parentTaxId")
+    # NCBI Datasets documents parents as taxids ordered from the
+    # immediate parent (most specific) to the most general parent.
+    # Therefore the LAST item is the immediate parent.
+    parent = tax.get("parent_tax_id")
+    if parent is None:
+        parent = tax.get("parentTaxId")
     if parent is None:
         parent = tax.get("parentTaxID")
     if parent is None:
         parents = tax.get("parents")
         if isinstance(parents, list) and parents:
-            parent = parents[0]
+            parent = parents[-1]
 
-    # NCBI Datasets can encode parent entries either as bare tax IDs
-    # or as objects such as {"taxId": 8782}. Normalize both forms.
     if isinstance(parent, dict):
         parent = (
-            parent.get("taxId")
+            parent.get("tax_id")
+            or parent.get("taxId")
             or parent.get("taxID")
             or parent.get("taxonId")
         )
@@ -105,9 +115,6 @@ def taxonomy_record(line):
         taxid = int(taxid)
     except (TypeError, ValueError):
         return None
-
-    if isinstance(parent, dict):
-        parent = parent.get("taxId") or parent.get("taxID") or parent.get("taxonId")
 
     try:
         parent = int(parent) if parent is not None else None
