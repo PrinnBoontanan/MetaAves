@@ -150,7 +150,7 @@ body {
     position: absolute;
     opacity: 0;
     transform: translateY(-4px) scale(0.96);
-    animation: reveal-tree-node 0.28s ease-out forwards;
+    animation: reveal-tree-node 0.32s ease-out forwards;
     animation-delay: var(--node-delay, 0s);
     display: flex;
     align-items: center;
