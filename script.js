@@ -489,6 +489,33 @@ function getCommonCladeAnchor(birds) {
     return deepest;
 }
 
+function getMysteryRevealTaxon() {
+    let deepest = {
+        id: "class:Aves",
+        level: "class",
+        value: "Aves",
+        depth: 0
+    };
+
+    for (const guessedBird of gameState.guesses) {
+        if (guessedBird.commonName === gameState.mysteryBird.commonName) {
+            continue;
+        }
+
+        const shared = getDeepestSharedTaxon(
+            guessedBird,
+            gameState.mysteryBird
+        );
+
+        if (shared.depth > deepest.depth) {
+            deepest = shared;
+        }
+    }
+
+    return deepest;
+}
+
+
 function buildTreeModel() {
     const root = {
         type: "taxon",
