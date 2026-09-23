@@ -584,3 +584,356 @@ body {
 .study-card-section a:hover {
     text-decoration: underline;
 }
+
+
+/* ========================================
+   MetaAves visual refresh
+======================================== */
+
+:root {
+    --paper: #fffdf8;
+    --paper-soft: #f7f0e2;
+    --ink: #3f4638;
+    --muted: #777565;
+    --olive: #587331;
+    --olive-dark: #405a25;
+    --gold: #b78a3d;
+    --line: #d9c8a5;
+    --shadow: 0 10px 30px rgba(74, 62, 37, 0.10);
+}
+
+body {
+    min-height: 100vh;
+    font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+    background:
+        radial-gradient(circle at 8% 8%, rgba(190, 169, 113, 0.14), transparent 24%),
+        radial-gradient(circle at 92% 18%, rgba(88, 115, 49, 0.08), transparent 22%),
+        linear-gradient(135deg, #f3f0e8 0%, #e9eee7 100%);
+    color: var(--ink);
+}
+
+.game-container {
+    width: min(1500px, 96vw);
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 28px 0 42px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(330px, 0.85fr);
+    grid-template-areas:
+        "header header"
+        "info info"
+        "guess guess"
+        "tree taxon";
+    gap: 18px 20px;
+}
+
+.game-header {
+    grid-area: header;
+    position: relative;
+    margin: 0;
+    padding: 8px 0 14px;
+    text-align: center;
+}
+
+.game-header h1 {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(40px, 5vw, 62px);
+    line-height: 1;
+    letter-spacing: -0.035em;
+    color: #4b583e;
+    text-shadow: 0 2px 0 rgba(255,255,255,0.8);
+}
+
+.title-bird {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 0.7em;
+    transform: rotate(-12deg);
+    filter: saturate(0.75);
+}
+
+.game-header p {
+    margin: 10px 0 0;
+    color: #787866;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.game-info {
+    grid-area: info;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0;
+}
+
+.mode-display,
+.guess-counter {
+    background: rgba(255, 253, 248, 0.92);
+    border: 1px solid rgba(201, 185, 143, 0.75);
+    padding: 11px 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(74, 62, 37, 0.07);
+}
+
+.mode-display::before {
+    content: "🌍 ";
+}
+
+.guess-counter::before {
+    content: "🎯 ";
+}
+
+.guess-section,
+.taxonomy-section,
+.taxon-section {
+    background: rgba(255, 253, 248, 0.94);
+    border: 1px solid rgba(201, 185, 143, 0.65);
+    box-shadow: var(--shadow);
+    border-radius: 18px;
+}
+
+.guess-section {
+    grid-area: guess;
+    padding: 20px 24px;
+    margin: 0;
+}
+
+.guess-section h2,
+.taxonomy-section h2,
+.taxon-section h2 {
+    margin: 0 0 14px;
+    font-family: Georgia, "Times New Roman", serif;
+    color: #4f5d42;
+    font-size: 21px;
+}
+
+.search-container {
+    gap: 10px;
+}
+
+#bird-search {
+    padding: 14px 17px;
+    font-size: 16px;
+    color: #41463b;
+    background: #fffefa;
+    border: 1px solid #cfc3a7;
+    border-radius: 11px;
+    outline: none;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+#bird-search:focus {
+    border-color: #789052;
+    box-shadow: 0 0 0 4px rgba(120, 144, 82, 0.13);
+}
+
+#guess-button,
+.new-game-button,
+.game-over-actions button {
+    border: 0;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #668542, #4e6c2e);
+    color: #fff;
+    font-family: inherit;
+    font-weight: 700;
+    box-shadow: 0 4px 0 #3f5926, 0 7px 16px rgba(63, 89, 38, 0.16);
+    transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+}
+
+#guess-button {
+    padding: 14px 23px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+#guess-button:hover,
+.new-game-button:hover,
+.game-over-actions button:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
+#guess-button:active,
+.new-game-button:active,
+.game-over-actions button:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #3f5926;
+}
+
+.suggestions {
+    border-color: #d8cdb6;
+    border-radius: 11px;
+    box-shadow: 0 8px 18px rgba(74, 62, 37, 0.09);
+}
+
+.suggestion:hover {
+    background: #eef2e8;
+}
+
+.taxonomy-section {
+    grid-area: tree;
+    padding: 22px;
+    margin: 0;
+    min-width: 0;
+}
+
+.taxon-section {
+    grid-area: taxon;
+    padding: 22px;
+    margin: 0;
+    min-width: 0;
+}
+
+.taxonomy-tree {
+    min-height: 520px;
+    height: calc(100vh - 355px);
+    max-height: 760px;
+    padding: 10px 0;
+    border: 1px solid #e3d4b7;
+    border-radius: 14px;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,.48), transparent 40%),
+        #f6ead7;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+}
+
+.meta-tree-canvas {
+    min-height: 100%;
+}
+
+.meta-tree-node {
+    min-height: 34px;
+    padding: 6px 13px;
+    border-radius: 9px;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    font-size: 14px;
+    box-shadow:
+        0 3px 0 rgba(67, 57, 35, 0.10),
+        0 7px 15px rgba(67, 57, 35, 0.08);
+}
+
+.meta-tree-node[data-level="class"] {
+    background: linear-gradient(135deg, #bd4b36, #a93827);
+}
+
+.meta-tree-node[data-level="order"] {
+    background: linear-gradient(135deg, #d58a2c, #bd6b17);
+}
+
+.meta-tree-node[data-level="family"] {
+    background: linear-gradient(135deg, #81983a, #667d29);
+}
+
+.meta-tree-node[data-level="genus"] {
+    background: linear-gradient(135deg, #5c9947, #477d37);
+}
+
+.meta-species-node {
+    background: rgba(255, 253, 248, 0.98);
+    border-radius: 9px;
+    box-shadow: 0 3px 0 rgba(67,57,35,.08), 0 6px 13px rgba(67,57,35,.07);
+}
+
+.meta-tree-connection {
+    stroke-linecap: round;
+}
+
+.taxon-card {
+    min-height: 520px;
+    padding: 22px;
+    border: 1px solid #ded2bb;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #fffdf8, #faf5e9);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.taxon-card h3 {
+    font-family: Georgia, "Times New Roman", serif;
+    color: #4f5d42;
+}
+
+.new-game-button {
+    padding: 11px 18px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.game-over-card {
+    border-radius: 20px;
+    border-color: #d5c7aa;
+    box-shadow: 0 24px 70px rgba(38, 34, 24, 0.28);
+}
+
+.game-over-card h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 30px;
+}
+
+.study-card-bird {
+    border: 1px solid #e3d5b9;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+}
+
+@media (max-width: 900px) {
+    .game-container {
+        width: min(96vw, 720px);
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "header"
+            "info"
+            "guess"
+            "tree"
+            "taxon";
+    }
+
+    .taxonomy-tree {
+        height: 520px;
+    }
+
+    .taxon-card {
+        min-height: 0;
+    }
+}
+
+@media (max-width: 560px) {
+    .game-container {
+        width: 94vw;
+        padding-top: 18px;
+    }
+
+    .game-info {
+        flex-wrap: wrap;
+    }
+
+    .mode-display,
+    .guess-counter {
+        flex: 1;
+    }
+
+    .new-game-button.visible {
+        width: 100%;
+    }
+
+    .search-container {
+        flex-direction: column;
+    }
+
+    #guess-button {
+        width: 100%;
+    }
+
+    .taxonomy-section,
+    .taxon-section,
+    .guess-section {
+        padding: 16px;
+    }
+
+    .taxonomy-tree {
+        min-height: 430px;
+        height: 430px;
+    }
+}
