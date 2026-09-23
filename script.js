@@ -445,6 +445,39 @@ function renderBirdCard(bird, wiki) {
         "No Wikipedia summary is available for this species yet.";
     card.appendChild(description);
 
+    const addBirdInfoSection = (heading, value) => {
+        if (!value) return;
+
+        const sectionHeading = document.createElement("h4");
+        sectionHeading.textContent = heading;
+        card.appendChild(sectionHeading);
+
+        const sectionText = document.createElement("p");
+        sectionText.textContent = value;
+        card.appendChild(sectionText);
+    };
+
+    addBirdInfoSection("Habitat", bird.habitat);
+    addBirdInfoSection("Distribution", bird.distribution);
+    addBirdInfoSection("Diet", bird.diet);
+    addBirdInfoSection("Behavior", bird.behavior);
+    addBirdInfoSection("Breeding", bird.breeding);
+    addBirdInfoSection("Conservation", bird.conservation);
+
+    if (Array.isArray(bird.interestingFacts) && bird.interestingFacts.length) {
+        const heading = document.createElement("h4");
+        heading.textContent = "Interesting facts";
+        card.appendChild(heading);
+
+        const list = document.createElement("ul");
+        bird.interestingFacts.forEach(fact => {
+            const item = document.createElement("li");
+            item.textContent = fact;
+            list.appendChild(item);
+        });
+        card.appendChild(list);
+    }
+
     if (wiki?.content_urls?.desktop?.page) {
         const link = document.createElement("a");
         link.href = wiki.content_urls.desktop.page;
