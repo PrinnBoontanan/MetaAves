@@ -74,10 +74,13 @@ async function loadGameData() {
         const cladeMembership = await cladeMembershipResponse.json();
         const membershipBySpecies = cladeMembership.species || {};
 
-        // Join the generated clade layer to the generated bird records.
-        // The scientific name is the stable species key produced by AviList.
+        // Use the corrected phylogenetic backbone at runtime. The generated
+        // membership file remains a compatibility/cache layer, but the game
+        // must not inherit an outdated clade assignment from it.
         gameState.birds.forEach(bird => {
-            bird.cladePath = membershipBySpecies[bird.scientificName] || [];
+            bird.cladePath = getCorrectedCladePath(bird)
+                || membershipBySpecies[bird.scientificName]
+                || ["Neornithes", "Neognathae", "Neoaves"];
         });
 
         // The ranked hierarchy is intentionally fixed to the classic game model.
@@ -101,6 +104,85 @@ async function loadGameData() {
     }
 }
 
+
+// ========================================
+// Corrected broad avian clade backbone
+// ========================================
+//
+// Neoaves has a partially unresolved deep phylogeny, so MetaAves uses the
+// well-supported named supraordinal groups without pretending that all of
+// their relationships form one settled ladder.
+
+const CLADE_PATHS_BY_ORDER = {
+    Struthioniformes: ["Neornithes", "Palaeognathae"],
+    Casuariiformes: ["Neornithes", "Palaeognathae"],
+    Apterygiformes: ["Neornithes", "Palaeognathae"],
+    Rheiformes: ["Neornithes", "Palaeognathae"],
+    Tinamiformes: ["Neornithes", "Palaeognathae"],
+
+    Anseriformes: ["Neornithes", "Neognathae", "Galloanserae"],
+    Galliformes: ["Neornithes", "Neognathae", "Galloanserae"],
+
+    Mirandornithes: ["Neornithes", "Neognathae", "Neoaves", "Mirandornithes"],
+    Phoenicopteriformes: ["Neornithes", "Neognathae", "Neoaves", "Mirandornithes"],
+    Podicipediformes: ["Neornithes", "Neognathae", "Neoaves", "Mirandornithes"],
+
+    Otidimorphae: ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
+    Musophagiformes: ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
+    Otidiformes: ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
+    Cuculiformes: ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
+
+    Columbimorphae: ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
+    Mesitornithiformes: ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
+    Pterocliformes: ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
+    Columbiformes: ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
+
+    Strisores: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+    Caprimulgiformes: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+    Steatornithiformes: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+    Nyctibiiformes: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+    Podargiformes: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+    Aegotheliformes: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+    Apodiformes: ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
+
+    Aequornithes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+    Gaviiformes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+    Sphenisciformes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+    Procellariiformes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+    Ciconiiformes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+    Suliformes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+    Pelecaniformes: ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
+
+    Eurypygimorphae: ["Neornithes", "Neognathae", "Neoaves", "Eurypygimorphae"],
+    Eurypygiformes: ["Neornithes", "Neognathae", "Neoaves", "Eurypygimorphae"],
+    Phaethontiformes: ["Neornithes", "Neognathae", "Neoaves", "Eurypygimorphae"],
+
+    Telluraves: ["Neornithes", "Neognathae", "Neoaves", "Telluraves"],
+    Accipitriformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    Cathartiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    Strigiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    Coliiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    Leptosomiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    Trogoniformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    Bucerotiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    Coraciiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    Galbuliformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+    Piciformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
+
+    Cariamiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves"],
+    Falconiformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves"],
+    Psittaciformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves", "Psittacopasserae"],
+    Passeriformes: ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves", "Psittacopasserae"],
+
+    Opisthocomiformes: ["Neornithes", "Neognathae", "Neoaves", "Opisthocomiformes"],
+    Gruiformes: ["Neornithes", "Neognathae", "Neoaves", "Gruiformes"],
+    Charadriiformes: ["Neornithes", "Neognathae", "Neoaves", "Charadriiformes"]
+};
+
+function getCorrectedCladePath(bird) {
+    if (!bird || !bird.order) return null;
+    return CLADE_PATHS_BY_ORDER[bird.order] || null;
+}
 
 // ========================================
 // Guess counter
@@ -759,24 +841,128 @@ async function showBirdInTaxonCard(bird) {
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
     let wiki = null;
+    let wikiDetails = {};
 
     try {
-        const response = await fetch(
-            "https://en.wikipedia.org/api/rest_v1/page/summary/" +
-            encodeURIComponent(wikiTitle)
-        );
+        const [summaryResponse, htmlResponse] = await Promise.all([
+            fetch(
+                "https://en.wikipedia.org/api/rest_v1/page/summary/" +
+                encodeURIComponent(wikiTitle)
+            ),
+            fetch(
+                "https://en.wikipedia.org/w/rest.php/v1/page/" +
+                encodeURIComponent(wikiTitle) +
+                "/html"
+            )
+        ]);
 
-        if (response.ok) {
-            wiki = await response.json();
+        if (summaryResponse.ok) {
+            wiki = await summaryResponse.json();
+        }
+
+        if (htmlResponse.ok) {
+            const html = await htmlResponse.text();
+            wikiDetails = parseWikipediaBirdDetails(html);
         }
     } catch (error) {
-        console.warn("Wikipedia information could not be loaded:", error);
+        console.warn("Wikipedia bird details could not be loaded:", error);
     }
 
-    renderBirdCard(bird, wiki);
+    renderBirdCard(bird, wiki, wikiDetails);
 }
 
-function renderBirdCard(bird, wiki) {
+function cleanWikipediaText(value) {
+    return (value || "")
+        .replace(/\\[nrt]/g, " ")
+        .replace(/\\s+/g, " ")
+        .replace(/\\[[^\]]+\\]/g, "")
+        .trim();
+}
+
+function parseWikipediaBirdDetails(html) {
+    const details = {};
+    if (!html) return details;
+
+    const doc = new DOMParser().parseFromString(html, "text/html");
+
+    // Wikipedia infobox labels vary between species, so accept common
+    // spellings and both US/UK forms.
+    const labelMap = {
+        habitat: ["habitat", "habitats"],
+        diet: ["diet", "food"],
+        behavior: ["behavior", "behaviour", "activity"],
+        breeding: ["breeding", "reproduction", "breeding season"],
+        distribution: ["distribution", "range", "range map"],
+        conservation: ["conservation status", "status", "iucn status"]
+    };
+
+    doc.querySelectorAll("table.infobox tr").forEach(row => {
+        const label = row.querySelector("th");
+        const value = row.querySelector("td");
+        if (!label || !value) return;
+
+        const key = cleanWikipediaText(label.textContent).toLowerCase();
+        const text = cleanWikipediaText(value.textContent);
+        if (!text) return;
+
+        for (const [field, labels] of Object.entries(labelMap)) {
+            if (labels.includes(key)) {
+                details[field] = text;
+                break;
+            }
+        }
+    });
+
+    // Some bird pages put useful information in sections instead of the
+    // infobox. Only use these as fallbacks, never overwrite a real infobox.
+    const sectionMap = {
+        habitat: ["habitat"],
+        diet: ["diet", "feeding", "food"],
+        behavior: ["behavior", "behaviour"],
+        breeding: ["breeding", "reproduction"],
+        distribution: ["distribution", "range"]
+    };
+
+    doc.querySelectorAll("h2, h3").forEach(heading => {
+        const headingText = cleanWikipediaText(heading.textContent)
+            .replace(/\\[edit\\]/gi, "")
+            .trim()
+            .toLowerCase();
+
+        const field = Object.entries(sectionMap).find(([, names]) =>
+            names.includes(headingText)
+        )?.[0];
+
+        if (!field || details[field]) return;
+
+        let text = "";
+        let node = heading.nextElementSibling;
+        while (node && !/^H[23]$/i.test(node.tagName)) {
+            if (node.tagName === "P") {
+                text += " " + cleanWikipediaText(node.textContent);
+            }
+            node = node.nextElementSibling;
+        }
+
+        if (text.trim()) {
+            details[field] = text.trim().slice(0, 1200);
+        }
+    });
+
+    return details;
+}
+
+function appendBirdDetail(card, label, value) {
+    const heading = document.createElement("h4");
+    heading.textContent = label;
+    card.appendChild(heading);
+
+    const text = document.createElement("p");
+    text.textContent = value;
+    card.appendChild(text);
+}
+
+function renderBirdCard(bird, wiki, wikiDetails = {}) {
     const card = document.getElementById("taxon-card");
     card.innerHTML = "";
 
@@ -821,11 +1007,32 @@ function renderBirdCard(bird, wiki) {
         card.appendChild(image);
     }
 
-    const description = document.createElement("p");
-    description.textContent =
-        wiki?.extract ||
-        "No Wikipedia summary is available for this species yet.";
-    card.appendChild(description);
+    appendBirdDetail(
+        card,
+        "Description",
+        wiki?.extract || "No external species summary is available."
+    );
+
+    const details = [
+        ["Habitat", bird.habitat || wikiDetails.habitat],
+        ["Diet", bird.diet || wikiDetails.diet],
+        ["Behavior", bird.behavior || wikiDetails.behavior],
+        ["Breeding", bird.breeding || wikiDetails.breeding],
+        ["Distribution", bird.distribution || wikiDetails.distribution],
+        ["Conservation", bird.conservation || wikiDetails.conservation]
+    ];
+
+    details.forEach(([label, value]) => {
+        if (value) appendBirdDetail(card, label, value);
+    });
+
+    const shownFields = details.filter(([, value]) => Boolean(value)).length;
+    if (shownFields === 0) {
+        const note = document.createElement("p");
+        note.className = "taxon-card-muted";
+        note.textContent = "Detailed natural-history data is not available from the current sources.";
+        card.appendChild(note);
+    }
 
     if (wiki?.content_urls?.desktop?.page) {
         const link = document.createElement("a");
@@ -1298,408 +1505,3 @@ function renderTaxonomyTree() {
             nodeHeight / 2;
 
         element.style.left = x + "px";
-        element.style.top = y + "px";
-        element.style.setProperty(
-            "--node-delay",
-            `${position.depth * 0.95}s`
-        );
-
-        nodeLayer.appendChild(element);
-
-        positioned.set(position.node, {
-            x: x + element.offsetWidth / 2,
-            y: y + element.offsetHeight / 2,
-            width: element.offsetWidth,
-            height: element.offsetHeight,
-            depth: position.depth,
-            element
-        });
-    });
-
-    function drawConnections(node) {
-        if (node.type !== "taxon") return;
-
-        const parent = positioned.get(node);
-        if (!parent) return;
-
-        node.children.forEach(child => {
-            const childPosition = positioned.get(child);
-            if (!childPosition) return;
-
-            const startX = parent.x;
-            const startY = parent.y + parent.height / 2;
-            const endX = childPosition.x;
-            const endY = childPosition.y - childPosition.height / 2;
-
-            const verticalDistance = Math.max(1, endY - startY);
-            const curve = Math.max(26, verticalDistance * 0.48);
-
-            const path = document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "path"
-            );
-
-            if (Math.abs(startX - endX) < 1) {
-                path.setAttribute(
-                    "d",
-                    `M ${startX} ${startY} L ${endX} ${endY}`
-                );
-            } else {
-                path.setAttribute(
-                    "d",
-                    `M ${startX} ${startY}
-                     C ${startX} ${startY + curve},
-                       ${endX} ${endY - curve},
-                       ${endX} ${endY}`
-                );
-            }
-
-            path.classList.add("meta-tree-connection");
-
-            const pathLength = path.getTotalLength();
-            path.style.strokeDasharray = pathLength;
-            path.style.strokeDashoffset = pathLength;
-            path.style.setProperty("--branch-length", pathLength);
-
-            if (child.type === "taxon") {
-                path.classList.add("meta-connection-taxon");
-            } else {
-                path.classList.add("meta-connection-species");
-            }
-
-            svg.appendChild(path);
-
-            const branchDelay =
-                positioned.get(node).depth * 0.95 + 0.28;
-
-            setTimeout(() => {
-                path.classList.add("active");
-            }, branchDelay * 1000);
-
-            if (child.type === "taxon") {
-                drawConnections(child);
-            }
-        });
-    }
-
-    drawConnections(model);
-
-    positions.forEach(position => {
-        delete position.node.__treeWidth;
-    });
-}
-
-
-// ========================================
-// Game Over Card
-// ========================================
-
-function getBirdTaxonomyText(bird) {
-    return [
-        bird.class,
-        bird.order,
-        bird.family,
-        bird.genus
-    ].filter(Boolean).join(" → ");
-}
-
-function showGameOverCard(result) {
-    const overlay = document.getElementById("game-over-overlay");
-    const newGameButton = document.getElementById("new-game-button");
-    const title = document.getElementById("game-over-title");
-    const message = document.getElementById("game-over-message");
-    const birdName = document.getElementById("study-bird-name");
-    const scientificName = document.getElementById("study-scientific-name");
-    const thaiName = document.getElementById("study-thai-name");
-    const taxonomy = document.getElementById("study-taxonomy");
-
-    const bird = gameState.mysteryBird;
-    if (!overlay || !bird) return;
-
-    // Reset only the dynamic sections from any previous game.
-    // Keep the permanent Thai name and taxonomy fields.
-    const details = document.querySelector(".study-card-details");
-    if (details) {
-        details.querySelectorAll(".study-card-section").forEach(section => {
-            section.remove();
-        });
-    }
-
-    gameState.gameStatus = result === "won" ? "won" : "lost";
-
-    if (result === "won") {
-        title.textContent = "You found the mystery bird!";
-        message.textContent = "Congratulations!";
-    } else {
-        title.textContent = "Out of guesses!";
-        message.textContent = "Here is the mystery bird.";
-    }
-
-    birdName.textContent = bird.commonName;
-    scientificName.textContent = bird.scientificName || "Unknown";
-    thaiName.textContent =
-        bird.thaiName || "No established Thai name found.";
-    taxonomy.innerHTML = "";
-
-    const taxonomyRows = [
-        ["Class", bird.class],
-        [
-            "Clades",
-            Array.isArray(bird.cladePath) && bird.cladePath.length
-                ? bird.cladePath.join(" → ")
-                : null
-        ],
-        ["Order", bird.order],
-        ["Family", bird.family],
-        ["Genus", bird.genus],
-        ["Species", bird.species || bird.scientificName]
-    ];
-
-    taxonomyRows.forEach(([label, value]) => {
-        if (!value) return;
-
-        const row = document.createElement("div");
-        row.className = "study-taxonomy-row";
-
-        const labelElement = document.createElement("span");
-        labelElement.className = "study-taxonomy-label";
-        labelElement.textContent = label;
-
-        const valueElement = document.createElement("span");
-        valueElement.className = "study-taxonomy-value";
-        valueElement.textContent = value;
-
-        row.appendChild(labelElement);
-        row.appendChild(valueElement);
-        taxonomy.appendChild(row);
-    });
-
-    const addStudySection = (heading, value) => {
-        if (!details || !value) return;
-
-        const section = document.createElement("div");
-        section.className = "study-card-section";
-
-        const title = document.createElement("h4");
-        title.textContent = heading;
-
-        const text = document.createElement("p");
-        text.textContent = value;
-
-        section.appendChild(title);
-        section.appendChild(text);
-        details.appendChild(section);
-    };
-
-    const unavailable =
-        "Detailed information is not available in the current dataset.";
-
-    addStudySection(
-        "Description",
-        bird.description || "Fetching the species description from Wikipedia…"
-    );
-    addStudySection("Habitat", bird.habitat || unavailable);
-    addStudySection("Distribution", bird.distribution || unavailable);
-    addStudySection("Diet", bird.diet || unavailable);
-    addStudySection("Behavior", bird.behavior || unavailable);
-    addStudySection("Breeding", bird.breeding || unavailable);
-    addStudySection("Conservation", bird.conservation || unavailable);
-
-    if (Array.isArray(bird.interestingFacts) && bird.interestingFacts.length) {
-        const section = document.createElement("div");
-        section.className = "study-card-section";
-
-        const title = document.createElement("h4");
-        title.textContent = "Interesting facts";
-
-        const list = document.createElement("ul");
-        bird.interestingFacts.forEach(fact => {
-            const item = document.createElement("li");
-            item.textContent = fact;
-            list.appendChild(item);
-        });
-
-        section.appendChild(title);
-        section.appendChild(list);
-        details.appendChild(section);
-    }
-
-    const studyImage = document.getElementById("study-bird-image");
-    const studyDescription = document.getElementById("study-bird-description");
-    if (studyImage) studyImage.remove();
-    if (studyDescription) studyDescription.remove();
-
-    fetch(
-        "https://en.wikipedia.org/api/rest_v1/page/summary/" +
-        encodeURIComponent(bird.wikipediaTitle || bird.commonName)
-    )
-        .then(response => response.ok ? response.json() : null)
-        .then(wiki => {
-            if (!wiki) return;
-
-            const imageSource = wiki.thumbnail?.source;
-
-            const image = imageSource
-                ? document.createElement("img")
-                : null;
-
-            if (image) {
-                image.id = "study-bird-image";
-                image.className = "study-card-image";
-                image.src = imageSource;
-                image.alt = bird.commonName;
-            }
-
-            const description = document.createElement("p");
-            description.id = "study-bird-description";
-            description.textContent = wiki.extract || "";
-
-            const details = document.querySelector(".study-card-details");
-            if (details) {
-                if (image) {
-                    image.classList.add("study-card-hero-image");
-                    const existingImage = details.parentElement?.querySelector(
-                        ".study-card-hero-image"
-                    );
-                    if (!existingImage) {
-                        details.before(image);
-                    }
-                }
-
-                // Use the Wikipedia introduction to replace the temporary
-                // description when the dataset does not contain one.
-                if (!bird.description && wiki.extract && details) {
-                    const descriptionSection = [...details.querySelectorAll(".study-card-section")]
-                        .find(section =>
-                            section.querySelector("h4")?.textContent === "Description"
-                        );
-
-                    const descriptionParagraph =
-                        descriptionSection?.querySelector("p");
-
-                    if (descriptionParagraph) {
-                        descriptionParagraph.textContent = wiki.extract;
-                    }
-                }
-
-                if (wiki.content_urls?.desktop?.page) {
-                    const wikiSection = document.createElement("div");
-                    wikiSection.className = "study-card-section";
-
-                    const wikiLink = document.createElement("a");
-                    wikiLink.href = wiki.content_urls.desktop.page;
-                    wikiLink.target = "_blank";
-                    wikiLink.rel = "noopener noreferrer";
-                    wikiLink.textContent = "Wikipedia →";
-
-                    wikiSection.appendChild(wikiLink);
-                    details.appendChild(wikiSection);
-                }
-            }
-        })
-        .catch(() => {});
-
-    overlay.classList.add("visible");
-
-    // The main-menu New Game button only appears once the current
-    // game has ended. It remains available after the study card is closed.
-    if (newGameButton) {
-        newGameButton.classList.add("visible");
-    }
-}
-
-function closeGameOverCard() {
-    const overlay = document.getElementById("game-over-overlay");
-    if (overlay) {
-        overlay.classList.remove("visible");
-    }
-}
-
-function replayGame() {
-    const newGameButton = document.getElementById("new-game-button");
-
-    if (newGameButton) {
-        newGameButton.classList.remove("visible");
-    }
-    closeGameOverCard();
-
-    gameState.guessesRemaining = gameState.maxGuesses;
-    gameState.guesses = [];
-    gameState.selectedTaxonId = null;
-    gameState.gameStatus = "playing";
-
-    // Start a fresh round with a new mystery species from the
-    // currently loaded full dataset.
-    gameState.mysteryBird =
-        gameState.birds[Math.floor(Math.random() * gameState.birds.length)];
-
-    searchInput.value = "";
-    suggestions.innerHTML = "";
-
-    updateGuessCounter();
-    renderTaxonomyView();
-    updateAutomaticTaxonCard();
-}
-
-document.getElementById("game-over-close").addEventListener(
-    "click",
-    closeGameOverCard
-);
-
-document.getElementById("game-over-replay").addEventListener(
-    "click",
-    replayGame
-);
-
-document.getElementById("new-game-button").addEventListener(
-    "click",
-    replayGame
-);
-
-document.getElementById("game-over-overlay").addEventListener(
-    "click",
-    event => {
-        if (event.target.id === "game-over-overlay") {
-            closeGameOverCard();
-        }
-    }
-);
-
-
-// ========================================
-// Events
-// ========================================
-
-guessButton.addEventListener("click", makeGuess);
-
-searchInput.addEventListener("keydown", event => {
-    if (event.key === "Enter") {
-        makeGuess();
-    }
-});
-
-searchInput.addEventListener("input", () => {
-    showSuggestions(searchInput.value);
-});
-
-
-treeViewButton?.addEventListener("click", () => {
-    gameState.taxonomyView = "tree";
-    renderTaxonomyView();
-});
-
-tableViewButton?.addEventListener("click", () => {
-    gameState.taxonomyView = "table";
-    renderTaxonomyView();
-});
-
-// ========================================
-// Start game
-// ========================================
-
-async function startGame() {
-    updateGuessCounter();
-    await loadGameData();
-}
-
-startGame();
