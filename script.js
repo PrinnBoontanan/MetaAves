@@ -236,12 +236,14 @@ function makeGuess() {
         gameState.gameStatus = "lost";
     }
 
+    // Clear the search immediately after a valid guess so the
+    // input never remains populated while the tree/card re-renders.
+    searchInput.value = "";
+    suggestions.innerHTML = "";
+
     updateGuessCounter();
     renderTaxonomyTree();
     updateAutomaticTaxonCard();
-
-    searchInput.value = "";
-    suggestions.innerHTML = "";
 
     if (gameState.gameStatus === "won") {
         showGameOverCard("won");
@@ -533,21 +535,25 @@ function renderTaxonCard(taxon) {
 }
 
 function getMostUsefulTaxon() {
-    if (!gameState.mysteryBird) return null;
+    if (!gameState.mysteryBird || !gameState.taxonomy) return null;
 
-    // Before any guess, the broadest useful taxon is Aves.
+    // Before any guess, show Aves.
     if (gameState.guesses.length === 0) {
-        return gameState.taxonomy?.["class:Aves"] || null;
+        return gameState.taxonomy["class:Aves"] || null;
     }
 
-    // After guesses, show the deepest shared taxon currently revealed
-    // by the guesses. This matches the information the tree has actually
-    // learned about the mystery bird.
+    // Use the same deepest shared taxon that the tree currently reveals.
     const reveal = getMysteryRevealTaxon();
     const id = `${reveal.level}:${reveal.value}`;
 
-    return gameState.taxonomy?.[id]
-        || gameState.taxonomy?.["class:Aves"]
+    // Prefer the exact ID, then fall back to a matching taxon object.
+    return gameState.taxonomy[id]
+        || Object.values(gameState.taxonomy).find(
+            taxon =>
+                taxon.rank === reveal.level &&
+                taxon.name === reveal.value
+        )
+        || gameState.taxonomy["class:Aves"]
         || null;
 }
 
