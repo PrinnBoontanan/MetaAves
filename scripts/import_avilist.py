@@ -56,11 +56,8 @@ CLADE_PATHS_BY_ORDER = {
     "Aegotheliformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
     "Apodiformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
 
-    "Phaethontiformes": ["Neornithes", "Neognathae", "Neoaves", "Phaethontimorphae"],
-    "Eurypygiformes": ["Neornithes", "Neognathae", "Neoaves"],
-    "Gruiformes": ["Neornithes", "Neognathae", "Neoaves"],
-    "Charadriiformes": ["Neornithes", "Neognathae", "Neoaves"],
-    "Opisthocomiformes": ["Neornithes", "Neognathae", "Neoaves"],
+    "Phaethontiformes": ["Neornithes", "Neognathae", "Neoaves", "Eurypygimorphae"],
+    "Eurypygiformes": ["Neornithes", "Neognathae", "Neoaves", "Eurypygimorphae"],
 
     "Accipitriformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
     "Cathartiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
@@ -77,6 +74,12 @@ CLADE_PATHS_BY_ORDER = {
     "Falconiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves"],
     "Psittaciformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves", "Psittacopasserae"],
     "Passeriformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves", "Psittacopasserae"],
+
+    # These orders are retained at Neoaves level because deeper placement
+    # is not encoded as settled in the MetaAves backbone.
+    "Gruiformes": ["Neornithes", "Neognathae", "Neoaves"],
+    "Charadriiformes": ["Neornithes", "Neognathae", "Neoaves"],
+    "Opisthocomiformes": ["Neornithes", "Neognathae", "Neoaves"],
 }
 
 
