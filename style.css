@@ -835,18 +835,6 @@ body {
     background: linear-gradient(135deg, #5c9947, #477d37);
 }
 
-.meta-tree-node[data-level="suborder"],
-.meta-tree-node[data-level="infraorder"],
-.meta-tree-node[data-level="parvorder"],
-.meta-tree-node[data-level="superfamily"],
-.meta-tree-node[data-level="subfamily"],
-.meta-tree-node[data-level="tribe"] {
-    background: linear-gradient(135deg, #6f8b3c, #58712e);
-    color: #fff;
-    border: 1px solid #58712e;
-    font-weight: 700;
-}
-
 .meta-tree-node[data-level="species"] {
     background: rgba(255, 253, 248, 0.98);
 }
@@ -869,7 +857,9 @@ body {
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
-    animation: meta-branch-draw 0.42s ease-out both;
+    stroke-dasharray: var(--branch-length, 1000);
+    stroke-dashoffset: var(--branch-length, 1000);
+    opacity: 1;
 }
 
 .meta-connection-taxon {
@@ -880,14 +870,16 @@ body {
     stroke-width: 1.8;
 }
 
+.meta-tree-connection.active {
+    animation: meta-branch-draw 0.62s cubic-bezier(0.22, 0.75, 0.3, 1) forwards;
+}
+
 @keyframes meta-branch-draw {
     from {
-        stroke-dashoffset: var(--branch-length);
-        opacity: 0;
+        stroke-dashoffset: var(--branch-length, 1000);
     }
     to {
         stroke-dashoffset: 0;
-        opacity: 1;
     }
 }
 
@@ -1561,13 +1553,7 @@ body {
     font-weight: 700;
 }
 
-.meta-tree-node[data-level="clade"],
-.meta-tree-node[data-level="suborder"],
-.meta-tree-node[data-level="infraorder"],
-.meta-tree-node[data-level="parvorder"],
-.meta-tree-node[data-level="superfamily"],
-.meta-tree-node[data-level="subfamily"],
-.meta-tree-node[data-level="tribe"] {
+.meta-tree-node[data-level="clade"] {
     background: linear-gradient(135deg, #70852e, #596c21);
     color: #fff;
     border: 1px solid #596c21;
