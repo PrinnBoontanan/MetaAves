@@ -1312,6 +1312,8 @@ function showGameOverCard(result) {
         });
     }
 
+    gameState.gameStatus = result === "won" ? "won" : "lost";
+
     if (result === "won") {
         title.textContent = "You found the mystery bird!";
         message.textContent = "Congratulations!";
@@ -1324,16 +1326,40 @@ function showGameOverCard(result) {
     scientificName.textContent = bird.scientificName || "Unknown";
     thaiName.textContent =
         bird.thaiName || "No established Thai name found.";
-    taxonomy.textContent = [
-        bird.class,
-        ...((Array.isArray(bird.cladePath) && bird.cladePath.length)
-            ? bird.cladePath
-            : []),
-        bird.order,
-        bird.family,
-        bird.genus,
-        bird.species || bird.scientificName
-    ].filter(Boolean).join(" → ");
+    taxonomy.innerHTML = "";
+
+    const taxonomyRows = [
+        ["Class", bird.class],
+        [
+            "Clades",
+            Array.isArray(bird.cladePath) && bird.cladePath.length
+                ? bird.cladePath.join(" → ")
+                : null
+        ],
+        ["Order", bird.order],
+        ["Family", bird.family],
+        ["Genus", bird.genus],
+        ["Species", bird.species || bird.scientificName]
+    ];
+
+    taxonomyRows.forEach(([label, value]) => {
+        if (!value) return;
+
+        const row = document.createElement("div");
+        row.className = "study-taxonomy-row";
+
+        const labelElement = document.createElement("span");
+        labelElement.className = "study-taxonomy-label";
+        labelElement.textContent = label;
+
+        const valueElement = document.createElement("span");
+        valueElement.className = "study-taxonomy-value";
+        valueElement.textContent = value;
+
+        row.appendChild(labelElement);
+        row.appendChild(valueElement);
+        taxonomy.appendChild(row);
+    });
 
     const addStudySection = (heading, value) => {
         if (!details || !value) return;
@@ -1352,34 +1378,19 @@ function showGameOverCard(result) {
         details.appendChild(section);
     };
 
+    const unavailable =
+        "Detailed information is not available in the current dataset.";
+
     addStudySection(
         "Description",
-        bird.description || "Loading the species description…"
+        bird.description || "Fetching the species description from Wikipedia…"
     );
-    addStudySection(
-        "Habitat",
-        bird.habitat || "Detailed habitat information is not available in the current dataset."
-    );
-    addStudySection(
-        "Distribution",
-        bird.distribution || "Distribution information is not available in the current dataset."
-    );
-    addStudySection(
-        "Diet",
-        bird.diet || "Detailed diet information is not available in the current dataset."
-    );
-    addStudySection(
-        "Behavior",
-        bird.behavior || "Detailed behavior information is not available in the current dataset."
-    );
-    addStudySection(
-        "Breeding",
-        bird.breeding || "Detailed breeding information is not available in the current dataset."
-    );
-    addStudySection(
-        "Conservation",
-        bird.conservation || "Conservation information is not available in the current dataset."
-    );
+    addStudySection("Habitat", bird.habitat || unavailable);
+    addStudySection("Distribution", bird.distribution || unavailable);
+    addStudySection("Diet", bird.diet || unavailable);
+    addStudySection("Behavior", bird.behavior || unavailable);
+    addStudySection("Breeding", bird.breeding || unavailable);
+    addStudySection("Conservation", bird.conservation || unavailable);
 
     if (Array.isArray(bird.interestingFacts) && bird.interestingFacts.length) {
         const section = document.createElement("div");
@@ -1432,7 +1443,15 @@ function showGameOverCard(result) {
 
             const details = document.querySelector(".study-card-details");
             if (details) {
-                if (image) details.before(image);
+                if (image) {
+                    image.classList.add("study-card-hero-image");
+                    const existingImage = details.parentElement?.querySelector(
+                        ".study-card-hero-image"
+                    );
+                    if (!existingImage) {
+                        details.before(image);
+                    }
+                }
 
                 // Use the Wikipedia introduction to replace the temporary
                 // description when the dataset does not contain one.
