@@ -11,26 +11,11 @@ const gameState = {
     guesses: []
 };
 
-
-// ========================================
-// HTML elements
-// ========================================
-
 const guessCountElement = document.getElementById("guess-count");
 const searchInput = document.getElementById("bird-search");
 const guessButton = document.getElementById("guess-button");
 const taxonomyTree = document.getElementById("taxonomy-tree");
 const suggestions = document.getElementById("suggestions");
-
-
-// ========================================
-// Temporary taxonomy
-// ========================================
-//
-// Aves is the root.
-// Later this will become the full taxonomy,
-// including clades, infraclasses, etc.
-//
 
 const taxonomyLevels = [
     "class",
@@ -55,7 +40,6 @@ async function loadBirdData() {
         gameState.birds = await response.json();
 
         // Temporary mystery for testing.
-        // We will randomize this later.
         gameState.mysteryBird = gameState.birds.find(
             bird => bird.commonName === "Oriental Pied Hornbill"
         );
@@ -81,21 +65,15 @@ function updateGuessCounter() {
 
 
 // ========================================
-// Find bird
+// Bird lookup
 // ========================================
 
 function findBirdByName(name) {
     return gameState.birds.find(
         bird =>
-            bird.commonName.toLowerCase() ===
-            name.toLowerCase()
+            bird.commonName.toLowerCase() === name.toLowerCase()
     );
 }
-
-
-// ========================================
-// Duplicate check
-// ========================================
 
 function hasAlreadyBeenGuessed(bird) {
     return gameState.guesses.some(
@@ -119,10 +97,10 @@ function showSuggestions(searchText) {
     const search = searchText.toLowerCase();
 
     const matches = gameState.birds.filter(bird => {
-        const matchesSearch =
-            bird.commonName.toLowerCase().includes(search);
-
-        return matchesSearch && !hasAlreadyBeenGuessed(bird);
+        return (
+            bird.commonName.toLowerCase().includes(search) &&
+            !hasAlreadyBeenGuessed(bird)
+        );
     });
 
     matches.forEach(bird => {
@@ -145,21 +123,6 @@ function showSuggestions(searchText) {
 // ========================================
 // Find deepest shared taxon
 // ========================================
-//
-// Great Hornbill vs Oriental Pied Hornbill:
-//
-// Aves
-// Bucerotiformes
-// Bucerotidae  <- deepest shared taxon
-//
-// The displayed tree therefore starts:
-//
-// Aves
-//  └── Bucerotidae
-//
-// We intentionally do not display every
-// shared taxon on the way down.
-//
 
 function getDeepestSharedTaxon(guessedBird, mysteryBird) {
     let deepest = {
@@ -176,7 +139,7 @@ function getDeepestSharedTaxon(guessedBird, mysteryBird) {
         }
 
         deepest = {
-            level: level,
+            level,
             value: guessedBird[level],
             depth: i + 1
         };
@@ -187,20 +150,8 @@ function getDeepestSharedTaxon(guessedBird, mysteryBird) {
 
 
 // ========================================
-// Get the deepest revealed taxon
+// Get where the mystery belongs
 // ========================================
-//
-// This is used to decide where the ONE
-// mystery marker belongs.
-//
-// Example:
-// Great Hornbill -> Bucerotidae
-// House Sparrow -> Aves
-//
-// The mystery belongs under Bucerotidae,
-// because that is the most specific clue
-// revealed so far.
-//
 
 function getMysteryRevealTaxon() {
     let deepest = {
@@ -238,11 +189,7 @@ function getMysteryRevealTaxon() {
 function makeGuess() {
     const input = searchInput.value.trim();
 
-    if (input === "") {
-        return;
-    }
-
-    if (gameState.guessesRemaining <= 0) {
+    if (input === "" || gameState.guessesRemaining <= 0) {
         return;
     }
 
@@ -269,233 +216,125 @@ function makeGuess() {
     searchInput.value = "";
     suggestions.innerHTML = "";
 
-    if (
-        bird.commonName ===
-        gameState.mysteryBird.commonName
-    ) {
+    if (bird.commonName === gameState.mysteryBird.commonName) {
         console.log("Correct!");
     }
 }
 
 
 // ========================================
-// Create taxon node
+// Build the logical tree
 // ========================================
 
-function createTaxonNode(name) {
-    const node = document.createElement("div");
+function buildTreeModel() {
+    const root = {
+        type: "taxon",
+        name: "Aves",
+        level: "class",
+        children: []
+    };
 
-    node.classList.add("taxon-node");
-    node.textContent = name;
-
-    return node;
-}
-
-
-// ========================================
-// Create species node
-// ========================================
-
-function createSpeciesNode(name, type) {
-    const node = document.createElement("div");
-
-    node.classList.add("species-node");
-
-    if (type === "guess") {
-        node.classList.add("guessed-species");
+    function findTaxon(name) {
+        return root.children.find(
+            child =>
+                child.type === "taxon" &&
+                child.name === name
+        );
     }
 
-    if (type === "mystery") {
-        node.classList.add("mystery-species");
+    function addBird(bird, nodeType) {
+        const sharedTaxon = getDeepestSharedTaxon(
+            bird,
+            gameState.mysteryBird
+        );
+
+        const leaf = {
+            type: "species",
+            name: bird.commonName,
+            nodeType
+        };
+
+        if (sharedTaxon.level === "class") {
+            root.children.push(leaf);
+            return;
+        }
+
+        let taxon = findTaxon(sharedTaxon.value);
+
+        if (!taxon) {
+            taxon = {
+                type: "taxon",
+                name: sharedTaxon.value,
+                level: sharedTaxon.level,
+                children: []
+            };
+
+            root.children.push(taxon);
+        }
+
+        taxon.children.push(leaf);
     }
 
-    if (type === "correct") {
-        node.classList.add("correct-species");
-    }
+    // Guessed birds create the visible branches.
+    gameState.guesses.forEach(bird => {
+        if (bird.commonName !== gameState.mysteryBird.commonName) {
+            addBird(bird, "guess");
+        }
+    });
 
-    node.textContent = name;
-
-    return node;
-}
-
-
-// ========================================
-// Create branch container
-// ========================================
-
-function createBranchContainer() {
-    const container = document.createElement("div");
-    container.classList.add("tree-branch");
-    return container;
-}
-
-
-// ========================================
-// Add one guess
-// ========================================
-//
-// IMPORTANT:
-// A guess only creates its own species leaf.
-// The mystery marker is added separately once
-// after the whole tree has been built.
-//
-
-function addGuessToTree(rootContainer, guessedBird) {
-    // The mystery bird is rendered by addMysteryMarker().
-    // Do NOT create a second branch for a correct guess.
-    if (
-        guessedBird.commonName ===
-        gameState.mysteryBird.commonName
-    ) {
-        return;
-    }
-
-    const sharedTaxon = getDeepestSharedTaxon(
-        guessedBird,
-        gameState.mysteryBird
-    );
-
-    if (sharedTaxon.level === "class") {
-        addSpeciesToContainer(rootContainer, guessedBird);
-        return;
-    }
-
-    let taxonNode = [...rootContainer.children].find(
-        child =>
-            child.classList.contains("taxon-node") &&
-            child.dataset.taxon === sharedTaxon.value
-    );
-
-    if (!taxonNode) {
-        taxonNode = createTaxonNode(sharedTaxon.value);
-        taxonNode.dataset.taxon = sharedTaxon.value;
-
-        const branchContainer = createBranchContainer();
-        taxonNode.appendChild(branchContainer);
-
-        rootContainer.appendChild(taxonNode);
-    }
-
-    const branchContainer = taxonNode.querySelector(
-        ":scope > .tree-branch"
-    );
-
-    addSpeciesToContainer(branchContainer, guessedBird);
-}
-
-
-// ========================================
-// Add guessed species
-// ========================================
-
-function addSpeciesToContainer(container, guessedBird) {
-    const existing = [...container.children].find(
-        child =>
-            child.classList.contains("species-node") &&
-            child.dataset.species === guessedBird.commonName
-    );
-
-    if (existing) {
-        return;
-    }
-
-    const species = createSpeciesNode(
-        guessedBird.commonName,
-        "guess"
-    );
-
-    species.dataset.species = guessedBird.commonName;
-    container.appendChild(species);
-}
-
-
-// ========================================
-// Add the ONE mystery marker
-// ========================================
-
-function addMysteryMarker(rootContainer) {
-    if (!gameState.mysteryBird || gameState.guesses.length === 0) {
-        return;
-    }
-
-    const revealTaxon = getMysteryRevealTaxon();
-
+    // The mystery is always exactly one leaf.
     const solved = gameState.guesses.some(
         bird =>
             bird.commonName ===
             gameState.mysteryBird.commonName
     );
 
-    // If the answer has been guessed, the mystery node
-    // becomes the real species name in the SAME position.
-    const mysteryName = solved
-        ? gameState.mysteryBird.commonName
-        : "???";
+    const revealTaxon = getMysteryRevealTaxon();
 
-    const mysteryType = solved
-        ? "correct"
-        : "mystery";
+    const mysteryLeaf = {
+        type: "species",
+        name: solved
+            ? gameState.mysteryBird.commonName
+            : "???",
+        nodeType: solved ? "correct" : "mystery"
+    };
 
     if (revealTaxon.level === "class") {
-        addMysterySpeciesToContainer(
-            rootContainer,
-            mysteryName,
-            mysteryType
-        );
-        return;
+        root.children.push(mysteryLeaf);
+    } else {
+        const taxon = findTaxon(revealTaxon.value);
+
+        if (taxon) {
+            taxon.children.push(mysteryLeaf);
+        }
     }
 
-    const taxonNode = [...rootContainer.children].find(
-        child =>
-            child.classList.contains("taxon-node") &&
-            child.dataset.taxon === revealTaxon.value
-    );
-
-    if (!taxonNode) {
-        return;
-    }
-
-    const branchContainer = taxonNode.querySelector(
-        ":scope > .tree-branch"
-    );
-
-    addMysterySpeciesToContainer(
-        branchContainer,
-        mysteryName,
-        mysteryType
-    );
+    return root;
 }
 
 
 // ========================================
-// Add mystery species
+// Metazooa-style tree renderer
 // ========================================
 
-function addMysterySpeciesToContainer(
-    container,
-    name = "???",
-    type = "mystery"
-) {
-    const existing = container.querySelector(
-        ":scope > .mystery-species, :scope > .correct-species"
-    );
+function createTreeNodeElement(node) {
+    const element = document.createElement("div");
 
-    if (existing) {
-        return;
+    element.classList.add("meta-tree-node");
+
+    if (node.type === "taxon") {
+        element.classList.add("meta-taxon-node");
+        element.dataset.taxon = node.name;
+        element.dataset.level = node.level;
+        element.textContent = node.name;
+    } else {
+        element.classList.add("meta-species-node");
+        element.classList.add(`meta-species-${node.nodeType}`);
+        element.textContent = node.name;
     }
 
-    const mystery = createSpeciesNode(
-        name,
-        type
-    );
-
-    container.appendChild(mystery);
+    return element;
 }
-
-
-// ========================================
-// Render complete tree
-// ========================================
 
 function renderTaxonomyTree() {
     taxonomyTree.innerHTML = "";
@@ -506,30 +345,195 @@ function renderTaxonomyTree() {
 
     if (gameState.guesses.length === 0) {
         const placeholder = document.createElement("div");
-
         placeholder.classList.add("tree-placeholder");
-        placeholder.textContent =
-            "Your guesses will appear here.";
-
+        placeholder.textContent = "Your guesses will appear here.";
         taxonomyTree.appendChild(placeholder);
         return;
     }
 
-    const root = createTaxonNode("Aves");
-    root.classList.add("tree-root-node");
+    const model = buildTreeModel();
 
-    const rootContainer = createBranchContainer();
+    const canvas = document.createElement("div");
+    canvas.classList.add("meta-tree-canvas");
 
-    root.appendChild(rootContainer);
-    taxonomyTree.appendChild(root);
+    const svg = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "svg"
+    );
+    svg.classList.add("meta-tree-lines");
 
-    // First build all guessed species.
-    gameState.guesses.forEach(guessedBird => {
-        addGuessToTree(rootContainer, guessedBird);
+    const nodeLayer = document.createElement("div");
+    nodeLayer.classList.add("meta-tree-nodes");
+
+    canvas.appendChild(svg);
+    canvas.appendChild(nodeLayer);
+    taxonomyTree.appendChild(canvas);
+
+    // Give every level enough room to resemble the
+    // loose, organic Metazooa tree.
+    const levelGap = 92;
+    const horizontalGap = 150;
+    const sidePadding = 70;
+
+    const positions = [];
+    let leafIndex = 0;
+
+    function measureNode(node) {
+        const element = createTreeNodeElement(node);
+        nodeLayer.appendChild(element);
+
+        const width = Math.max(
+            element.offsetWidth,
+            node.type === "taxon" ? 78 : 74
+        );
+
+        element.remove();
+        return width;
+    }
+
+    function layout(node, depth) {
+        if (node.type === "species") {
+            const width = measureNode(node);
+            const x = sidePadding + leafIndex * horizontalGap;
+            leafIndex++;
+            positions.push({
+                node,
+                depth,
+                x,
+                width
+            });
+            return x;
+        }
+
+        const width = measureNode(node);
+
+        if (node.children.length === 0) {
+            const x = sidePadding + leafIndex * horizontalGap;
+            leafIndex++;
+            positions.push({
+                node,
+                depth,
+                x,
+                width
+            });
+            return x;
+        }
+
+        const childXs = node.children.map(
+            child => layout(child, depth + 1)
+        );
+
+        const x =
+            (childXs[0] + childXs[childXs.length - 1]) / 2;
+
+        positions.push({
+            node,
+            depth,
+            x,
+            width
+        });
+
+        return x;
+    }
+
+    layout(model, 0);
+
+    const maxDepth = Math.max(
+        ...positions.map(position => position.depth)
+    );
+
+    const canvasWidth = Math.max(
+        taxonomyTree.clientWidth - 20,
+        sidePadding * 2 + Math.max(0, leafIndex - 1) * horizontalGap
+    );
+
+    const canvasHeight =
+        50 + (maxDepth + 1) * levelGap;
+
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
+    svg.setAttribute("width", canvasWidth);
+    svg.setAttribute("height", canvasHeight);
+    svg.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
+
+    const positioned = new Map();
+
+    positions.forEach(position => {
+        const element = createTreeNodeElement(position.node);
+
+        const nodeHeight = element.offsetHeight || 34;
+        const x = position.x - position.width / 2;
+        const y =
+            24 +
+            position.depth * levelGap -
+            nodeHeight / 2;
+
+        element.style.left = `${x}px`;
+        element.style.top = `${y}px`;
+
+        nodeLayer.appendChild(element);
+
+        positioned.set(position.node, {
+            x: position.x,
+            y: y + nodeHeight / 2,
+            width: position.width,
+            height: nodeHeight,
+            element
+        });
     });
 
-    // Then place the single mystery marker.
-    addMysteryMarker(rootContainer);
+    function drawConnections(node) {
+        if (node.type !== "taxon") {
+            return;
+        }
+
+        const parent = positioned.get(node);
+
+        node.children.forEach(child => {
+            const childPosition = positioned.get(child);
+
+            if (!parent || !childPosition) {
+                return;
+            }
+
+            const startX = parent.x;
+            const startY = parent.y + parent.height / 2 - 1;
+            const endX = childPosition.x;
+            const endY = childPosition.y - childPosition.height / 2 + 1;
+
+            const curve = Math.max(
+                30,
+                Math.abs(endY - startY) * 0.55
+            );
+
+            const path = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "path"
+            );
+
+            path.setAttribute(
+                "d",
+                `M ${startX} ${startY}
+                 C ${startX} ${startY + curve},
+                   ${endX} ${endY - curve},
+                   ${endX} ${endY}`
+            );
+
+            path.classList.add("meta-tree-connection");
+
+            if (child.type === "taxon") {
+                path.classList.add("meta-connection-taxon");
+            } else {
+                path.classList.add("meta-connection-species");
+            }
+
+            svg.appendChild(path);
+
+            drawConnections(child);
+        });
+    }
+
+    drawConnections(model);
 }
 
 
