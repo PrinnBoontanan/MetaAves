@@ -491,18 +491,56 @@ function buildTreeModel() {
         branchEndpoints.some(endpoint => endpoint.id === commonAnchor.id);
 
     function getDisplayPath(bird, endpoint) {
-        const path = getEndpointPath(bird, endpoint);
-        const result = [path[0]];
+        const path = getBirdPhylogenyPath(bird);
+        const endpointIndex = path.findIndex(node => node.id === endpoint.id);
 
-        if (showCommonClade) {
-            result.push(commonAnchor);
+        if (endpointIndex === -1) {
+            return [path[0], endpoint];
         }
 
-        if (
-            endpoint.level !== "class" &&
-            endpoint.id !== commonAnchor.id
-        ) {
-            result.push(endpoint);
+        // Keep the real hierarchy between the shared anchor and the
+        // endpoint. The previous renderer jumped directly from Neornithes
+        // to Aequornithes, for example, which incorrectly made Aequornithes
+        // look like a sibling of Neoaves.
+        //
+        // Ranked endpoints show the ranked chain, while a clade endpoint
+        // preserves the clade chain needed to show relationships such as:
+        // Aves -> Neornithes -> Neoaves -> Aequornithes.
+        const result = [path[0]];
+
+        let anchorIndex = -1;
+
+        if (showCommonClade) {
+            anchorIndex = path.findIndex(
+                node => node.id === commonAnchor.id
+            );
+
+            if (anchorIndex > 0) {
+                result.push(commonAnchor);
+            }
+        }
+
+        const startIndex = anchorIndex >= 0
+            ? anchorIndex + 1
+            : 1;
+
+        for (let i = startIndex; i <= endpointIndex; i++) {
+            const node = path[i];
+
+            // When the endpoint is a ranked taxon, intermediate clades are
+            // intentionally hidden unless the clade itself is the useful
+            // visible endpoint. This preserves the existing "deeper ranked
+            // taxon beats clade" behavior for cases such as hornbills.
+            if (
+                endpoint.level !== "clade" &&
+                node.level === "clade"
+            ) {
+                continue;
+            }
+
+            if (!result.some(existing => existing.id === node.id)) {
+                result.push(node);
+            }
         }
 
         return result;
