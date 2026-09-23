@@ -268,12 +268,12 @@ body {
 
 .meta-connection-taxon {
     stroke: #7d641f;
-    stroke-width: 3.5;
+    stroke-width: 5;
 }
 
 .meta-connection-species {
     stroke: #7b8c4b;
-    stroke-width: 2;
+    stroke-width: 3.5;
 }
 
 
