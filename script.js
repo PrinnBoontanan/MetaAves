@@ -723,7 +723,8 @@ function renderTaxonomyTree() {
         const element = createTreeNodeElement(position.node);
 
         const nodeHeight = element.offsetHeight || 34;
-        const x = position.x - position.width / 2;
+        const actualWidth = element.offsetWidth || position.width;
+        const x = position.x - actualWidth / 2;
         const y =
             24 +
             position.depth * levelGap -
@@ -753,7 +754,7 @@ function renderTaxonomyTree() {
         positioned.set(position.node, {
             x: position.x,
             y: y + nodeHeight / 2,
-            width: position.width,
+            width: actualWidth,
             height: nodeHeight,
             depth: position.depth,
             element
