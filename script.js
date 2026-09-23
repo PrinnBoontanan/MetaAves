@@ -184,12 +184,16 @@ function showSuggestions(searchText) {
 function getBirdPhylogenyPath(bird) {
     if (!bird) return [];
 
-    // The generated taxonomy now stores the real parent relationship for
-    // every ranked node. Build the path from the species upward instead of
-    // assuming that every rank is present or directly follows another rank.
-    const speciesId = `species:${bird.scientificName}`;
+    // Species IDs in generated taxonomy are sanitized, so never construct
+    // an ID directly from the raw scientific name. Resolve the actual node.
+    const speciesTaxon = Object.values(gameState.taxonomy || {}).find(
+        taxon =>
+            taxon.rank === "species" &&
+            taxon.name === bird.scientificName
+    );
+
     const rankedPath = [];
-    let currentId = speciesId;
+    let currentId = speciesTaxon?.id || null;
     const seen = new Set();
 
     while (
@@ -208,25 +212,19 @@ function getBirdPhylogenyPath(bird) {
             depth: 0
         });
 
-        if (taxon.id === "class:Aves") {
-            break;
-        }
-
+        if (taxon.id === "class:Aves") break;
         currentId = taxon.parent;
     }
 
-    // Fallback for an un-enriched species record. This keeps the game
-    // playable if a particular species is absent from the external taxonomy.
-    if (
-        rankedPath.length === 0 ||
-        rankedPath[0]?.id !== "class:Aves"
-    ) {
-        const fallback = [{
+    // Safe fallback for a species that somehow has no generated node.
+    if (!rankedPath.length || rankedPath[0]?.id !== "class:Aves") {
+        rankedPath.length = 0;
+        rankedPath.push({
             id: "class:Aves",
             level: "class",
-            value: "Aves",
+            value: bird.class || "Aves",
             depth: 0
-        }];
+        });
 
         taxonomyLevels.forEach(level => {
             if (level === "class" || level === "species") return;
@@ -234,54 +232,85 @@ function getBirdPhylogenyPath(bird) {
             const value = bird[level];
             if (!value) return;
 
-            fallback.push({
-                id: `${level}:${value}`,
+            rankedPath.push({
+                id: nodeIdForTaxon(level, value),
                 level,
                 value,
-                depth: fallback.length
+                depth: 0
             });
         });
 
-        rankedPath.length = 0;
-        rankedPath.push(...fallback);
+        rankedPath.push({
+            id: nodeIdForTaxon("species", bird.scientificName),
+            level: "species",
+            value: bird.scientificName,
+            depth: 0
+        });
     }
 
-    // Clades are a separate phylogenetic layer. Their parent relationships
-    // let us keep nested clades in their real position:
-    // Aves -> Neornithes -> Neognathae -> Neoaves -> Aequornithes -> order.
-    const cladePath = Array.isArray(bird.cladePath)
-        ? bird.cladePath
-        : [];
+    // Clades are a separate layer, but their parent pointers give us the
+    // correct root-to-leaf order. This fixes the old bug where clades were
+    // simply appended before/after ranked taxonomy without regard to their
+    // actual nesting.
+    const cladeEntries = new Map();
+
+    (Array.isArray(bird.cladePath) ? bird.cladePath : []).forEach(name => {
+        const clade = Object.values(gameState.clades || {}).find(
+            entry =>
+                entry.rank === "clade" &&
+                entry.name === name
+        );
+
+        if (clade) cladeEntries.set(clade.id, clade);
+    });
+
+    function cladeDepth(clade) {
+        let depth = 0;
+        let current = clade;
+        const seenClades = new Set();
+
+        while (
+            current?.parent &&
+            !seenClades.has(current.id)
+        ) {
+            seenClades.add(current.id);
+            const parent = gameState.clades?.[current.parent];
+
+            if (!parent || !cladeEntries.has(parent.id)) break;
+
+            depth++;
+            current = parent;
+        }
+
+        return depth;
+    }
+
+    const orderedClades = [...cladeEntries.values()]
+        .sort((a, b) => cladeDepth(a) - cladeDepth(b));
 
     const result = [];
     const addNode = (id, level, value) => {
-        if (!result.some(node => node.id === id)) {
-            result.push({
-                id,
-                level,
-                value,
-                depth: result.length
-            });
-        }
+        if (!id || result.some(node => node.id === id)) return;
+
+        result.push({
+            id,
+            level,
+            value,
+            depth: result.length
+        });
     };
 
-    // Aves is always the root.
+    // Aves is the immutable root.
     addNode("class:Aves", "class", "Aves");
 
-    // Add clades in their stored root-to-leaf order.
-    cladePath.forEach(cladeName => {
-        const clade = Object.values(gameState.clades || {}).find(
-            entry => entry.rank === "clade" && entry.name === cladeName
-        );
-
-        if (clade) {
-            addNode(clade.id, "clade", clade.name);
-        }
+    // Every clade supplied for the species sits between Aves and the first
+    // ranked taxon below Aves. Parent pointers determine their ordering.
+    orderedClades.forEach(clade => {
+        addNode(clade.id, "clade", clade.name);
     });
 
-    // Add the ranked lineage after the clade chain. The renderer can choose
-    // which intermediate nodes to collapse, but the logical path remains
-    // complete and correctly ordered.
+    // Add the ranked taxonomy exactly as stored by the generated parent
+    // relationships. No rank is invented when the source does not provide it.
     rankedPath.slice(1).forEach(node => {
         addNode(node.id, node.level, node.value);
     });
@@ -292,64 +321,37 @@ function getBirdPhylogenyPath(bird) {
     }));
 }
 
+function nodeIdForTaxon(rank, value) {
+    const safe = String(value || "")
+        .replace(/[^A-Za-z0-9_-]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+
+    return `${rank}:${safe}`;
+}
+
 function getDeepestSharedTaxon(guessedBird, mysteryBird) {
     const guessedPath = getBirdPhylogenyPath(guessedBird);
     const mysteryPath = getBirdPhylogenyPath(mysteryBird);
 
-    // The deepest common ancestor is simply the last identical node in the
-    // two complete root-to-leaf paths. This makes intermediate ranks and
-    // clades obey exactly the same mechanic.
-    let deepest = guessedPath[0] || {
+    const max = Math.min(
+        guessedPath.length,
+        mysteryPath.length
+    );
+
+    let deepest = {
         id: "class:Aves",
         level: "class",
         value: "Aves",
         depth: 0
     };
 
-    const max = Math.min(guessedPath.length, mysteryPath.length);
-
     for (let i = 0; i < max; i++) {
-        if (guessedPath[i].id !== mysteryPath[i].id) {
-            break;
-        }
+        if (guessedPath[i].id !== mysteryPath[i].id) break;
 
         deepest = {
             ...mysteryPath[i],
             depth: i
         };
-    }
-
-    return deepest;
-}
-
-
-// ========================================
-// Get where the mystery belongs
-// ========================================
-
-function getMysteryRevealTaxon() {
-    let deepest = {
-        level: "class",
-        value: "Aves",
-        depth: 0
-    };
-
-    for (const guessedBird of gameState.guesses) {
-        if (
-            guessedBird.commonName ===
-            gameState.mysteryBird.commonName
-        ) {
-            continue;
-        }
-
-        const shared = getDeepestSharedTaxon(
-            guessedBird,
-            gameState.mysteryBird
-        );
-
-        if (shared.depth > deepest.depth) {
-            deepest = shared;
-        }
     }
 
     return deepest;
@@ -418,19 +420,7 @@ function makeGuess() {
 // Build the logical tree
 // ========================================
 
-function getCommonCladeAnchor(birds) {
-    if (!birds.length) {
-        return {
-            id: "class:Aves",
-            level: "class",
-            value: "Aves",
-            depth: 0
-        };
-    }
-
-    const paths = birds.map(getBirdPhylogenyPath);
-    const firstClades = paths[0].filter(node => node.level === "clade");
-
+function getMysteryRevealTaxon() {
     let deepest = {
         id: "class:Aves",
         level: "class",
@@ -438,20 +428,28 @@ function getCommonCladeAnchor(birds) {
         depth: 0
     };
 
-    for (const candidate of firstClades) {
-        const sharedByAll = paths.every(path =>
-            path.some(node => node.id === candidate.id)
+    for (const guessedBird of gameState.guesses) {
+        if (guessedBird.commonName === gameState.mysteryBird.commonName) {
+            continue;
+        }
+
+        const shared = getDeepestSharedTaxon(
+            guessedBird,
+            gameState.mysteryBird
         );
 
-        if (sharedByAll) {
-            deepest = candidate;
-        } else {
-            break;
+        if (shared.depth > deepest.depth) {
+            deepest = shared;
         }
     }
 
     return deepest;
 }
+
+
+// ========================================
+// Build the logical tree
+// ========================================
 
 function buildTreeModel() {
     const root = {
@@ -462,127 +460,35 @@ function buildTreeModel() {
         children: []
     };
 
-    // At the start of a game, show only the root Aves node.
-    // Do not reveal the mystery bird or any clade until the first guess.
-    if (gameState.guesses.length === 0) {
+    if (!gameState.guesses.length) {
         return root;
     }
 
-    const activeBirds = [
-        ...gameState.guesses.filter(
-            bird => bird.commonName !== gameState.mysteryBird.commonName
-        ),
-        gameState.mysteryBird
-    ];
-
-    const commonAnchor = getCommonCladeAnchor(activeBirds);
-
     function findChild(parent, id) {
         return parent.children.find(
-            child => child.type === "taxon" && child.taxonId === id
+            child =>
+                child.type === "taxon" &&
+                child.taxonId === id
         );
     }
 
-    function getEndpointPath(bird, endpoint) {
+    function insertPathToEndpoint(bird, endpoint, nodeType) {
         const path = getBirdPhylogenyPath(bird);
-        const endpointIndex = path.findIndex(node => node.id === endpoint.id);
+        const endpointIndex = path.findIndex(
+            node => node.id === endpoint.id
+        );
 
-        if (endpointIndex === -1) {
-            return [endpoint];
-        }
+        const visiblePath =
+            endpointIndex >= 0
+                ? path.slice(0, endpointIndex + 1)
+                : [path[0]];
 
-        return path.slice(0, endpointIndex + 1);
-    }
-
-    // A clade is shown when it is the common branching point
-    // for the current tree. This matches the Metazooa-style behavior:
-    // if one branch ends at the shared clade (e.g. House Sparrow at
-    // Telluraves), that clade becomes the common parent of the other
-    // deeper branch (e.g. Bucerotidae).
-    const mysteryEndpointForTree = getMysteryRevealTaxon();
-
-    const branchEndpoints = [
-        ...gameState.guesses
-            .filter(bird => bird.commonName !== gameState.mysteryBird.commonName)
-            .map(bird => getDeepestSharedTaxon(bird, gameState.mysteryBird)),
-        mysteryEndpointForTree
-    ];
-
-    const showCommonClade =
-        commonAnchor.level !== "class" &&
-        branchEndpoints.some(endpoint => endpoint.id === commonAnchor.id);
-
-    function getDisplayPath(bird, endpoint) {
-        const path = getBirdPhylogenyPath(bird);
-        const endpointIndex = path.findIndex(node => node.id === endpoint.id);
-
-        if (endpointIndex === -1) {
-            return [path[0], endpoint];
-        }
-
-        // Keep the real hierarchy between the shared anchor and the
-        // endpoint. The previous renderer jumped directly from Neornithes
-        // to Aequornithes, for example, which incorrectly made Aequornithes
-        // look like a sibling of Neoaves.
-        //
-        // Ranked endpoints show the ranked chain, while a clade endpoint
-        // preserves the clade chain needed to show relationships such as:
-        // Aves -> Neornithes -> Neoaves -> Aequornithes.
-        const result = [path[0]];
-
-        let anchorIndex = -1;
-
-        if (showCommonClade) {
-            anchorIndex = path.findIndex(
-                node => node.id === commonAnchor.id
-            );
-
-            if (anchorIndex > 0) {
-                result.push(commonAnchor);
-            }
-        }
-
-        const startIndex = anchorIndex >= 0
-            ? anchorIndex + 1
-            : 1;
-
-        for (let i = startIndex; i <= endpointIndex; i++) {
-            const node = path[i];
-
-            // Preserve the actual hierarchy when a clade is a parent of the
-            // ranked endpoint. This prevents Aequornithes from ever becoming
-            // a sibling of Neoaves. A clade may still be collapsed by the
-            // higher-level common-anchor logic when it is not needed as a
-            // visible branching point.
-            if (!result.some(existing => existing.id === node.id)) {
-                result.push(node);
-            }
-        }
-
-        return result;
-    }
-
-    function insertBird(bird, endpoint, nodeType) {
-        const mysteryRevealedAfterLoss =
-            nodeType === "mystery" && gameState.gameStatus === "lost";
-
-        const leaf = {
-            type: "species",
-            name: nodeType === "mystery" && !mysteryRevealedAfterLoss
-                ? "???"
-                : bird.commonName,
-            nodeType: mysteryRevealedAfterLoss ? "revealed-lost" : nodeType,
-            bird: nodeType === "mystery" && !mysteryRevealedAfterLoss
-                ? null
-                : bird
-        };
-
-        const displayPath = getDisplayPath(bird, endpoint);
         let parent = root;
 
-        for (let i = 1; i < displayPath.length; i++) {
-            const taxon = displayPath[i];
-
+        // Every branch is built from the real root-to-MRCA path. This is the
+        // key Metazooa behavior: the guess stops exactly where it diverges
+        // from the mystery instead of inventing sibling relationships.
+        visiblePath.slice(1).forEach(taxon => {
             let child = findChild(parent, taxon.id);
 
             if (!child) {
@@ -593,53 +499,69 @@ function buildTreeModel() {
                     level: taxon.level,
                     children: []
                 };
+
                 parent.children.push(child);
             }
 
             parent = child;
-        }
+        });
 
-        parent.children.push(leaf);
+        const isMystery = nodeType === "mystery";
+        const isSolved = gameState.gameStatus === "won";
+        const revealMystery = !isMystery || isSolved || gameState.gameStatus === "lost";
+
+        parent.children.push({
+            type: "species",
+            name: isMystery && !revealMystery
+                ? "???"
+                : bird.commonName,
+            nodeType:
+                isMystery && gameState.gameStatus === "lost"
+                    ? "revealed-lost"
+                    : nodeType,
+            bird:
+                isMystery && !revealMystery
+                    ? null
+                    : bird
+        });
     }
 
-    // Guesses are placed at their deepest shared taxon.
-    gameState.guesses.forEach(bird => {
-        if (bird.commonName === gameState.mysteryBird.commonName) return;
+    const wrongGuesses = gameState.guesses.filter(
+        bird => bird.commonName !== gameState.mysteryBird.commonName
+    );
 
-        const endpoint = getDeepestSharedTaxon(
+    // Every wrong guess gets its own branch ending at its MRCA.
+    wrongGuesses.forEach(bird => {
+        insertPathToEndpoint(
             bird,
-            gameState.mysteryBird
+            getDeepestSharedTaxon(bird, gameState.mysteryBird),
+            "guess"
         );
-
-        insertBird(bird, endpoint, "guess");
     });
 
     const solved = gameState.guesses.some(
         bird => bird.commonName === gameState.mysteryBird.commonName
     );
 
-    const mysteryEndpoint = getMysteryRevealTaxon();
-
-    insertBird(
-        gameState.mysteryBird,
-        mysteryEndpoint,
-        solved ? "correct" : "mystery"
-    );
-
-    // The mystery placeholder must not have a bird object while unsolved.
-    if (!solved) {
-        function removeMysteryBirdReference(node) {
-            if (node.type === "species" && node.nodeType === "mystery") {
-                node.bird = null;
-                return;
-            }
-
-            if (node.children) {
-                node.children.forEach(removeMysteryBirdReference);
-            }
-        }
-
-        removeMysteryBirdReference(root);
+    if (solved) {
+        // Once the player finds the species, reveal the complete lineage.
+        insertPathToEndpoint(
+            gameState.mysteryBird,
+            {
+                id: getBirdPhylogenyPath(gameState.mysteryBird).at(-1)?.id,
+                level: "species",
+                value: gameState.mysteryBird.scientificName
+            },
+            "correct"
+        );
+    } else {
+        // Until solved, the mystery only extends as far as the best
+        // evidence supplied by the guesses.
+        insertPathToEndpoint(
+            gameState.mysteryBird,
+            getMysteryRevealTaxon(),
+            "mystery"
+        );
     }
 
     return root;
@@ -1090,7 +1012,7 @@ function renderTaxonomyTree() {
     const model = buildTreeModel();
 
     const canvas = document.createElement("div");
-    canvas.classList.add("meta-tree-canvas");
+    canvas.className = "meta-tree-canvas";
 
     const svg = document.createElementNS(
         "http://www.w3.org/2000/svg",
@@ -1099,20 +1021,24 @@ function renderTaxonomyTree() {
     svg.classList.add("meta-tree-lines");
 
     const nodeLayer = document.createElement("div");
-    nodeLayer.classList.add("meta-tree-nodes");
+    nodeLayer.className = "meta-tree-nodes";
 
     canvas.appendChild(svg);
     canvas.appendChild(nodeLayer);
     taxonomyTree.appendChild(canvas);
 
-    const levelGap = 96;
-    const horizontalGap = 42;
-    const sidePadding = 44;
+    const levelGap = 88;
+    const horizontalGap = 34;
+    const sidePadding = 42;
+    const topPadding = 34;
+
     const positions = [];
     const measuredWidths = new Map();
 
     function measureNode(node) {
-        if (measuredWidths.has(node)) return measuredWidths.get(node);
+        if (measuredWidths.has(node)) {
+            return measuredWidths.get(node);
+        }
 
         const element = createTreeNodeElement(node);
         element.style.visibility = "hidden";
@@ -1122,8 +1048,8 @@ function renderTaxonomyTree() {
         nodeLayer.appendChild(element);
 
         const width = Math.max(
-            element.offsetWidth || 74,
-            node.type === "taxon" ? 84 : 78
+            element.offsetWidth || 76,
+            node.type === "taxon" ? 82 : 76
         );
 
         element.remove();
@@ -1131,59 +1057,65 @@ function renderTaxonomyTree() {
         return width;
     }
 
-    function getSubtreeWidth(node) {
-        const ownWidth = measureNode(node);
-
-        if (!node.children || node.children.length === 0) {
-            node.__treeWidth = ownWidth;
-            return ownWidth;
+    function subtreeWidth(node) {
+        if (!node.children?.length) {
+            node.__treeWidth = measureNode(node);
+            return node.__treeWidth;
         }
 
         const childrenWidth =
             node.children.reduce(
-                (sum, child) => sum + getSubtreeWidth(child),
+                (sum, child) => sum + subtreeWidth(child),
                 0
             ) +
-            horizontalGap * Math.max(0, node.children.length - 1);
+            horizontalGap * (node.children.length - 1);
 
-        node.__treeWidth = Math.max(ownWidth, childrenWidth);
+        node.__treeWidth = Math.max(
+            measureNode(node),
+            childrenWidth
+        );
+
         return node.__treeWidth;
     }
 
-    const treeContentWidth = getSubtreeWidth(model);
+    const contentWidth = subtreeWidth(model);
 
     function place(node, depth, left) {
-        const subtreeWidth = node.__treeWidth || measureNode(node);
+        const width = node.__treeWidth || measureNode(node);
         const ownWidth = measureNode(node);
 
         let centerX;
 
-        if (!node.children || node.children.length === 0) {
-            centerX = left + subtreeWidth / 2;
+        if (!node.children?.length) {
+            centerX = left + width / 2;
         } else {
-            const childWidths = node.children.map(
-                child => child.__treeWidth || measureNode(child)
-            );
-
             const totalChildrenWidth =
-                childWidths.reduce((sum, width) => sum + width, 0) +
-                horizontalGap * Math.max(0, childWidths.length - 1);
+                node.children.reduce(
+                    (sum, child) => sum + (child.__treeWidth || measureNode(child)),
+                    0
+                ) +
+                horizontalGap * (node.children.length - 1);
 
             let cursor =
                 left +
-                (subtreeWidth - totalChildrenWidth) / 2;
+                (width - totalChildrenWidth) / 2;
 
-            const childCenters = [];
+            const centers = [];
 
-            node.children.forEach((child, index) => {
-                const childCenter = place(child, depth + 1, cursor);
-                childCenters.push(childCenter);
-                cursor += childWidths[index] + horizontalGap;
+            node.children.forEach(child => {
+                const childWidth =
+                    child.__treeWidth || measureNode(child);
+
+                centers.push(
+                    place(child, depth + 1, cursor)
+                );
+
+                cursor += childWidth + horizontalGap;
             });
 
             centerX =
-                childCenters.reduce((sum, x) => sum + x, 0) /
-                childCenters.length;
+                centers.reduce((sum, value) => sum + value, 0) /
+                centers.length;
         }
 
         positions.push({
@@ -1196,33 +1128,36 @@ function renderTaxonomyTree() {
         return centerX;
     }
 
-    const minimumContentWidth = treeContentWidth + sidePadding * 2;
     const canvasWidth = Math.max(
         taxonomyTree.clientWidth - 20,
-        minimumContentWidth
+        contentWidth + sidePadding * 2
     );
 
     const leftOffset = Math.max(
         sidePadding,
-        (canvasWidth - treeContentWidth) / 2
+        (canvasWidth - contentWidth) / 2
     );
 
     place(model, 0, leftOffset);
 
     const maxDepth = Math.max(
-        ...positions.map(position => position.depth),
-        0
+        0,
+        ...positions.map(position => position.depth)
     );
 
     const canvasHeight =
-        56 + (maxDepth + 1) * levelGap;
+        topPadding * 2 +
+        (maxDepth + 1) * levelGap;
 
-    canvas.style.width = canvasWidth + "px";
-    canvas.style.height = canvasHeight + "px";
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
 
     svg.setAttribute("width", canvasWidth);
     svg.setAttribute("height", canvasHeight);
-    svg.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
+    svg.setAttribute(
+        "viewBox",
+        `0 0 ${canvasWidth} ${canvasHeight}`
+    );
 
     const positioned = new Map();
 
@@ -1230,19 +1165,17 @@ function renderTaxonomyTree() {
         const element = createTreeNodeElement(position.node);
 
         const nodeHeight = element.offsetHeight || 34;
-        const actualWidth = element.offsetWidth || position.width;
-
-        const x = position.x - actualWidth / 2;
+        const x = position.x - element.offsetWidth / 2;
         const y =
-            28 +
+            topPadding +
             position.depth * levelGap -
             nodeHeight / 2;
 
-        element.style.left = x + "px";
-        element.style.top = y + "px";
+        element.style.left = `${x}px`;
+        element.style.top = `${y}px`;
         element.style.setProperty(
             "--node-delay",
-            `${position.depth * 0.95}s`
+            `${Math.min(position.depth * 0.08, 0.8)}s`
         );
 
         nodeLayer.appendChild(element);
@@ -1252,16 +1185,13 @@ function renderTaxonomyTree() {
             y: y + element.offsetHeight / 2,
             width: element.offsetWidth,
             height: element.offsetHeight,
-            depth: position.depth,
-            element
+            depth: position.depth
         });
     });
 
     function drawConnections(node) {
-        if (node.type !== "taxon") return;
-
         const parent = positioned.get(node);
-        if (!parent) return;
+        if (!parent || !node.children?.length) return;
 
         node.children.forEach(child => {
             const childPosition = positioned.get(child);
@@ -1272,54 +1202,44 @@ function renderTaxonomyTree() {
             const endX = childPosition.x;
             const endY = childPosition.y - childPosition.height / 2;
 
-            const verticalDistance = Math.max(1, endY - startY);
-            const curve = Math.max(26, verticalDistance * 0.48);
+            // Use a clean cladogram-style elbow. Horizontal branches make
+            // the shared ancestor and the split visually obvious, while
+            // keeping labels from being crossed by diagonal curves.
+            const midY = startY + Math.max(
+                12,
+                (endY - startY) * 0.5
+            );
 
             const path = document.createElementNS(
                 "http://www.w3.org/2000/svg",
                 "path"
             );
 
-            if (Math.abs(startX - endX) < 1) {
-                path.setAttribute(
-                    "d",
-                    `M ${startX} ${startY} L ${endX} ${endY}`
-                );
-            } else {
-                path.setAttribute(
-                    "d",
-                    `M ${startX} ${startY}
-                     C ${startX} ${startY + curve},
-                       ${endX} ${endY - curve},
-                       ${endX} ${endY}`
-                );
-            }
+            path.setAttribute(
+                "d",
+                `M ${startX} ${startY}
+                 L ${startX} ${midY}
+                 L ${endX} ${midY}
+                 L ${endX} ${endY}`
+            );
 
             path.classList.add("meta-tree-connection");
+            path.classList.add(
+                child.type === "taxon"
+                    ? "meta-connection-taxon"
+                    : "meta-connection-species"
+            );
 
-            const pathLength = path.getTotalLength();
-            path.style.strokeDasharray = pathLength;
-            path.style.strokeDashoffset = pathLength;
-            path.style.setProperty("--branch-length", pathLength);
-
-            if (child.type === "taxon") {
-                path.classList.add("meta-connection-taxon");
-            } else {
-                path.classList.add("meta-connection-species");
-            }
+            const length = path.getTotalLength();
+            path.style.setProperty("--branch-length", length);
+            path.style.strokeDasharray = length;
+            path.style.strokeDashoffset = length;
+            path.style.animationDelay =
+                `${Math.min(parent.depth * 0.08 + 0.12, 1)}s`;
 
             svg.appendChild(path);
 
-            const branchDelay =
-                positioned.get(node).depth * 0.95 + 0.28;
-
-            setTimeout(() => {
-                path.classList.add("active");
-            }, branchDelay * 1000);
-
-            if (child.type === "taxon") {
-                drawConnections(child);
-            }
+            drawConnections(child);
         });
     }
 
