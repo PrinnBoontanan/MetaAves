@@ -427,7 +427,7 @@ def main():
             "rankOrder": RANKS,
             "rootTaxa": ["class:Aves"],
             "nodeTypes": ["ranked_taxon", "species"],
-            "taxonomyPolicy": "Classic MetaAves taxonomy uses only Class → Order → Family → Genus → Species. Named phylogenetic clades are maintained separately."
+            "taxonomyPolicy": "Classic MetaAves taxonomy uses only Class → Order → Family → Genus → Species. Named phylogenetic clades are maintained separately.",
             "clades": (
                 "Maintained separately from ranked taxonomy. "
                 "The game can insert clade nodes between ranked taxa."

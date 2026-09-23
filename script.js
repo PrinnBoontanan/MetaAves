@@ -73,7 +73,10 @@ async function loadGameData() {
 
         const cladeMembership = await cladeMembershipResponse.json();
         const membershipBySpecies = cladeMembership.species || {};
+        const canonicalCladePaths =
+            gameState.clades?._meta?.orderCladePaths || {};
 
+<<<<<<< HEAD
         // Use the corrected phylogenetic backbone at runtime. The generated
         // membership file remains a compatibility/cache layer, but the game
         // must not inherit an outdated clade assignment from it.
@@ -81,6 +84,21 @@ async function loadGameData() {
             bird.cladePath = getCorrectedCladePath(bird)
                 || membershipBySpecies[bird.scientificName]
                 || ["Neornithes", "Neognathae", "Neoaves"];
+=======
+        // The generated species membership file is a build artifact, but the
+        // canonical order → clade relationship lives in clades.json so the
+        // game cannot silently keep using a stale generated path.
+        //
+        // In particular, Passeriformes must be:
+        // Neoaves → Telluraves → Australaves → Psittacopasserae
+        // (see the Telluraves phylogeny).
+        gameState.birds.forEach(bird => {
+            const canonicalPath = canonicalCladePaths[bird.order];
+
+            bird.cladePath = canonicalPath
+                ? [...canonicalPath]
+                : (membershipBySpecies[bird.scientificName] || []);
+>>>>>>> 8af37c9cfb00f2b9e131d7048d66ebfa9b58cd8d
         });
 
         // The ranked hierarchy is intentionally fixed to the classic game model.

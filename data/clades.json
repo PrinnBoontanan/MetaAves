@@ -13,7 +13,285 @@
         "note": "Genome-scale avian phylogeny supporting major clades including Telluraves, Afroaves and Australaves."
       }
     ],
-    "uncertaintyPolicy": "Only relationships with useful broad support are encoded in the backbone. Contested deep Neoaves relationships remain explicitly unresolved rather than presented as certain."
+    "uncertaintyPolicy": "Only relationships with useful broad support are encoded in the backbone. Contested deep Neoaves relationships remain explicitly unresolved rather than presented as certain.",
+    "orderCladePaths": {
+      "Struthioniformes": [
+        "Neornithes",
+        "Palaeognathae"
+      ],
+      "Casuariiformes": [
+        "Neornithes",
+        "Palaeognathae"
+      ],
+      "Apterygiformes": [
+        "Neornithes",
+        "Palaeognathae"
+      ],
+      "Rheiformes": [
+        "Neornithes",
+        "Palaeognathae"
+      ],
+      "Tinamiformes": [
+        "Neornithes",
+        "Palaeognathae"
+      ],
+      "Anseriformes": [
+        "Neornithes",
+        "Neognathae",
+        "Galloanserae"
+      ],
+      "Galliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Galloanserae"
+      ],
+      "Phoenicopteriformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Mirandornithes"
+      ],
+      "Podicipediformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Mirandornithes"
+      ],
+      "Musophagiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Otidimorphae"
+      ],
+      "Otidiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Otidimorphae"
+      ],
+      "Cuculiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Otidimorphae"
+      ],
+      "Mesitornithiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbimorphae"
+      ],
+      "Pterocliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbimorphae"
+      ],
+      "Columbiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbimorphae"
+      ],
+      "Gaviiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Aequornithes"
+      ],
+      "Sphenisciformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Aequornithes"
+      ],
+      "Procellariiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Aequornithes"
+      ],
+      "Ciconiiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Aequornithes"
+      ],
+      "Suliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Aequornithes"
+      ],
+      "Pelecaniformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Aequornithes"
+      ],
+      "Caprimulgiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Strisores"
+      ],
+      "Steatornithiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Strisores"
+      ],
+      "Nyctibiiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Strisores"
+      ],
+      "Podargiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Strisores"
+      ],
+      "Aegotheliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Strisores"
+      ],
+      "Apodiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Strisores"
+      ],
+      "Phaethontiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Phaethontimorphae"
+      ],
+      "Eurypygiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves"
+      ],
+      "Gruiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves"
+      ],
+      "Charadriiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves"
+      ],
+      "Opisthocomiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves"
+      ],
+      "Accipitriformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves"
+      ],
+      "Cathartiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves"
+      ],
+      "Strigiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves"
+      ],
+      "Coliiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves"
+      ],
+      "Leptosomiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves"
+      ],
+      "Trogoniformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves"
+      ],
+      "Bucerotiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves"
+      ],
+      "Coraciiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves"
+      ],
+      "Galbuliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves"
+      ],
+      "Piciformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves"
+      ],
+      "Cariamiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Australaves"
+      ],
+      "Falconiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Australaves"
+      ],
+      "Psittaciformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Australaves",
+        "Psittacopasserae"
+      ],
+      "Passeriformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Australaves",
+        "Psittacopasserae"
+      ]
+    }
   },
   "clade:Neornithes": {
     "id": "clade:Neornithes",
