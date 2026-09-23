@@ -88,6 +88,93 @@ def find_avilist_sheet(workbook):
     )
 
 
+
+def validate_import(birds, taxa):
+    print("\n=== MetaAves Import Validation ===")
+
+    missing_fields = {
+        "commonName": [],
+        "scientificName": [],
+        "order": [],
+        "family": [],
+        "genus": []
+    }
+
+    for bird in birds:
+        for field in missing_fields:
+            if not bird.get(field):
+                missing_fields[field].append(bird.get("scientificName") or bird.get("commonName") or "<unknown>")
+
+    def duplicate_count(values):
+        seen = set()
+        duplicates = set()
+        for value in values:
+            if not value:
+                continue
+            if value in seen:
+                duplicates.add(value)
+            seen.add(value)
+        return len(duplicates)
+
+    duplicate_scientific = duplicate_count(
+        bird.get("scientificName") for bird in birds
+    )
+    duplicate_common = duplicate_count(
+        bird.get("commonName") for bird in birds
+    )
+
+    extinct_count = sum(1 for bird in birds if bird.get("isExtinct"))
+
+    invalid_taxon_parents = [
+        taxon_id_value
+        for taxon_id_value, taxon in taxa.items()
+        if taxon_id_value != "class:Aves"
+        and taxon.get("parent") not in taxa
+    ]
+
+    root = taxa.get("class:Aves")
+    invalid_root = (
+        not root
+        or root.get("rank") != "class"
+        or root.get("name") != "Aves"
+        or root.get("parent") is not None
+    )
+
+    print(f"Species imported:        {len(birds):,}")
+    print(f"Extinct/possibly extinct:{extinct_count:,}")
+    print(f"Taxonomy nodes:          {len(taxa):,}")
+    print()
+    print(f"Missing common names:    {len(missing_fields['commonName']):,}")
+    print(f"Missing scientific names:{len(missing_fields['scientificName']):,}")
+    print(f"Missing order:           {len(missing_fields['order']):,}")
+    print(f"Missing family:          {len(missing_fields['family']):,}")
+    print(f"Missing genus:           {len(missing_fields['genus']):,}")
+    print()
+    print(f"Duplicate scientific:    {duplicate_scientific:,}")
+    print(f"Duplicate common names:  {duplicate_common:,}")
+    print(f"Invalid taxon parents:   {len(invalid_taxon_parents):,}")
+    print(f"Invalid Aves root:       {'YES' if invalid_root else 'NO'}")
+
+    errors = (
+        any(missing_fields.values())
+        or duplicate_scientific > 0
+        or invalid_taxon_parents
+        or invalid_root
+    )
+
+    if errors:
+        print("\nSTATUS: CHECK REQUIRED")
+        for field, values in missing_fields.items():
+            if values:
+                print(f"  {field}: {values[:5]}")
+        if invalid_taxon_parents:
+            print(f"  Invalid parent examples: {invalid_taxon_parents[:5]}")
+        return False
+
+    print("\nSTATUS: PASS")
+    return True
+
+
 def main():
     if len(sys.argv) != 2:
         raise SystemExit(
@@ -270,6 +357,8 @@ def main():
     print(f"Generated {len(taxa):,} ranked taxonomy nodes")
     print("Wrote data/birds.generated.json")
     print("Wrote data/taxonomy.generated.json")
+
+    validate_import(birds, taxa)
 
 
 if __name__ == "__main__":
