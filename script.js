@@ -11,6 +11,7 @@ const gameState = {
     guesses: [],
     taxonomy: null,
     taxonInfo: null,
+    clades: null,
     selectedTaxonId: null,
     gameStatus: "playing"
 };
@@ -35,19 +36,21 @@ const taxonomyLevels = [
 
 async function loadGameData() {
     try {
-        const [birdResponse, taxonomyResponse, infoResponse] = await Promise.all([
+        const [birdResponse, taxonomyResponse, infoResponse, cladeResponse] = await Promise.all([
             fetch("data/birds.json"),
             fetch("data/taxonomy.json"),
-            fetch("data/taxon_info.json")
+            fetch("data/taxon_info.json"),
+            fetch("data/clades.json")
         ]);
 
-        if (!birdResponse.ok || !taxonomyResponse.ok || !infoResponse.ok) {
+        if (!birdResponse.ok || !taxonomyResponse.ok || !infoResponse.ok || !cladeResponse.ok) {
             throw new Error("Could not load MetaAves data.");
         }
 
         gameState.birds = await birdResponse.json();
         gameState.taxonomy = await taxonomyResponse.json();
         gameState.taxonInfo = await infoResponse.json();
+        gameState.clades = await cladeResponse.json();
 
         // Temporary mystery for testing.
         gameState.mysteryBird = gameState.birds.find(
@@ -137,25 +140,70 @@ function showSuggestions(searchText) {
 // Find deepest shared taxon
 // ========================================
 
+function getBirdPhylogenyPath(bird) {
+    if (!bird) return [];
+
+    const path = [
+        { id: "class:Aves", level: "class", value: "Aves", depth: 0 }
+    ];
+
+    const cladePath = Array.isArray(bird.cladePath)
+        ? bird.cladePath
+        : [];
+
+    cladePath.forEach((cladeName, index) => {
+        const clade = Object.values(gameState.clades || {}).find(
+            entry => entry.rank === "clade" && entry.name === cladeName
+        );
+
+        if (clade) {
+            path.push({
+                id: clade.id,
+                level: "clade",
+                value: clade.name,
+                depth: path.length
+            });
+        }
+    });
+
+    taxonomyLevels.forEach(level => {
+        if (bird[level]) {
+            const id = level === "class"
+                ? "class:Aves"
+                : `${level}:${bird[level]}`;
+
+            if (!path.some(node => node.id === id)) {
+                path.push({
+                    id,
+                    level,
+                    value: bird[level],
+                    depth: path.length
+                });
+            }
+        }
+    });
+
+    return path;
+}
+
 function getDeepestSharedTaxon(guessedBird, mysteryBird) {
-    let deepest = {
+    const guessedPath = getBirdPhylogenyPath(guessedBird);
+    const mysteryPath = getBirdPhylogenyPath(mysteryBird);
+
+    let deepest = mysteryPath[0] || {
+        id: "class:Aves",
         level: "class",
         value: "Aves",
         depth: 0
     };
 
-    for (let i = 0; i < taxonomyLevels.length; i++) {
-        const level = taxonomyLevels[i];
+    const limit = Math.min(guessedPath.length, mysteryPath.length);
 
-        if (guessedBird[level] !== mysteryBird[level]) {
+    for (let i = 0; i < limit; i++) {
+        if (guessedPath[i].id !== mysteryPath[i].id) {
             break;
         }
-
-        deepest = {
-            level,
-            value: guessedBird[level],
-            depth: i + 1
-        };
+        deepest = mysteryPath[i];
     }
 
     return deepest;
@@ -266,11 +314,12 @@ function buildTreeModel() {
         children: []
     };
 
-    function findTaxon(name) {
+    function findTaxon(name, level) {
         return root.children.find(
             child =>
                 child.type === "taxon" &&
-                child.name === name
+                child.name === name &&
+                child.level === level
         );
     }
 
@@ -292,57 +341,56 @@ function buildTreeModel() {
             return;
         }
 
-        let taxon = findTaxon(sharedTaxon.value);
+        let taxon = findTaxon(sharedTaxon.value, sharedTaxon.level);
 
         if (!taxon) {
             taxon = {
                 type: "taxon",
                 name: sharedTaxon.value,
-                taxonId: `${sharedTaxon.level}:${sharedTaxon.value}`,
+                taxonId: sharedTaxon.id,
                 level: sharedTaxon.level,
                 children: []
             };
-
             root.children.push(taxon);
         }
 
         taxon.children.push(leaf);
     }
 
-    // Guessed birds create the visible branches.
     gameState.guesses.forEach(bird => {
         if (bird.commonName !== gameState.mysteryBird.commonName) {
             addBird(bird, "guess");
         }
     });
 
-    // The mystery is always exactly one leaf.
     const solved = gameState.guesses.some(
-        bird =>
-            bird.commonName ===
-            gameState.mysteryBird.commonName
+        bird => bird.commonName === gameState.mysteryBird.commonName
     );
 
     const revealTaxon = getMysteryRevealTaxon();
 
     const mysteryLeaf = {
         type: "species",
-        name: solved
-            ? gameState.mysteryBird.commonName
-            : "???",
+        name: solved ? gameState.mysteryBird.commonName : "???",
         nodeType: solved ? "correct" : "mystery",
-        // Keep the actual bird attached after the mystery is solved so
-        // the revealed species remains a real tree node and can be opened.
         bird: solved ? gameState.mysteryBird : null
     };
 
     if (revealTaxon.level === "class") {
         root.children.push(mysteryLeaf);
     } else {
-        const taxon = findTaxon(revealTaxon.value);
+        const taxon = findTaxon(revealTaxon.value, revealTaxon.level);
 
         if (taxon) {
             taxon.children.push(mysteryLeaf);
+        } else {
+            root.children.push({
+                type: "taxon",
+                name: revealTaxon.value,
+                taxonId: revealTaxon.id,
+                level: revealTaxon.level,
+                children: [mysteryLeaf]
+            });
         }
     }
 
@@ -462,11 +510,17 @@ function renderBirdCard(bird, wiki) {
 }
 
 function selectTaxon(node) {
-    if (node.type !== "taxon" || !gameState.taxonomy) return;
+    if (node.type !== "taxon") return;
 
-    const taxon = Object.values(gameState.taxonomy).find(
-        entry => entry.id === node.taxonId
-    );
+    let taxon = null;
+
+    if (node.level === "clade") {
+        taxon = gameState.clades?.[node.taxonId] || null;
+    } else if (gameState.taxonomy) {
+        taxon = Object.values(gameState.taxonomy).find(
+            entry => entry.id === node.taxonId
+        );
+    }
 
     if (!taxon) return;
 
@@ -474,9 +528,11 @@ function selectTaxon(node) {
     renderTaxonCard(taxon);
 }
 
+
 function renderTaxonCard(taxon) {
     const card = document.getElementById("taxon-card");
     const info = gameState.taxonInfo?.[taxon.id] || {};
+    const isClade = taxon.rank === "clade";
 
     card.innerHTML = "";
 
@@ -493,7 +549,10 @@ function renderTaxonCard(taxon) {
     }
 
     const description = document.createElement("p");
-    description.textContent = info.description || "No information available for this taxon yet.";
+    description.textContent =
+        info.description ||
+        taxon.description ||
+        (isClade ? "Phylogenetic clade information is not available yet." : "No information available for this taxon yet.");
 
     card.appendChild(title);
     card.appendChild(rank);
@@ -537,16 +596,18 @@ function renderTaxonCard(taxon) {
 function getMostUsefulTaxon() {
     if (!gameState.mysteryBird || !gameState.taxonomy) return null;
 
-    // Before any guess, show Aves.
     if (gameState.guesses.length === 0) {
         return gameState.taxonomy["class:Aves"] || null;
     }
 
-    // Use the same deepest shared taxon that the tree currently reveals.
     const reveal = getMysteryRevealTaxon();
+
+    if (reveal.level === "clade") {
+        return gameState.clades?.[reveal.id] || null;
+    }
+
     const id = `${reveal.level}:${reveal.value}`;
 
-    // Prefer the exact ID, then fall back to a matching taxon object.
     return gameState.taxonomy[id]
         || Object.values(gameState.taxonomy).find(
             taxon =>
@@ -556,6 +617,7 @@ function getMostUsefulTaxon() {
         || gameState.taxonomy["class:Aves"]
         || null;
 }
+
 
 function updateAutomaticTaxonCard() {
     const taxon = getMostUsefulTaxon();
