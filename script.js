@@ -238,10 +238,16 @@ function getBirdPhylogenyPath(bird) {
         });
     }
 
-    // Clades are a separate layer, but their parent pointers give us the
-    // correct root-to-leaf order. This fixes the old bug where clades were
-    // simply appended before/after ranked taxonomy without regard to their
-    // actual nesting.
+    // Clades are a separate phylogenetic layer, but they must be
+    // interleaved with the ranked taxonomy in root-to-leaf order.
+    //
+    // Example:
+    // Aves -> Neornithes -> Neognathae -> Neoaves -> Telluraves
+    // -> Afroaves -> Bucerotiformes -> Bucerotidae -> ...
+    //
+    // The old code appended clades after the ranked taxonomy, which meant
+    // a bird in Bucerotiformes could appear to terminate at Telluraves
+    // instead of continuing into its order.
     const cladeEntries = new Map();
 
     (Array.isArray(bird.cladePath) ? bird.cladePath : []).forEach(name => {
@@ -278,38 +284,21 @@ function getBirdPhylogenyPath(bird) {
     const orderedClades = [...cladeEntries.values()]
         .sort((a, b) => cladeDepth(a) - cladeDepth(b));
 
-    const result = [];
-    const addNode = (id, level, value) => {
-        if (!id || result.some(node => node.id === id)) return;
-
-        result.push({
-            id,
-            level,
-            value,
-            depth: result.length
-        });
-    };
-
-    // Aves is the immutable root.
-    addNode("class:Aves", "class", "Aves");
-
-    // Every clade supplied for the species sits between Aves and the first
-    // ranked taxon below Aves. Parent pointers determine their ordering.
-    orderedClades.forEach(clade => {
-        addNode(clade.id, "clade", clade.name);
-    });
-
-    // Add the ranked taxonomy exactly as stored by the generated parent
-    // relationships. No rank is invented when the source does not provide it.
-    rankedPath.slice(1).forEach(node => {
-        addNode(node.id, node.level, node.value);
-    });
-
-    return result.map((node, index) => ({
+    // Keep the formal ranked taxonomy intact, but insert the clade chain
+    // immediately after Aves and before Order.
+    return [
+        rankedPath[0],
+        ...orderedClades.map(clade => ({
+            id: clade.id,
+            level: "clade",
+            value: clade.name,
+            depth: 0
+        })),
+        ...rankedPath.slice(1)
+    ].map((node, index) => ({
         ...node,
         depth: index
     }));
-}
 
 function nodeIdForTaxon(rank, value) {
     const safe = String(value || "")
