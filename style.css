@@ -1269,3 +1269,58 @@ body {
         max-height: 65vh;
     }
 }
+
+
+/* ========================================
+   Custom MetaAves scrollbars
+======================================== */
+
+.taxonomy-tree,
+.taxonomy-table-wrap,
+.game-over-card {
+    scrollbar-width: thin;
+    scrollbar-color: #9b8a66 #eee5d4;
+    scrollbar-gutter: stable;
+}
+
+.taxonomy-tree::-webkit-scrollbar,
+.taxonomy-table-wrap::-webkit-scrollbar,
+.game-over-card::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+}
+
+.taxonomy-tree::-webkit-scrollbar-track,
+.taxonomy-table-wrap::-webkit-scrollbar-track,
+.game-over-card::-webkit-scrollbar-track {
+    background: #eee5d4;
+    border-radius: 999px;
+}
+
+.taxonomy-tree::-webkit-scrollbar-thumb,
+.taxonomy-table-wrap::-webkit-scrollbar-thumb,
+.game-over-card::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #b8a67d, #887754);
+    border: 3px solid #eee5d4;
+    border-radius: 999px;
+}
+
+.taxonomy-tree::-webkit-scrollbar-thumb:hover,
+.taxonomy-table-wrap::-webkit-scrollbar-thumb:hover,
+.game-over-card::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #a79263, #746343);
+}
+
+.meta-species-revealed-lost {
+    background: #4d8d39 !important;
+    color: #ffffff !important;
+    border: 1px solid #3b6d2c !important;
+    font-weight: 700;
+}
+
+.meta-species-node {
+    max-width: 230px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+}
