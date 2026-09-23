@@ -328,7 +328,10 @@ function buildTreeModel() {
         name: solved
             ? gameState.mysteryBird.commonName
             : "???",
-        nodeType: solved ? "correct" : "mystery"
+        nodeType: solved ? "correct" : "mystery",
+        // Keep the actual bird attached after the mystery is solved so
+        // the revealed species remains a real tree node and can be opened.
+        bird: solved ? gameState.mysteryBird : null
     };
 
     if (revealTaxon.level === "class") {
