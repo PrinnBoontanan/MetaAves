@@ -390,26 +390,22 @@ function buildTreeModel() {
     function getDisplayPath(bird, endpoint) {
         const path = getEndpointPath(bird, endpoint);
 
-        // Clades are displayed only when they lead to a revealed
-        // ranked taxon below Aves. If the deepest shared ranked
-        // taxon is Aves itself (for example Sparrow vs. Hornbill),
-        // the branch comes directly from Aves.
+        // Show whichever shared level is deeper:
+        // - If a ranked taxon (for example Bucerotidae) is deeper
+        //   than the shared clade, show the ranked taxon directly.
+        // - If the deepest shared ranked taxon is only Aves, but a
+        //   shared clade such as Telluraves is deeper, show that clade.
         const result = [path[0]];
 
-        if (endpoint.level === "class") {
-            return result;
+        if (commonAnchor.level !== "class" &&
+            commonAnchor.depth > endpoint.depth) {
+            result.push(commonAnchor);
         }
 
-        const endpointIndex = path.findIndex(node => node.id === endpoint.id);
-        const cladeBeforeEndpoint = path
-            .slice(1, endpointIndex)
-            .filter(node => node.level === "clade");
-
-        if (cladeBeforeEndpoint.length > 0) {
-            result.push(cladeBeforeEndpoint[cladeBeforeEndpoint.length - 1]);
+        if (endpoint.level !== "class") {
+            result.push(endpoint);
         }
 
-        result.push(endpoint);
         return result;
     }
 
