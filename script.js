@@ -751,11 +751,16 @@ function renderTaxonomyTree() {
 
         nodeLayer.appendChild(element);
 
+        // Use the actual rendered element center for connector coordinates.
+        // This avoids tiny offsets caused by font metrics, padding, or transforms.
+        const renderedCenterX = element.offsetLeft + element.offsetWidth / 2;
+        const renderedCenterY = element.offsetTop + element.offsetHeight / 2;
+
         positioned.set(position.node, {
-            x: position.x,
-            y: y + nodeHeight / 2,
-            width: actualWidth,
-            height: nodeHeight,
+            x: renderedCenterX,
+            y: renderedCenterY,
+            width: element.offsetWidth,
+            height: element.offsetHeight,
             depth: position.depth,
             element
         });
