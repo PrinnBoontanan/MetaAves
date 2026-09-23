@@ -236,7 +236,9 @@ body {
 .meta-tree-connection {
     fill: none;
     stroke-linecap: round;
+}
 
+.meta-tree-connection.active {
     animation: grow-tree-branch 0.65s ease-out forwards;
 }
 
