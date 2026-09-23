@@ -184,120 +184,142 @@ function showSuggestions(searchText) {
 function getBirdPhylogenyPath(bird) {
     if (!bird) return [];
 
-    const path = [
-        {
+    // The generated taxonomy now stores the real parent relationship for
+    // every ranked node. Build the path from the species upward instead of
+    // assuming that every rank is present or directly follows another rank.
+    const speciesId = `species:${bird.scientificName}`;
+    const rankedPath = [];
+    let currentId = speciesId;
+    const seen = new Set();
+
+    while (
+        currentId &&
+        !seen.has(currentId) &&
+        gameState.taxonomy?.[currentId]
+    ) {
+        seen.add(currentId);
+
+        const taxon = gameState.taxonomy[currentId];
+
+        rankedPath.unshift({
+            id: taxon.id,
+            level: taxon.rank,
+            value: taxon.name,
+            depth: 0
+        });
+
+        if (taxon.id === "class:Aves") {
+            break;
+        }
+
+        currentId = taxon.parent;
+    }
+
+    // Fallback for an un-enriched species record. This keeps the game
+    // playable if a particular species is absent from the external taxonomy.
+    if (
+        rankedPath.length === 0 ||
+        rankedPath[0]?.id !== "class:Aves"
+    ) {
+        const fallback = [{
             id: "class:Aves",
             level: "class",
             value: "Aves",
             depth: 0
-        }
-    ];
+        }];
 
-    // Clades remain a separate phylogenetic layer. They are inserted before
-    // the ranked taxonomy and are only used when a clade is actually shared
-    // deeply enough to matter to the current tree.
+        taxonomyLevels.forEach(level => {
+            if (level === "class" || level === "species") return;
+
+            const value = bird[level];
+            if (!value) return;
+
+            fallback.push({
+                id: `${level}:${value}`,
+                level,
+                value,
+                depth: fallback.length
+            });
+        });
+
+        rankedPath.length = 0;
+        rankedPath.push(...fallback);
+    }
+
+    // Clades are a separate phylogenetic layer. Their parent relationships
+    // let us keep nested clades in their real position:
+    // Aves -> Neornithes -> Neognathae -> Neoaves -> Aequornithes -> order.
     const cladePath = Array.isArray(bird.cladePath)
         ? bird.cladePath
         : [];
 
+    const result = [];
+    const addNode = (id, level, value) => {
+        if (!result.some(node => node.id === id)) {
+            result.push({
+                id,
+                level,
+                value,
+                depth: result.length
+            });
+        }
+    };
+
+    // Aves is always the root.
+    addNode("class:Aves", "class", "Aves");
+
+    // Add clades in their stored root-to-leaf order.
     cladePath.forEach(cladeName => {
         const clade = Object.values(gameState.clades || {}).find(
             entry => entry.rank === "clade" && entry.name === cladeName
         );
 
-        if (clade && !path.some(node => node.id === clade.id)) {
-            path.push({
-                id: clade.id,
-                level: "clade",
-                value: clade.name,
-                depth: path.length
-            });
+        if (clade) {
+            addNode(clade.id, "clade", clade.name);
         }
     });
 
-    // Add every populated ranked level in canonical order. The renderer may
-    // later collapse intermediate nodes, but the underlying path retains the
-    // full taxonomy so any rank can become the deepest shared endpoint.
-    taxonomyLevels.forEach(level => {
-        if (level === "class") return;
-
-        const value = bird[level];
-        if (!value) return;
-
-        const id = `${level}:${value}`;
-
-        if (!path.some(node => node.id === id)) {
-            path.push({
-                id,
-                level,
-                value,
-                depth: path.length
-            });
-        }
+    // Add the ranked lineage after the clade chain. The renderer can choose
+    // which intermediate nodes to collapse, but the logical path remains
+    // complete and correctly ordered.
+    rankedPath.slice(1).forEach(node => {
+        addNode(node.id, node.level, node.value);
     });
 
-    return path;
+    return result.map((node, index) => ({
+        ...node,
+        depth: index
+    }));
 }
+
 function getDeepestSharedTaxon(guessedBird, mysteryBird) {
     const guessedPath = getBirdPhylogenyPath(guessedBird);
     const mysteryPath = getBirdPhylogenyPath(mysteryBird);
 
-    // First compare the formal ranked taxonomy independently of the
-    // phylogenetic clades. Clades are inserted into the path, so comparing
-    // the paths by array index would make a shared family/order look like
-    // Aves whenever the two birds have different clade branches.
-    let deepestRanked = guessedPath[0] || {
+    // The deepest common ancestor is simply the last identical node in the
+    // two complete root-to-leaf paths. This makes intermediate ranks and
+    // clades obey exactly the same mechanic.
+    let deepest = guessedPath[0] || {
         id: "class:Aves",
         level: "class",
         value: "Aves",
         depth: 0
     };
 
-    for (const level of taxonomyLevels) {
-        if (level === "class" || level === "species") {
-            continue;
-        }
+    const max = Math.min(guessedPath.length, mysteryPath.length);
 
-        const guessedNode = guessedPath.find(node => node.level === level);
-        const mysteryNode = mysteryPath.find(node => node.level === level);
-
-        // A missing intermediate rank must not make a later populated rank
-        // appear to be shared. Stop as soon as the formal hierarchy diverges.
-        if (
-            guessedNode &&
-            mysteryNode &&
-            guessedNode.id === mysteryNode.id
-        ) {
-            deepestRanked = mysteryNode;
-        } else if (guessedNode || mysteryNode) {
+    for (let i = 0; i < max; i++) {
+        if (guessedPath[i].id !== mysteryPath[i].id) {
             break;
         }
+
+        deepest = {
+            ...mysteryPath[i],
+            depth: i
+        };
     }
 
-    // If the birds only share Aves as a formal rank, use their deepest
-    // shared clade as the visible branch point. This is what lets a bird
-    // such as House Sparrow terminate at Telluraves while a hornbill branch
-    // continues deeper to Bucerotidae.
-    const guessedClades = guessedPath.filter(node => node.level === "clade");
-    const mysteryClades = mysteryPath.filter(node => node.level === "clade");
-
-    let deepestSharedClade = null;
-
-    for (const clade of guessedClades) {
-        if (mysteryClades.some(node => node.id === clade.id)) {
-            deepestSharedClade = clade;
-        } else {
-            break;
-        }
-    }
-
-    // A shared ranked taxon takes precedence over a clade. For example,
-    // two hornbills share Bucerotidae, so Afroaves should not replace it.
-    if (deepestRanked.level !== "class") {
-        return deepestRanked;
-    }
-
-    return deepestSharedClade || deepestRanked;
+    return deepest;
 }
 
 
@@ -527,17 +549,11 @@ function buildTreeModel() {
         for (let i = startIndex; i <= endpointIndex; i++) {
             const node = path[i];
 
-            // When the endpoint is a ranked taxon, intermediate clades are
-            // intentionally hidden unless the clade itself is the useful
-            // visible endpoint. This preserves the existing "deeper ranked
-            // taxon beats clade" behavior for cases such as hornbills.
-            if (
-                endpoint.level !== "clade" &&
-                node.level === "clade"
-            ) {
-                continue;
-            }
-
+            // Preserve the actual hierarchy when a clade is a parent of the
+            // ranked endpoint. This prevents Aequornithes from ever becoming
+            // a sibling of Neoaves. A clade may still be collapsed by the
+            // higher-level common-anchor logic when it is not needed as a
+            // visible branching point.
             if (!result.some(existing => existing.id === node.id)) {
                 result.push(node);
             }
