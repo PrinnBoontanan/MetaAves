@@ -5,13 +5,9 @@ Build MetaAves bird/taxonomy data from the official AviList v2025b XLSX.
 Usage:
   python scripts/import_avilist.py path/to/AviList-v2025b-extended.xlsx
 
-The importer treats AviList as the authoritative ranked taxonomy. AviList
-v2025b currently publishes the classic order/family/genus/species ranks, but
-the importer is deliberately rank-aware so future AviList releases can add
-intermediate ranks without requiring another importer rewrite.
-
-Enrichment fields (Thai name, habitat, diet, behavior, breeding, interesting
-facts) are intentionally kept separate because AviList does not provide them.
+The importer treats AviList as the authoritative ranked taxonomy and
+automatically finds the AviList extended worksheet, so minor worksheet
+name/capitalization changes do not break the import.
 """
 
 import json
@@ -27,11 +23,6 @@ RANKS = [
     "superfamily", "family", "subfamily", "tribe", "subtribe",
     "genus", "subgenus", "species"
 ]
-
-# AviList currently publishes order/family/genus/species as its core
-# taxonomic ranks. Keeping this list separate makes the importer forward
-# compatible with future intermediate-rank columns.
-CORE_AVILIST_RANKS = ["order", "family", "genus", "species"]
 
 
 def clean(value):
@@ -71,6 +62,32 @@ def taxon_id(rank, name):
     return f"{rank}:{safe_name}"
 
 
+def find_avilist_sheet(workbook):
+    # Prefer the known current name, but normalize case/spacing so the
+    # importer also works with harmless naming differences.
+    preferred = "AviList v2025b extended"
+    if preferred in workbook.sheetnames:
+        return workbook[preferred]
+
+    target = normalize_header(preferred)
+    for sheet_name in workbook.sheetnames:
+        normalized = normalize_header(sheet_name)
+        if normalized == target:
+            return workbook[sheet_name]
+
+    # Fallback: find any sheet containing both "avilist" and "extended".
+    for sheet_name in workbook.sheetnames:
+        normalized = normalize_header(sheet_name)
+        if "avilist" in normalized and "extended" in normalized:
+            return workbook[sheet_name]
+
+    available = ", ".join(repr(name) for name in workbook.sheetnames)
+    raise SystemExit(
+        "Could not find the AviList extended worksheet. "
+        f"Available worksheets: {available}"
+    )
+
+
 def main():
     if len(sys.argv) != 2:
         raise SystemExit(
@@ -82,13 +99,10 @@ def main():
         raise SystemExit(f"File not found: {xlsx}")
 
     wb = load_workbook(xlsx, read_only=True, data_only=True)
+    ws = find_avilist_sheet(wb)
 
-    if "AviList v2025b" not in wb.sheetnames:
-        raise SystemExit(
-            "Could not find the 'AviList v2025b' worksheet in the XLSX."
-        )
+    print(f"Using worksheet: {ws.title}")
 
-    ws = wb["AviList v2025b"]
     rows = ws.iter_rows(values_only=True)
     headers = next(rows)
 
@@ -129,8 +143,6 @@ def main():
     for row in rows:
         rank = clean(row[cols["rank"]])
 
-        # MetaAves guesses species. Subspecies and higher-rank rows are
-        # represented through the species records and generated taxonomy.
         if rank != "species":
             continue
 
@@ -140,7 +152,6 @@ def main():
         if not common or not scientific:
             continue
 
-        # Start with the fixed biological backbone used by MetaAves.
         bird = {
             "commonName": common,
             "scientificName": scientific,
@@ -166,26 +177,17 @@ def main():
             "subgenus": None,
             "species": scientific,
             "habitat": None,
-            "distribution": (
-                clean(row[cols["range"]])
-                if cols["range"] is not None else None
-            ),
+            "distribution": clean(row[cols["range"]]) if cols["range"] is not None else None,
             "diet": None,
             "behavior": None,
             "breeding": None,
-            "conservation": (
-                clean(row[cols["iucn"]])
-                if cols["iucn"] is not None else None
-            ),
+            "conservation": clean(row[cols["iucn"]]) if cols["iucn"] is not None else None,
             "interestingFacts": [],
             "wikipediaTitle": common,
             "genusCharacteristics": []
         }
 
-        extinct_value = (
-            clean(row[cols["extinct"]])
-            if cols["extinct"] is not None else None
-        )
+        extinct_value = clean(row[cols["extinct"]]) if cols["extinct"] is not None else None
         bird["isExtinct"] = bool(
             extinct_value
             and extinct_value.lower() in {
@@ -195,9 +197,6 @@ def main():
 
         birds.append(bird)
 
-        # Build the ranked hierarchy using every populated rank in the
-        # canonical order. This is intentionally not hard-coded to
-        # order -> family -> genus.
         parent_id = "class:Aves"
 
         for tax_rank in RANKS[RANKS.index("class") + 1:]:
@@ -224,9 +223,6 @@ def main():
 
         species_id = taxon_id("species", scientific)
 
-        # Species always becomes the terminal node. If a future AviList
-        # release supplies subgenus/subspecies-style intermediary fields,
-        # those are already inserted before this point.
         if species_id not in taxa:
             taxa[species_id] = {
                 "id": species_id,
@@ -272,6 +268,8 @@ def main():
 
     print(f"Imported {len(birds):,} species")
     print(f"Generated {len(taxa):,} ranked taxonomy nodes")
+    print("Wrote data/birds.generated.json")
+    print("Wrote data/taxonomy.generated.json")
 
 
 if __name__ == "__main__":
