@@ -39,14 +39,27 @@ let taxonomyLevels = [
 
 async function loadGameData() {
     try {
-        const [birdResponse, taxonomyResponse, infoResponse, cladeResponse] = await Promise.all([
-            fetch("data/birds.json"),
-            fetch("data/taxonomy.json"),
+        const [
+            birdResponse,
+            taxonomyResponse,
+            infoResponse,
+            cladeResponse,
+            cladeMembershipResponse
+        ] = await Promise.all([
+            fetch("data/birds.generated.json"),
+            fetch("data/taxonomy.generated.json"),
             fetch("data/taxon_info.json"),
-            fetch("data/clades.json")
+            fetch("data/clades.json"),
+            fetch("data/clade_membership.generated.json")
         ]);
 
-        if (!birdResponse.ok || !taxonomyResponse.ok || !infoResponse.ok || !cladeResponse.ok) {
+        if (
+            !birdResponse.ok ||
+            !taxonomyResponse.ok ||
+            !infoResponse.ok ||
+            !cladeResponse.ok ||
+            !cladeMembershipResponse.ok
+        ) {
             throw new Error("Could not load MetaAves data.");
         }
 
@@ -54,6 +67,15 @@ async function loadGameData() {
         gameState.taxonomy = await taxonomyResponse.json();
         gameState.taxonInfo = await infoResponse.json();
         gameState.clades = await cladeResponse.json();
+
+        const cladeMembership = await cladeMembershipResponse.json();
+        const membershipBySpecies = cladeMembership.species || {};
+
+        // Join the generated clade layer to the generated bird records.
+        // The scientific name is the stable species key produced by AviList.
+        gameState.birds.forEach(bird => {
+            bird.cladePath = membershipBySpecies[bird.scientificName] || [];
+        });
 
         // Read the canonical rank order from the generated taxonomy when
         // available. This keeps the game engine independent of a fixed
@@ -68,10 +90,10 @@ async function loadGameData() {
                 .filter(level => level !== "species");
         }
 
-        // Temporary mystery for testing.
-        gameState.mysteryBird = gameState.birds.find(
-            bird => bird.commonName === "Oriental Pied Hornbill"
-        );
+        // Select a random species from the full imported dataset.
+        // The mystery remains hidden from the player until it is guessed.
+        gameState.mysteryBird =
+            gameState.birds[Math.floor(Math.random() * gameState.birds.length)];
 
         updateGuessCounter();
         renderTaxonomyTree();
@@ -1358,11 +1380,10 @@ function replayGame() {
     gameState.selectedTaxonId = null;
     gameState.gameStatus = "playing";
 
-    // Temporary mystery selection until the game mode/random
-    // selection system is implemented.
-    gameState.mysteryBird = gameState.birds.find(
-        bird => bird.commonName === "Oriental Pied Hornbill"
-    );
+    // Start a fresh round with a new mystery species from the
+    // currently loaded full dataset.
+    gameState.mysteryBird =
+        gameState.birds[Math.floor(Math.random() * gameState.birds.length)];
 
     searchInput.value = "";
     suggestions.innerHTML = "";
