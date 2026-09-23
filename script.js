@@ -1316,19 +1316,13 @@ function renderTaxonomyTree() {
         });
     });
 
-    // Draw each branch from parent to child. Branches stay invisible until
-    // their parent branch has finished, so the tree grows outward from Aves
-    // instead of every branch starting at the same time.
-    const branchDuration = 620;
-    const branchGap = 90;
-
-    function drawConnections(node, parentReadyAt = 0) {
+    function drawConnections(node) {
         if (node.type !== "taxon") return;
 
         const parent = positioned.get(node);
         if (!parent) return;
 
-        node.children.forEach((child, childIndex) => {
+        node.children.forEach(child => {
             const childPosition = positioned.get(child);
             if (!childPosition) return;
 
@@ -1363,9 +1357,9 @@ function renderTaxonomyTree() {
             path.classList.add("meta-tree-connection");
 
             const pathLength = path.getTotalLength();
-            path.style.setProperty("--branch-length", pathLength);
             path.style.strokeDasharray = pathLength;
             path.style.strokeDashoffset = pathLength;
+            path.style.setProperty("--branch-length", pathLength);
 
             if (child.type === "taxon") {
                 path.classList.add("meta-connection-taxon");
@@ -1375,20 +1369,15 @@ function renderTaxonomyTree() {
 
             svg.appendChild(path);
 
-            // Siblings can grow together. A child waits until its parent
-            // connection has completed, giving a natural root-to-leaf growth.
             const branchDelay =
-                parentReadyAt + (childIndex > 0 ? branchGap : 0);
+                positioned.get(node).depth * 0.95 + 0.28;
 
             setTimeout(() => {
                 path.classList.add("active");
-            }, branchDelay);
+            }, branchDelay * 1000);
 
             if (child.type === "taxon") {
-                drawConnections(
-                    child,
-                    branchDelay + branchDuration
-                );
+                drawConnections(child);
             }
         });
     }
