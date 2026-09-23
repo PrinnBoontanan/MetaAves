@@ -572,3 +572,15 @@ body {
     margin: 6px 0;
     line-height: 1.55;
 }
+
+.study-card-section a {
+    display: inline-block;
+    margin-top: 2px;
+    color: #587331;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.study-card-section a:hover {
+    text-decoration: underline;
+}
