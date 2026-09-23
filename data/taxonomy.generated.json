@@ -34,7 +34,16 @@
     "nodeTypes": [
       "ranked_taxon",
       "species"
-    ]
+    ],
+    "supplementalTaxonomy": {
+      "name": "MetaAves supplemental passerine taxonomy",
+      "source": "Wikipedia, Passerine",
+      "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+      "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia",
+      "scope": "Passeriformes only",
+      "mappedFamilies": 154,
+      "coveredFamilies": 145
+    }
   },
   "class:Aves": {
     "id": "class:Aves",
@@ -56224,148 +56233,38 @@
     "name": "Passeriformes",
     "parent": "infraclass:Neognathae",
     "children": [
-      "family:Acanthisittidae",
-      "family:Philepittidae",
-      "family:Eurylaimidae",
-      "family:Calyptomenidae",
-      "family:Sapayoidae",
-      "family:Pittidae",
-      "family:Pipridae",
-      "family:Cotingidae",
-      "family:Tityridae",
-      "family:Oxyruncidae",
-      "family:Onychorhynchidae",
-      "family:Tyrannidae",
-      "family:Melanopareiidae",
-      "family:Conopophagidae",
-      "family:Thamnophilidae",
-      "family:Grallariidae",
-      "family:Rhinocryptidae",
-      "family:Formicariidae",
-      "family:Furnariidae",
-      "family:Menuridae",
-      "family:Atrichornithidae",
-      "family:Climacteridae",
-      "family:Ptilonorhynchidae",
-      "superfamily:Meliphagoidea",
       "family:Acanthizidae",
       "family:Meliphagidae",
-      "superfamily:Corvoidea",
-      "family:Pomatostomidae",
       "family:Cinclosomatidae",
       "family:Campephagidae",
-      "family:Mohouidae",
-      "family:Machaerirhynchidae",
-      "family:Artamidae",
-      "family:Rhagologidae",
-      "family:Pityriasidae",
-      "family:Aegithinidae",
       "family:Malaconotidae",
-      "family:Platysteiridae",
-      "family:Vangidae",
-      "family:Neosittidae",
-      "family:Psophodidae",
-      "family:Eulacestomatidae",
-      "family:Oreoicidae",
-      "family:Falcunculidae",
-      "superfamily:Passeroidea",
       "family:Paramythiidae",
-      "family:Vireonidae",
-      "family:Oriolidae",
-      "family:Pachycephalidae",
-      "family:Rhipiduridae",
       "family:Dicruridae",
       "family:Monarchidae",
-      "family:Ifritidae",
-      "family:Paradisaeidae",
-      "family:Melampittidae",
-      "family:Platylophidae",
       "family:Laniidae",
       "family:Corvidae",
-      "family:Cnemophilidae",
       "family:Melanocharitidae",
-      "family:Notiomystidae",
-      "family:Eupetidae",
-      "family:Chaetopidae",
-      "family:Picathartidae",
-      "family:Petroicidae",
-      "family:Stenostiridae",
-      "family:Hyliotidae",
-      "family:Remizidae",
-      "family:Paridae",
-      "family:Panuridae",
-      "superfamily:Sylvioidea",
       "family:Alaudidae",
-      "family:Nicatoridae",
-      "family:Macrosphenidae",
-      "family:Cisticolidae",
-      "family:Acrocephalidae",
-      "family:Donacobiidae",
       "family:Bernieridae",
       "family:Locustellidae",
-      "family:Pnoepygidae",
       "family:Hirundinidae",
-      "family:Hyliidae",
-      "family:Aegithalidae",
-      "family:Erythrocercidae",
-      "family:Cettiidae",
       "family:Phylloscopidae",
       "family:Pycnonotidae",
       "family:Sylviidae",
-      "family:Paradoxornithidae",
       "family:Zosteropidae",
       "family:Timaliidae",
-      "family:Pellorneidae",
-      "family:Leiothrichidae",
-      "family:Dulidae",
-      "family:Bombycillidae",
-      "family:Ptiliogonatidae",
-      "family:Hylocitreidae",
-      "family:Hypocoliidae",
-      "family:Mohoidae",
-      "family:Regulidae",
-      "family:Tichodromidae",
-      "family:Sittidae",
-      "family:Salpornithidae",
-      "family:Certhiidae",
-      "family:Polioptilidae",
-      "family:Troglodytidae",
-      "family:Elachuridae",
-      "family:Buphagidae",
-      "family:Mimidae",
-      "family:Sturnidae",
-      "family:Cinclidae",
-      "family:Turdidae",
-      "family:Muscicapidae",
-      "family:Promeropidae",
-      "family:Modulatricidae",
       "family:Dicaeidae",
       "family:Nectariniidae",
-      "family:Chloropseidae",
       "family:Irenidae",
-      "family:Peucedramidae",
-      "family:Urocynchramidae",
       "family:Ploceidae",
       "family:Viduidae",
       "family:Estrildidae",
-      "family:Passeridae",
       "family:Motacillidae",
       "family:Fringillidae",
-      "family:Rhodinocichlidae",
-      "family:Calcariidae",
-      "family:Emberizidae",
-      "family:Passerellidae",
-      "family:Calyptophilidae",
-      "family:Zeledoniidae",
-      "family:Phaenicophilidae",
-      "family:Nesospingidae",
-      "family:Spindalidae",
-      "family:Teretistridae",
-      "family:Icteridae",
       "family:Parulidae",
-      "family:Cardinalidae",
-      "family:Mitrospingidae",
-      "family:Thraupidae"
+      "suborder:Acanthisitti",
+      "suborder:Tyranni",
+      "suborder:Passeri"
     ],
     "source": "NCBI Taxonomy"
   },
@@ -56373,7 +56272,7 @@
     "id": "family:Acanthisittidae",
     "rank": "family",
     "name": "Acanthisittidae",
-    "parent": "order:Passeriformes",
+    "parent": "suborder:Acanthisitti",
     "children": [
       "genus:Traversia",
       "genus:Acanthisitta",
@@ -56452,7 +56351,7 @@
     "id": "family:Philepittidae",
     "rank": "family",
     "name": "Philepittidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Eurylaimides",
     "children": [
       "genus:Philepitta",
       "genus:Neodrepanis"
@@ -56521,7 +56420,7 @@
     "id": "family:Eurylaimidae",
     "rank": "family",
     "name": "Eurylaimidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Eurylaimides",
     "children": [
       "genus:Pseudocalyptomena",
       "genus:Corydon",
@@ -56700,7 +56599,7 @@
     "id": "family:Calyptomenidae",
     "rank": "family",
     "name": "Calyptomenidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Eurylaimides",
     "children": [
       "genus:Calyptomena",
       "genus:Smithornis"
@@ -56789,7 +56688,7 @@
     "id": "family:Sapayoidae",
     "rank": "family",
     "name": "Sapayoidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Eurylaimides",
     "children": [
       "genus:Sapayoa"
     ],
@@ -56818,7 +56717,7 @@
     "id": "family:Pittidae",
     "rank": "family",
     "name": "Pittidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Eurylaimides",
     "children": [
       "genus:Erythropitta",
       "genus:Hydrornis",
@@ -57317,7 +57216,7 @@
     "id": "family:Pipridae",
     "rank": "family",
     "name": "Pipridae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Tyrannida",
     "children": [
       "genus:Tyranneutes",
       "genus:Neopelma",
@@ -58036,7 +57935,7 @@
     "id": "family:Cotingidae",
     "rank": "family",
     "name": "Cotingidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Tyrannida",
     "children": [
       "genus:Ampelioides",
       "genus:Pipreola",
@@ -58935,7 +58834,7 @@
     "id": "family:Tityridae",
     "rank": "family",
     "name": "Tityridae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Tyrannida",
     "children": [
       "genus:Laniisoma",
       "genus:Laniocera",
@@ -59374,7 +59273,7 @@
     "id": "family:Oxyruncidae",
     "rank": "family",
     "name": "Oxyruncidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Tyrannida",
     "children": [
       "genus:Oxyruncus"
     ],
@@ -59403,7 +59302,7 @@
     "id": "family:Onychorhynchidae",
     "rank": "family",
     "name": "Onychorhynchidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Tyrannida",
     "children": [
       "genus:Onychorhynchus",
       "genus:Terenotriccus",
@@ -59512,7 +59411,7 @@
     "id": "family:Tyrannidae",
     "rank": "family",
     "name": "Tyrannidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Tyrannida",
     "children": [
       "genus:Piprites",
       "genus:Neopipo",
@@ -64971,7 +64870,7 @@
     "id": "family:Melanopareiidae",
     "rank": "family",
     "name": "Melanopareiidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Furnariida",
     "children": [
       "genus:Melanopareia"
     ],
@@ -65030,7 +64929,7 @@
     "id": "family:Conopophagidae",
     "rank": "family",
     "name": "Conopophagidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Furnariida",
     "children": [
       "genus:Pittasoma",
       "genus:Conopophaga"
@@ -65179,7 +65078,7 @@
     "id": "family:Thamnophilidae",
     "rank": "family",
     "name": "Thamnophilidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Furnariida",
     "children": [
       "genus:Myrmornis",
       "genus:Pygiptila",
@@ -68208,7 +68107,7 @@
     "id": "family:Grallariidae",
     "rank": "family",
     "name": "Grallariidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Furnariida",
     "children": [
       "genus:Cryptopezus",
       "genus:Grallaricula",
@@ -68967,7 +68866,7 @@
     "id": "family:Rhinocryptidae",
     "rank": "family",
     "name": "Rhinocryptidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Furnariida",
     "children": [
       "genus:Scelorchilus",
       "genus:Pteroptochos",
@@ -69746,7 +69645,7 @@
     "id": "family:Formicariidae",
     "rank": "family",
     "name": "Formicariidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Furnariida",
     "children": [
       "genus:Chamaeza",
       "genus:Formicarius"
@@ -69895,7 +69794,7 @@
     "id": "family:Furnariidae",
     "rank": "family",
     "name": "Furnariidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Furnariida",
     "children": [
       "genus:Sclerurus",
       "genus:Geositta",
@@ -73824,7 +73723,7 @@
     "id": "family:Menuridae",
     "rank": "family",
     "name": "Menuridae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Menurides",
     "children": [
       "genus:Menura"
     ],
@@ -73863,7 +73762,7 @@
     "id": "family:Atrichornithidae",
     "rank": "family",
     "name": "Atrichornithidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Menurides",
     "children": [
       "genus:Atrichornis"
     ],
@@ -73902,7 +73801,7 @@
     "id": "family:Climacteridae",
     "rank": "family",
     "name": "Climacteridae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Climacterides",
     "children": [
       "genus:Cormobates",
       "genus:Climacteris"
@@ -74001,7 +73900,7 @@
     "id": "family:Ptilonorhynchidae",
     "rank": "family",
     "name": "Ptilonorhynchidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Climacterides",
     "children": [
       "genus:Sericulus",
       "genus:Ptilonorhynchus",
@@ -74320,13 +74219,11 @@
     "id": "superfamily:Meliphagoidea",
     "rank": "superfamily",
     "name": "Meliphagoidea",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Meliphagides",
     "children": [
       "family:Maluridae",
       "family:Dasyornithidae",
-      "family:Pardalotidae",
-      "family:Acanthizidae",
-      "family:Meliphagidae"
+      "family:Pardalotidae"
     ],
     "source": "NCBI Taxonomy"
   },
@@ -74841,7 +74738,7 @@
     "id": "family:Acanthizidae",
     "rank": "family",
     "name": "Acanthizidae",
-    "parent": "superfamily:Meliphagoidea",
+    "parent": "infraorder:Meliphagides",
     "children": [
       "genus:Oreoscopus",
       "genus:Pachycare",
@@ -75660,7 +75557,7 @@
     "id": "family:Meliphagidae",
     "rank": "family",
     "name": "Meliphagidae",
-    "parent": "superfamily:Meliphagoidea",
+    "parent": "infraorder:Meliphagides",
     "children": [
       "genus:Myza",
       "genus:Acanthorhynchus",
@@ -78129,19 +78026,11 @@
     "id": "superfamily:Corvoidea",
     "rank": "superfamily",
     "name": "Corvoidea",
-    "parent": "order:Passeriformes",
+    "parent": "suborder:Passeri",
     "children": [
       "family:Orthonychidae",
-      "family:Cinclosomatidae",
-      "family:Campephagidae",
-      "family:Malaconotidae",
-      "family:Dicruridae",
-      "family:Monarchidae",
       "family:Corcoracidae",
-      "family:Laniidae",
-      "family:Corvidae",
-      "family:Callaeidae",
-      "family:Irenidae"
+      "family:Callaeidae"
     ],
     "source": "NCBI Taxonomy"
   },
@@ -78198,7 +78087,7 @@
     "id": "family:Pomatostomidae",
     "rank": "family",
     "name": "Pomatostomidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Orthonynchides",
     "children": [
       "genus:Garritornis",
       "genus:Pomatostomus"
@@ -78277,7 +78166,7 @@
     "id": "family:Cinclosomatidae",
     "rank": "family",
     "name": "Cinclosomatidae",
-    "parent": "superfamily:Corvoidea",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Ptilorrhoa",
       "genus:Cinclosoma"
@@ -78426,7 +78315,7 @@
     "id": "family:Campephagidae",
     "rank": "family",
     "name": "Campephagidae",
-    "parent": "superfamily:Corvoidea",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Pericrocotus",
       "genus:Ceblepyris",
@@ -79615,7 +79504,7 @@
     "id": "family:Mohouidae",
     "rank": "family",
     "name": "Mohouidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Mohoua"
     ],
@@ -79664,7 +79553,7 @@
     "id": "family:Machaerirhynchidae",
     "rank": "family",
     "name": "Machaerirhynchidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Machaerirhynchus"
     ],
@@ -79703,7 +79592,7 @@
     "id": "family:Artamidae",
     "rank": "family",
     "name": "Artamidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Artamus",
       "genus:Peltops",
@@ -80012,7 +79901,7 @@
     "id": "family:Rhagologidae",
     "rank": "family",
     "name": "Rhagologidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Rhagologus"
     ],
@@ -80041,7 +79930,7 @@
     "id": "family:Pityriasidae",
     "rank": "family",
     "name": "Pityriasidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Pityriasis"
     ],
@@ -80070,7 +79959,7 @@
     "id": "family:Aegithinidae",
     "rank": "family",
     "name": "Aegithinidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Aegithina"
     ],
@@ -80129,7 +80018,7 @@
     "id": "family:Malaconotidae",
     "rank": "family",
     "name": "Malaconotidae",
-    "parent": "superfamily:Corvoidea",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Nilaus",
       "genus:Bocagia",
@@ -80728,7 +80617,7 @@
     "id": "family:Platysteiridae",
     "rank": "family",
     "name": "Platysteiridae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Lanioturdus",
       "genus:Dyaphorophyia",
@@ -81097,7 +80986,7 @@
     "id": "family:Vangidae",
     "rank": "family",
     "name": "Vangidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Philentoma",
       "genus:Prionops",
@@ -81716,7 +81605,7 @@
     "id": "family:Neosittidae",
     "rank": "family",
     "name": "Neosittidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Daphoenositta"
     ],
@@ -81765,7 +81654,7 @@
     "id": "family:Psophodidae",
     "rank": "family",
     "name": "Psophodidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Androphobus",
       "genus:Psophodes"
@@ -81844,7 +81733,7 @@
     "id": "family:Eulacestomatidae",
     "rank": "family",
     "name": "Eulacestomatidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Eulacestoma"
     ],
@@ -81873,7 +81762,7 @@
     "id": "family:Oreoicidae",
     "rank": "family",
     "name": "Oreoicidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Oreoica",
       "genus:Ornorectes",
@@ -81942,7 +81831,7 @@
     "id": "family:Falcunculidae",
     "rank": "family",
     "name": "Falcunculidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Falcunculus"
     ],
@@ -81991,19 +81880,9 @@
     "id": "superfamily:Passeroidea",
     "rank": "superfamily",
     "name": "Passeroidea",
-    "parent": "order:Passeriformes",
+    "parent": "suborder:Passeri",
     "children": [
-      "family:Paramythiidae",
-      "family:Melanocharitidae",
-      "family:Dicaeidae",
-      "family:Nectariniidae",
-      "family:Ploceidae",
-      "family:Viduidae",
-      "family:Estrildidae",
-      "family:Prunellidae",
-      "family:Motacillidae",
-      "family:Fringillidae",
-      "family:Parulidae"
+      "family:Prunellidae"
     ],
     "source": "NCBI Taxonomy"
   },
@@ -82011,7 +81890,7 @@
     "id": "family:Paramythiidae",
     "rank": "family",
     "name": "Paramythiidae",
-    "parent": "superfamily:Passeroidea",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Oreocharis",
       "genus:Paramythia"
@@ -82070,7 +81949,7 @@
     "id": "family:Vireonidae",
     "rank": "family",
     "name": "Vireonidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Pteruthius",
       "genus:Erpornis",
@@ -82830,7 +82709,7 @@
     "id": "family:Oriolidae",
     "rank": "family",
     "name": "Oriolidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Pitohui",
       "genus:Turnagra",
@@ -83289,7 +83168,7 @@
     "id": "family:Pachycephalidae",
     "rank": "family",
     "name": "Pachycephalidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Pseudorectes",
       "genus:Colluricincla",
@@ -83958,7 +83837,7 @@
     "id": "family:Rhipiduridae",
     "rank": "family",
     "name": "Rhipiduridae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Chaetorhynchus",
       "genus:Eutrichomyias",
@@ -84647,7 +84526,7 @@
     "id": "family:Dicruridae",
     "rank": "family",
     "name": "Dicruridae",
-    "parent": "superfamily:Corvoidea",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Dicrurus"
     ],
@@ -84946,7 +84825,7 @@
     "id": "family:Monarchidae",
     "rank": "family",
     "name": "Monarchidae",
-    "parent": "superfamily:Corvoidea",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Trochocercus",
       "genus:Hypothymis",
@@ -86204,7 +86083,7 @@
     "id": "family:Ifritidae",
     "rank": "family",
     "name": "Ifritidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Ifrita"
     ],
@@ -86233,7 +86112,7 @@
     "id": "family:Paradisaeidae",
     "rank": "family",
     "name": "Paradisaeidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Lycocorax",
       "genus:Phonygammus",
@@ -86852,7 +86731,7 @@
     "id": "family:Melampittidae",
     "rank": "family",
     "name": "Melampittidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Melampitta",
       "genus:Megalampitta"
@@ -86901,7 +86780,7 @@
     "id": "family:Platylophidae",
     "rank": "family",
     "name": "Platylophidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Platylophus"
     ],
@@ -86930,7 +86809,7 @@
     "id": "family:Laniidae",
     "rank": "family",
     "name": "Laniidae",
-    "parent": "superfamily:Corvoidea",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Corvinella",
       "genus:Urolestes",
@@ -87319,7 +87198,7 @@
     "id": "family:Corvidae",
     "rank": "family",
     "name": "Corvidae",
-    "parent": "superfamily:Corvoidea",
+    "parent": "infraorder:Corvides",
     "children": [
       "genus:Pyrrhocorax",
       "genus:Crypsirina",
@@ -88898,7 +88777,7 @@
     "id": "family:Cnemophilidae",
     "rank": "family",
     "name": "Cnemophilidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Passerides",
     "children": [
       "genus:Loboparadisea",
       "genus:Cnemophilus"
@@ -88957,7 +88836,7 @@
     "id": "family:Melanocharitidae",
     "rank": "family",
     "name": "Melanocharitidae",
-    "parent": "superfamily:Passeroidea",
+    "parent": "infraorder:Passerides",
     "children": [
       "genus:Toxorhamphus",
       "genus:Oedistoma",
@@ -89116,7 +88995,7 @@
     "id": "family:Notiomystidae",
     "rank": "family",
     "name": "Notiomystidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Passerides",
     "children": [
       "genus:Notiomystis"
     ],
@@ -89234,7 +89113,7 @@
     "id": "family:Eupetidae",
     "rank": "family",
     "name": "Eupetidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Passerides",
     "children": [
       "genus:Eupetes"
     ],
@@ -89263,7 +89142,7 @@
     "id": "family:Chaetopidae",
     "rank": "family",
     "name": "Chaetopidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Passerides",
     "children": [
       "genus:Chaetops"
     ],
@@ -89302,7 +89181,7 @@
     "id": "family:Picathartidae",
     "rank": "family",
     "name": "Picathartidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Passerides",
     "children": [
       "genus:Picathartes"
     ],
@@ -89341,7 +89220,7 @@
     "id": "family:Petroicidae",
     "rank": "family",
     "name": "Petroicidae",
-    "parent": "order:Passeriformes",
+    "parent": "infraorder:Passerides",
     "children": [
       "genus:Amalocichla",
       "genus:Pachycephalopsis",
@@ -90020,7 +89899,7 @@
     "id": "family:Stenostiridae",
     "rank": "family",
     "name": "Stenostiridae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Chelidorhynx",
       "genus:Stenostira",
@@ -90159,7 +90038,7 @@
     "id": "family:Hyliotidae",
     "rank": "family",
     "name": "Hyliotidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Hyliota"
     ],
@@ -90218,7 +90097,7 @@
     "id": "family:Remizidae",
     "rank": "family",
     "name": "Remizidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Auriparus",
       "genus:Remiz",
@@ -90367,7 +90246,7 @@
     "id": "family:Paridae",
     "rank": "family",
     "name": "Paridae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Cephalopyrus",
       "genus:Sylviparus",
@@ -91126,7 +91005,7 @@
     "id": "family:Panuridae",
     "rank": "family",
     "name": "Panuridae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Panurus"
     ],
@@ -91155,25 +91034,15 @@
     "id": "superfamily:Sylvioidea",
     "rank": "superfamily",
     "name": "Sylvioidea",
-    "parent": "order:Passeriformes",
-    "children": [
-      "family:Alaudidae",
-      "family:Bernieridae",
-      "family:Locustellidae",
-      "family:Hirundinidae",
-      "family:Phylloscopidae",
-      "family:Pycnonotidae",
-      "family:Sylviidae",
-      "family:Zosteropidae",
-      "family:Timaliidae"
-    ],
+    "parent": "parvorder:Sylviida",
+    "children": [],
     "source": "NCBI Taxonomy"
   },
   "family:Alaudidae": {
     "id": "family:Alaudidae",
     "rank": "family",
     "name": "Alaudidae",
-    "parent": "superfamily:Sylvioidea",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Alaemon",
       "genus:Ammomanopsis",
@@ -92402,7 +92271,7 @@
     "id": "family:Nicatoridae",
     "rank": "family",
     "name": "Nicatoridae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Nicator"
     ],
@@ -92451,7 +92320,7 @@
     "id": "family:Macrosphenidae",
     "rank": "family",
     "name": "Macrosphenidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Macrosphenus",
       "genus:Achaetops",
@@ -92700,7 +92569,7 @@
     "id": "family:Cisticolidae",
     "rank": "family",
     "name": "Cisticolidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Neomixis",
       "genus:Micromacronus",
@@ -94609,7 +94478,7 @@
     "id": "family:Acrocephalidae",
     "rank": "family",
     "name": "Acrocephalidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Graueria",
       "genus:Nesillas",
@@ -95288,7 +95157,7 @@
     "id": "family:Donacobiidae",
     "rank": "family",
     "name": "Donacobiidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Donacobius"
     ],
@@ -95317,7 +95186,7 @@
     "id": "family:Bernieridae",
     "rank": "family",
     "name": "Bernieridae",
-    "parent": "superfamily:Sylvioidea",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Crossleyia",
       "genus:Xanthomixis",
@@ -95516,7 +95385,7 @@
     "id": "family:Locustellidae",
     "rank": "family",
     "name": "Locustellidae",
-    "parent": "superfamily:Sylvioidea",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Robsonius",
       "genus:Helopsaltes",
@@ -96305,7 +96174,7 @@
     "id": "family:Pnoepygidae",
     "rank": "family",
     "name": "Pnoepygidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Pnoepyga"
     ],
@@ -96364,7 +96233,7 @@
     "id": "family:Hirundinidae",
     "rank": "family",
     "name": "Hirundinidae",
-    "parent": "superfamily:Sylvioidea",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Pseudochelidon",
       "genus:Psalidoprocne",
@@ -97503,7 +97372,7 @@
     "id": "family:Hyliidae",
     "rank": "family",
     "name": "Hyliidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Hylia",
       "genus:Pholidornis"
@@ -97552,7 +97421,7 @@
     "id": "family:Aegithalidae",
     "rank": "family",
     "name": "Aegithalidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Leptopoecile",
       "genus:Psaltriparus",
@@ -97701,7 +97570,7 @@
     "id": "family:Erythrocercidae",
     "rank": "family",
     "name": "Erythrocercidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Erythrocercus"
     ],
@@ -97750,7 +97619,7 @@
     "id": "family:Cettiidae",
     "rank": "family",
     "name": "Cettiidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Scotocerca",
       "genus:Hemitesia",
@@ -98169,7 +98038,7 @@
     "id": "family:Phylloscopidae",
     "rank": "family",
     "name": "Phylloscopidae",
-    "parent": "superfamily:Sylvioidea",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Phylloscopus"
     ],
@@ -98988,7 +98857,7 @@
     "id": "family:Pycnonotidae",
     "rank": "family",
     "name": "Pycnonotidae",
-    "parent": "superfamily:Sylvioidea",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Andropadus",
       "genus:Calyptocichla",
@@ -100887,7 +100756,7 @@
     "id": "family:Sylviidae",
     "rank": "family",
     "name": "Sylviidae",
-    "parent": "superfamily:Sylvioidea",
+    "parent": "parvorder:Sylviida",
     "children": [
       "subfamily:Sylviinae",
       "genus:Sylvia",
@@ -101248,7 +101117,7 @@
     "id": "family:Paradoxornithidae",
     "rank": "family",
     "name": "Paradoxornithidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Myzornis",
       "genus:Moupinia",
@@ -101727,7 +101596,7 @@
     "id": "family:Zosteropidae",
     "rank": "family",
     "name": "Zosteropidae",
-    "parent": "superfamily:Sylvioidea",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Parayuhina",
       "genus:Staphida",
@@ -103336,7 +103205,7 @@
     "id": "family:Timaliidae",
     "rank": "family",
     "name": "Timaliidae",
-    "parent": "superfamily:Sylvioidea",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Timalia",
       "genus:Dumetia",
@@ -104025,7 +103894,7 @@
     "id": "family:Pellorneidae",
     "rank": "family",
     "name": "Pellorneidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Graminicola",
       "genus:Turdinus",
@@ -104814,7 +104683,7 @@
     "id": "family:Leiothrichidae",
     "rank": "family",
     "name": "Leiothrichidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Sylviida",
     "children": [
       "genus:Alcippe",
       "genus:Grammatoptila",
@@ -106423,7 +106292,7 @@
     "id": "family:Dulidae",
     "rank": "family",
     "name": "Dulidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Dulus"
     ],
@@ -106452,7 +106321,7 @@
     "id": "family:Bombycillidae",
     "rank": "family",
     "name": "Bombycillidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Bombycilla"
     ],
@@ -106501,7 +106370,7 @@
     "id": "family:Ptiliogonatidae",
     "rank": "family",
     "name": "Ptiliogonatidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Phainoptila",
       "genus:Phainopepla",
@@ -106580,7 +106449,7 @@
     "id": "family:Hylocitreidae",
     "rank": "family",
     "name": "Hylocitreidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Hylocitrea"
     ],
@@ -106609,7 +106478,7 @@
     "id": "family:Hypocoliidae",
     "rank": "family",
     "name": "Hypocoliidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Hypocolius"
     ],
@@ -106638,7 +106507,7 @@
     "id": "family:Mohoidae",
     "rank": "family",
     "name": "Mohoidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Chaetoptila",
       "genus:Moho"
@@ -106717,7 +106586,7 @@
     "id": "family:Regulidae",
     "rank": "family",
     "name": "Regulidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Corthylio",
       "genus:Regulus"
@@ -106806,7 +106675,7 @@
     "id": "family:Tichodromidae",
     "rank": "family",
     "name": "Tichodromidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Tichodroma"
     ],
@@ -106835,7 +106704,7 @@
     "id": "family:Sittidae",
     "rank": "family",
     "name": "Sittidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Sitta"
     ],
@@ -107144,7 +107013,7 @@
     "id": "family:Salpornithidae",
     "rank": "family",
     "name": "Salpornithidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Salpornis"
     ],
@@ -107183,7 +107052,7 @@
     "id": "family:Certhiidae",
     "rank": "family",
     "name": "Certhiidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "subfamily:Certhiinae"
     ],
@@ -107302,7 +107171,7 @@
     "id": "family:Polioptilidae",
     "rank": "family",
     "name": "Polioptilidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Microbates",
       "genus:Ramphocaenus",
@@ -107541,7 +107410,7 @@
     "id": "family:Troglodytidae",
     "rank": "family",
     "name": "Troglodytidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Salpinctes",
       "genus:Catherpes",
@@ -108700,7 +108569,7 @@
     "id": "family:Elachuridae",
     "rank": "family",
     "name": "Elachuridae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Elachura"
     ],
@@ -108729,7 +108598,7 @@
     "id": "family:Buphagidae",
     "rank": "family",
     "name": "Buphagidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Buphagus"
     ],
@@ -108768,7 +108637,7 @@
     "id": "family:Mimidae",
     "rank": "family",
     "name": "Mimidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Melanotis",
       "genus:Melanoptila",
@@ -109227,7 +109096,7 @@
     "id": "family:Sturnidae",
     "rank": "family",
     "name": "Sturnidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Rhabdornis",
       "genus:Enodes",
@@ -110826,7 +110695,7 @@
     "id": "family:Cinclidae",
     "rank": "family",
     "name": "Cinclidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Cinclus"
     ],
@@ -110895,7 +110764,7 @@
     "id": "family:Turdidae",
     "rank": "family",
     "name": "Turdidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Grandala",
       "genus:Sialia",
@@ -113014,7 +112883,7 @@
     "id": "family:Muscicapidae",
     "rank": "family",
     "name": "Muscicapidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Muscicapida",
     "children": [
       "genus:Alethe",
       "genus:Tychaedon",
@@ -117113,7 +116982,7 @@
     "id": "family:Promeropidae",
     "rank": "family",
     "name": "Promeropidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Promerops"
     ],
@@ -117152,7 +117021,7 @@
     "id": "family:Modulatricidae",
     "rank": "family",
     "name": "Modulatricidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Modulatrix",
       "genus:Kakamega",
@@ -117221,7 +117090,7 @@
     "id": "family:Dicaeidae",
     "rank": "family",
     "name": "Dicaeidae",
-    "parent": "superfamily:Passeroidea",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Prionochilus",
       "genus:Pachyglossa",
@@ -117820,7 +117689,7 @@
     "id": "family:Nectariniidae",
     "rank": "family",
     "name": "Nectariniidae",
-    "parent": "superfamily:Passeroidea",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Kurochkinegramma",
       "genus:Arachnothera",
@@ -119499,7 +119368,7 @@
     "id": "family:Chloropseidae",
     "rank": "family",
     "name": "Chloropseidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Chloropsis"
     ],
@@ -119638,7 +119507,7 @@
     "id": "family:Irenidae",
     "rank": "family",
     "name": "Irenidae",
-    "parent": "superfamily:Corvoidea",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Irena"
     ],
@@ -119687,7 +119556,7 @@
     "id": "family:Peucedramidae",
     "rank": "family",
     "name": "Peucedramidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Peucedramus"
     ],
@@ -119716,7 +119585,7 @@
     "id": "family:Urocynchramidae",
     "rank": "family",
     "name": "Urocynchramidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Urocynchramus"
     ],
@@ -119745,7 +119614,7 @@
     "id": "family:Ploceidae",
     "rank": "family",
     "name": "Ploceidae",
-    "parent": "superfamily:Passeroidea",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Amblyospiza",
       "genus:Histurgops",
@@ -121146,7 +121015,7 @@
     "id": "family:Viduidae",
     "rank": "family",
     "name": "Viduidae",
-    "parent": "superfamily:Passeroidea",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Anomalospiza",
       "genus:Vidua"
@@ -121375,7 +121244,7 @@
     "id": "family:Estrildidae",
     "rank": "family",
     "name": "Estrildidae",
-    "parent": "superfamily:Passeroidea",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Heteromunia",
       "genus:Oreostruthus",
@@ -123303,7 +123172,7 @@
     "id": "family:Passeridae",
     "rank": "family",
     "name": "Passeridae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Hypocryptadius",
       "genus:Petronia",
@@ -123822,7 +123691,7 @@
     "id": "family:Motacillidae",
     "rank": "family",
     "name": "Motacillidae",
-    "parent": "superfamily:Passeroidea",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Dendronanthus",
       "genus:Motacilla",
@@ -124591,7 +124460,7 @@
     "id": "family:Fringillidae",
     "rank": "family",
     "name": "Fringillidae",
-    "parent": "superfamily:Passeroidea",
+    "parent": "parvorder:Passerida",
     "children": [
       "subfamily:Fringillinae",
       "genus:Fringilla",
@@ -127495,7 +127364,7 @@
     "id": "family:Rhodinocichlidae",
     "rank": "family",
     "name": "Rhodinocichlidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Rhodinocichla"
     ],
@@ -127524,7 +127393,7 @@
     "id": "family:Calcariidae",
     "rank": "family",
     "name": "Calcariidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Rhynchophanes",
       "genus:Plectrophenax",
@@ -127623,7 +127492,7 @@
     "id": "family:Emberizidae",
     "rank": "family",
     "name": "Emberizidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Emberiza"
     ],
@@ -128082,7 +127951,7 @@
     "id": "family:Passerellidae",
     "rank": "family",
     "name": "Passerellidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Amphispizopsis",
       "genus:Amphispiza",
@@ -129771,7 +129640,7 @@
     "id": "family:Calyptophilidae",
     "rank": "family",
     "name": "Calyptophilidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Calyptophilus"
     ],
@@ -129810,7 +129679,7 @@
     "id": "family:Zeledoniidae",
     "rank": "family",
     "name": "Zeledoniidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Zeledonia"
     ],
@@ -129839,7 +129708,7 @@
     "id": "family:Phaenicophilidae",
     "rank": "family",
     "name": "Phaenicophilidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Xenoligea",
       "genus:Microligea",
@@ -129918,7 +129787,7 @@
     "id": "family:Nesospingidae",
     "rank": "family",
     "name": "Nesospingidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Nesospingus"
     ],
@@ -129947,7 +129816,7 @@
     "id": "family:Spindalidae",
     "rank": "family",
     "name": "Spindalidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Spindalis"
     ],
@@ -130006,7 +129875,7 @@
     "id": "family:Teretistridae",
     "rank": "family",
     "name": "Teretistridae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Teretistris"
     ],
@@ -130045,7 +129914,7 @@
     "id": "family:Icteridae",
     "rank": "family",
     "name": "Icteridae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Icteria",
       "genus:Xanthocephalus",
@@ -131444,7 +131313,7 @@
     "id": "family:Parulidae",
     "rank": "family",
     "name": "Parulidae",
-    "parent": "superfamily:Passeroidea",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Seiurus",
       "genus:Parkesia",
@@ -132793,7 +132662,7 @@
     "id": "family:Cardinalidae",
     "rank": "family",
     "name": "Cardinalidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Pheucticus",
       "genus:Granatellus",
@@ -133462,7 +133331,7 @@
     "id": "family:Mitrospingidae",
     "rank": "family",
     "name": "Mitrospingidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Orthogonys",
       "genus:Lamprospiza",
@@ -133541,7 +133410,7 @@
     "id": "family:Thraupidae",
     "rank": "family",
     "name": "Thraupidae",
-    "parent": "order:Passeriformes",
+    "parent": "parvorder:Passerida",
     "children": [
       "genus:Orchesticus",
       "genus:Parkerthraustes",
@@ -138530,5 +138399,336 @@
     "parent": "genus:Stilpnia",
     "children": [],
     "source": "AviList"
+  },
+  "suborder:Acanthisitti": {
+    "id": "suborder:Acanthisitti",
+    "rank": "suborder",
+    "name": "Acanthisitti",
+    "parent": "order:Passeriformes",
+    "children": [
+      "family:Acanthisittidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "suborder:Tyranni": {
+    "id": "suborder:Tyranni",
+    "rank": "suborder",
+    "name": "Tyranni",
+    "parent": "order:Passeriformes",
+    "children": [
+      "infraorder:Eurylaimides",
+      "infraorder:Tyrannides"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "infraorder:Eurylaimides": {
+    "id": "infraorder:Eurylaimides",
+    "rank": "infraorder",
+    "name": "Eurylaimides",
+    "parent": "suborder:Tyranni",
+    "children": [
+      "family:Philepittidae",
+      "family:Eurylaimidae",
+      "family:Calyptomenidae",
+      "family:Sapayoidae",
+      "family:Pittidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "infraorder:Tyrannides": {
+    "id": "infraorder:Tyrannides",
+    "rank": "infraorder",
+    "name": "Tyrannides",
+    "parent": "suborder:Tyranni",
+    "children": [
+      "parvorder:Furnariida",
+      "parvorder:Tyrannida"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "parvorder:Furnariida": {
+    "id": "parvorder:Furnariida",
+    "rank": "parvorder",
+    "name": "Furnariida",
+    "parent": "infraorder:Tyrannides",
+    "children": [
+      "family:Melanopareiidae",
+      "family:Conopophagidae",
+      "family:Thamnophilidae",
+      "family:Grallariidae",
+      "family:Rhinocryptidae",
+      "family:Formicariidae",
+      "family:Furnariidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "parvorder:Tyrannida": {
+    "id": "parvorder:Tyrannida",
+    "rank": "parvorder",
+    "name": "Tyrannida",
+    "parent": "infraorder:Tyrannides",
+    "children": [
+      "family:Pipridae",
+      "family:Cotingidae",
+      "family:Tityridae",
+      "family:Oxyruncidae",
+      "family:Onychorhynchidae",
+      "family:Tyrannidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "suborder:Passeri": {
+    "id": "suborder:Passeri",
+    "rank": "suborder",
+    "name": "Passeri",
+    "parent": "order:Passeriformes",
+    "children": [
+      "infraorder:Menurides",
+      "infraorder:Climacterides",
+      "infraorder:Orthonynchides",
+      "infraorder:Meliphagides",
+      "infraorder:Corvides",
+      "infraorder:Passerides",
+      "superfamily:Corvoidea",
+      "superfamily:Passeroidea"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "infraorder:Menurides": {
+    "id": "infraorder:Menurides",
+    "rank": "infraorder",
+    "name": "Menurides",
+    "parent": "suborder:Passeri",
+    "children": [
+      "family:Menuridae",
+      "family:Atrichornithidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "infraorder:Climacterides": {
+    "id": "infraorder:Climacterides",
+    "rank": "infraorder",
+    "name": "Climacterides",
+    "parent": "suborder:Passeri",
+    "children": [
+      "family:Climacteridae",
+      "family:Ptilonorhynchidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "infraorder:Orthonynchides": {
+    "id": "infraorder:Orthonynchides",
+    "rank": "infraorder",
+    "name": "Orthonynchides",
+    "parent": "suborder:Passeri",
+    "children": [
+      "family:Pomatostomidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "infraorder:Meliphagides": {
+    "id": "infraorder:Meliphagides",
+    "rank": "infraorder",
+    "name": "Meliphagides",
+    "parent": "suborder:Passeri",
+    "children": [
+      "superfamily:Meliphagoidea",
+      "family:Acanthizidae",
+      "family:Meliphagidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "infraorder:Corvides": {
+    "id": "infraorder:Corvides",
+    "rank": "infraorder",
+    "name": "Corvides",
+    "parent": "suborder:Passeri",
+    "children": [
+      "family:Cinclosomatidae",
+      "family:Campephagidae",
+      "family:Mohouidae",
+      "family:Machaerirhynchidae",
+      "family:Artamidae",
+      "family:Rhagologidae",
+      "family:Pityriasidae",
+      "family:Aegithinidae",
+      "family:Malaconotidae",
+      "family:Platysteiridae",
+      "family:Vangidae",
+      "family:Neosittidae",
+      "family:Psophodidae",
+      "family:Eulacestomatidae",
+      "family:Oreoicidae",
+      "family:Falcunculidae",
+      "family:Paramythiidae",
+      "family:Vireonidae",
+      "family:Oriolidae",
+      "family:Pachycephalidae",
+      "family:Rhipiduridae",
+      "family:Dicruridae",
+      "family:Monarchidae",
+      "family:Ifritidae",
+      "family:Paradisaeidae",
+      "family:Melampittidae",
+      "family:Platylophidae",
+      "family:Laniidae",
+      "family:Corvidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "infraorder:Passerides": {
+    "id": "infraorder:Passerides",
+    "rank": "infraorder",
+    "name": "Passerides",
+    "parent": "suborder:Passeri",
+    "children": [
+      "parvorder:Sylviida",
+      "parvorder:Muscicapida",
+      "parvorder:Passerida",
+      "family:Cnemophilidae",
+      "family:Melanocharitidae",
+      "family:Notiomystidae",
+      "family:Eupetidae",
+      "family:Chaetopidae",
+      "family:Picathartidae",
+      "family:Petroicidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "parvorder:Sylviida": {
+    "id": "parvorder:Sylviida",
+    "rank": "parvorder",
+    "name": "Sylviida",
+    "parent": "infraorder:Passerides",
+    "children": [
+      "family:Stenostiridae",
+      "family:Hyliotidae",
+      "family:Remizidae",
+      "family:Paridae",
+      "family:Panuridae",
+      "superfamily:Sylvioidea",
+      "family:Alaudidae",
+      "family:Nicatoridae",
+      "family:Macrosphenidae",
+      "family:Cisticolidae",
+      "family:Acrocephalidae",
+      "family:Donacobiidae",
+      "family:Bernieridae",
+      "family:Locustellidae",
+      "family:Pnoepygidae",
+      "family:Hirundinidae",
+      "family:Hyliidae",
+      "family:Aegithalidae",
+      "family:Erythrocercidae",
+      "family:Cettiidae",
+      "family:Phylloscopidae",
+      "family:Pycnonotidae",
+      "family:Sylviidae",
+      "family:Paradoxornithidae",
+      "family:Zosteropidae",
+      "family:Timaliidae",
+      "family:Pellorneidae",
+      "family:Leiothrichidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "parvorder:Muscicapida": {
+    "id": "parvorder:Muscicapida",
+    "rank": "parvorder",
+    "name": "Muscicapida",
+    "parent": "infraorder:Passerides",
+    "children": [
+      "family:Dulidae",
+      "family:Bombycillidae",
+      "family:Ptiliogonatidae",
+      "family:Hylocitreidae",
+      "family:Hypocoliidae",
+      "family:Mohoidae",
+      "family:Regulidae",
+      "family:Tichodromidae",
+      "family:Sittidae",
+      "family:Salpornithidae",
+      "family:Certhiidae",
+      "family:Polioptilidae",
+      "family:Troglodytidae",
+      "family:Elachuridae",
+      "family:Buphagidae",
+      "family:Mimidae",
+      "family:Sturnidae",
+      "family:Cinclidae",
+      "family:Turdidae",
+      "family:Muscicapidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
+  },
+  "parvorder:Passerida": {
+    "id": "parvorder:Passerida",
+    "rank": "parvorder",
+    "name": "Passerida",
+    "parent": "infraorder:Passerides",
+    "children": [
+      "family:Promeropidae",
+      "family:Modulatricidae",
+      "family:Dicaeidae",
+      "family:Nectariniidae",
+      "family:Chloropseidae",
+      "family:Irenidae",
+      "family:Peucedramidae",
+      "family:Urocynchramidae",
+      "family:Ploceidae",
+      "family:Viduidae",
+      "family:Estrildidae",
+      "family:Passeridae",
+      "family:Motacillidae",
+      "family:Fringillidae",
+      "family:Rhodinocichlidae",
+      "family:Calcariidae",
+      "family:Emberizidae",
+      "family:Passerellidae",
+      "family:Calyptophilidae",
+      "family:Zeledoniidae",
+      "family:Phaenicophilidae",
+      "family:Nesospingidae",
+      "family:Spindalidae",
+      "family:Teretistridae",
+      "family:Icteridae",
+      "family:Parulidae",
+      "family:Cardinalidae",
+      "family:Mitrospingidae",
+      "family:Thraupidae"
+    ],
+    "source": "Wikipedia",
+    "sourcePage": "https://en.wikipedia.org/wiki/Passerine",
+    "sourceTreatment": "Oliveros et al. (2019) phylogenetic analysis as presented by Wikipedia"
   }
 }
