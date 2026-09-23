@@ -1324,3 +1324,117 @@ body {
     text-align: center;
     line-height: 1.25;
 }
+
+
+/* ========================================
+   Final Study Card + invisible scrolling
+======================================== */
+
+.taxonomy-tree,
+.taxonomy-table-wrap,
+.game-over-card {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.taxonomy-tree::-webkit-scrollbar,
+.taxonomy-table-wrap::-webkit-scrollbar,
+.game-over-card::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.study-taxonomy {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.study-taxonomy-row {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 8px 0;
+    border-bottom: 1px solid #e7dcc7;
+}
+
+.study-taxonomy-row:last-child {
+    border-bottom: 0;
+}
+
+.study-taxonomy-label {
+    color: #7b725f;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+}
+
+.study-taxonomy-value {
+    color: #4b4d43;
+    line-height: 1.55;
+}
+
+.study-card-hero-image {
+    display: block;
+    width: min(100%, 560px);
+    max-height: 270px;
+    object-fit: cover;
+    margin: 18px auto 4px;
+    border-radius: 14px;
+    border: 1px solid #e1d3b8;
+    box-shadow: 0 8px 24px rgba(67, 57, 35, .12);
+}
+
+.study-card-bird {
+    padding: 18px 20px;
+    border-radius: 14px;
+    background: #fbf7ed;
+}
+
+.study-card-bird h3 {
+    margin-bottom: 5px;
+}
+
+.study-card-details {
+    margin-top: 8px;
+}
+
+.study-card-section {
+    padding: 18px 0;
+    border-bottom: 1px solid #e3d6bd;
+}
+
+.study-card-section:last-child {
+    border-bottom: 0;
+}
+
+.study-card-section h4 {
+    margin: 0 0 8px;
+    color: #4f5d42;
+}
+
+.study-card-section p,
+.study-card-section li {
+    line-height: 1.65;
+}
+
+.game-over-card {
+    max-height: min(88vh, 900px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+@media (max-width: 560px) {
+    .study-taxonomy-row {
+        grid-template-columns: 1fr;
+        gap: 3px;
+    }
+
+    .study-card-hero-image {
+        max-height: 220px;
+    }
+}
