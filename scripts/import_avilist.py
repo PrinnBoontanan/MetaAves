@@ -42,7 +42,6 @@ CLADE_PATHS_BY_ORDER = {
     "Pterocliformes": ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
     "Columbiformes": ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
 
-    "Aequornithes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
     "Gaviiformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
     "Sphenisciformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
     "Procellariiformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
@@ -58,6 +57,10 @@ CLADE_PATHS_BY_ORDER = {
     "Apodiformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
 
     "Phaethontiformes": ["Neornithes", "Neognathae", "Neoaves", "Phaethontimorphae"],
+    "Eurypygiformes": ["Neornithes", "Neognathae", "Neoaves"],
+    "Gruiformes": ["Neornithes", "Neognathae", "Neoaves"],
+    "Charadriiformes": ["Neornithes", "Neognathae", "Neoaves"],
+    "Opisthocomiformes": ["Neornithes", "Neognathae", "Neoaves"],
 
     "Accipitriformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
     "Cathartiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
