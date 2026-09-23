@@ -509,12 +509,18 @@ function buildTreeModel() {
     }
 
     function insertBird(bird, endpoint, nodeType) {
+        const mysteryRevealedAfterLoss =
+            nodeType === "mystery" && gameState.gameStatus === "lost";
+
         const leaf = {
             type: "species",
-            // Keep the mystery hidden until it is actually guessed.
-            name: nodeType === "mystery" ? "???" : bird.commonName,
-            nodeType,
-            bird: nodeType === "correct" ? bird : bird
+            name: nodeType === "mystery" && !mysteryRevealedAfterLoss
+                ? "???"
+                : bird.commonName,
+            nodeType: mysteryRevealedAfterLoss ? "revealed-lost" : nodeType,
+            bird: nodeType === "mystery" && !mysteryRevealedAfterLoss
+                ? null
+                : bird
         };
 
         const displayPath = getDisplayPath(bird, endpoint);
@@ -608,16 +614,19 @@ function createTreeNodeElement(node) {
         element.classList.add(`meta-species-${node.nodeType}`);
         element.textContent = node.name;
 
-        // Guessed / solved species can be opened in the taxon card.
+        // Guessed / revealed species can be opened in the taxon card.
         if (node.bird) {
             element.classList.add("meta-species-clickable");
             element.style.pointerEvents = "auto";
 
             element.addEventListener("click", () => {
-                // The solved mystery species reopens the full Bird Study Card.
-                // Other species continue to open the lightweight Taxon Info card.
-                if (node.nodeType === "correct") {
-                    showGameOverCard("won");
+                if (
+                    node.nodeType === "correct" ||
+                    node.nodeType === "revealed-lost"
+                ) {
+                    showGameOverCard(
+                        node.nodeType === "revealed-lost" ? "lost" : "won"
+                    );
                     return;
                 }
 
@@ -1022,11 +1031,8 @@ function renderTaxonomyView() {
 function renderTaxonomyTree() {
     taxonomyTree.innerHTML = "";
 
-    if (!gameState.mysteryBird) {
-        return;
-    }
+    if (!gameState.mysteryBird) return;
 
-    // Aves is always visible from the start.
     const model = buildTreeModel();
 
     const canvas = document.createElement("div");
@@ -1045,105 +1051,121 @@ function renderTaxonomyTree() {
     canvas.appendChild(nodeLayer);
     taxonomyTree.appendChild(canvas);
 
-    // Give every level enough room to resemble the
-    // loose, organic Metazooa tree.
-    const levelGap = 92;
-    const horizontalGap = 150;
-    const sidePadding = 70;
-
+    const levelGap = 96;
+    const horizontalGap = 42;
+    const sidePadding = 44;
     const positions = [];
-    let leafIndex = 0;
+    const measuredWidths = new Map();
 
     function measureNode(node) {
+        if (measuredWidths.has(node)) return measuredWidths.get(node);
+
         const element = createTreeNodeElement(node);
+        element.style.visibility = "hidden";
+        element.style.position = "absolute";
+        element.style.left = "-10000px";
+        element.style.top = "0";
         nodeLayer.appendChild(element);
 
         const width = Math.max(
-            element.offsetWidth,
-            node.type === "taxon" ? 78 : 74
+            element.offsetWidth || 74,
+            node.type === "taxon" ? 84 : 78
         );
 
         element.remove();
+        measuredWidths.set(node, width);
         return width;
     }
 
-    function layout(node, depth) {
-        if (node.type === "species") {
-            const width = measureNode(node);
-            const x = sidePadding + leafIndex * horizontalGap;
-            leafIndex++;
-            positions.push({
-                node,
-                depth,
-                x,
-                width
-            });
-            return x;
+    function getSubtreeWidth(node) {
+        const ownWidth = measureNode(node);
+
+        if (!node.children || node.children.length === 0) {
+            node.__treeWidth = ownWidth;
+            return ownWidth;
         }
 
-        const width = measureNode(node);
+        const childrenWidth =
+            node.children.reduce(
+                (sum, child) => sum + getSubtreeWidth(child),
+                0
+            ) +
+            horizontalGap * Math.max(0, node.children.length - 1);
 
-        if (node.children.length === 0) {
-            const x = sidePadding + leafIndex * horizontalGap;
-            leafIndex++;
-            positions.push({
-                node,
-                depth,
-                x,
-                width
+        node.__treeWidth = Math.max(ownWidth, childrenWidth);
+        return node.__treeWidth;
+    }
+
+    const treeContentWidth = getSubtreeWidth(model);
+
+    function place(node, depth, left) {
+        const subtreeWidth = node.__treeWidth || measureNode(node);
+        const ownWidth = measureNode(node);
+
+        let centerX;
+
+        if (!node.children || node.children.length === 0) {
+            centerX = left + subtreeWidth / 2;
+        } else {
+            const childWidths = node.children.map(
+                child => child.__treeWidth || measureNode(child)
+            );
+
+            const totalChildrenWidth =
+                childWidths.reduce((sum, width) => sum + width, 0) +
+                horizontalGap * Math.max(0, childWidths.length - 1);
+
+            let cursor =
+                left +
+                (subtreeWidth - totalChildrenWidth) / 2;
+
+            const childCenters = [];
+
+            node.children.forEach((child, index) => {
+                const childCenter = place(child, depth + 1, cursor);
+                childCenters.push(childCenter);
+                cursor += childWidths[index] + horizontalGap;
             });
-            return x;
+
+            centerX =
+                childCenters.reduce((sum, x) => sum + x, 0) /
+                childCenters.length;
         }
-
-        const childXs = node.children.map(
-            child => layout(child, depth + 1)
-        );
-
-        const x =
-            (childXs[0] + childXs[childXs.length - 1]) / 2;
 
         positions.push({
             node,
             depth,
-            x,
-            width
+            x: centerX,
+            width: ownWidth
         });
 
-        return x;
+        return centerX;
     }
 
-    layout(model, 0);
-
-    const maxDepth = Math.max(
-        ...positions.map(position => position.depth)
-    );
-
-    const minimumTreeWidth =
-        sidePadding * 2 +
-        Math.max(0, leafIndex - 1) * horizontalGap;
-
+    const minimumContentWidth = treeContentWidth + sidePadding * 2;
     const canvasWidth = Math.max(
         taxonomyTree.clientWidth - 20,
-        minimumTreeWidth
+        minimumContentWidth
     );
 
-    // Center the whole tree inside the available area.
-    // The layout starts with a fixed left padding, so shift every
-    // node equally after we know the actual canvas width.
-    const centerShift = Math.max(
-        0,
-        (canvasWidth - minimumTreeWidth) / 2
+    const leftOffset = Math.max(
+        sidePadding,
+        (canvasWidth - treeContentWidth) / 2
     );
 
-    positions.forEach(position => {
-        position.x += centerShift;
-    });
+    place(model, 0, leftOffset);
+
+    const maxDepth = Math.max(
+        ...positions.map(position => position.depth),
+        0
+    );
 
     const canvasHeight =
-        50 + (maxDepth + 1) * levelGap;
+        56 + (maxDepth + 1) * levelGap;
 
-    canvas.style.width = `${canvasWidth}px`;
-    canvas.style.height = `${canvasHeight}px`;
+    canvas.style.width = canvasWidth + "px";
+    canvas.style.height = canvasHeight + "px";
+
     svg.setAttribute("width", canvasWidth);
     svg.setAttribute("height", canvasHeight);
     svg.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
@@ -1155,41 +1177,25 @@ function renderTaxonomyTree() {
 
         const nodeHeight = element.offsetHeight || 34;
         const actualWidth = element.offsetWidth || position.width;
+
         const x = position.x - actualWidth / 2;
         const y =
-            24 +
+            28 +
             position.depth * levelGap -
             nodeHeight / 2;
 
-        element.style.left = `${x}px`;
-        element.style.top = `${y}px`;
-
-        // The tree grows one generation at a time.
-        // A node must finish appearing before the branches
-        // leading to the next generation are allowed to grow.
-        //
-        // Depth 0 = Aves
-        // Depth 1 = Bucerotidae / House Sparrow
-        // Depth 2 = Great Hornbill / ???
-        const generationDuration = 0.95;
-        const nodeRevealDuration = 0.32;
-        const nodeDelay = position.depth * generationDuration;
-
+        element.style.left = x + "px";
+        element.style.top = y + "px";
         element.style.setProperty(
             "--node-delay",
-            `${nodeDelay}s`
+            `${position.depth * 0.95}s`
         );
 
         nodeLayer.appendChild(element);
 
-        // Use the actual rendered element center for connector coordinates.
-        // This avoids tiny offsets caused by font metrics, padding, or transforms.
-        const renderedCenterX = element.offsetLeft + element.offsetWidth / 2;
-        const renderedCenterY = element.offsetTop + element.offsetHeight / 2;
-
         positioned.set(position.node, {
-            x: renderedCenterX,
-            y: renderedCenterY,
+            x: x + element.offsetWidth / 2,
+            y: y + element.offsetHeight / 2,
             width: element.offsetWidth,
             height: element.offsetHeight,
             depth: position.depth,
@@ -1197,93 +1203,46 @@ function renderTaxonomyTree() {
         });
     });
 
-    // Final alignment pass: use the actual rendered centers of the
-    // children to position every taxon. This guarantees that a parent
-    // taxon sits exactly over its branch group, even when text widths differ.
-    [...positions].reverse().forEach(position => {
-        if (position.node.type !== "taxon" || position.node.children.length === 0) {
-            return;
-        }
-
-        const childCenters = position.node.children
-            .map(child => positioned.get(child))
-            .filter(Boolean)
-            .map(child => child.x);
-
-        if (!childCenters.length) return;
-
-        const centeredX =
-            childCenters.reduce((sum, x) => sum + x, 0) /
-            childCenters.length;
-
-        position.x = centeredX;
-
-        const current = positioned.get(position.node);
-        if (current) {
-            // Move the actual rendered element, not the temporary
-            // layout object. The previous code referenced
-            // position.element, which does not exist and stopped
-            // tree rendering before the branches were drawn.
-            current.element.style.left =
-                `${centeredX - current.width / 2}px`;
-            current.x = centeredX;
-        }
-    });
-
     function drawConnections(node) {
-        if (node.type !== "taxon") {
-            return;
-        }
+        if (node.type !== "taxon") return;
 
         const parent = positioned.get(node);
+        if (!parent) return;
 
         node.children.forEach(child => {
             const childPosition = positioned.get(child);
-
-            if (!parent || !childPosition) {
-                return;
-            }
+            if (!childPosition) return;
 
             const startX = parent.x;
-            const startY = parent.y + parent.height / 2 - 1;
-            const endY = childPosition.y - childPosition.height / 2 + 1;
+            const startY = parent.y + parent.height / 2;
+            const endX = childPosition.x;
+            const endY = childPosition.y - childPosition.height / 2;
 
-            // A taxon with a single child should connect straight down.
-            // Force the child onto the exact same X coordinate instead of
-            // relying on two separately measured DOM centers.
-            const isSingleChild = node.children.length === 1;
-            const endX = isSingleChild ? startX : childPosition.x;
-
-            const curve = Math.max(
-                30,
-                Math.abs(endY - startY) * 0.55
-            );
+            const verticalDistance = Math.max(1, endY - startY);
+            const curve = Math.max(26, verticalDistance * 0.48);
 
             const path = document.createElementNS(
                 "http://www.w3.org/2000/svg",
                 "path"
             );
 
-            // When the child is directly below the parent, use a
-            // perfectly vertical connector. This keeps the line visually
-            // centered through both node centers instead of introducing
-            // a tiny curve that can look off-center.
-            const isVerticallyAligned = isSingleChild || Math.abs(startX - endX) < 1;
-
-            path.setAttribute(
-                "d",
-                isVerticallyAligned
-                    ? `M ${startX} ${startY} L ${endX} ${endY}`
-                    : `M ${startX} ${startY}
-                       C ${startX} ${startY + curve},
-                         ${endX} ${endY - curve},
-                         ${endX} ${endY}`
-            );
+            if (Math.abs(startX - endX) < 1) {
+                path.setAttribute(
+                    "d",
+                    `M ${startX} ${startY} L ${endX} ${endY}`
+                );
+            } else {
+                path.setAttribute(
+                    "d",
+                    `M ${startX} ${startY}
+                     C ${startX} ${startY + curve},
+                       ${endX} ${endY - curve},
+                       ${endX} ${endY}`
+                );
+            }
 
             path.classList.add("meta-tree-connection");
 
-            // Draw the branch progressively instead of making it
-            // appear instantly.
             const pathLength = path.getTotalLength();
             path.style.strokeDasharray = pathLength;
             path.style.strokeDashoffset = pathLength;
@@ -1297,35 +1256,24 @@ function renderTaxonomyTree() {
 
             svg.appendChild(path);
 
-            // Grow the tree strictly from top to bottom.
-            //
-            // A branch leading to depth 1 starts after Aves has
-            // appeared. A branch leading to depth 2 waits until
-            // the depth-1 taxon/species nodes have appeared.
-            //
-            // This prevents all branches from growing together.
-            const parentDepth = positioned.get(node).depth;
-            const generationDuration = 0.95;
-            const nodeRevealDuration = 0.32;
+            const branchDelay =
+                positioned.get(node).depth * 0.95 + 0.28;
 
-            // A branch starts only after its parent node has finished
-            // appearing. This makes the growth happen generation by
-            // generation from the top of the tree.
-            const animationDelay =
-                parentDepth * generationDuration +
-                nodeRevealDuration;
-
-            // Start each branch explicitly. This prevents the browser
-            // from starting every SVG animation when the tree is rendered.
             setTimeout(() => {
                 path.classList.add("active");
-            }, animationDelay * 1000);
+            }, branchDelay * 1000);
 
-            drawConnections(child);
+            if (child.type === "taxon") {
+                drawConnections(child);
+            }
         });
     }
 
     drawConnections(model);
+
+    positions.forEach(position => {
+        delete position.node.__treeWidth;
+    });
 }
 
 
@@ -1404,13 +1352,34 @@ function showGameOverCard(result) {
         details.appendChild(section);
     };
 
-    addStudySection("Description", bird.description);
-    addStudySection("Habitat", bird.habitat);
-    addStudySection("Distribution", bird.distribution);
-    addStudySection("Diet", bird.diet);
-    addStudySection("Behavior", bird.behavior);
-    addStudySection("Breeding", bird.breeding);
-    addStudySection("Conservation", bird.conservation);
+    addStudySection(
+        "Description",
+        bird.description || "Loading the species description…"
+    );
+    addStudySection(
+        "Habitat",
+        bird.habitat || "Detailed habitat information is not available in the current dataset."
+    );
+    addStudySection(
+        "Distribution",
+        bird.distribution || "Distribution information is not available in the current dataset."
+    );
+    addStudySection(
+        "Diet",
+        bird.diet || "Detailed diet information is not available in the current dataset."
+    );
+    addStudySection(
+        "Behavior",
+        bird.behavior || "Detailed behavior information is not available in the current dataset."
+    );
+    addStudySection(
+        "Breeding",
+        bird.breeding || "Detailed breeding information is not available in the current dataset."
+    );
+    addStudySection(
+        "Conservation",
+        bird.conservation || "Conservation information is not available in the current dataset."
+    );
 
     if (Array.isArray(bird.interestingFacts) && bird.interestingFacts.length) {
         const section = document.createElement("div");
@@ -1465,18 +1434,20 @@ function showGameOverCard(result) {
             if (details) {
                 if (image) details.before(image);
 
-                const descriptionHeading = document.createElement("h4");
-                descriptionHeading.textContent = "Description";
+                // Use the Wikipedia introduction to replace the temporary
+                // description when the dataset does not contain one.
+                if (!bird.description && wiki.extract && details) {
+                    const descriptionSection = [...details.querySelectorAll(".study-card-section")]
+                        .find(section =>
+                            section.querySelector("h4")?.textContent === "Description"
+                        );
 
-                const descriptionSection = document.createElement("div");
-                descriptionSection.className = "study-card-section study-card-wiki-description";
-                descriptionSection.appendChild(descriptionHeading);
-                descriptionSection.appendChild(description);
+                    const descriptionParagraph =
+                        descriptionSection?.querySelector("p");
 
-                // Use the Wikipedia introduction as the description only
-                // when the dataset does not already contain one.
-                if (!bird.description && wiki.extract) {
-                    details.prepend(descriptionSection);
+                    if (descriptionParagraph) {
+                        descriptionParagraph.textContent = wiki.extract;
+                    }
                 }
 
                 if (wiki.content_urls?.desktop?.page) {
