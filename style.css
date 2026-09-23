@@ -302,3 +302,31 @@ body {
     border: 1px solid #ddd;
     border-radius: 10px;
 }
+
+
+/* ========================================
+   Interactive taxon card
+======================================== */
+
+.meta-taxon-node {
+    cursor: pointer;
+}
+
+.meta-taxon-node:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+.taxon-card-rank {
+    margin: 0 0 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #8a7650;
+}
+
+.taxon-card a {
+    display: inline-block;
+    margin-top: 8px;
+    color: #587331;
+}
