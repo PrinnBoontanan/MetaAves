@@ -1,1 +1,125 @@
-{}
+{
+  "_meta": {
+    "version": 1,
+    "description": "Taxonomic hierarchy used by MetaAves. Each taxon has a stable ID, rank, name, parent, and children. Additional ranks can be added without changing the game structure.",
+    "rankOrder": [
+      "kingdom",
+      "phylum",
+      "class",
+      "infraclass",
+      "order",
+      "suborder",
+      "infraorder",
+      "parvorder",
+      "superfamily",
+      "family",
+      "subfamily",
+      "tribe",
+      "subtribe",
+      "genus",
+      "subgenus",
+      "species"
+    ],
+    "rootTaxa": [
+      "class:Aves"
+    ]
+  },
+  "class:Aves": {
+    "id": "class:Aves",
+    "rank": "class",
+    "name": "Aves",
+    "parent": null,
+    "children": [
+      "order:Bucerotiformes",
+      "order:Passeriformes"
+    ]
+  },
+  "order:Bucerotiformes": {
+    "id": "order:Bucerotiformes",
+    "rank": "order",
+    "name": "Bucerotiformes",
+    "parent": "class:Aves",
+    "children": [
+      "family:Bucerotidae"
+    ]
+  },
+  "family:Bucerotidae": {
+    "id": "family:Bucerotidae",
+    "rank": "family",
+    "name": "Bucerotidae",
+    "parent": "order:Bucerotiformes",
+    "children": [
+      "genus:Buceros",
+      "genus:Anthracoceros"
+    ]
+  },
+  "genus:Buceros": {
+    "id": "genus:Buceros",
+    "rank": "genus",
+    "name": "Buceros",
+    "parent": "family:Bucerotidae",
+    "children": [
+      "species:Buceros_bicornis"
+    ]
+  },
+  "species:Buceros_bicornis": {
+    "id": "species:Buceros_bicornis",
+    "rank": "species",
+    "name": "Buceros bicornis",
+    "commonName": "Great Hornbill",
+    "parent": "genus:Buceros",
+    "children": []
+  },
+  "genus:Anthracoceros": {
+    "id": "genus:Anthracoceros",
+    "rank": "genus",
+    "name": "Anthracoceros",
+    "parent": "family:Bucerotidae",
+    "children": [
+      "species:Anthracoceros_albirostris"
+    ]
+  },
+  "species:Anthracoceros_albirostris": {
+    "id": "species:Anthracoceros_albirostris",
+    "rank": "species",
+    "name": "Anthracoceros albirostris",
+    "commonName": "Oriental Pied Hornbill",
+    "parent": "genus:Anthracoceros",
+    "children": []
+  },
+  "order:Passeriformes": {
+    "id": "order:Passeriformes",
+    "rank": "order",
+    "name": "Passeriformes",
+    "parent": "class:Aves",
+    "children": [
+      "family:Passeridae"
+    ]
+  },
+  "family:Passeridae": {
+    "id": "family:Passeridae",
+    "rank": "family",
+    "name": "Passeridae",
+    "parent": "order:Passeriformes",
+    "children": [
+      "genus:Passer"
+    ]
+  },
+  "genus:Passer": {
+    "id": "genus:Passer",
+    "rank": "genus",
+    "name": "Passer",
+    "parent": "family:Passeridae",
+    "children": [
+      "species:Passer_domesticus"
+    ]
+  },
+  "species:Passer_domesticus": {
+    "id": "species:Passer_domesticus",
+    "rank": "species",
+    "name": "Passer domesticus",
+    "commonName": "House Sparrow",
+    "parent": "genus:Passer",
+    "children": []
+  }
+}
