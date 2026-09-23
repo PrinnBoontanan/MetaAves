@@ -174,6 +174,15 @@ def main():
     direct_children = list(taxa[order_id].get("children", []))
     moved = 0
     covered_families = set()
+    present_families = set()
+
+    # Only validate families that actually exist in the AviList/NCBI tree.
+    # Supplemental sources can contain historical/alternative family
+    # treatments that are not represented by the current AviList checklist.
+    for taxon_id in taxa:
+        node = taxa[taxon_id]
+        if node.get("rank") == "family":
+            present_families.add(node.get("name"))
 
     for child_id in direct_children:
         families = descendant_families(taxa, child_id)
@@ -242,15 +251,21 @@ def main():
     print(f"Supplemental nodes created: {created:,}")
     print(f"Existing branches reparented: {moved:,}")
 
-    if covered_families != set(family_paths):
-        missing = sorted(set(family_paths) - covered_families)
-        print("Families not connected into the supplemented tree:")
+    expected_present = set(family_paths) & present_families
+    missing = sorted(expected_present - covered_families)
+    absent_from_base = sorted(set(family_paths) - present_families)
+
+    if missing:
+        print("Present families not connected into the supplemented tree:")
         for family in missing[:30]:
             print(f"  - {family}")
         raise SystemExit(
-            f"Supplemental taxonomy incomplete: {len(missing)} families not connected."
+            f"Supplemental taxonomy incomplete: {len(missing)} present families not connected."
         )
 
+    print(f"Source families absent from current base taxonomy: {len(absent_from_base):,}")
+    for family in absent_from_base[:30]:
+        print(f"  - {family}")
     print("SUPPLEMENTAL VALIDATION PASSED")
 
 
