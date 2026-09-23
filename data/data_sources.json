@@ -15,5 +15,15 @@
   "phylogeny": {
     "name": "MetaAves Phylogenetic Clade Layer",
     "notes": "Maintain clades separately from ranked taxonomy. Example: Telluraves is a clade and must not be encoded as an order/family. Clades can contain multiple orders and can be nested between ranked nodes."
+  },
+  "taxonomyPolicy": {
+    "rankedTaxonomy": [
+      "class",
+      "order",
+      "family",
+      "genus",
+      "species"
+    ],
+    "clades": "Separate phylogenetic layer; clades never occupy ranked taxonomy fields."
   }
 }
