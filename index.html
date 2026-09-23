@@ -15,7 +15,12 @@
     <main class="game-container">
 
         <header class="game-header">
-            <h1>MetaAves <span class="title-bird" aria-hidden="true">🪶</span></h1>
+            <h1>MetaAves <span class="title-bird" aria-hidden="true">
+    <svg viewBox="0 0 64 40" role="img">
+        <path d="M4 28c9-1 16-6 22-14 5-7 12-11 21-10-3 3-5 6-6 10 5 1 10 4 15 9-8-2-14-2-19 1-7 4-14 7-24 6l-9-2z"/>
+        <circle cx="48" cy="8" r="1.8"/>
+    </svg>
+</span></h1>
             <p>The Taxonomic Bird Game</p>
         </header>
 
@@ -32,7 +37,7 @@
             </div>
 
             <button id="new-game-button" class="new-game-button" type="button" >
-                ✨ New Game
+                New Game
             </button>
 
         </section>
@@ -41,7 +46,7 @@
         <!-- Guessing area -->
         <section class="guess-section">
 
-            <h2>🔎 Guess the mystery bird</h2>
+            <h2><span class="mono-heading-icon">⌕</span> Guess the mystery bird</h2>
 
             <div class="search-container">
 
@@ -53,7 +58,7 @@
                 >
 
                 <button id="guess-button">
-                    🔍 Guess
+                    <span class="button-icon">⌕</span> Guess
                 </button>
 
             </div>
@@ -66,7 +71,7 @@
         <!-- Taxonomy tree -->
         <section class="taxonomy-section">
 
-            <h2>🌳 Taxonomy</h2>
+            <h2><span class="mono-heading-icon">◆</span> Taxonomy</h2>
 
             <div id="taxonomy-tree" class="taxonomy-tree">
 
@@ -82,7 +87,7 @@
         <!-- Taxon information -->
         <section class="taxon-section">
 
-            <h2>📖 Taxon Information</h2>
+            <h2><span class="mono-heading-icon">◇</span> Taxon Information</h2>
 
             <div id="taxon-card" class="taxon-card">
 
