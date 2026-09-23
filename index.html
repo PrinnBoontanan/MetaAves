@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,9 +12,91 @@
 
 <body>
 
-    <h1>MetaAves</h1>
-    <p>The Taxonomic Bird Game</p>
+    <main class="game-container">
+
+        <header class="game-header">
+            <h1>MetaAves</h1>
+            <p>The Taxonomic Bird Game</p>
+        </header>
+
+
+        <!-- Game information -->
+        <section class="game-info">
+
+            <div class="mode-display">
+                Mode: <strong id="game-mode">World Birds</strong>
+            </div>
+
+            <div class="guess-counter">
+                Guesses: <strong id="guess-count">12</strong>
+            </div>
+
+        </section>
+
+
+        <!-- Guessing area -->
+        <section class="guess-section">
+
+            <h2>Guess the mystery bird</h2>
+
+            <div class="search-container">
+
+                <input
+                    type="text"
+                    id="bird-search"
+                    placeholder="Enter an English bird name..."
+                    autocomplete="off"
+                >
+
+                <button id="guess-button">
+                    Guess
+                </button>
+
+            </div>
+
+            <div id="suggestions" class="suggestions"></div>
+
+        </section>
+
+
+        <!-- Taxonomy tree -->
+        <section class="taxonomy-section">
+
+            <h2>Taxonomy</h2>
+
+            <div id="taxonomy-tree" class="taxonomy-tree">
+
+                <p class="tree-placeholder">
+                    Your guesses will appear here.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- Taxon information -->
+        <section class="taxon-section">
+
+            <h2>Taxon Information</h2>
+
+            <div id="taxon-card" class="taxon-card">
+
+                <h3>Select a taxon</h3>
+
+                <p>
+                    Click a taxon in the tree to learn more about it.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
 
     <script src="script.js"></script>
+
 </body>
+
 </html>

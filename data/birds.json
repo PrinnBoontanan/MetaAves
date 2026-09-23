@@ -1,0 +1,38 @@
+[
+    {
+        "commonName": "Great Hornbill",
+        "scientificName": "Buceros bicornis",
+        "thaiName": "นกกก",
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Bucerotiformes",
+        "family": "Bucerotidae",
+        "genus": "Buceros",
+        "species": "Buceros bicornis"
+    },
+    {
+        "commonName": "Oriental Pied Hornbill",
+        "scientificName": "Anthracoceros albirostris",
+        "thaiName": "นกแก๊ก",
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Bucerotiformes",
+        "family": "Bucerotidae",
+        "genus": "Anthracoceros",
+        "species": "Anthracoceros albirostris"
+    },
+    {
+        "commonName": "House Sparrow",
+        "scientificName": "Passer domesticus",
+        "thaiName": "นกกระจอกบ้าน",
+        "kingdom": "Animalia",
+        "phylum": "Chordata",
+        "class": "Aves",
+        "order": "Passeriformes",
+        "family": "Passeridae",
+        "genus": "Passer",
+        "species": "Passer domesticus"
+    }
+]

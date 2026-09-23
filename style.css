@@ -1,4 +1,352 @@
+/* ========================================
+   MetaAves - Base
+======================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+
 body {
+    margin: 0;
+
     font-family: Arial, sans-serif;
+
+    background: #f4f6f8;
+
+    color: #222;
+}
+
+
+.game-container {
+    width: min(1000px, 92%);
+
+    margin: 0 auto;
+
+    padding: 40px 0;
+}
+
+
+.game-header {
     text-align: center;
+
+    margin-bottom: 35px;
+}
+
+
+.game-header h1 {
+    margin: 0;
+
+    font-size: 42px;
+}
+
+
+.game-header p {
+    margin-top: 8px;
+
+    color: #666;
+}
+
+
+.game-info {
+    display: flex;
+
+    justify-content: space-between;
+
+    margin-bottom: 25px;
+}
+
+
+.mode-display,
+.guess-counter {
+    background: white;
+
+    padding: 12px 18px;
+
+    border-radius: 10px;
+}
+
+
+.guess-section {
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 14px;
+
+    margin-bottom: 25px;
+}
+
+
+.search-container {
+    display: flex;
+
+    gap: 10px;
+}
+
+
+#bird-search {
+    flex: 1;
+
+    padding: 14px;
+
+    font-size: 16px;
+
+    border: 1px solid #ccc;
+
+    border-radius: 8px;
+}
+
+
+#guess-button {
+    padding: 14px 24px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+    font-size: 16px;
+}
+
+
+.suggestions {
+    margin-top: 5px;
+
+    background: white;
+
+    border: 1px solid #ddd;
+
+    border-radius: 8px;
+
+    overflow: hidden;
+}
+
+
+.suggestion {
+    padding: 12px 15px;
+
+    cursor: pointer;
+
+    border-bottom: 1px solid #eee;
+}
+
+
+.suggestion:hover {
+    background: #f1f1f1;
+}
+
+
+/* ========================================
+   Taxonomy Section
+======================================== */
+
+.taxonomy-section {
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 14px;
+
+    margin-bottom: 25px;
+}
+
+
+.taxonomy-tree {
+    min-height: 260px;
+
+    padding: 35px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 12px;
+
+    background: #fafafa;
+
+    overflow-x: auto;
+}
+
+
+/* ========================================
+   Taxonomy Nodes
+======================================== */
+
+.taxon-node {
+    position: relative;
+
+    display: inline-block;
+
+    padding: 7px 14px;
+
+    background: white;
+
+    border: 1.5px solid #aaa;
+
+    border-radius: 7px;
+
+    font-weight: bold;
+
+    white-space: nowrap;
+}
+
+
+.tree-root-node {
+    border: 2px solid #333;
+}
+
+
+/* ========================================
+   Branch Container
+======================================== */
+
+.tree-branch {
+    position: relative;
+
+    margin-left: 28px;
+
+    padding-left: 30px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+}
+
+
+/* Vertical branch line */
+
+.tree-branch::before {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+
+    top: 0;
+
+    bottom: 0;
+
+    width: 2px;
+
+    background: #aaa;
+}
+
+
+/* ========================================
+   Horizontal branch connectors
+======================================== */
+
+.tree-branch > .taxon-node,
+.tree-branch > .species-node {
+    position: relative;
+}
+
+
+.tree-branch > .taxon-node::before,
+.tree-branch > .species-node::before {
+
+    content: "";
+
+    position: absolute;
+
+    left: -30px;
+
+    top: 50%;
+
+    width: 30px;
+
+    height: 2px;
+
+    background: #aaa;
+}
+
+
+/* ========================================
+   Species
+======================================== */
+
+.species-node {
+    position: relative;
+
+    display: inline-block;
+
+    margin: 5px 0;
+
+    padding: 7px 14px;
+
+    background: white;
+
+    border: 1px solid #bbb;
+
+    border-radius: 7px;
+
+    white-space: nowrap;
+}
+
+
+/* ========================================
+   Guessed species
+======================================== */
+
+.guessed-species {
+    font-weight: bold;
+}
+
+
+/* ========================================
+   Hidden mystery
+======================================== */
+
+.mystery-species {
+    color: #888;
+
+    font-weight: bold;
+}
+
+
+/* ========================================
+   Correct answer
+======================================== */
+
+.correct-species {
+    font-weight: bold;
+
+    border: 2px solid #333;
+}
+
+
+/* ========================================
+   Empty tree
+======================================== */
+
+.tree-placeholder {
+    padding: 60px 20px;
+
+    text-align: center;
+
+    color: #888;
+}
+
+
+/* ========================================
+   Taxon Information
+======================================== */
+
+.taxon-section {
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 14px;
+}
+
+
+.taxon-card {
+    padding: 20px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 10px;
 }
