@@ -828,6 +828,7 @@ function getBirdTaxonomyText(bird) {
 
 function showGameOverCard(result) {
     const overlay = document.getElementById("game-over-overlay");
+    const newGameButton = document.getElementById("new-game-button");
     const title = document.getElementById("game-over-title");
     const message = document.getElementById("game-over-message");
     const birdName = document.getElementById("study-bird-name");
@@ -865,12 +866,18 @@ function showGameOverCard(result) {
         .then(wiki => {
             if (!wiki) return;
 
-            const image = document.createElement("img");
-            image.id = "study-bird-image";
-            image.className = "study-card-image";
-            image.src = wiki.thumbnail?.source || "";
-            image.alt = bird.commonName;
-            if (!image.src) image.remove();
+            const imageSource = wiki.thumbnail?.source;
+
+            const image = imageSource
+                ? document.createElement("img")
+                : null;
+
+            if (image) {
+                image.id = "study-bird-image";
+                image.className = "study-card-image";
+                image.src = imageSource;
+                image.alt = bird.commonName;
+            }
 
             const description = document.createElement("p");
             description.id = "study-bird-description";
@@ -878,13 +885,19 @@ function showGameOverCard(result) {
 
             const details = document.querySelector(".study-card-details");
             if (details) {
-                if (image.src) details.before(image);
+                if (image) details.before(image);
                 if (wiki.extract) details.before(description);
             }
         })
         .catch(() => {});
 
     overlay.classList.add("visible");
+
+    // The main-menu New Game button only appears once the current
+    // game has ended. It remains available after the study card is closed.
+    if (newGameButton) {
+        newGameButton.classList.add("visible");
+    }
 }
 
 function closeGameOverCard() {
@@ -895,6 +908,11 @@ function closeGameOverCard() {
 }
 
 function replayGame() {
+    const newGameButton = document.getElementById("new-game-button");
+
+    if (newGameButton) {
+        newGameButton.classList.remove("visible");
+    }
     closeGameOverCard();
 
     gameState.guessesRemaining = gameState.maxGuesses;
