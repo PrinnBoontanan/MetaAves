@@ -487,10 +487,17 @@ function renderTaxonomyTree() {
         element.style.left = `${x}px`;
         element.style.top = `${y}px`;
 
-        // Nodes are revealed by depth, not all at once.
-        // Depth 0 = Aves, depth 1 = its children,
-        // depth 2 = the next generation, etc.
-        const nodeDelay = position.depth * 0.8;
+        // The tree grows one generation at a time.
+        // A node must finish appearing before the branches
+        // leading to the next generation are allowed to grow.
+        //
+        // Depth 0 = Aves
+        // Depth 1 = Bucerotidae / House Sparrow
+        // Depth 2 = Great Hornbill / ???
+        const generationDuration = 0.95;
+        const nodeRevealDuration = 0.32;
+        const nodeDelay = position.depth * generationDuration;
+
         element.style.setProperty(
             "--node-delay",
             `${nodeDelay}s`
@@ -561,18 +568,26 @@ function renderTaxonomyTree() {
 
             svg.appendChild(path);
 
-            // Grow the tree from top to bottom.
-            // Every level waits for the level above it to finish.
+            // Grow the tree strictly from top to bottom.
+            //
+            // A branch leading to depth 1 starts after Aves has
+            // appeared. A branch leading to depth 2 waits until
+            // the depth-1 taxon/species nodes have appeared.
+            //
+            // This prevents all branches from growing together.
             const childDepth = positioned.get(child).depth;
-            const levelDuration = 0.65;
+            const generationDuration = 0.95;
+            const nodeRevealDuration = 0.32;
+
             const animationDelay = Math.max(
                 0,
-                (childDepth - 1) * levelDuration + 0.12
+                (childDepth - 1) * generationDuration +
+                    nodeRevealDuration
             );
 
             // Set the delay BEFORE adding the SVG path so the
             // animation starts at the correct generation.
-            path.style.animationDelay = `${animationDelay}s`;
+            path.style.animationDelay = animationDelay + "s";
 
             drawConnections(child);
         });
