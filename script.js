@@ -61,9 +61,11 @@ async function loadGameData() {
         const rankOrder = gameState.taxonomy?._meta?.rankOrder;
 
         if (Array.isArray(rankOrder) && rankOrder.length) {
-            taxonomyLevels = rankOrder.filter(
-                level => level !== "species"
-            );
+            const classIndex = rankOrder.indexOf("class");
+
+            taxonomyLevels = rankOrder
+                .slice(classIndex >= 0 ? classIndex : 0)
+                .filter(level => level !== "species");
         }
 
         // Temporary mystery for testing.
