@@ -17,6 +17,16 @@ BIRDS_PATH = DATA_DIR / "birds.generated.json"
 
 INSERT_RANKS = ("suborder", "infraorder", "parvorder")
 
+# Supplemental sources can use historical family spellings while the
+# AviList backbone uses the current family anchor.
+FAMILY_ALIASES = {
+    "Pityriaseidae": "Pityriasidae",
+}
+
+
+def canonical_family_name(name):
+    return FAMILY_ALIASES.get(name, name)
+
 
 def node_id(rank, name):
     safe = re.sub(r"[^A-Za-z0-9_-]+", "_", name).strip("_")
@@ -125,7 +135,8 @@ def main():
                 parent_path = []
             prefix = parent_path + [(group["rank"], group["name"])]
 
-        for family in group["families"]:
+        for source_family in group["families"]:
+            family = canonical_family_name(source_family)
             current = family_paths.get(family, [])
             if len(prefix) > len(current):
                 family_paths[family] = prefix
@@ -146,7 +157,8 @@ def main():
     family_paths = {}
     for group in groups:
         path = path_for(group)
-        for family in group["families"]:
+        for source_family in group["families"]:
+            family = canonical_family_name(source_family)
             old = family_paths.get(family)
             if old and old != path:
                 # A family may appear in a broad group and a more specific
