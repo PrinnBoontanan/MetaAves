@@ -630,129 +630,30 @@ function buildTreeModel() {
     }
 
     // ----------------------------------------
-    // 4. Reconstruct close-guess side branches
+    // 4. Attach every wrong guess directly to its
+    //    deepest shared taxon
     // ----------------------------------------
     //
-    // Wrong guesses are grouped by their MRCA with the mystery.
+    // This is the key reveal rule:
     //
-    // A group of one stays as:
+    //     guess + mystery -> deepest shared taxon
     //
-    //     Telluraves
-    //       └─ Great Hornbill
+    // The tree must NOT reveal the guessed bird's hidden descendants,
+    // even when multiple guesses happen to belong to the same branch.
     //
-    // A group of two or more is expanded using their real lineages:
+    // For example, if the mystery is a passerine and Great Hornbill
+    // shares only Telluraves with it, the hornbill is shown directly
+    // under Telluraves. We do not reveal Afroaves, Bucerotiformes,
+    // Bucerotidae, etc.
     //
-    //     Telluraves
-    //       └─ Afroaves
-    //          └─ Bucerotiformes
-    //             ├─ Great Hornbill
-    //             └─ Oriental Pied Hornbill
-    //
-    // The recursion only creates a taxon when at least two guesses share
-    // that next node. Therefore no arbitrary hidden lineage is exposed.
-
-    const groups = new Map();
+    // Multiple guesses with the same deepest shared taxon simply become
+    // sibling leaves under that one revealed taxon.
 
     for (const entry of wrongEntries) {
-        const id = entry.endpoint.id;
-
-        if (!groups.has(id)) {
-            groups.set(id, []);
-        }
-
-        groups.get(id).push(entry);
-    }
-
-    function addSideBranch(parent, group, endpointId) {
-        if (group.length < 2) return;
-
-        const candidates = group
-            .map(entry => {
-                const path =
-                    pathByBird.get(entry.bird.commonName) ||
-                    [];
-
-                const endpointIndex = path.findIndex(
-                    node => node.id === endpointId
-                );
-
-                if (endpointIndex < 0) return null;
-
-                return {
-                    entry,
-                    path,
-                    endpointIndex
-                };
-            })
-            .filter(Boolean);
-
-        function expand(currentParent, remaining, offset) {
-            const nextGroups = new Map();
-
-            for (const candidate of remaining) {
-                const next =
-                    candidate.path[
-                        candidate.endpointIndex + offset
-                    ];
-
-                if (!next) {
-                    continue;
-                }
-
-                if (!nextGroups.has(next.id)) {
-                    nextGroups.set(next.id, []);
-                }
-
-                nextGroups.get(next.id).push(candidate);
-            }
-
-            for (const sameTaxon of nextGroups.values()) {
-                if (sameTaxon.length === 1) {
-                    addSpecies(
-                        currentParent,
-                        sameTaxon[0].entry
-                    );
-                    continue;
-                }
-
-                const taxon =
-                    sameTaxon[0].path[
-                        sameTaxon[0].endpointIndex + offset
-                    ];
-
-                const child = getOrCreateTaxon(
-                    currentParent,
-                    taxon
-                );
-
-                expand(
-                    child,
-                    sameTaxon,
-                    offset + 1
-                );
-            }
-        }
-
-        expand(parent, candidates, 1);
-    }
-
-    for (const [endpointId, group] of groups) {
-        const parent = endpointParents.get(endpointId);
+        const parent = endpointParents.get(entry.endpoint.id);
 
         if (parent) {
-            addSideBranch(parent, group, endpointId);
-        }
-    }
-
-    // A group containing one guess has no reason to reveal its hidden
-    // descendants. Attach it directly to its shared endpoint.
-    for (const [endpointId, group] of groups) {
-        if (group.length !== 1) continue;
-
-        const parent = endpointParents.get(endpointId);
-
-        if (parent) {
-            addSpecies(parent, group[0]);
+            addSpecies(parent, entry);
         }
     }
 
