@@ -603,51 +603,73 @@ function buildTreeModel() {
         });
     }
 
-    // Count how many WRONG guesses pass through every taxon in the
-    // complete tree. A taxon shared by at least two guesses is a real
-    // visible branch, even when that taxon is deeper than their MRCA
-    // with the mystery.
-    const wrongDescendantCount = new Map();
-
-    for (const entry of wrongEntries) {
-        const path =
-            pathByBird.get(entry.bird.commonName) || [];
-
-        for (const taxon of path) {
-            wrongDescendantCount.set(
-                taxon.id,
-                (wrongDescendantCount.get(taxon.id) || 0) + 1
-            );
-        }
-    }
-
-    // These are the only taxon nodes that may appear while the game is
-    // still running:
+    // Select the visible projection from the COMPLETE tree.
     //
-    //   - the deepest shared taxon revealed by a guess
-    //   - a taxon shared by two or more guesses
-    //   - the mystery's current revealed endpoint
+    // There are two independent kinds of information:
     //
-    // Everything else is collapsed away.
+    // 1. Guess -> mystery:
+    //    reveal the deepest shared taxon for that guess.
+    //
+    // 2. Guess -> guess:
+    //    if two guessed species share a deeper common branch, reveal
+    //    that branch too. This does NOT require that branch to be shared
+    //    with the mystery.
+    //
+    // We therefore use pairwise MRCAs instead of simply marking every
+    // taxon that happens to occur in two paths. Each MRCA is a real
+    // branching point in the combined tree.
+
     const visibleIds = new Set(["class:Aves"]);
 
+    // A guess reveals its deepest shared taxon with the mystery.
     for (const entry of wrongEntries) {
         visibleIds.add(entry.endpoint.id);
     }
 
+    // The mystery's current position is also visible.
     visibleIds.add(mysteryEntry.endpoint.id);
 
-    for (const [taxonId, count] of wrongDescendantCount) {
-        if (count >= 2) {
-            visibleIds.add(taxonId);
+    function getDeepestCommonNode(leftPath, rightPath) {
+        const limit = Math.min(leftPath.length, rightPath.length);
+
+        let common = null;
+
+        for (let i = 0; i < limit; i++) {
+            if (leftPath[i].id !== rightPath[i].id) break;
+            common = leftPath[i];
+        }
+
+        return common;
+    }
+
+    // Two guesses can reveal their own side branch independently of the
+    // mystery. For every pair, reveal the path to their actual MRCA.
+    for (let i = 0; i < wrongEntries.length; i++) {
+        const leftPath =
+            pathByBird.get(wrongEntries[i].bird.commonName) || [];
+
+        for (let j = i + 1; j < wrongEntries.length; j++) {
+            const rightPath =
+                pathByBird.get(wrongEntries[j].bird.commonName) || [];
+
+            const common = getDeepestCommonNode(leftPath, rightPath);
+
+            if (common) {
+                // Every ancestor is required to physically connect the
+                // common node to Aves in the rendered tree.
+                for (let k = 0; k <= common.depth; k++) {
+                    if (leftPath[k]) {
+                        visibleIds.add(leftPath[k].id);
+                    }
+                }
+            }
         }
     }
 
     // At game end the mystery is intentionally fully revealed.
     if (finished) {
-        const mysteryPath = pathByBird.get(
-            gameState.mysteryBird.commonName
-        ) || [];
+        const mysteryPath =
+            pathByBird.get(gameState.mysteryBird.commonName) || [];
 
         mysteryPath.forEach(taxon => visibleIds.add(taxon.id));
     }
@@ -721,12 +743,89 @@ function buildTreeModel() {
 // Metazooa-style tree renderer
 // ========================================
 
+// ========================================
+// Tree node proximity coloring
+// ========================================
+//
+// Color is based on biological closeness to the hidden mystery, not
+// taxonomy rank. Red = far, yellow = middle, green = close.
+//
+// A side branch inherits the closeness of the point where that branch
+// meets the mystery. This prevents a deep hornbill branch from becoming
+// green merely because it contains many taxonomy levels.
+
+function getTreeNodeProximity(node) {
+    if (!node || node.type !== "taxon" || !gameState.mysteryBird) {
+        return 0;
+    }
+
+    const mysteryPath = getBirdPhylogenyPath(gameState.mysteryBird);
+    const mysteryNode = mysteryPath.find(item => item.id === node.taxonId);
+
+    // Nodes on the mystery's own lineage are directly scored by their
+    // depth in that lineage.
+    let bestDepth = mysteryNode ? mysteryNode.depth : 0;
+
+    // A side branch is scored by the deepest relationship its guessed
+    // species has with the mystery.
+    for (const guessedBird of gameState.guesses) {
+        if (
+            guessedBird.commonName ===
+            gameState.mysteryBird.commonName
+        ) {
+            continue;
+        }
+
+        const path = getBirdPhylogenyPath(guessedBird);
+        const containsNode = path.some(item => item.id === node.taxonId);
+
+        if (!containsNode) continue;
+
+        const shared = getDeepestSharedTaxon(
+            guessedBird,
+            gameState.mysteryBird
+        );
+
+        bestDepth = Math.max(bestDepth, shared.depth);
+    }
+
+    const deepestKnown = Math.max(
+        1,
+        ...gameState.guesses
+            .filter(
+                bird =>
+                    bird.commonName !==
+                    gameState.mysteryBird.commonName
+            )
+            .map(bird =>
+                getDeepestSharedTaxon(
+                    bird,
+                    gameState.mysteryBird
+                ).depth
+            ),
+        mysteryNode?.depth || 0
+    );
+
+    return Math.max(0, Math.min(1, bestDepth / deepestKnown));
+}
+
 function createTreeNodeElement(node) {
     const element = document.createElement("div");
 
     element.classList.add("meta-tree-node");
 
     if (node.type === "taxon") {
+        const proximity = getTreeNodeProximity(node);
+        const hue = Math.round(proximity * 120);
+        element.style.setProperty("--tree-proximity-hue", hue);
+        element.style.setProperty(
+            "--tree-proximity-saturation",
+            "58%"
+        );
+        element.style.setProperty(
+            "--tree-proximity-lightness",
+            "38%"
+        );
         element.classList.add("meta-taxon-node");
         element.dataset.taxon = node.name;
         element.dataset.taxonId = node.taxonId || "";
