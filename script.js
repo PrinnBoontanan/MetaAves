@@ -758,7 +758,14 @@ function buildTreeModel() {
 
         if (!parent) return;
 
-        addSpeciesLeaf(parent, entry);
+        const group = groups.get(entry.endpoint.id) || [];
+
+        // Groups with multiple close guesses were already expanded into
+        // their side branch above. Only a lone guess stays directly under
+        // its mystery-shared endpoint.
+        if (group.length === 1) {
+            addSpeciesLeaf(parent, entry);
+        }
     });
 
     /*
