@@ -713,44 +713,8 @@ function buildTreeModel() {
         addVisiblePath(mysteryPath, mysteryEntry, true);
     }
 
-    // ----------------------------------------
-    // 5. Add the mystery
-    // ----------------------------------------
-    //
-    // While playing, ??? sits exactly at the deepest revealed mystery
-    // endpoint. At game end, the full mystery path is already represented
-    // by its actual species endpoint.
-
-    if (finished) {
-        const fullPath = mysteryPath;
-
-        if (fullPath.length) {
-            let parent = root;
-
-            for (let i = 1; i < fullPath.length; i++) {
-                const taxon = fullPath[i];
-
-                /*
-                 * At game end the mystery is allowed to reveal its complete
-                 * lineage. This is separate from the hidden-game tree.
-                 */
-                parent = getOrCreateTaxon(parent, taxon);
-            }
-
-            addSpecies(parent, mysteryEntry);
-        } else {
-            addSpecies(root, mysteryEntry);
-        }
-    } else {
-        const parent = endpointParents.get(
-            mysteryEntry.endpoint.id
-        );
-
-        if (parent) {
-            addSpecies(parent, mysteryEntry);
-        }
-    }
-
+    // The mystery was already added by the projection above.
+    // Do not add it a second time here.
     return root;
 }
 
