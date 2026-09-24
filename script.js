@@ -496,6 +496,53 @@ function getMysteryRevealTaxon() {
 }
 
 
+function getPathThroughTaxon(bird, taxonId) {
+    const path = getBirdPhylogenyPath(bird);
+    const index = path.findIndex(node => node.id === taxonId);
+    return index === -1 ? [] : path.slice(0, index + 1);
+}
+
+function getDeepestSharedNode(birdA, birdB) {
+    const pathA = getBirdPhylogenyPath(birdA);
+    const pathB = getBirdPhylogenyPath(birdB);
+    const pathBIds = new Set(pathB.map(node => node.id));
+
+    let deepest = pathA[0] || {
+        id: "class:Aves",
+        level: "class",
+        value: "Aves",
+        depth: 0
+    };
+
+    for (const node of pathA) {
+        if (pathBIds.has(node.id)) {
+            deepest = node;
+        }
+    }
+
+    return deepest;
+}
+
+function getTreeEndpointForBird(bird, displayedBirds) {
+    // Every visible species is attached to the deepest taxon it shares
+    // with ANY other visible species. This is the core Metazooa behavior:
+    // the tree represents relationships among the guesses, not only
+    // relationships to the mystery bird.
+    let deepest = getBirdPhylogenyPath(bird)[0];
+
+    for (const other of displayedBirds) {
+        if (other.commonName === bird.commonName) continue;
+
+        const shared = getDeepestSharedNode(bird, other);
+
+        if (shared.depth > deepest.depth) {
+            deepest = shared;
+        }
+    }
+
+    return deepest;
+}
+
 function buildTreeModel() {
     const root = {
         type: "taxon",
@@ -505,119 +552,53 @@ function buildTreeModel() {
         children: []
     };
 
-    // At the start of a game, show only the root Aves node.
-    // Do not reveal the mystery bird or any clade until the first guess.
     if (gameState.guesses.length === 0) {
         return root;
     }
 
-    const activeBirds = [
-        ...gameState.guesses.filter(
-            bird => bird.commonName !== gameState.mysteryBird.commonName
-        ),
-        gameState.mysteryBird
-    ];
+    const guessedBirds = gameState.guesses.filter(
+        bird => bird.commonName !== gameState.mysteryBird.commonName
+    );
 
-    const commonAnchor = getCommonCladeAnchor(activeBirds);
+    const solved = gameState.guesses.some(
+        bird => bird.commonName === gameState.mysteryBird.commonName
+    );
 
-    function findChild(parent, id) {
+    // The mystery is part of the relationship calculation even though its
+    // species name remains hidden. This lets a lone guess connect to the
+    // correct shared taxon, while additional guesses can create their own
+    // deeper side branches.
+    const visibleBirds = [...guessedBirds, gameState.mysteryBird];
+
+    const endpoints = new Map();
+
+    visibleBirds.forEach(bird => {
+        endpoints.set(
+            bird.commonName,
+            getTreeEndpointForBird(bird, visibleBirds)
+        );
+    });
+
+    function findChild(parent, taxonId) {
         return parent.children.find(
-            child => child.type === "taxon" && child.taxonId === id
+            child => child.type === "taxon" && child.taxonId === taxonId
         );
     }
 
-    function getEndpointPath(bird, endpoint) {
-        const path = getBirdPhylogenyPath(bird);
-        const endpointIndex = path.findIndex(node => node.id === endpoint.id);
+    function insertSpecies(bird, nodeType) {
+        const endpoint = endpoints.get(bird.commonName);
 
-        if (endpointIndex === -1) {
-            return [endpoint];
-        }
+        if (!endpoint) return;
 
-        return path.slice(0, endpointIndex + 1);
-    }
+        const path = getPathThroughTaxon(bird, endpoint.id);
+        if (!path.length) return;
 
-    // A clade is shown when it is the common branching point
-    // for the current tree. This matches the Metazooa-style behavior:
-    // if one branch ends at the shared clade (e.g. House Sparrow at
-    // Telluraves), that clade becomes the common parent of the other
-    // deeper branch (e.g. Bucerotidae).
-    const mysteryEndpointForTree = getMysteryRevealTaxon();
-
-    const branchEndpoints = [
-        ...gameState.guesses
-            .filter(bird => bird.commonName !== gameState.mysteryBird.commonName)
-            .map(bird => getDeepestSharedTaxon(bird, gameState.mysteryBird)),
-        mysteryEndpointForTree
-    ];
-
-    const showCommonClade =
-        commonAnchor.level !== "class" &&
-        branchEndpoints.some(endpoint => endpoint.id === commonAnchor.id);
-
-    function getDisplayPath(bird, endpoint) {
-        const path = getBirdPhylogenyPath(bird);
-        const endpointIndex = path.findIndex(node => node.id === endpoint.id);
-
-        if (endpointIndex === -1) {
-            return [path[0], endpoint];
-        }
-
-        // Taxon nodes belong to the guessed birds' own taxonomy too.
-        // They are not required to be shared with the mystery bird.
-        //
-        // For example, if Great Hornbill and Oriental Pied Hornbill are
-        // both guessed, their shared Bucerotidae node should be visible
-        // even when the mystery bird is a different family.
-        const result = [path[0]];
-
-        let anchorIndex = -1;
-
-        if (showCommonClade) {
-            anchorIndex = path.findIndex(
-                node => node.id === commonAnchor.id
-            );
-
-            if (anchorIndex > 0) {
-                result.push(commonAnchor);
-            }
-        }
-
-        const startIndex = anchorIndex >= 0
-            ? anchorIndex + 1
-            : 1;
-
-        for (let i = startIndex; i <= endpointIndex; i++) {
-            const node = path[i];
-
-            if (!result.some(existing => existing.id === node.id)) {
-                result.push(node);
-            }
-        }
-
-        return result;
-    }
-
-    function insertBird(bird, endpoint, nodeType) {
-        const mysteryRevealedAfterLoss =
-            nodeType === "mystery" && gameState.gameStatus === "lost";
-
-        const leaf = {
-            type: "species",
-            name: nodeType === "mystery" && !mysteryRevealedAfterLoss
-                ? "???"
-                : bird.commonName,
-            nodeType: mysteryRevealedAfterLoss ? "revealed-lost" : nodeType,
-            bird: nodeType === "mystery" && !mysteryRevealedAfterLoss
-                ? null
-                : bird
-        };
-
-        const displayPath = getDisplayPath(bird, endpoint);
         let parent = root;
 
-        for (let i = 1; i < displayPath.length; i++) {
-            const taxon = displayPath[i];
+        // The endpoint itself is included in the path. Every taxon between
+        // Aves and that endpoint is therefore preserved exactly once.
+        for (let i = 1; i < path.length; i++) {
+            const taxon = path[i];
 
             let child = findChild(parent, taxon.id);
 
@@ -635,77 +616,34 @@ function buildTreeModel() {
             parent = child;
         }
 
-        parent.children.push(leaf);
+        const mysteryHidden =
+            nodeType === "mystery" && !solved && gameState.gameStatus !== "lost";
+
+        parent.children.push({
+            type: "species",
+            name: mysteryHidden ? "???" : bird.commonName,
+            nodeType: mysteryHidden
+                ? "mystery"
+                : nodeType === "mystery" && gameState.gameStatus === "lost"
+                    ? "revealed-lost"
+                    : nodeType,
+            bird: mysteryHidden ? null : bird
+        });
     }
 
-    // Guesses are grouped by the taxonomy they share with the other
-    // guessed birds. This is intentionally independent of the mystery
-    // bird: a taxon node can still be meaningful because multiple guesses
-    // belong to that group.
-    function getDeepestSharedGuessTaxon(bird) {
-        const otherGuesses = gameState.guesses.filter(
-            other =>
-                other.commonName !== bird.commonName &&
-                other.commonName !== gameState.mysteryBird.commonName
-        );
-
-        if (!otherGuesses.length) {
-            return getDeepestSharedTaxon(bird, gameState.mysteryBird);
-        }
-
-        const birdPath = getBirdPhylogenyPath(bird);
-
-        let deepest = birdPath[0];
-
-        for (const candidate of birdPath) {
-            const sharedByAnotherGuess = otherGuesses.some(other => {
-                const otherPath = getBirdPhylogenyPath(other);
-                return otherPath.some(node => node.id === candidate.id);
-            });
-
-            if (sharedByAnotherGuess) {
-                deepest = candidate;
-            }
-        }
-
-        return deepest;
-    }
-
-    gameState.guesses.forEach(bird => {
-        if (bird.commonName === gameState.mysteryBird.commonName) return;
-
-        const endpoint = getDeepestSharedGuessTaxon(bird);
-
-        insertBird(bird, endpoint, "guess");
+    // Insert guesses first. If two guesses share a family/order/clade,
+    // their shared path is physically the same branch in the tree.
+    guessedBirds.forEach(bird => {
+        insertSpecies(bird, "guess");
     });
 
-    const solved = gameState.guesses.some(
-        bird => bird.commonName === gameState.mysteryBird.commonName
-    );
-
-    const mysteryEndpoint = getMysteryRevealTaxon();
-
-    insertBird(
+    // The mystery is inserted last so it can share the already-created
+    // branch with the guesses. Its endpoint is still calculated from the
+    // same complete set of visible species.
+    insertSpecies(
         gameState.mysteryBird,
-        mysteryEndpoint,
         solved ? "correct" : "mystery"
     );
-
-    // The mystery placeholder must not have a bird object while unsolved.
-    if (!solved) {
-        function removeMysteryBirdReference(node) {
-            if (node.type === "species" && node.nodeType === "mystery") {
-                node.bird = null;
-                return;
-            }
-
-            if (node.children) {
-                node.children.forEach(removeMysteryBirdReference);
-            }
-        }
-
-        removeMysteryBirdReference(root);
-    }
 
     return root;
 }
@@ -1298,414 +1236,3 @@ function renderTaxonomyTree() {
         const actualWidth = element.offsetWidth || position.width;
 
         const x = position.x - actualWidth / 2;
-        const y =
-            28 +
-            position.depth * levelGap -
-            nodeHeight / 2;
-
-        element.style.left = x + "px";
-        element.style.top = y + "px";
-        element.style.setProperty(
-            "--node-delay",
-            `${position.depth * 0.95}s`
-        );
-
-        nodeLayer.appendChild(element);
-
-        positioned.set(position.node, {
-            x: x + element.offsetWidth / 2,
-            y: y + element.offsetHeight / 2,
-            width: element.offsetWidth,
-            height: element.offsetHeight,
-            depth: position.depth,
-            element
-        });
-    });
-
-    function drawConnections(node) {
-        if (node.type !== "taxon") return;
-
-        const parent = positioned.get(node);
-        if (!parent) return;
-
-        node.children.forEach(child => {
-            const childPosition = positioned.get(child);
-            if (!childPosition) return;
-
-            const startX = parent.x;
-            const startY = parent.y + parent.height / 2;
-            const endX = childPosition.x;
-            const endY = childPosition.y - childPosition.height / 2;
-
-            const verticalDistance = Math.max(1, endY - startY);
-            const curve = Math.max(26, verticalDistance * 0.48);
-
-            const path = document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "path"
-            );
-
-            if (Math.abs(startX - endX) < 1) {
-                path.setAttribute(
-                    "d",
-                    `M ${startX} ${startY} L ${endX} ${endY}`
-                );
-            } else {
-                path.setAttribute(
-                    "d",
-                    `M ${startX} ${startY}
-                     C ${startX} ${startY + curve},
-                       ${endX} ${endY - curve},
-                       ${endX} ${endY}`
-                );
-            }
-
-            path.classList.add("meta-tree-connection");
-
-            const pathLength = path.getTotalLength();
-            path.style.strokeDasharray = pathLength;
-            path.style.strokeDashoffset = pathLength;
-            path.style.setProperty("--branch-length", pathLength);
-
-            if (child.type === "taxon") {
-                path.classList.add("meta-connection-taxon");
-            } else {
-                path.classList.add("meta-connection-species");
-            }
-
-            svg.appendChild(path);
-
-            const branchDelay =
-                positioned.get(node).depth * 0.95 + 0.28;
-
-            setTimeout(() => {
-                path.classList.add("active");
-            }, branchDelay * 1000);
-
-            if (child.type === "taxon") {
-                drawConnections(child);
-            }
-        });
-    }
-
-    drawConnections(model);
-
-    positions.forEach(position => {
-        delete position.node.__treeWidth;
-    });
-}
-
-
-// ========================================
-// Game Over Card
-// ========================================
-
-function getBirdTaxonomyText(bird) {
-    return [
-        bird.class,
-        bird.order,
-        bird.family,
-        bird.genus
-    ].filter(Boolean).join(" → ");
-}
-
-function showGameOverCard(result) {
-    const overlay = document.getElementById("game-over-overlay");
-    const newGameButton = document.getElementById("new-game-button");
-    const title = document.getElementById("game-over-title");
-    const message = document.getElementById("game-over-message");
-    const birdName = document.getElementById("study-bird-name");
-    const scientificName = document.getElementById("study-scientific-name");
-    const thaiName = document.getElementById("study-thai-name");
-    const taxonomy = document.getElementById("study-taxonomy");
-
-    const bird = gameState.mysteryBird;
-    if (!overlay || !bird) return;
-
-    // Reset only the dynamic sections from any previous game.
-    // Keep the permanent Thai name and taxonomy fields.
-    const details = document.querySelector(".study-card-details");
-    if (details) {
-        details.querySelectorAll(".study-card-section").forEach(section => {
-            section.remove();
-        });
-    }
-
-    gameState.gameStatus = result === "won" ? "won" : "lost";
-
-    if (result === "won") {
-        title.textContent = "You found the mystery bird!";
-        message.textContent = "Congratulations!";
-    } else {
-        title.textContent = "Out of guesses!";
-        message.textContent = "Here is the mystery bird.";
-    }
-
-    birdName.textContent = bird.commonName;
-    scientificName.textContent = bird.scientificName || "Unknown";
-    thaiName.textContent =
-        bird.thaiName || "No established Thai name found.";
-    taxonomy.innerHTML = "";
-
-    const taxonomyRows = [
-        ["Class", bird.class],
-        [
-            "Clades",
-            Array.isArray(bird.cladePath) && bird.cladePath.length
-                ? bird.cladePath.join(" → ")
-                : null
-        ],
-        ["Order", bird.order],
-        ["Family", bird.family],
-        ["Genus", bird.genus],
-        ["Species", bird.species || bird.scientificName]
-    ];
-
-    taxonomyRows.forEach(([label, value]) => {
-        if (!value) return;
-
-        const row = document.createElement("div");
-        row.className = "study-taxonomy-row";
-
-        const labelElement = document.createElement("span");
-        labelElement.className = "study-taxonomy-label";
-        labelElement.textContent = label;
-
-        const valueElement = document.createElement("span");
-        valueElement.className = "study-taxonomy-value";
-        valueElement.textContent = value;
-
-        row.appendChild(labelElement);
-        row.appendChild(valueElement);
-        taxonomy.appendChild(row);
-    });
-
-    const addStudySection = (heading, value) => {
-        if (!details || !value) return;
-
-        const section = document.createElement("div");
-        section.className = "study-card-section";
-
-        const title = document.createElement("h4");
-        title.textContent = heading;
-
-        const text = document.createElement("p");
-        text.textContent = value;
-
-        section.appendChild(title);
-        section.appendChild(text);
-        details.appendChild(section);
-    };
-
-    const unavailable =
-        "Detailed information is not available in the current dataset.";
-
-    addStudySection(
-        "Description",
-        bird.description || "Fetching the species description from Wikipedia…"
-    );
-    addStudySection("Habitat", bird.habitat || unavailable);
-    addStudySection("Distribution", bird.distribution || unavailable);
-    addStudySection("Diet", bird.diet || unavailable);
-    addStudySection("Behavior", bird.behavior || unavailable);
-    addStudySection("Breeding", bird.breeding || unavailable);
-    addStudySection("Conservation", bird.conservation || unavailable);
-
-    if (Array.isArray(bird.interestingFacts) && bird.interestingFacts.length) {
-        const section = document.createElement("div");
-        section.className = "study-card-section";
-
-        const title = document.createElement("h4");
-        title.textContent = "Interesting facts";
-
-        const list = document.createElement("ul");
-        bird.interestingFacts.forEach(fact => {
-            const item = document.createElement("li");
-            item.textContent = fact;
-            list.appendChild(item);
-        });
-
-        section.appendChild(title);
-        section.appendChild(list);
-        details.appendChild(section);
-    }
-
-    const studyImage = document.getElementById("study-bird-image");
-    const studyDescription = document.getElementById("study-bird-description");
-    if (studyImage) studyImage.remove();
-    if (studyDescription) studyDescription.remove();
-
-    fetch(
-        "https://en.wikipedia.org/api/rest_v1/page/summary/" +
-        encodeURIComponent(bird.wikipediaTitle || bird.commonName)
-    )
-        .then(response => response.ok ? response.json() : null)
-        .then(wiki => {
-            if (!wiki) return;
-
-            const imageSource = wiki.thumbnail?.source;
-
-            const image = imageSource
-                ? document.createElement("img")
-                : null;
-
-            if (image) {
-                image.id = "study-bird-image";
-                image.className = "study-card-image";
-                image.src = imageSource;
-                image.alt = bird.commonName;
-            }
-
-            const description = document.createElement("p");
-            description.id = "study-bird-description";
-            description.textContent = wiki.extract || "";
-
-            const details = document.querySelector(".study-card-details");
-            if (details) {
-                if (image) {
-                    image.classList.add("study-card-hero-image");
-                    const existingImage = details.parentElement?.querySelector(
-                        ".study-card-hero-image"
-                    );
-                    if (!existingImage) {
-                        details.before(image);
-                    }
-                }
-
-                // Use the Wikipedia introduction to replace the temporary
-                // description when the dataset does not contain one.
-                if (!bird.description && wiki.extract && details) {
-                    const descriptionSection = [...details.querySelectorAll(".study-card-section")]
-                        .find(section =>
-                            section.querySelector("h4")?.textContent === "Description"
-                        );
-
-                    const descriptionParagraph =
-                        descriptionSection?.querySelector("p");
-
-                    if (descriptionParagraph) {
-                        descriptionParagraph.textContent = wiki.extract;
-                    }
-                }
-
-                if (wiki.content_urls?.desktop?.page) {
-                    const wikiSection = document.createElement("div");
-                    wikiSection.className = "study-card-section";
-
-                    const wikiLink = document.createElement("a");
-                    wikiLink.href = wiki.content_urls.desktop.page;
-                    wikiLink.target = "_blank";
-                    wikiLink.rel = "noopener noreferrer";
-                    wikiLink.textContent = "Wikipedia →";
-
-                    wikiSection.appendChild(wikiLink);
-                    details.appendChild(wikiSection);
-                }
-            }
-        })
-        .catch(() => {});
-
-    overlay.classList.add("visible");
-
-    // The main-menu New Game button only appears once the current
-    // game has ended. It remains available after the study card is closed.
-    if (newGameButton) {
-        newGameButton.classList.add("visible");
-    }
-}
-
-function closeGameOverCard() {
-    const overlay = document.getElementById("game-over-overlay");
-    if (overlay) {
-        overlay.classList.remove("visible");
-    }
-}
-
-function replayGame() {
-    const newGameButton = document.getElementById("new-game-button");
-
-    if (newGameButton) {
-        newGameButton.classList.remove("visible");
-    }
-    closeGameOverCard();
-
-    gameState.guessesRemaining = gameState.maxGuesses;
-    gameState.guesses = [];
-    gameState.selectedTaxonId = null;
-    gameState.gameStatus = "playing";
-
-    // Start a fresh round with a new mystery species from the
-    // currently loaded full dataset.
-    gameState.mysteryBird =
-        gameState.birds[Math.floor(Math.random() * gameState.birds.length)];
-
-    searchInput.value = "";
-    suggestions.innerHTML = "";
-
-    updateGuessCounter();
-    renderTaxonomyView();
-    updateAutomaticTaxonCard();
-}
-
-document.getElementById("game-over-close").addEventListener(
-    "click",
-    closeGameOverCard
-);
-
-document.getElementById("game-over-replay").addEventListener(
-    "click",
-    replayGame
-);
-
-document.getElementById("new-game-button").addEventListener(
-    "click",
-    replayGame
-);
-
-document.getElementById("game-over-overlay").addEventListener(
-    "click",
-    event => {
-        if (event.target.id === "game-over-overlay") {
-            closeGameOverCard();
-        }
-    }
-);
-
-
-// ========================================
-// Events
-// ========================================
-
-guessButton.addEventListener("click", makeGuess);
-
-searchInput.addEventListener("keydown", event => {
-    if (event.key === "Enter") {
-        makeGuess();
-    }
-});
-
-searchInput.addEventListener("input", () => {
-    showSuggestions(searchInput.value);
-});
-
-
-treeViewButton?.addEventListener("click", () => {
-    gameState.taxonomyView = "tree";
-    renderTaxonomyView();
-});
-
-tableViewButton?.addEventListener("click", () => {
-    gameState.taxonomyView = "table";
-    renderTaxonomyView();
-});
-
-// ========================================
-// Start game
-// ========================================
-
-async function startGame() {
-    updateGuessCounter();
-    await loadGameData();
-}
-
-startGame();
