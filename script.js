@@ -193,9 +193,27 @@ function getBirdPhylogenyPath(bird) {
             .map(entry => [entry.name, entry])
     );
 
-    const clades = Array.isArray(bird.cladePath)
-        ? bird.cladePath.map(name => cladeByName.get(name)).filter(Boolean)
-        : [];
+    // Use the canonical order -> clade backbone first. The generated
+    // membership file is useful as a species-level join, but it can be
+    // incomplete for a bird. The order backbone is the authoritative
+    // structural path, so every bird in Galloanserae/Neoaves/etc. gets the
+    // required intermediate clade nodes instead of jumping straight to a
+    // parent such as Neognathae.
+    const backboneCladeNames =
+        gameState.clades?._meta?.orderCladePaths?.[bird.order];
+
+    const cladeNames =
+        Array.isArray(backboneCladeNames) && backboneCladeNames.length
+            ? backboneCladeNames
+            : (
+                Array.isArray(bird.cladePath)
+                    ? bird.cladePath
+                    : []
+            );
+
+    const clades = cladeNames
+        .map(name => cladeByName.get(name))
+        .filter(Boolean);
 
     let previousCladeId = "class:Aves";
 
