@@ -563,48 +563,39 @@ function buildTreeModel() {
             return [path[0], endpoint];
         }
 
-        // Only render taxonomy nodes that are actually shared with the
-        // mystery bird. This prevents two guesses that share a family
-        // with each other, but not with the mystery bird, from creating
-        // a misleading family node in the tree.
+        // Taxon nodes belong to the guessed birds' own taxonomy too.
+        // They are not required to be shared with the mystery bird.
         //
-        // Example:
-        //   Mystery: another Telluraves bird
-        //   Guesses: Great Hornbill + Oriental Pied Hornbill
-        //
-        // Both guesses may share Bucerotidae with each other, but if the
-        // mystery bird is not in Bucerotidae, the tree must not create:
-        //
-        //   Telluraves -> Bucerotidae -> both hornbills
-        //
-        // Instead the hornbills stop at the deepest taxon they actually
-        // share with the mystery bird.
-        const isMystery = bird.commonName === gameState.mysteryBird.commonName;
+        // For example, if Great Hornbill and Oriental Pied Hornbill are
+        // both guessed, their shared Bucerotidae node should be visible
+        // even when the mystery bird is a different family.
+        const result = [path[0]];
 
-        if (isMystery) {
-            // The mystery bird is only allowed to reveal the route up to
-            // the shared endpoint calculated from the guesses.
-            return path.slice(0, endpointIndex + 1);
+        let anchorIndex = -1;
+
+        if (showCommonClade) {
+            anchorIndex = path.findIndex(
+                node => node.id === commonAnchor.id
+            );
+
+            if (anchorIndex > 0) {
+                result.push(commonAnchor);
+            }
         }
 
-        const mysteryPath = getBirdPhylogenyPath(gameState.mysteryBird);
-        const mysteryIds = new Set(mysteryPath.map(node => node.id));
+        const startIndex = anchorIndex >= 0
+            ? anchorIndex + 1
+            : 1;
 
-        const sharedPath = path.filter(node => mysteryIds.has(node.id));
-        const sharedEndpointIndex = sharedPath.findIndex(
-            node => node.id === endpoint.id
-        );
+        for (let i = startIndex; i <= endpointIndex; i++) {
+            const node = path[i];
 
-        if (sharedEndpointIndex === -1) {
-            return [path[0]];
+            if (!result.some(existing => existing.id === node.id)) {
+                result.push(node);
+            }
         }
 
-        // Because the endpoint is computed by getDeepestSharedTaxon(),
-        // every node before it is a real common ancestor. Keeping the
-        // complete shared route also preserves intermediate clades such as
-        // Telluraves -> Afroaves -> Bucerotiformes when they are genuinely
-        // shared with the mystery bird.
-        return sharedPath.slice(0, sharedEndpointIndex + 1);
+        return result;
     }
 
     function insertBird(bird, endpoint, nodeType) {
@@ -647,14 +638,43 @@ function buildTreeModel() {
         parent.children.push(leaf);
     }
 
-    // Guesses are placed at their deepest shared taxon.
+    // Guesses are grouped by the taxonomy they share with the other
+    // guessed birds. This is intentionally independent of the mystery
+    // bird: a taxon node can still be meaningful because multiple guesses
+    // belong to that group.
+    function getDeepestSharedGuessTaxon(bird) {
+        const otherGuesses = gameState.guesses.filter(
+            other =>
+                other.commonName !== bird.commonName &&
+                other.commonName !== gameState.mysteryBird.commonName
+        );
+
+        if (!otherGuesses.length) {
+            return getDeepestSharedTaxon(bird, gameState.mysteryBird);
+        }
+
+        const birdPath = getBirdPhylogenyPath(bird);
+
+        let deepest = birdPath[0];
+
+        for (const candidate of birdPath) {
+            const sharedByAnotherGuess = otherGuesses.some(other => {
+                const otherPath = getBirdPhylogenyPath(other);
+                return otherPath.some(node => node.id === candidate.id);
+            });
+
+            if (sharedByAnotherGuess) {
+                deepest = candidate;
+            }
+        }
+
+        return deepest;
+    }
+
     gameState.guesses.forEach(bird => {
         if (bird.commonName === gameState.mysteryBird.commonName) return;
 
-        const endpoint = getDeepestSharedTaxon(
-            bird,
-            gameState.mysteryBird
-        );
+        const endpoint = getDeepestSharedGuessTaxon(bird);
 
         insertBird(bird, endpoint, "guess");
     });
