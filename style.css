@@ -1525,38 +1525,34 @@ body {
         0 7px 15px rgba(67, 57, 35, 0.08);
 }
 
-.meta-tree-node[data-level="class"] {
-    background: linear-gradient(135deg, #bd4b36, #a93827);
-    color: #fff;
-    border: 1px solid #8d281b;
-    font-weight: 700;
-}
-
-.meta-tree-node[data-level="order"] {
-    background: linear-gradient(135deg, #d58a2c, #bd6b17);
-    color: #fff;
-    border: 1px solid #a65e0e;
-    font-weight: 700;
-}
-
-.meta-tree-node[data-level="family"] {
-    background: linear-gradient(135deg, #81983a, #667d29);
-    color: #fff;
-    border: 1px solid #596c21;
-    font-weight: 700;
-}
-
-.meta-tree-node[data-level="genus"] {
-    background: linear-gradient(135deg, #5c9947, #477d37);
-    color: #fff;
-    border: 1px solid #3b6e2c;
-    font-weight: 700;
-}
-
+/* Taxon color is based on proximity to the mystery, not rank.
+   0 = red/far, 0.5 = yellow/middle, 1 = green/close. */
+.meta-tree-node[data-level="class"],
+.meta-tree-node[data-level="order"],
+.meta-tree-node[data-level="family"],
+.meta-tree-node[data-level="genus"],
 .meta-tree-node[data-level="clade"] {
-    background: linear-gradient(135deg, #70852e, #596c21);
+    background:
+        linear-gradient(
+            135deg,
+            hsl(
+                var(--tree-proximity-hue, 0),
+                var(--tree-proximity-saturation, 58%),
+                var(--tree-proximity-lightness, 38%)
+            ),
+            hsl(
+                var(--tree-proximity-hue, 0),
+                var(--tree-proximity-saturation, 58%),
+                calc(var(--tree-proximity-lightness, 38%) + 7%)
+            )
+        );
     color: #fff;
-    border: 1px solid #596c21;
+    border: 1px solid
+        hsl(
+            var(--tree-proximity-hue, 0),
+            60%,
+            30%
+        );
     font-weight: 700;
 }
 
