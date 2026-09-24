@@ -382,23 +382,23 @@ function getMysteryRevealTaxon() {
     };
 
     for (const guessedBird of gameState.guesses) {
-        if (guessedBird.commonName === gameState.mysteryBird.commonName) {
-            continue;
-        }
+        if (guessedBird.commonName === gameState.mysteryBird.commonName) continue;
 
         const shared = getDeepestSharedTaxon(
             guessedBird,
             gameState.mysteryBird
         );
 
-        if (shared.depth > deepest.depth) {
-            deepest = shared;
-        }
+        if (shared.depth > deepest.depth) deepest = shared;
     }
 
     return deepest;
 }
 
+// Build a minimal revealed taxonomy tree.
+// Full paths are used for biological relationships, but ordinary intermediate
+// nodes are hidden. A node is shown only when it is a revealed endpoint or is
+// necessary to connect two different revealed branches.
 function buildTreeModel() {
     const root = {
         type: "taxon",
@@ -408,33 +408,98 @@ function buildTreeModel() {
         children: []
     };
 
-    if (gameState.guesses.length === 0) {
-        return root;
+    if (gameState.guesses.length === 0) return root;
+
+    const solved = gameState.guesses.some(
+        bird => bird.commonName === gameState.mysteryBird.commonName
+    );
+
+    const entries = [];
+
+    for (const bird of gameState.guesses) {
+        if (bird.commonName === gameState.mysteryBird.commonName) continue;
+
+        entries.push({
+            bird,
+            endpoint: getDeepestSharedTaxon(
+                bird,
+                gameState.mysteryBird
+            ),
+            nodeType: "guess"
+        });
+    }
+
+    entries.push({
+        bird: gameState.mysteryBird,
+        endpoint: getMysteryRevealTaxon(),
+        nodeType: solved ? "correct" : "mystery"
+    });
+
+    const pathByBird = new Map();
+    for (const entry of entries) {
+        pathByBird.set(
+            entry.bird.commonName,
+            getBirdPhylogenyPath(entry.bird)
+        );
+    }
+
+    const endpointIds = new Set(
+        entries.map(entry => entry.endpoint.id)
+    );
+    const visibleIds = new Set(["class:Aves"]);
+
+    // Endpoints are always visible.
+    endpointIds.forEach(id => visibleIds.add(id));
+
+    // Add only the lowest common ancestors needed to connect different
+    // endpoint branches. This prevents the old "show every taxon" behavior.
+    const endpointPaths = entries.map(entry => {
+        const path = pathByBird.get(entry.bird.commonName) || [];
+        const index = path.findIndex(
+            node => node.id === entry.endpoint.id
+        );
+        return index >= 0 ? path.slice(0, index + 1) : [];
+    }).filter(path => path.length);
+
+    for (let i = 0; i < endpointPaths.length; i++) {
+        for (let j = i + 1; j < endpointPaths.length; j++) {
+            const left = endpointPaths[i];
+            const right = endpointPaths[j];
+            const limit = Math.min(left.length, right.length);
+
+            for (let k = limit - 1; k >= 0; k--) {
+                if (left[k].id === right[k].id) {
+                    visibleIds.add(left[k].id);
+                    break;
+                }
+            }
+        }
     }
 
     function findTaxonChild(parent, id) {
         return parent.children.find(
-            child =>
-                child.type === "taxon" &&
-                child.taxonId === id
+            child => child.type === "taxon" && child.taxonId === id
         );
     }
 
-    function insertPathToEndpoint(bird, endpoint, leaf) {
-        const path = getBirdPhylogenyPath(bird);
+    function insertEntry(entry) {
+        const path = pathByBird.get(entry.bird.commonName) || [];
         const endpointIndex = path.findIndex(
-            node => node.id === endpoint.id
+            node => node.id === entry.endpoint.id
         );
 
-        if (endpointIndex < 0) {
-            root.children.push(leaf);
-            return;
-        }
+        if (endpointIndex < 0) return;
 
         let parent = root;
 
+        // Only insert visible nodes. Therefore:
+        //   same endpoint -> same node -> multiple leaves
+        //   nested endpoints -> endpoint becomes child of endpoint
+        //   separate endpoints -> only their required LCA is shown
         for (let i = 1; i <= endpointIndex; i++) {
             const taxon = path[i];
+
+            if (!visibleIds.has(taxon.id)) continue;
 
             let child = findTaxonChild(parent, taxon.id);
 
@@ -452,53 +517,24 @@ function buildTreeModel() {
             parent = child;
         }
 
-        parent.children.push(leaf);
-    }
-
-    function makeSpeciesLeaf(bird, nodeType) {
         const hidden =
-            nodeType === "mystery" &&
+            entry.nodeType === "mystery" &&
             gameState.gameStatus !== "lost";
 
-        return {
+        parent.children.push({
             type: "species",
-            name: hidden ? "???" : bird.commonName,
-            nodeType: hidden ? "mystery" : nodeType,
-            bird: hidden ? null : bird
-        };
+            name: hidden ? "???" : entry.bird.commonName,
+            nodeType: hidden ? "mystery" : entry.nodeType,
+            bird: hidden ? null : entry.bird
+        });
     }
 
-    // Every guess is compared directly against the mystery.
-    for (const guessedBird of gameState.guesses) {
-        if (guessedBird.commonName === gameState.mysteryBird.commonName) {
-            continue;
-        }
+    entries.forEach(insertEntry);
 
-        const endpoint = getDeepestSharedTaxon(
-            guessedBird,
-            gameState.mysteryBird
-        );
+    return root;
+}
 
-        insertPathToEndpoint(
-            guessedBird,
-            endpoint,
-            makeSpeciesLeaf(guessedBird, "guess")
-        );
-    }
-
-    const solved = gameState.guesses.some(
-        bird => bird.commonName === gameState.mysteryBird.commonName
-    );
-
-    // The mystery is hidden, but its real lineage is progressively exposed
-    // as guesses reach deeper shared nodes.
-    insertPathToEndpoint(
-        gameState.mysteryBird,
-        getMysteryRevealTaxon(),
-        makeSpeciesLeaf(
-            gameState.mysteryBird,
-            solved ? "correct" : "mystery"
-        )
+       )
     );
 
     return root;
