@@ -621,12 +621,11 @@ function buildTreeModel() {
 
     // Only reveal information that the guesses actually justify.
     //
-    // A wrong guess reveals its path only as far as its MRCA with the
-    // mystery. A deeper taxon on a side branch is revealed only when at
-    // least TWO guessed birds share that taxon. This is the key Metazooa
-    // behaviour: one guess does not expose its entire lineage, but two
-    // guesses can expose the branch they have in common even when that
-    // branch is unrelated to the mystery below their shared endpoint.
+    // IMPORTANT: a taxon being shared by two guesses is NOT enough by
+    // itself. The shared taxon must be a *new, deeper branch* than the
+    // point where those guesses meet the mystery. Otherwise common
+    // ancestors such as Aves / Neognathae / Telluraves would make the
+    // tree look like the whole taxonomy.
     const visibleIds = new Set(["class:Aves"]);
 
     function revealAncestors(path, throughId) {
@@ -638,40 +637,55 @@ function buildTreeModel() {
         }
     }
 
-    // 1. Every guess reveals its own deepest shared taxon with the mystery.
+    // 1. Each wrong guess reveals only its MRCA with the mystery.
     for (const entry of wrongEntries) {
         const path = pathByBird.get(entry.bird.commonName) || [];
         revealAncestors(path, entry.endpoint.id);
     }
 
-    // 2. Build the combined real tree and count how many guessed species
-    //    descend from every taxon. A taxon with two or more guessed species
-    //    beneath it is a genuine shared side branch and may be shown.
-    const guessedDescendantCount = new Map();
+    // 2. A side branch is revealed ONLY when multiple guesses share a
+    //    deeper MRCA than the mystery gives either of them.
+    //
+    // Example:
+    //   mystery = passerine
+    //   hornbill A -> Telluraves
+    //   hornbill B -> Telluraves
+    //   A + B -> Bucerotidae
+    //
+    // We reveal Telluraves -> Afroaves -> Bucerotiformes -> Bucerotidae,
+    // but we do NOT reveal a private genus/species branch belonging to
+    // just one hornbill.
+    for (let i = 0; i < wrongEntries.length; i++) {
+        const left = wrongEntries[i];
+        const leftPath = pathByBird.get(left.bird.commonName) || [];
 
-    for (const entry of wrongEntries) {
-        const path = pathByBird.get(entry.bird.commonName) || [];
-        for (const taxon of path) {
-            guessedDescendantCount.set(
-                taxon.id,
-                (guessedDescendantCount.get(taxon.id) || 0) + 1
+        for (let j = i + 1; j < wrongEntries.length; j++) {
+            const right = wrongEntries[j];
+            const rightPath = pathByBird.get(right.bird.commonName) || [];
+
+            const common = getDeepestCommonNode(leftPath, rightPath);
+            if (!common) continue;
+
+            const leftEndpointDepth = left.endpoint.depth;
+            const rightEndpointDepth = right.endpoint.depth;
+            const mysteryDepth = Math.max(
+                leftEndpointDepth,
+                rightEndpointDepth
             );
+
+            // If the pair's MRCA is not deeper than both mystery
+            // relationships, it adds no new information and must stay
+            // collapsed.
+            if (common.depth <= mysteryDepth) continue;
+
+            revealAncestors(leftPath, common.id);
         }
     }
 
-    for (const entry of wrongEntries) {
-        const path = pathByBird.get(entry.bird.commonName) || [];
-        for (const taxon of path) {
-            if ((guessedDescendantCount.get(taxon.id) || 0) >= 2) {
-                visibleIds.add(taxon.id);
-            }
-        }
-    }
-
-    // 3. The mystery's current revealed position is visible while playing.
+    // 3. The mystery's current revealed position is visible.
     visibleIds.add(mysteryEntry.endpoint.id);
 
-    // 4. At game end, reveal the actual mystery lineage.
+    // 4. At game end reveal the actual mystery lineage.
     if (finished) {
         const finishedMysteryPath =
             pathByBird.get(gameState.mysteryBird.commonName) || [];
