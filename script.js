@@ -563,44 +563,48 @@ function buildTreeModel() {
             return [path[0], endpoint];
         }
 
-        // Keep the real hierarchy between the shared anchor and the
-        // endpoint. The previous renderer jumped directly from Neornithes
-        // to Aequornithes, for example, which incorrectly made Aequornithes
-        // look like a sibling of Neoaves.
+        // Only render taxonomy nodes that are actually shared with the
+        // mystery bird. This prevents two guesses that share a family
+        // with each other, but not with the mystery bird, from creating
+        // a misleading family node in the tree.
         //
-        // Ranked endpoints show the ranked chain, while a clade endpoint
-        // preserves the clade chain needed to show relationships such as:
-        // Aves -> Neornithes -> Neoaves -> Aequornithes.
-        const result = [path[0]];
+        // Example:
+        //   Mystery: another Telluraves bird
+        //   Guesses: Great Hornbill + Oriental Pied Hornbill
+        //
+        // Both guesses may share Bucerotidae with each other, but if the
+        // mystery bird is not in Bucerotidae, the tree must not create:
+        //
+        //   Telluraves -> Bucerotidae -> both hornbills
+        //
+        // Instead the hornbills stop at the deepest taxon they actually
+        // share with the mystery bird.
+        const isMystery = bird.commonName === gameState.mysteryBird.commonName;
 
-        let anchorIndex = -1;
-
-        if (showCommonClade) {
-            anchorIndex = path.findIndex(
-                node => node.id === commonAnchor.id
-            );
-
-            if (anchorIndex > 0) {
-                result.push(commonAnchor);
-            }
+        if (isMystery) {
+            // The mystery bird is only allowed to reveal the route up to
+            // the shared endpoint calculated from the guesses.
+            return path.slice(0, endpointIndex + 1);
         }
 
-        const startIndex = anchorIndex >= 0
-            ? anchorIndex + 1
-            : 1;
+        const mysteryPath = getBirdPhylogenyPath(gameState.mysteryBird);
+        const mysteryIds = new Set(mysteryPath.map(node => node.id));
 
-        for (let i = startIndex; i <= endpointIndex; i++) {
-            const node = path[i];
+        const sharedPath = path.filter(node => mysteryIds.has(node.id));
+        const sharedEndpointIndex = sharedPath.findIndex(
+            node => node.id === endpoint.id
+        );
 
-            // Clades are part of the visible phylogenetic route to a
-            // ranked endpoint. Keep them in the tree instead of jumping
-            // directly from a broad clade to the Order/Family.
-            if (!result.some(existing => existing.id === node.id)) {
-                result.push(node);
-            }
+        if (sharedEndpointIndex === -1) {
+            return [path[0]];
         }
 
-        return result;
+        // Because the endpoint is computed by getDeepestSharedTaxon(),
+        // every node before it is a real common ancestor. Keeping the
+        // complete shared route also preserves intermediate clades such as
+        // Telluraves -> Afroaves -> Bucerotiformes when they are genuinely
+        // shared with the mystery bird.
+        return sharedPath.slice(0, sharedEndpointIndex + 1);
     }
 
     function insertBird(bird, endpoint, nodeType) {
