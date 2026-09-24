@@ -401,23 +401,37 @@ function getMysteryRevealTaxon() {
 // necessary to connect two different revealed branches.
 function buildTreeModel() {
     /*
-     * Metazooa mechanic:
+     * MetaAves tree reconstruction
      *
-     * Every wrong guess is placed at the deepest taxonomic node it shares
-     * with the mystery. That node is the point where the two branches split.
+     * The important distinction is between:
      *
-     * Previous guesses are NEVER replaced. If a later guess is closer, its
-     * branch grows deeper while the older guess remains where it originally
-     * split from the mystery.
+     *   A) where a guess meets the mystery, and
+     *   B) how several guesses relate to each other.
      *
-     * If two guesses have the same shared node, they become siblings under
-     * one taxon node. If their shared nodes are on different branches, the
-     * real common ancestor is inserted only when it is needed to connect
-     * those branches.
+     * A single wrong guess stops at its deepest shared taxon with the
+     * mystery. It must NOT expose the rest of that bird's lineage.
      *
-     * The mystery remains hidden at the deepest taxon learned so far.
-     * Once the player wins or loses, the mystery is shown at its actual
-     * species position.
+     * If several wrong guesses stop at the same taxon, however, their own
+     * lineage is now useful information. We build a small side tree from
+     * those guesses and expose the shared descendants needed to show where
+     * they split.
+     *
+     * Example:
+     *
+     *   Aves
+     *   └─ Telluraves
+     *      ├─ Afroaves
+     *      │  └─ Bucerotiformes
+     *      │     ├─ Great Hornbill
+     *      │     └─ Oriental Pied Hornbill
+     *      └─ [another branch]
+     *
+     * Great Hornbill alone would simply be a leaf at Telluraves.
+     * The Afroaves/Bucerotiformes branch appears only when another guess
+     * makes that relationship useful.
+     *
+     * Existing guesses are never moved when a later guess reveals more
+     * information.
      */
 
     const root = {
@@ -432,97 +446,103 @@ function buildTreeModel() {
         return root;
     }
 
-    const solved = gameState.gameStatus === "won";
-    const finished = gameState.gameStatus === "won" ||
+    const finished =
+        gameState.gameStatus === "won" ||
         gameState.gameStatus === "lost";
 
-    const entries = [];
+    const solved = gameState.gameStatus === "won";
 
-    for (const bird of gameState.guesses) {
-        if (bird.commonName === gameState.mysteryBird.commonName) {
-            continue;
-        }
+    // ----------------------------------------
+    // 1. Determine the endpoint of every guess
+    // ----------------------------------------
 
-        entries.push({
+    const wrongEntries = gameState.guesses
+        .filter(
+            bird =>
+                bird.commonName !==
+                gameState.mysteryBird.commonName
+        )
+        .map(bird => ({
             bird,
             endpoint: getDeepestSharedTaxon(
                 bird,
                 gameState.mysteryBird
             ),
             nodeType: "guess"
-        });
-    }
+        }));
 
-    let mysteryEndpoint;
+    const mysteryPath = getBirdPhylogenyPath(
+        gameState.mysteryBird
+    );
 
-    if (finished) {
-        // At game end the exact species is known, so reveal the actual
-        // terminal species node instead of leaving it at the last hint node.
-        const mysteryPath = getBirdPhylogenyPath(gameState.mysteryBird);
-        mysteryEndpoint = mysteryPath[mysteryPath.length - 1] || {
-            id: "class:Aves",
-            level: "class",
-            value: "Aves",
-            depth: 0
-        };
-    } else {
-        mysteryEndpoint = getMysteryRevealTaxon();
-    }
+    const mysteryEndpoint = finished
+        ? (
+            mysteryPath[mysteryPath.length - 1] || {
+                id: "class:Aves",
+                level: "class",
+                value: "Aves",
+                depth: 0
+            }
+        )
+        : getMysteryRevealTaxon();
 
-    entries.push({
+    const mysteryEntry = {
         bird: gameState.mysteryBird,
         endpoint: mysteryEndpoint,
         nodeType: solved ? "correct" : "mystery"
-    });
+    };
+
+    // ----------------------------------------
+    // 2. Cache complete lineages
+    // ----------------------------------------
 
     const pathByBird = new Map();
 
-    for (const entry of entries) {
+    for (const entry of [...wrongEntries, mysteryEntry]) {
         pathByBird.set(
             entry.bird.commonName,
             getBirdPhylogenyPath(entry.bird)
         );
     }
 
-    /*
-     * Build the smallest tree that contains every revealed endpoint.
-     *
-     * We do NOT simply add every ancestor. An ancestor is visible only when
-     * it is itself an endpoint or is required to connect two endpoint
-     * branches. This is the important distinction between the biological
-     * lineage and the game's displayed clue tree.
-     */
+    function getPathToEndpoint(entry) {
+        const path =
+            pathByBird.get(entry.bird.commonName) || [];
+
+        const endpointIndex = path.findIndex(
+            node => node.id === entry.endpoint.id
+        );
+
+        if (endpointIndex < 0) return [];
+
+        return path.slice(0, endpointIndex + 1);
+    }
+
+    // ----------------------------------------
+    // 3. Build the revealed trunk
+    // ----------------------------------------
+    //
+    // Only endpoints and the deepest common ancestors needed to connect
+    // those endpoints are visible. Ordinary hidden ancestors stay hidden.
+
+    const entries = [...wrongEntries, mysteryEntry];
+
     const endpointPaths = entries
-        .map(entry => {
-            const path = pathByBird.get(entry.bird.commonName) || [];
-            const endpointIndex = path.findIndex(
-                node => node.id === entry.endpoint.id
-            );
-
-            if (endpointIndex < 0) {
-                return [];
-            }
-
-            return path.slice(0, endpointIndex + 1);
-        })
+        .map(getPathToEndpoint)
         .filter(path => path.length > 0);
 
     const visibleIds = new Set(["class:Aves"]);
 
-    // Every revealed endpoint must be visible.
-    endpointPaths.forEach(path => {
+    for (const path of endpointPaths) {
         visibleIds.add(path[path.length - 1].id);
-    });
+    }
 
-    /*
-     * For every pair of revealed branches, expose only their deepest common
-     * ancestor. This is exactly the connector needed for the branching
-     * structure; all other ancestors remain hidden.
-     */
+    // Add the deepest common connector for every pair of endpoints.
     for (let i = 0; i < endpointPaths.length; i++) {
         for (let j = i + 1; j < endpointPaths.length; j++) {
             const left = endpointPaths[i];
             const right = endpointPaths[j];
+
             const limit = Math.min(left.length, right.length);
 
             for (let k = limit - 1; k >= 0; k--) {
@@ -542,49 +562,43 @@ function buildTreeModel() {
         );
     }
 
-    function insertEntry(entry) {
-        const path = pathByBird.get(entry.bird.commonName) || [];
-        const endpointIndex = path.findIndex(
-            node => node.id === entry.endpoint.id
-        );
+    function getOrCreateTaxon(parent, taxon) {
+        let child = findTaxonChild(parent, taxon.id);
 
-        if (endpointIndex < 0) {
-            return;
+        if (!child) {
+            child = {
+                type: "taxon",
+                name: taxon.value,
+                taxonId: taxon.id,
+                level: taxon.level,
+                children: []
+            };
+
+            parent.children.push(child);
         }
 
-        let parent = root;
+        return child;
+    }
 
-        for (let i = 1; i <= endpointIndex; i++) {
-            const taxon = path[i];
-
-            if (!visibleIds.has(taxon.id)) {
-                continue;
-            }
-
-            let child = findTaxonChild(parent, taxon.id);
-
-            if (!child) {
-                child = {
-                    type: "taxon",
-                    name: taxon.value,
-                    taxonId: taxon.id,
-                    level: taxon.level,
-                    children: []
-                };
-
-                parent.children.push(child);
-            }
-
-            parent = child;
-        }
-
+    function addSpecies(parent, entry) {
         const hidden =
             entry.nodeType === "mystery" &&
             !finished;
 
+        const alreadyThere = parent.children.some(
+            child =>
+                child.type === "species" &&
+                child.bird?.commonName ===
+                    entry.bird.commonName
+        );
+
+        if (alreadyThere) return;
+
         parent.children.push({
             type: "species",
-            name: hidden ? "???" : entry.bird.commonName,
+            name: hidden
+                ? "???"
+                : entry.bird.commonName,
             nodeType: hidden
                 ? "mystery"
                 : entry.nodeType,
@@ -592,7 +606,193 @@ function buildTreeModel() {
         });
     }
 
-    entries.forEach(insertEntry);
+    // Put each endpoint onto the trunk.
+    const endpointParents = new Map();
+
+    for (const entry of entries) {
+        const path = getPathToEndpoint(entry);
+
+        if (!path.length) continue;
+
+        let parent = root;
+
+        for (let i = 1; i < path.length; i++) {
+            const taxon = path[i];
+
+            if (!visibleIds.has(taxon.id)) {
+                continue;
+            }
+
+            parent = getOrCreateTaxon(parent, taxon);
+        }
+
+        endpointParents.set(entry.endpoint.id, parent);
+    }
+
+    // ----------------------------------------
+    // 4. Reconstruct close-guess side branches
+    // ----------------------------------------
+    //
+    // Wrong guesses are grouped by their MRCA with the mystery.
+    //
+    // A group of one stays as:
+    //
+    //     Telluraves
+    //       └─ Great Hornbill
+    //
+    // A group of two or more is expanded using their real lineages:
+    //
+    //     Telluraves
+    //       └─ Afroaves
+    //          └─ Bucerotiformes
+    //             ├─ Great Hornbill
+    //             └─ Oriental Pied Hornbill
+    //
+    // The recursion only creates a taxon when at least two guesses share
+    // that next node. Therefore no arbitrary hidden lineage is exposed.
+
+    const groups = new Map();
+
+    for (const entry of wrongEntries) {
+        const id = entry.endpoint.id;
+
+        if (!groups.has(id)) {
+            groups.set(id, []);
+        }
+
+        groups.get(id).push(entry);
+    }
+
+    function addSideBranch(parent, group, endpointId) {
+        if (group.length < 2) return;
+
+        const candidates = group
+            .map(entry => {
+                const path =
+                    pathByBird.get(entry.bird.commonName) ||
+                    [];
+
+                const endpointIndex = path.findIndex(
+                    node => node.id === endpointId
+                );
+
+                if (endpointIndex < 0) return null;
+
+                return {
+                    entry,
+                    path,
+                    endpointIndex
+                };
+            })
+            .filter(Boolean);
+
+        function expand(currentParent, remaining, offset) {
+            const nextGroups = new Map();
+
+            for (const candidate of remaining) {
+                const next =
+                    candidate.path[
+                        candidate.endpointIndex + offset
+                    ];
+
+                if (!next) {
+                    continue;
+                }
+
+                if (!nextGroups.has(next.id)) {
+                    nextGroups.set(next.id, []);
+                }
+
+                nextGroups.get(next.id).push(candidate);
+            }
+
+            for (const sameTaxon of nextGroups.values()) {
+                if (sameTaxon.length === 1) {
+                    addSpecies(
+                        currentParent,
+                        sameTaxon[0].entry
+                    );
+                    continue;
+                }
+
+                const taxon =
+                    sameTaxon[0].path[
+                        sameTaxon[0].endpointIndex + offset
+                    ];
+
+                const child = getOrCreateTaxon(
+                    currentParent,
+                    taxon
+                );
+
+                expand(
+                    child,
+                    sameTaxon,
+                    offset + 1
+                );
+            }
+        }
+
+        expand(parent, candidates, 1);
+    }
+
+    for (const [endpointId, group] of groups) {
+        const parent = endpointParents.get(endpointId);
+
+        if (parent) {
+            addSideBranch(parent, group, endpointId);
+        }
+    }
+
+    // A group containing one guess has no reason to reveal its hidden
+    // descendants. Attach it directly to its shared endpoint.
+    for (const [endpointId, group] of groups) {
+        if (group.length !== 1) continue;
+
+        const parent = endpointParents.get(endpointId);
+
+        if (parent) {
+            addSpecies(parent, group[0]);
+        }
+    }
+
+    // ----------------------------------------
+    // 5. Add the mystery
+    // ----------------------------------------
+    //
+    // While playing, ??? sits exactly at the deepest revealed mystery
+    // endpoint. At game end, the full mystery path is already represented
+    // by its actual species endpoint.
+
+    if (finished) {
+        const fullPath = mysteryPath;
+
+        if (fullPath.length) {
+            let parent = root;
+
+            for (let i = 1; i < fullPath.length; i++) {
+                const taxon = fullPath[i];
+
+                /*
+                 * At game end the mystery is allowed to reveal its complete
+                 * lineage. This is separate from the hidden-game tree.
+                 */
+                parent = getOrCreateTaxon(parent, taxon);
+            }
+
+            addSpecies(parent, mysteryEntry);
+        } else {
+            addSpecies(root, mysteryEntry);
+        }
+    } else {
+        const parent = endpointParents.get(
+            mysteryEntry.endpoint.id
+        );
+
+        if (parent) {
+            addSpecies(parent, mysteryEntry);
+        }
+    }
 
     return root;
 }
