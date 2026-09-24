@@ -518,6 +518,21 @@ function buildTreeModel() {
         return path.slice(0, endpointIndex + 1);
     }
 
+    // Return the deepest taxon shared by two complete lineages.
+    // This is deliberately independent of the mystery bird: it is used
+    // to discover deeper branches shared by multiple guesses.
+    function getDeepestCommonNode(leftPath, rightPath) {
+        const limit = Math.min(leftPath.length, rightPath.length);
+        let deepest = null;
+
+        for (let i = 0; i < limit; i++) {
+            if (leftPath[i].id !== rightPath[i].id) break;
+            deepest = leftPath[i];
+        }
+
+        return deepest;
+    }
+
     // ----------------------------------------
     // 3. Build the full tree first, then select
     //    which parts are allowed to be visible
@@ -703,11 +718,14 @@ function buildTreeModel() {
         let parent = root;
         let deepestVisibleParent = root;
 
+        // Visibility is a contiguous revealed prefix of the real lineage.
+        // Never skip a hidden taxon and then attach a deeper taxon anyway:
+        // doing that effectively leaks the hidden part of the taxonomy.
         for (let i = 1; i < path.length; i++) {
             const taxon = path[i];
 
             if (!visibleIds.has(taxon.id)) {
-                continue;
+                break;
             }
 
             parent = getOrCreateTaxon(parent, taxon);
