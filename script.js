@@ -534,12 +534,6 @@ function buildTreeModel() {
     return root;
 }
 
-       )
-    );
-
-    return root;
-}
-
 // Metazooa-style tree renderer
 // ========================================
 
