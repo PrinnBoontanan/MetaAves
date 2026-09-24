@@ -168,14 +168,57 @@ function showSuggestions(searchText) {
 
 
 // ========================================
-// Find deepest shared taxon
+// Bird lineage + true shared taxon
 // ========================================
 
 function getBirdPhylogenyPath(bird) {
     if (!bird) return [];
 
-    // Species IDs in generated taxonomy are sanitized, so never construct
-    // an ID directly from the raw scientific name. Resolve the actual node.
+    const path = [];
+    const seen = new Set();
+
+    function addNode(id, level, value) {
+        if (!id || seen.has(id)) return;
+        seen.add(id);
+        path.push({ id, level, value, depth: path.length });
+    }
+
+    addNode("class:Aves", "class", "Aves");
+
+    // Clades are part of the actual lineage, not a separate decoration.
+    // Their parent relationships determine where they belong.
+    const cladeByName = new Map(
+        Object.values(gameState.clades || {})
+            .filter(entry => entry?.rank === "clade")
+            .map(entry => [entry.name, entry])
+    );
+
+    const clades = Array.isArray(bird.cladePath)
+        ? bird.cladePath.map(name => cladeByName.get(name)).filter(Boolean)
+        : [];
+
+    let previousCladeId = "class:Aves";
+
+    for (const clade of clades) {
+        if (seen.has(clade.id)) continue;
+
+        const parentId = clade.parent || "class:Aves";
+
+        // Do not insert an unrelated external clade.
+        if (
+            parentId !== "class:Aves" &&
+            parentId !== previousCladeId &&
+            !seen.has(parentId)
+        ) {
+            continue;
+        }
+
+        addNode(clade.id, "clade", clade.name);
+        previousCladeId = clade.id;
+    }
+
+    // Ranked taxonomy comes after the deepest clade and follows the
+    // generated taxonomy's real parent chain.
     const speciesTaxon = Object.values(gameState.taxonomy || {}).find(
         taxon =>
             taxon.rank === "species" &&
@@ -184,131 +227,44 @@ function getBirdPhylogenyPath(bird) {
 
     const rankedPath = [];
     let currentId = speciesTaxon?.id || null;
-    const seen = new Set();
+    const seenTaxa = new Set();
 
     while (
         currentId &&
-        !seen.has(currentId) &&
+        !seenTaxa.has(currentId) &&
         gameState.taxonomy?.[currentId]
     ) {
-        seen.add(currentId);
-
+        seenTaxa.add(currentId);
         const taxon = gameState.taxonomy[currentId];
 
         rankedPath.unshift({
             id: taxon.id,
             level: taxon.rank,
-            value: taxon.name,
-            depth: 0
+            value: taxon.name
         });
 
         if (taxon.id === "class:Aves") break;
         currentId = taxon.parent;
     }
 
-    // Safe fallback for a species that somehow has no generated node.
-    if (!rankedPath.length || rankedPath[0]?.id !== "class:Aves") {
-        rankedPath.length = 0;
-        rankedPath.push({
-            id: "class:Aves",
-            level: "class",
-            value: bird.class || "Aves",
-            depth: 0
-        });
-
-        taxonomyLevels.forEach(level => {
-            if (level === "class" || level === "species") return;
-
-            const value = bird[level];
-            if (!value) return;
-
-            rankedPath.push({
-                id: nodeIdForTaxon(level, value),
-                level,
-                value,
-                depth: 0
-            });
-        });
-
-        rankedPath.push({
-            id: nodeIdForTaxon("species", bird.scientificName),
-            level: "species",
-            value: bird.scientificName,
-            depth: 0
-        });
-    }
-
-    // Clades are a separate layer, but their parent pointers give us the
-    // correct root-to-leaf order. This fixes the old bug where clades were
-    // simply appended before/after ranked taxonomy without regard to their
-    // actual nesting.
-    const cladeEntries = new Map();
-
-    (Array.isArray(bird.cladePath) ? bird.cladePath : []).forEach(name => {
-        const clade = Object.values(gameState.clades || {}).find(
-            entry =>
-                entry.rank === "clade" &&
-                entry.name === name
+    if (rankedPath.length && rankedPath[0].id === "class:Aves") {
+        rankedPath.slice(1).forEach(node =>
+            addNode(node.id, node.level, node.value)
         );
-
-        if (clade) cladeEntries.set(clade.id, clade);
-    });
-
-    function cladeDepth(clade) {
-        let depth = 0;
-        let current = clade;
-        const seenClades = new Set();
-
-        while (
-            current?.parent &&
-            !seenClades.has(current.id)
-        ) {
-            seenClades.add(current.id);
-            const parent = gameState.clades?.[current.parent];
-
-            if (!parent || !cladeEntries.has(parent.id)) break;
-
-            depth++;
-            current = parent;
+    } else {
+        for (const level of ["order", "family", "genus"]) {
+            const value = bird[level];
+            if (value) addNode(nodeIdForTaxon(level, value), level, value);
         }
 
-        return depth;
+        addNode(
+            nodeIdForTaxon("species", bird.scientificName),
+            "species",
+            bird.scientificName
+        );
     }
 
-    const orderedClades = [...cladeEntries.values()]
-        .sort((a, b) => cladeDepth(a) - cladeDepth(b));
-
-    const result = [];
-    const addNode = (id, level, value) => {
-        if (!id || result.some(node => node.id === id)) return;
-
-        result.push({
-            id,
-            level,
-            value,
-            depth: result.length
-        });
-    };
-
-    // Aves is the immutable root.
-    addNode("class:Aves", "class", "Aves");
-
-    // Every clade supplied for the species sits between Aves and the first
-    // ranked taxon below Aves. Parent pointers determine their ordering.
-    orderedClades.forEach(clade => {
-        addNode(clade.id, "clade", clade.name);
-    });
-
-    // Add the ranked taxonomy exactly as stored by the generated parent
-    // relationships. No rank is invented when the source does not provide it.
-    rankedPath.slice(1).forEach(node => {
-        addNode(node.id, node.level, node.value);
-    });
-
-    return result.map((node, index) => ({
-        ...node,
-        depth: index
-    }));
+    return path.map((node, index) => ({ ...node, depth: index }));
 }
 
 function nodeIdForTaxon(rank, value) {
@@ -319,70 +275,30 @@ function nodeIdForTaxon(rank, value) {
     return `${rank}:${safe}`;
 }
 
+// The deepest shared node is simply the last identical node in the two
+// complete lineages. This handles clades and ranked taxa uniformly.
 function getDeepestSharedTaxon(guessedBird, mysteryBird) {
     const guessedPath = getBirdPhylogenyPath(guessedBird);
     const mysteryPath = getBirdPhylogenyPath(mysteryBird);
 
-    // First compare the formal ranked taxonomy independently of the
-    // phylogenetic clades. Clades are inserted into the path, so comparing
-    // the paths by array index would make a shared family/order look like
-    // Aves whenever the two birds have different clade branches.
-    let deepestRanked = guessedPath[0] || {
+    const limit = Math.min(guessedPath.length, mysteryPath.length);
+
+    let deepest = {
         id: "class:Aves",
         level: "class",
         value: "Aves",
         depth: 0
     };
 
-    for (const level of taxonomyLevels) {
-        if (level === "class" || level === "species") {
-            continue;
-        }
+    for (let i = 0; i < limit; i++) {
+        if (guessedPath[i].id !== mysteryPath[i].id) break;
 
-        const guessedNode = guessedPath.find(node => node.level === level);
-        const mysteryNode = mysteryPath.find(node => node.level === level);
-
-        // A missing intermediate rank must not make a later populated rank
-        // appear to be shared. Stop as soon as the formal hierarchy diverges.
-        if (
-            guessedNode &&
-            mysteryNode &&
-            guessedNode.id === mysteryNode.id
-        ) {
-            deepestRanked = mysteryNode;
-        } else if (guessedNode || mysteryNode) {
-            break;
-        }
+        deepest = { ...mysteryPath[i], depth: i };
     }
 
-    // If the birds only share Aves as a formal rank, use their deepest
-    // shared clade as the visible branch point. This is what lets a bird
-    // such as House Sparrow terminate at Telluraves while a hornbill branch
-    // continues deeper to Bucerotidae.
-    const guessedClades = guessedPath.filter(node => node.level === "clade");
-    const mysteryClades = mysteryPath.filter(node => node.level === "clade");
-
-    let deepestSharedClade = null;
-
-    for (const clade of guessedClades) {
-        if (mysteryClades.some(node => node.id === clade.id)) {
-            deepestSharedClade = clade;
-        } else {
-            break;
-        }
-    }
-
-    // A shared ranked taxon takes precedence over a clade. For example,
-    // two hornbills share Bucerotidae, so Afroaves should not replace it.
-    if (deepestRanked.level !== "class") {
-        return deepestRanked;
-    }
-
-    return deepestSharedClade || deepestRanked;
+    return deepest;
 }
 
-
-// ========================================
 // Make guess
 // ========================================
 
@@ -443,42 +359,20 @@ function makeGuess() {
 // ========================================
 // Build the logical tree
 // ========================================
-
-function getCommonCladeAnchor(birds) {
-    if (!birds.length) {
-        return {
-            id: "class:Aves",
-            level: "class",
-            value: "Aves",
-            depth: 0
-        };
-    }
-
-    const paths = birds.map(getBirdPhylogenyPath);
-    const firstClades = paths[0].filter(node => node.level === "clade");
-
-    let deepest = {
-        id: "class:Aves",
-        level: "class",
-        value: "Aves",
-        depth: 0
-    };
-
-    for (const candidate of firstClades) {
-        const sharedByAll = paths.every(path =>
-            path.some(node => node.id === candidate.id)
-        );
-
-        if (sharedByAll) {
-            deepest = candidate;
-        } else {
-            break;
-        }
-    }
-
-    return deepest;
-}
-
+//
+// Build ONE real tree from the mystery's lineage and every guess.
+// Each wrong guess is attached at its MRCA with the mystery.
+// The hidden mystery branch extends to the deepest MRCA learned so far.
+//
+// This means:
+//   House Sparrow + Great Hornbill
+//       -> both share Telluraves
+//       -> Sparrow is attached at Telluraves
+//       -> Hornbill's hidden branch continues through Afroaves when a
+//          sufficiently close guess reveals that branch.
+//
+// Older guesses never get moved; deeper later guesses simply grow the
+// mystery branch farther down the already-existing tree.
 function getMysteryRevealTaxon() {
     let deepest = {
         id: "class:Aves",
@@ -505,7 +399,6 @@ function getMysteryRevealTaxon() {
     return deepest;
 }
 
-
 function buildTreeModel() {
     const root = {
         type: "taxon",
@@ -515,134 +408,35 @@ function buildTreeModel() {
         children: []
     };
 
-    // At the start of a game, show only the root Aves node.
-    // Do not reveal the mystery bird or any clade until the first guess.
     if (gameState.guesses.length === 0) {
         return root;
     }
 
-    const activeBirds = [
-        ...gameState.guesses.filter(
-            bird => bird.commonName !== gameState.mysteryBird.commonName
-        ),
-        gameState.mysteryBird
-    ];
-
-    const commonAnchor = getCommonCladeAnchor(activeBirds);
-
-    function findChild(parent, id) {
+    function findTaxonChild(parent, id) {
         return parent.children.find(
-            child => child.type === "taxon" && child.taxonId === id
+            child =>
+                child.type === "taxon" &&
+                child.taxonId === id
         );
     }
 
-    function getEndpointPath(bird, endpoint) {
+    function insertPathToEndpoint(bird, endpoint, leaf) {
         const path = getBirdPhylogenyPath(bird);
-        const endpointIndex = path.findIndex(node => node.id === endpoint.id);
+        const endpointIndex = path.findIndex(
+            node => node.id === endpoint.id
+        );
 
-        if (endpointIndex === -1) {
-            return [endpoint];
+        if (endpointIndex < 0) {
+            root.children.push(leaf);
+            return;
         }
 
-        return path.slice(0, endpointIndex + 1);
-    }
-
-    // A clade is shown when it is the common branching point
-    // for the current tree. This matches the Metazooa-style behavior:
-    // if one branch ends at the shared clade (e.g. House Sparrow at
-    // Telluraves), that clade becomes the common parent of the other
-    // deeper branch (e.g. Bucerotidae).
-    const mysteryEndpointForTree = getMysteryRevealTaxon();
-
-    const branchEndpoints = [
-        ...gameState.guesses
-            .filter(bird => bird.commonName !== gameState.mysteryBird.commonName)
-            .map(bird => getDeepestSharedTaxon(bird, gameState.mysteryBird)),
-        mysteryEndpointForTree
-    ];
-
-    const showCommonClade =
-        commonAnchor.level !== "class" &&
-        branchEndpoints.some(endpoint => endpoint.id === commonAnchor.id);
-
-    function getDisplayPath(bird, endpoint) {
-        const path = getBirdPhylogenyPath(bird);
-        const endpointIndex = path.findIndex(node => node.id === endpoint.id);
-
-        if (endpointIndex === -1) {
-            return [path[0], endpoint];
-        }
-
-        // Keep the real hierarchy between the shared anchor and the
-        // endpoint. The previous renderer jumped directly from Neornithes
-        // to Aequornithes, for example, which incorrectly made Aequornithes
-        // look like a sibling of Neoaves.
-        //
-        // Ranked endpoints show the ranked chain, while a clade endpoint
-        // preserves the clade chain needed to show relationships such as:
-        // Aves -> Neornithes -> Neoaves -> Aequornithes.
-        const result = [path[0]];
-
-        let anchorIndex = -1;
-
-        if (showCommonClade) {
-            anchorIndex = path.findIndex(
-                node => node.id === commonAnchor.id
-            );
-
-            if (anchorIndex > 0) {
-                result.push(commonAnchor);
-            }
-        }
-
-        const startIndex = anchorIndex >= 0
-            ? anchorIndex + 1
-            : 1;
-
-        for (let i = startIndex; i <= endpointIndex; i++) {
-            const node = path[i];
-
-            // When the endpoint is a ranked taxon, intermediate clades are
-            // intentionally hidden unless the clade itself is the useful
-            // visible endpoint. This preserves the existing "deeper ranked
-            // taxon beats clade" behavior for cases such as hornbills.
-            if (
-                endpoint.level !== "clade" &&
-                node.level === "clade"
-            ) {
-                continue;
-            }
-
-            if (!result.some(existing => existing.id === node.id)) {
-                result.push(node);
-            }
-        }
-
-        return result;
-    }
-
-    function insertBird(bird, endpoint, nodeType) {
-        const mysteryRevealedAfterLoss =
-            nodeType === "mystery" && gameState.gameStatus === "lost";
-
-        const leaf = {
-            type: "species",
-            name: nodeType === "mystery" && !mysteryRevealedAfterLoss
-                ? "???"
-                : bird.commonName,
-            nodeType: mysteryRevealedAfterLoss ? "revealed-lost" : nodeType,
-            bird: nodeType === "mystery" && !mysteryRevealedAfterLoss
-                ? null
-                : bird
-        };
-
-        const displayPath = getDisplayPath(bird, endpoint);
         let parent = root;
 
-        for (let i = 1; i < displayPath.length; i++) {
-            const taxon = displayPath[i];
+        for (let i = 1; i <= endpointIndex; i++) {
+            const taxon = path[i];
 
-            let child = findChild(parent, taxon.id);
+            let child = findTaxonChild(parent, taxon.id);
 
             if (!child) {
                 child = {
@@ -661,51 +455,55 @@ function buildTreeModel() {
         parent.children.push(leaf);
     }
 
-    // Guesses are placed at their deepest shared taxon.
-    gameState.guesses.forEach(bird => {
-        if (bird.commonName === gameState.mysteryBird.commonName) return;
+    function makeSpeciesLeaf(bird, nodeType) {
+        const hidden =
+            nodeType === "mystery" &&
+            gameState.gameStatus !== "lost";
+
+        return {
+            type: "species",
+            name: hidden ? "???" : bird.commonName,
+            nodeType: hidden ? "mystery" : nodeType,
+            bird: hidden ? null : bird
+        };
+    }
+
+    // Every guess is compared directly against the mystery.
+    for (const guessedBird of gameState.guesses) {
+        if (guessedBird.commonName === gameState.mysteryBird.commonName) {
+            continue;
+        }
 
         const endpoint = getDeepestSharedTaxon(
-            bird,
+            guessedBird,
             gameState.mysteryBird
         );
 
-        insertBird(bird, endpoint, "guess");
-    });
+        insertPathToEndpoint(
+            guessedBird,
+            endpoint,
+            makeSpeciesLeaf(guessedBird, "guess")
+        );
+    }
 
     const solved = gameState.guesses.some(
         bird => bird.commonName === gameState.mysteryBird.commonName
     );
 
-    const mysteryEndpoint = getMysteryRevealTaxon();
-
-    insertBird(
+    // The mystery is hidden, but its real lineage is progressively exposed
+    // as guesses reach deeper shared nodes.
+    insertPathToEndpoint(
         gameState.mysteryBird,
-        mysteryEndpoint,
-        solved ? "correct" : "mystery"
+        getMysteryRevealTaxon(),
+        makeSpeciesLeaf(
+            gameState.mysteryBird,
+            solved ? "correct" : "mystery"
+        )
     );
-
-    // The mystery placeholder must not have a bird object while unsolved.
-    if (!solved) {
-        function removeMysteryBirdReference(node) {
-            if (node.type === "species" && node.nodeType === "mystery") {
-                node.bird = null;
-                return;
-            }
-
-            if (node.children) {
-                node.children.forEach(removeMysteryBirdReference);
-            }
-        }
-
-        removeMysteryBirdReference(root);
-    }
 
     return root;
 }
 
-
-// ========================================
 // Metazooa-style tree renderer
 // ========================================
 
