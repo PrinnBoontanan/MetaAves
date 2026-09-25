@@ -1266,7 +1266,7 @@ function appendCardSection(card, heading, text) {
     card.appendChild(section);
 }
 
-async async function showBirdInTaxonCard(bird) {
+async function showBirdInTaxonCard(bird) {
     const card = document.getElementById("taxon-card");
     if (!card || !bird) return;
 
@@ -1364,7 +1364,7 @@ function renderBirdCard(bird, wiki) {
     }
 }
 
-async async function showTaxonInTaxonCard(taxon) {
+async function showTaxonInTaxonCard(taxon) {
     const card = document.getElementById("taxon-card");
     if (!card || !taxon) return;
 
