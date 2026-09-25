@@ -376,10 +376,18 @@ function getBirdPhylogenyPath(bird) {
         gameState.taxonomyOverrides?.[bird.scientificName];
 
     if (Array.isArray(detailedOverride) && detailedOverride.length) {
+        // Overrides describe the detailed ranked/phylogenetic chain starting
+        // at Aves/order. Keep the real clade backbone above that chain, then
+        // append only the nodes that are not already present. This prevents a
+        // detailed Wikipedia path from accidentally replacing Telluraves,
+        // Afroaves, Australaves, etc.
         for (const taxon of detailedOverride) {
             if (!taxon?.id || seen.has(taxon.id)) continue;
             addNode(taxon.id, taxon.rank || "clade", taxon.name);
         }
+    }
+
+    if (Array.isArray(detailedOverride) && detailedOverride.length) {
         return path.map((node, index) => ({ ...node, depth: index }));
     }
 
