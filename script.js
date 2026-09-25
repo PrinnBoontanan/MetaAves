@@ -1208,25 +1208,10 @@ function wikipediaLookupCandidates(title) {
 
     const candidates = [cleanTitle];
 
-    // If a plain Wikipedia title is a homonym, Wikipedia commonly provides a
-    // "(bird)" disambiguation. Try that before giving up.
-    if (!/\(bird\)$/i.test(cleanTitle)) {
-        candidates.push(cleanTitle + " (bird)");
-    }
-
-    return candidates;
-}
-
-function wikipediaLookupCandidates(title) {
-    const cleanTitle = String(title || "").trim();
-    if (!cleanTitle) return [];
-
-    const candidates = [cleanTitle];
-
     // Wikipedia has a deliberate disambiguation for the bird genus
     // Gypsophila. Try the bird-specific title when the plain title is a
     // plant or another homonym.
-    if (!/\\(bird\\)$/i.test(cleanTitle)) {
+    if (!/\(bird\)$/i.test(cleanTitle)) {
         candidates.push(cleanTitle + " (bird)");
     }
 
@@ -1284,8 +1269,7 @@ async function fetchWikipediaPageData(title, includeHtml = false, expectedType =
             data.htmlPromise = fetch(
                 "https://en.wikipedia.org/w/rest.php/v1/page/" +
                 encodeURIComponent(normalizedTitle) +
-                "/html" +
-                encodeURIComponent(normalizedTitle),
+                "/html",
                 {
                     headers: {
                         "Api-User-Agent":
