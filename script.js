@@ -142,7 +142,7 @@ function normalizeSearchText(value) {
         .normalize("NFD")
         .replace(/[\\u0300-\\u036f]/g, "")
         .replace(/[^a-z0-9\\s-]/g, " ")
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
 }
 
@@ -1054,7 +1054,7 @@ function createTreeNodeElement(node) {
 function wikipediaCacheKey(title) {
     return String(title || "")
         .trim()
-        .replace(/\\s+/g, "_");
+        .replace(/\s+/g, "_");
 }
 
 async function fetchWikipediaPageData(title, includeHtml = false) {
@@ -1124,7 +1124,7 @@ function extractWikipediaSections(html) {
         if (element.matches("h2, h3, h4")) {
             const heading = element.textContent
                 .replace(/\\[edit\\]/gi, "")
-                .replace(/\\s+/g, " ")
+                .replace(/\s+/g, " ")
                 .trim()
                 .toLowerCase();
 
@@ -1136,7 +1136,7 @@ function extractWikipediaSections(html) {
         }
 
         const text = element.textContent
-            .replace(/\\s+/g, " ")
+            .replace(/\s+/g, " ")
             .trim();
 
         if (text) {
@@ -1148,7 +1148,7 @@ function extractWikipediaSections(html) {
     Object.keys(sections).forEach(key => {
         sections[key] = sections[key]
             .join(" ")
-            .replace(/\\s+/g, " ")
+            .replace(/\s+/g, " ")
             .trim();
     });
 
@@ -1180,7 +1180,7 @@ function getWikipediaTitleFromTaxon(taxon, info) {
     if (info?.wikipedia) {
         try {
             const url = new URL(info.wikipedia);
-            const wikiPath = url.pathname.match(/\\/wiki\\/(.+)$/);
+            const wikiPath = url.pathname.match(/\/wiki\/(.+)$/);
             if (wikiPath?.[1]) {
                 return decodeURIComponent(wikiPath[1]).replace(/_/g, " ");
             }
