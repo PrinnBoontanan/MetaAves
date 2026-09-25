@@ -1311,6 +1311,7 @@ function getCladeText(bird) {
 
 function renderTaxonomyTable() {
     taxonomyTree.innerHTML = "";
+    taxonomyTree.classList.add("table-mode");
 
     const wrapper = document.createElement("div");
     wrapper.className = "taxonomy-table-wrap";
@@ -1450,6 +1451,7 @@ function renderTaxonomyView() {
 }
 
 function renderTaxonomyTree() {
+    taxonomyTree.classList.remove("table-mode");
     taxonomyTree.innerHTML = "";
 
     if (!gameState.mysteryBird) return;
