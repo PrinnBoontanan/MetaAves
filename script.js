@@ -84,9 +84,6 @@ async function loadGameData() {
             bird.cladePath = membershipBySpecies[bird.scientificName] || [];
         });
 
-        // The ranked hierarchy is intentionally fixed to the classic game model.
-        // Do not derive extra ranks from the dataset.
-
         // Select a random species from the full imported dataset.
         // The mystery remains hidden from the player until it is guessed.
         gameState.mysteryBird =
