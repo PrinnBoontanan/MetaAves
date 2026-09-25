@@ -123,6 +123,79 @@ def taxon_id(rank, name):
     return f"{rank}:{safe_name}"
 
 
+def load_thai_names(path):
+    """Load eBird's maintained Thai common names, keyed by scientific name.
+
+    eBird's Thai set is specifically maintained for species known from
+    Thailand. The workbook format can change slightly, so locate the
+    scientific-name and Thai columns by their headers instead of relying on
+    fixed positions.
+    """
+    if not path:
+        return {}
+
+    wb = load_workbook(path, read_only=True, data_only=True)
+
+    def norm(value):
+        return normalize_header(value).replace("_", "")
+
+    target_sheet = None
+    header_row = None
+    scientific_col = None
+    thai_col = None
+
+    for ws in wb.worksheets:
+        rows = ws.iter_rows(values_only=True)
+        for row_index, row in enumerate(rows):
+            if row_index >= 12:
+                break
+
+            normalized = [norm(value) for value in row]
+            sci = next(
+                (i for i, value in enumerate(normalized)
+                 if value in {"scientificname", "scientificnames", "scientific"}),
+                None
+            )
+            thai = next(
+                (i for i, value in enumerate(normalized)
+                 if value == "th" or "thai" in value),
+                None
+            )
+
+            if sci is not None and thai is not None:
+                target_sheet = ws
+                header_row = row_index
+                scientific_col = sci
+                thai_col = thai
+                break
+
+        if target_sheet is not None:
+            break
+
+    if target_sheet is None:
+        raise SystemExit(
+            "Could not find the scientific-name and Thai columns in the "
+            "eBird common-names workbook."
+        )
+
+    thai_names = {}
+    rows = target_sheet.iter_rows(values_only=True)
+    for _ in range(header_row + 1):
+        next(rows, None)
+
+    for row in rows:
+        scientific = clean(row[scientific_col]) if scientific_col < len(row) else None
+        thai = clean(row[thai_col]) if thai_col < len(row) else None
+        if scientific and thai:
+            thai_names[scientific] = thai
+
+    print(
+        f"Loaded {len(thai_names):,} Thai bird names from "
+        f"{target_sheet.title!r}."
+    )
+    return thai_names
+
+
 def find_avilist_sheet(workbook):
     # Prefer the known current name, but normalize case/spacing so the
     # importer also works with harmless naming differences.
@@ -237,14 +310,18 @@ def validate_import(birds, taxa):
 
 
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in {2, 3}:
         raise SystemExit(
-            "Usage: python scripts/import_avilist.py <AviList-extended.xlsx>"
+            "Usage: python scripts/import_avilist.py <AviList-extended.xlsx> "
+            "[ebird-common-names.xlsx]"
         )
 
     xlsx = Path(sys.argv[1])
+    ebird_names_path = Path(sys.argv[2]) if len(sys.argv) == 3 else None
     if not xlsx.exists():
         raise SystemExit(f"File not found: {xlsx}")
+
+    thai_names = load_thai_names(ebird_names_path) if ebird_names_path else {}
 
     wb = load_workbook(xlsx, read_only=True, data_only=True)
     ws = find_avilist_sheet(wb)
@@ -317,7 +394,7 @@ def main():
         bird = {
             "commonName": common,
             "scientificName": scientific,
-            "thaiName": None,
+            "thaiName": thai_names.get(scientific),
             "isExtinct": False,
             "kingdom": "Animalia",
             "phylum": "Chordata",
