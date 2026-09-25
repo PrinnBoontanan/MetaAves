@@ -228,6 +228,35 @@ def thai_name_for_bird(bird, thai_names):
     return None
 
 
+def thai_name_for_bird(bird, thai_names):
+    """Resolve Thai names even when AviList changes the scientific genus.
+
+    Prefer an exact scientific-name match. If taxonomy has moved the species
+    to another genus, fall back to a unique match on the species epithet.
+    This prevents established Thai names from disappearing solely because
+    the current taxonomy uses a different genus combination.
+    """
+    scientific = clean(bird.get("scientificName"))
+    if not scientific:
+        return None
+
+    exact = thai_names.get(scientific)
+    if exact:
+        return exact
+
+    parts = scientific.split()
+    if len(parts) < 2:
+        return None
+
+    epithet = parts[1]
+    candidates = [
+        value for name, value in thai_names.items()
+        if len(name.split()) >= 2 and name.split()[1] == epithet
+    ]
+
+    return candidates[0] if len(candidates) == 1 else None
+
+
 def find_avilist_sheet(workbook):
     # Prefer the known current name, but normalize case/spacing so the
     # importer also works with harmless naming differences.
