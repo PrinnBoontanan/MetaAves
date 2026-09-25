@@ -1705,3 +1705,501 @@ body {
         max-height: 270px;
     }
 }
+
+
+/* ========================================
+   2026 UI polish — spacing, hierarchy,
+   taxonomy framing, and clean scrolling
+======================================== */
+
+:root {
+    --ui-cream: #fffdf8;
+    --ui-cream-2: #f8f1e4;
+    --ui-sand: #eadfc9;
+    --ui-border: #ddcfb4;
+    --ui-border-strong: #d0bea0;
+    --ui-ink: #3f4638;
+    --ui-muted: #817a69;
+    --ui-green: #587331;
+    --ui-green-dark: #435c28;
+    --ui-shadow: 0 12px 32px rgba(69, 57, 33, 0.09);
+}
+
+html {
+    background: #ecefe8;
+}
+
+body {
+    min-width: 320px;
+    color: var(--ui-ink);
+    background:
+        radial-gradient(circle at 12% 0%, rgba(190, 169, 113, 0.13), transparent 27%),
+        radial-gradient(circle at 92% 10%, rgba(88, 115, 49, 0.09), transparent 25%),
+        linear-gradient(145deg, #f3f1ea 0%, #e8ede6 100%);
+}
+
+.game-container {
+    width: min(1500px, calc(100vw - 48px));
+    padding: 32px 0 48px;
+    gap: 20px;
+}
+
+/* Header */
+.game-header {
+    padding: 10px 0 8px;
+}
+
+.game-header h1 {
+    font-size: clamp(42px, 5vw, 62px);
+    line-height: .95;
+    color: #4b583e;
+}
+
+.game-header p {
+    margin-top: 12px;
+    color: #817d6f;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .14em;
+}
+
+/* Top information pills */
+.game-info {
+    gap: 10px;
+}
+
+.mode-display,
+.guess-counter {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 15px;
+    border: 1px solid var(--ui-border);
+    border-radius: 12px;
+    background: rgba(255, 253, 248, .86);
+    box-shadow: 0 4px 14px rgba(69, 57, 33, .055);
+    color: #686253;
+    font-size: 13px;
+}
+
+.mode-display strong,
+.guess-counter strong {
+    color: #4d5f3b;
+}
+
+/* Main cards */
+.guess-section,
+.taxonomy-section,
+.taxon-section {
+    border: 1px solid rgba(207, 190, 158, .78);
+    border-radius: 18px;
+    box-shadow: var(--ui-shadow);
+}
+
+.guess-section {
+    padding: 21px 24px 23px;
+    background: rgba(255, 253, 248, .93);
+}
+
+.guess-section h2 {
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 19px;
+    letter-spacing: -.01em;
+}
+
+.mono-heading-icon {
+    width: 22px;
+    margin: 0;
+    color: var(--ui-green);
+    font-size: 15px;
+}
+
+#bird-search {
+    min-height: 48px;
+    padding: 12px 16px;
+    border-color: #d2c5aa;
+    border-radius: 12px;
+    background: #fffefa;
+}
+
+#guess-button {
+    min-height: 48px;
+    padding-inline: 22px;
+    border-radius: 12px;
+}
+
+/* ========================================
+   Taxonomy panel
+======================================== */
+
+.taxonomy-section {
+    padding: 0;
+    overflow: hidden;
+    background: rgba(255, 253, 248, .95);
+}
+
+.taxonomy-heading-row {
+    min-height: 78px;
+    margin: 0;
+    padding: 16px 20px 16px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    background:
+        linear-gradient(180deg, rgba(255, 253, 248, .98), rgba(248, 241, 228, .92));
+    border-bottom: 1px solid #e1d3b9;
+}
+
+.taxonomy-title {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.taxonomy-title-mark {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #d3c09e;
+    border-radius: 10px;
+    background: #f1e8d7;
+    color: #66833f;
+    font-size: 13px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+    transform: rotate(0deg);
+}
+
+.taxonomy-title h2 {
+    margin: 0;
+    color: #4c5941;
+    font-size: 21px;
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: -.015em;
+}
+
+.taxonomy-title p {
+    margin: 4px 0 0;
+    color: #8a8374;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.taxonomy-view-toggle {
+    flex: 0 0 auto;
+    padding: 3px;
+    gap: 2px;
+    border: 1px solid #d4c5a8;
+    border-radius: 11px;
+    background: #eee6d7;
+    box-shadow: inset 0 1px 1px rgba(80, 65, 36, .05);
+}
+
+.taxonomy-view-button {
+    min-width: 54px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    color: #817968;
+    font-size: 12px;
+    font-weight: 800;
+    transition: background .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.taxonomy-view-button:hover {
+    color: #52633e;
+}
+
+.taxonomy-view-button.active {
+    color: #4e5f3c;
+    background: #fffdf8;
+    box-shadow:
+        0 2px 6px rgba(74, 62, 37, .10),
+        0 1px 0 rgba(255,255,255,.9) inset;
+}
+
+.taxonomy-content {
+    padding: 16px 18px 18px;
+    background: #f7efdf;
+}
+
+/* Tree/table viewport */
+.taxonomy-tree,
+.taxonomy-table-wrap {
+    min-height: 520px;
+    height: calc(100vh - 355px);
+    max-height: 760px;
+    border: 1px solid #dfd0b3;
+    border-radius: 14px;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,.52), transparent 42%),
+        #f4e8d5;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.75),
+        0 2px 7px rgba(74, 62, 37, .035);
+}
+
+.taxonomy-tree {
+    overflow-x: auto;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+/* The browser's horizontal scrollbar is replaced by a small,
+   deliberately placed control beneath the tree viewport. */
+.taxonomy-tree::-webkit-scrollbar {
+    width: 10px;
+    height: 0;
+}
+
+.taxonomy-tree {
+    scrollbar-width: auto;
+    scrollbar-color: #b9ab8f transparent;
+}
+
+.taxonomy-tree::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.taxonomy-tree::-webkit-scrollbar-thumb {
+    background: #b9ab8f;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 999px;
+}
+
+.taxonomy-tree::-webkit-scrollbar-thumb:hover {
+    background: #968663;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+}
+
+.taxonomy-horizontal-scroll {
+    display: none;
+    height: 12px;
+    margin-top: 8px;
+    padding: 3px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: 1px solid #dfd1b7;
+    border-radius: 999px;
+    background: #eee5d5;
+    box-shadow: inset 0 1px 2px rgba(76, 61, 33, .07);
+    scrollbar-width: thin;
+    scrollbar-color: #aa9a7c transparent;
+    cursor: grab;
+}
+
+.taxonomy-horizontal-scroll.visible {
+    display: block;
+}
+
+.taxonomy-horizontal-scroll:active {
+    cursor: grabbing;
+}
+
+.taxonomy-horizontal-scroll-content {
+    width: 1px;
+    height: 1px;
+}
+
+.taxonomy-horizontal-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.taxonomy-horizontal-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.taxonomy-horizontal-scroll::-webkit-scrollbar-thumb {
+    background: #aa9a7c;
+    border-radius: 999px;
+}
+
+.taxonomy-horizontal-scroll::-webkit-scrollbar-thumb:hover {
+    background: #8f8064;
+}
+
+/* Table has its own internal scrolling, with matching spacing. */
+.taxonomy-table-wrap {
+    overflow: auto;
+    scrollbar-gutter: stable;
+    scrollbar-color: #b9ab8f #eee5d5;
+}
+
+.taxonomy-table-wrap::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.taxonomy-table-wrap::-webkit-scrollbar-track {
+    background: #eee5d5;
+}
+
+.taxonomy-table-wrap::-webkit-scrollbar-thumb {
+    background: #b9ab8f;
+    border: 2px solid #eee5d5;
+    border-radius: 999px;
+}
+
+.taxonomy-table-wrap::-webkit-scrollbar-thumb:hover {
+    background: #968663;
+}
+
+/* Give the empty state breathing room. */
+.tree-placeholder {
+    min-height: 100%;
+    margin: 0;
+    padding: 0 24px;
+    display: grid;
+    place-items: center;
+    color: #9a927f;
+    font-size: 13px;
+    letter-spacing: .01em;
+}
+
+/* Tree canvas */
+.meta-tree-canvas {
+    min-height: 100%;
+}
+
+.meta-tree-node {
+    border-radius: 9px;
+}
+
+/* Taxon information */
+.taxon-section {
+    padding: 20px;
+    background: rgba(255, 253, 248, .95);
+}
+
+.taxon-section h2 {
+    margin: 0 0 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 19px;
+}
+
+.taxon-card {
+    min-height: 520px;
+    padding: 21px;
+    border-radius: 14px;
+    border-color: #dfd2bb;
+    background: linear-gradient(180deg, #fffdf8 0%, #faf5e9 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.85),
+        0 2px 8px rgba(74, 62, 37, .035);
+}
+
+/* Keep the table header and rows visually separated from the frame. */
+.taxonomy-table {
+    min-width: 760px;
+    background: rgba(255, 253, 248, .45);
+}
+
+.taxonomy-table th {
+    background: #eee2cc;
+    box-shadow: 0 1px 0 rgba(255,255,255,.65) inset;
+}
+
+.taxonomy-table th,
+.taxonomy-table td {
+    padding: 12px 13px;
+}
+
+.taxonomy-table tbody tr:hover td {
+    background: rgba(237, 242, 230, .52);
+}
+
+/* New game button fits the top status row better. */
+.new-game-button {
+    min-height: 44px;
+    padding: 10px 17px;
+}
+
+/* Better focus visibility for keyboard users. */
+button:focus-visible,
+input:focus-visible,
+.taxonomy-horizontal-scroll:focus-visible {
+    outline: 3px solid rgba(111, 140, 72, .28);
+    outline-offset: 2px;
+}
+
+/* Mobile spacing */
+@media (max-width: 900px) {
+    .game-container {
+        width: min(96vw, 720px);
+        padding-top: 22px;
+    }
+
+    .taxonomy-heading-row {
+        min-height: 72px;
+        padding: 15px 17px;
+    }
+
+    .taxonomy-content {
+        padding: 13px;
+    }
+}
+
+@media (max-width: 560px) {
+    .game-container {
+        width: 94vw;
+        padding-top: 18px;
+        gap: 14px;
+    }
+
+    .guess-section {
+        padding: 18px;
+    }
+
+    .taxonomy-heading-row {
+        align-items: flex-start;
+        padding: 15px;
+    }
+
+    .taxonomy-title {
+        gap: 9px;
+    }
+
+    .taxonomy-title-mark {
+        width: 31px;
+        height: 31px;
+        flex-basis: 31px;
+    }
+
+    .taxonomy-title h2 {
+        font-size: 19px;
+    }
+
+    .taxonomy-title p {
+        font-size: 11px;
+    }
+
+    .taxonomy-content {
+        padding: 10px;
+    }
+
+    .taxonomy-tree,
+    .taxonomy-table-wrap {
+        min-height: 430px;
+        height: 430px;
+    }
+
+    .taxon-section {
+        padding: 16px;
+    }
+
+    .taxon-card {
+        min-height: 0;
+        padding: 17px;
+    }
+}
