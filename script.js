@@ -1224,13 +1224,16 @@ async function showBirdInTaxonCard(bird) {
     const card = document.getElementById("taxon-card");
     if (!card || !bird) return;
 
+    gameState.selectedTaxonId = "species:" + (bird.scientificName || bird.commonName);
+    const selectionId = gameState.selectedTaxonId;
+
     card.innerHTML = "<p>Loading bird information...</p>";
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
     const wiki = await fetchWikipediaPageData(wikiTitle, true);
 
     // Do not let a slower old request overwrite a newer selection.
-    if (gameState.mysteryBird === null && !bird) return;
+    if (gameState.selectedTaxonId !== selectionId) return;
 
     renderBirdCard(bird, wiki);
 }
