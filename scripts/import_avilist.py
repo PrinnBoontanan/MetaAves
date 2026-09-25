@@ -124,142 +124,58 @@ def taxon_id(rank, name):
 
 
 def load_thai_names(path):
-    """Load Thai eBird names from either wide or long-format common-name workbooks."""
+    """Load Thai names from the eBird workbook.
+
+    The current eBird workbook stores:
+      - English common name: column E
+      - Scientific name: column F
+      - Thai name: column DV
+
+    Use the fixed columns because the workbook's headers are not reliable
+    enough for automatic layout detection.
+    """
     if not path:
         return {}
 
     wb = load_workbook(path, read_only=True, data_only=True)
+    thai_names = {}
 
-    def header_kind(value):
-        raw = clean(value) or ""
-        normalized = normalize_header(raw)
-        compact = normalized.replace("_", "")
-        raw_lower = raw.lower()
-
-        scientific = (
-            "scientific" in compact
-            or compact in {"scientificname", "scientificnames", "scientific_name"}
-            or "ชื่อวิทยาศาสตร์" in raw
-        )
-        thai = (
-            "thai" in raw_lower
-            or compact in {"th", "thainame", "thainames"}
-            or "ชื่อภาษาไทย" in raw
-            or "ชื่อไทย" in raw
-            or any("\\u0e00" <= char <= "\\u0e7f" for char in raw)
-        )
-        common = (
-            "common" in compact
-            or "name" == compact
-            or compact in {"commonname", "commonnames", "birdname"}
-        )
-        language = (
-            compact in {"language", "languagecode", "lang", "langcode", "locale", "languageid"}
-            or "language" in compact
-        )
-        return scientific, thai, common, language
-
-    # First support the wide format: one row contains Scientific Name and Thai.
     for ws in wb.worksheets:
-        for row_index, row in enumerate(ws.iter_rows(values_only=True)):
-            if row_index >= 100:
-                break
+        loaded = 0
 
-            scientific_col = None
-            thai_col = None
-            common_col = None
-            language_col = None
-
-            for i, value in enumerate(row):
-                scientific, thai, common, language = header_kind(value)
-                if scientific and scientific_col is None:
-                    scientific_col = i
-                if thai and thai_col is None:
-                    thai_col = i
-                if common and common_col is None:
-                    common_col = i
-                if language and language_col is None:
-                    language_col = i
-
-            if scientific_col is None:
+        # Excel columns are 1-based; openpyxl uses 0-based indexes here.
+        # E = 5 -> index 4, F = 6 -> index 5, DV = 126 -> index 125.
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if len(row) <= 125:
                 continue
 
-            # Wide spreadsheet with a dedicated Thai column.
-            if thai_col is not None:
-                thai_names = {}
-                for data_row in ws.iter_rows(values_only=True, min_row=row_index + 2):
-                    scientific = clean(data_row[scientific_col]) if scientific_col < len(data_row) else None
-                    thai = clean(data_row[thai_col]) if thai_col < len(data_row) else None
-                    if scientific and thai:
-                        thai_names[scientific] = thai
+            common = clean(row[4])
+            scientific = clean(row[5])
+            thai = clean(row[125])
 
-                if thai_names:
-                    print(f"Loaded {len(thai_names):,} Thai bird names from {ws.title!r}.")
-                    return thai_names
-
-    # Also support the long/matrix format used by eBird, where each row is a
-    # scientific name + common name + language/code rather than a Thai column.
-    for ws in wb.worksheets:
-        for row_index, row in enumerate(ws.iter_rows(values_only=True)):
-            if row_index >= 100:
-                break
-
-            scientific_col = common_col = language_col = None
-            for i, value in enumerate(row):
-                scientific, thai, common, language = header_kind(value)
-                if scientific and scientific_col is None:
-                    scientific_col = i
-                if common and common_col is None:
-                    common_col = i
-                if language and language_col is None:
-                    language_col = i
-
-            if scientific_col is None or common_col is None:
+            # Require the scientific name and Thai name. The English name
+            # is present in this workbook but is not needed as the key.
+            if not scientific or not thai:
                 continue
 
-            thai_names = {}
+            # Avoid accidentally reading another worksheet with unrelated
+            # data if the workbook contains multiple sheets.
+            if " " not in scientific:
+                continue
 
-            # If the worksheet itself is clearly the Thai language sheet,
-            # every common-name value is a Thai name.
-            sheet_is_thai = "thai" in ws.title.lower() or "th" == ws.title.strip().lower()
+            thai_names[scientific] = thai
+            loaded += 1
 
-            for data_row in ws.iter_rows(values_only=True, min_row=row_index + 2):
-                scientific = clean(data_row[scientific_col]) if scientific_col < len(data_row) else None
-                common = clean(data_row[common_col]) if common_col < len(data_row) else None
-                language = clean(data_row[language_col]) if language_col is not None and language_col < len(data_row) else None
-
-                if not scientific or not common:
-                    continue
-
-                is_thai = sheet_is_thai
-                if language:
-                    code = language.strip().lower().replace("-", "_")
-                    is_thai = (
-                        code in {"th", "th_th", "thai"}
-                        or "thai" in code
-                        or "ไทย" in language
-                    )
-
-                if is_thai:
-                    thai_names[scientific] = common
-
-            if thai_names:
-                print(f"Loaded {len(thai_names):,} Thai bird names from {ws.title!r}.")
-                return thai_names
-
-    samples = []
-    for ws in wb.worksheets:
-        for row_index, row in enumerate(ws.iter_rows(values_only=True)):
-            if row_index >= 8:
-                break
-            values = [str(v).strip() for v in row if v is not None]
-            if values:
-                samples.append(f"{ws.title!r}: {values}")
+        if loaded:
+            print(f"Loaded {loaded:,} Thai bird names from {ws.title!r}.")
+            # The workbook may contain several views of the same data.
+            # Once a sheet has supplied the names, no further layout
+            # detection is necessary.
+            return thai_names
 
     raise SystemExit(
-        "Could not find a usable scientific/Thai-name layout in the "
-        "eBird common-names workbook. Header samples: "
-        + " | ".join(samples[:12])
+        "Could not load Thai names from the eBird workbook using "
+        "columns E (English), F (scientific), and DV (Thai)."
     )
 
 
@@ -293,35 +209,6 @@ def thai_name_for_bird(bird, thai_names):
         return candidates[0]
 
     return None
-
-
-def thai_name_for_bird(bird, thai_names):
-    """Resolve Thai names even when AviList changes the scientific genus.
-
-    Prefer an exact scientific-name match. If taxonomy has moved the species
-    to another genus, fall back to a unique match on the species epithet.
-    This prevents established Thai names from disappearing solely because
-    the current taxonomy uses a different genus combination.
-    """
-    scientific = clean(bird.get("scientificName"))
-    if not scientific:
-        return None
-
-    exact = thai_names.get(scientific)
-    if exact:
-        return exact
-
-    parts = scientific.split()
-    if len(parts) < 2:
-        return None
-
-    epithet = parts[1]
-    candidates = [
-        value for name, value in thai_names.items()
-        if len(name.split()) >= 2 and name.split()[1] == epithet
-    ]
-
-    return candidates[0] if len(candidates) == 1 else None
 
 
 def find_avilist_sheet(workbook):
