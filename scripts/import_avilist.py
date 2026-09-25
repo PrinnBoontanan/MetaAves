@@ -139,6 +139,7 @@ def load_thai_names(path):
 
     wb = load_workbook(path, read_only=True, data_only=True)
     thai_names = {}
+    thai_names_by_common = {}
 
     for ws in wb.worksheets:
         loaded = 0
@@ -164,6 +165,8 @@ def load_thai_names(path):
                 continue
 
             thai_names[scientific] = thai
+            if common:
+                thai_names_by_common.setdefault(common, set()).add(thai)
             loaded += 1
 
         if loaded:
@@ -171,7 +174,10 @@ def load_thai_names(path):
             # The workbook may contain several views of the same data.
             # Once a sheet has supplied the names, no further layout
             # detection is necessary.
-            return thai_names
+            return {
+                "by_scientific": thai_names,
+                "by_common": thai_names_by_common,
+            }
 
     raise SystemExit(
         "Could not load Thai names from the eBird workbook using "
@@ -180,36 +186,50 @@ def load_thai_names(path):
 
 
 def thai_name_for_bird(bird, thai_names):
-    """Resolve a Thai name across taxonomy-name changes.
+    """Resolve a Thai name across scientific-name taxonomy changes.
 
-    AviList can move a species between genera while the Thai reference list
-    still uses an older scientific combination. Prefer exact scientific-name
-    matches, then match the species epithet only when the genus differs.
-    This avoids losing established Thai names merely because taxonomy changed.
+    Prefer an exact scientific-name match. If AviList uses a different
+    scientific combination for the same species, use the English common name
+    only when that common name maps to exactly one Thai name in the eBird
+    workbook. This is safer than matching only the species epithet, which can
+    collide across unrelated taxa.
     """
     scientific = clean(bird.get("scientificName"))
+    common = clean(bird.get("commonName"))
     if not scientific:
         return None
 
-    exact = thai_names.get(scientific)
+    by_scientific = thai_names.get("by_scientific", {})
+    by_common = thai_names.get("by_common", {})
+
+    exact = by_scientific.get(scientific)
     if exact:
         return exact
 
-    parts = scientific.split()
-    if len(parts) < 2:
-        return None
+    # Known historical combinations can be mapped explicitly when needed.
+    # Keep these species-level aliases rather than using a broad genus or
+    # epithet heuristic.
+    scientific_aliases = {
+        "Sittiparus semilarvatus": {
+            "Parus semilarvatus",
+            "Cyanistes semilarvatus",
+            "Melaniparus semilarvatus",
+        },
+    }
 
-    epithet = parts[1]
-    candidates = [
-        value for name, value in thai_names.items()
-        if len(name.split()) >= 2 and name.split()[1] == epithet
-    ]
+    for alias in scientific_aliases.get(scientific, set()):
+        thai = by_scientific.get(alias)
+        if thai:
+            return thai
 
-    if len(candidates) == 1:
-        return candidates[0]
+    # Last-resort matching by English common name is allowed only when the
+    # eBird workbook has exactly one Thai value for that name.
+    if common:
+        candidates = by_common.get(common, set())
+        if len(candidates) == 1:
+            return next(iter(candidates))
 
     return None
-
 
 def find_avilist_sheet(workbook):
     # Prefer the known current name, but normalize case/spacing so the
