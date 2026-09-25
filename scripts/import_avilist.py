@@ -146,6 +146,7 @@ def load_thai_names(path):
             or compact in {"th", "thainame", "thainames"}
             or "ชื่อภาษาไทย" in raw
             or "ชื่อไทย" in raw
+            or any("\\u0e00" <= char <= "\\u0e7f" for char in raw)
         )
         common = (
             "common" in compact
