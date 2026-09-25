@@ -7,6 +7,7 @@ DATA = REPO / "data"
 SCRIPTS = REPO / "scripts"
 
 AVILIST_URL = "https://www.avilist.org/wp-content/uploads/2026/06/AviList-v2025b-10Jun2026-extended.xlsx"
+EBIRD_THAI_NAMES_URL = "https://cornell.box.com/shared/static/zjci66divvqnz00k98r7pmmb6kpc69zs.xlsx"
 RANKS = ["class","subclass","infraclass","cohort","superorder","order","suborder",
          "infraorder","parvorder","superfamily","family","subfamily","tribe",
          "subtribe","genus","subgenus","species"]
@@ -83,10 +84,16 @@ def main():
                 p.unlink()
 
         avilist = tmp/"AviList-v2025b-extended.xlsx"
+        ebird_names = tmp/"eBird-common-names.xlsx"
         download(AVILIST_URL, avilist)
+        download(EBIRD_THAI_NAMES_URL, ebird_names)
 
-        run([sys.executable, str(SCRIPTS/"import_avilist.py"), str(avilist)],
-            "Build AviList base dataset")
+        run([
+            sys.executable,
+            str(SCRIPTS/"import_avilist.py"),
+            str(avilist),
+            str(ebird_names)
+        ], "Build AviList base dataset + Thai bird names")
 
         validate()
         print("\nDONE. Generated files are ready in data/.")
