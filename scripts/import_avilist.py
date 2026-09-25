@@ -124,58 +124,72 @@ def taxon_id(rank, name):
 
 
 def load_thai_names(path):
-    """Load eBird's maintained Thai common names, keyed by scientific name.
-
-    eBird's Thai set is specifically maintained for species known from
-    Thailand. The workbook format can change slightly, so locate the
-    scientific-name and Thai columns by their headers instead of relying on
-    fixed positions.
-    """
+    """Load eBird Thai common names, tolerating English or Thai headers."""
     if not path:
         return {}
 
     wb = load_workbook(path, read_only=True, data_only=True)
-
-    def norm(value):
-        return normalize_header(value).replace("_", "")
-
     target_sheet = None
     header_row = None
     scientific_col = None
     thai_col = None
 
     for ws in wb.worksheets:
-        rows = ws.iter_rows(values_only=True)
-        for row_index, row in enumerate(rows):
-            if row_index >= 12:
+        for row_index, row in enumerate(ws.iter_rows(values_only=True)):
+            if row_index >= 20:
                 break
 
-            normalized = [norm(value) for value in row]
-            sci = next(
-                (i for i, value in enumerate(normalized)
-                 if value in {"scientificname", "scientificnames", "scientific"}),
-                None
-            )
-            thai = next(
-                (i for i, value in enumerate(normalized)
-                 if value == "th" or "thai" in value),
-                None
-            )
+            for i, value in enumerate(row):
+                if value is None:
+                    continue
 
-            if sci is not None and thai is not None:
+                raw = str(value).strip()
+                normalized = normalize_header(raw)
+                compact = normalized.replace("_", "")
+                raw_lower = raw.lower()
+
+                is_scientific = (
+                    ("scientific" in compact and
+                     ("name" in compact or compact == "scientific"))
+                    or "ชื่อวิทยาศาสตร์" in raw
+                )
+
+                # Thai column names are Unicode, so normalize_header() removes
+                # the Thai characters. Detect both English and Thai labels
+                # before normalization.
+                is_thai = (
+                    "thai" in raw_lower
+                    or compact in {"th", "thainame", "thainames"}
+                    or "ชื่อภาษาไทย" in raw
+                    or "ชื่อไทย" in raw
+                )
+
+                if is_scientific:
+                    scientific_col = i
+                if is_thai:
+                    thai_col = i
+
+            if scientific_col is not None and thai_col is not None:
                 target_sheet = ws
                 header_row = row_index
-                scientific_col = sci
-                thai_col = thai
                 break
 
         if target_sheet is not None:
             break
 
     if target_sheet is None:
+        samples = []
+        for ws in wb.worksheets:
+            for row_index, row in enumerate(ws.iter_rows(values_only=True)):
+                if row_index >= 5:
+                    break
+                values = [str(v).strip() for v in row if v is not None]
+                if values:
+                    samples.append(f"{ws.title!r}: {values}")
         raise SystemExit(
             "Could not find the scientific-name and Thai columns in the "
-            "eBird common-names workbook."
+            "eBird common-names workbook. Header samples: "
+            + " | ".join(samples[:8])
         )
 
     thai_names = {}
@@ -194,7 +208,6 @@ def load_thai_names(path):
         f"{target_sheet.title!r}."
     )
     return thai_names
-
 
 def thai_name_for_bird(bird, thai_names):
     """Resolve a Thai name across taxonomy-name changes.
