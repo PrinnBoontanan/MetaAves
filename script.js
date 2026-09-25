@@ -1397,6 +1397,43 @@ function renderTaxonomyTable() {
     taxonomyTree.appendChild(wrapper);
 }
 
+const taxonomyHorizontalScroll = document.getElementById("taxonomy-horizontal-scroll");
+const taxonomyHorizontalScrollContent =
+    taxonomyHorizontalScroll?.querySelector(".taxonomy-horizontal-scroll-content");
+
+function syncTaxonomyHorizontalScroll() {
+    if (!taxonomyHorizontalScroll || !taxonomyHorizontalScrollContent) return;
+
+    const isTree = gameState.taxonomyView === "tree";
+    const needsScroll = isTree && taxonomyTree.scrollWidth > taxonomyTree.clientWidth + 2;
+
+    taxonomyHorizontalScroll.classList.toggle("visible", needsScroll);
+
+    if (!needsScroll) {
+        taxonomyHorizontalScroll.scrollLeft = 0;
+        taxonomyTree.scrollLeft = 0;
+        taxonomyHorizontalScrollContent.style.width = "1px";
+        return;
+    }
+
+    taxonomyHorizontalScrollContent.style.width = taxonomyTree.scrollWidth + "px";
+    taxonomyHorizontalScroll.scrollLeft = taxonomyTree.scrollLeft;
+}
+
+taxonomyTree.addEventListener("scroll", () => {
+    if (taxonomyHorizontalScroll) {
+        taxonomyHorizontalScroll.scrollLeft = taxonomyTree.scrollLeft;
+    }
+});
+
+taxonomyHorizontalScroll?.addEventListener("scroll", () => {
+    taxonomyTree.scrollLeft = taxonomyHorizontalScroll.scrollLeft;
+});
+
+window.addEventListener("resize", () => {
+    requestAnimationFrame(syncTaxonomyHorizontalScroll);
+});
+
 function renderTaxonomyView() {
     if (gameState.taxonomyView === "table") {
         renderTaxonomyTable();
@@ -1408,6 +1445,8 @@ function renderTaxonomyView() {
         treeViewButton.classList.toggle("active", gameState.taxonomyView === "tree");
         tableViewButton.classList.toggle("active", gameState.taxonomyView === "table");
     }
+
+    requestAnimationFrame(syncTaxonomyHorizontalScroll);
 }
 
 function renderTaxonomyTree() {
