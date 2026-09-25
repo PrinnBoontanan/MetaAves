@@ -1266,14 +1266,14 @@ function appendCardSection(card, heading, text) {
     card.appendChild(section);
 }
 
-async function showBirdInTaxonCard(bird) {
+async async function showBirdInTaxonCard(bird) {
     const card = document.getElementById("taxon-card");
     if (!card || !bird) return;
 
     gameState.selectedTaxonId = "species:" + (bird.scientificName || bird.commonName);
     const selectionId = gameState.selectedTaxonId;
 
-    card.innerHTML = "<p>Loading bird information...</p>";
+    card.innerHTML = "<p>Loading bird information from Wikipedia...</p>";
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
     const wiki = await fetchWikipediaPageData(wikiTitle, true);
@@ -1304,25 +1304,67 @@ function renderBirdCard(bird, wiki) {
     rank.textContent = "SPECIES";
     card.appendChild(rank);
 
-    const description =
-        wiki?.summary?.extract ||
-        "No Wikipedia summary is available for this species yet.";
+    const hasWikiSummary = Boolean(wiki?.summary?.extract);
+    const description = hasWikiSummary
+        ? wiki.summary.extract
+        : "No information available on Wikipedia.";
 
     appendWikipediaImage(card, wiki, "taxon-card-image");
+
+    if (!wiki?.summary?.thumbnail?.source) {
+        appendCardSection(card, "Photo", "No photo available on Wikipedia.");
+    }
+
     appendCardSection(card, "Description", description);
+
+    // Taxonomy is intentionally shown only for species cards. Higher taxon
+    // cards do not repeat their taxonomy because the tree already provides it.
+    const taxonomySection = document.createElement("div");
+    taxonomySection.className = "taxon-card-wiki-section taxon-card-species-taxonomy";
+
+    const taxonomyHeading = document.createElement("h4");
+    taxonomyHeading.textContent = "Taxonomy";
+    taxonomySection.appendChild(taxonomyHeading);
+
+    const taxonomyRows = [
+        ["Class", bird.class || "Aves"],
+        ["Order", bird.order],
+        ["Family", bird.family],
+        ["Genus", bird.genus],
+        ["Species", bird.species || bird.scientificName]
+    ];
+
+    taxonomyRows.forEach(([label, value]) => {
+        if (!value) return;
+
+        const row = document.createElement("p");
+        row.className = "taxon-card-taxonomy-row";
+
+        const labelElement = document.createElement("strong");
+        labelElement.textContent = label + ": ";
+
+        row.appendChild(labelElement);
+        row.appendChild(document.createTextNode(value));
+        taxonomySection.appendChild(row);
+    });
+
+    card.appendChild(taxonomySection);
 
     const link = wiki?.summary?.content_urls?.desktop?.page;
     if (link) {
         const wikipediaLink = document.createElement("a");
+        wikipediaLink.className = "taxon-card-wikipedia-link";
         wikipediaLink.href = link;
         wikipediaLink.target = "_blank";
         wikipediaLink.rel = "noopener noreferrer";
-        wikipediaLink.textContent = "Wikipedia →";
+        wikipediaLink.textContent = "Wikipedia";
         card.appendChild(wikipediaLink);
+    } else {
+        appendCardSection(card, "Wikipedia", "No Wikipedia page available.");
     }
 }
 
-async function showTaxonInTaxonCard(taxon) {
+async async function showTaxonInTaxonCard(taxon) {
     const card = document.getElementById("taxon-card");
     if (!card || !taxon) return;
 
@@ -1330,7 +1372,7 @@ async function showTaxonInTaxonCard(taxon) {
     const selectionId = taxon.id;
 
     if (taxon.rank === "clade") {
-        card.innerHTML = "<p>Loading clade information...</p>";
+        card.innerHTML = "<p>Loading clade information from Wikipedia...</p>";
 
         const wiki = await fetchWikipediaPageData(
             getWikipediaTitleFromTaxon(taxon, {}),
@@ -1354,9 +1396,7 @@ async function showTaxonInTaxonCard(taxon) {
     if (description) {
         description.textContent =
             wiki?.summary?.extract ||
-            info.description ||
-            taxon.description ||
-            "No Wikipedia summary is available for this taxon yet.";
+            "No information available on Wikipedia.";
     }
 
     if (wiki?.summary?.thumbnail?.source) {
@@ -1366,12 +1406,11 @@ async function showTaxonInTaxonCard(taxon) {
         image.alt = wiki.summary.title || taxon.name;
         image.loading = "lazy";
         card.insertBefore(image, description || null);
+    } else {
+        appendCardSection(card, "Photo", "No photo available on Wikipedia.");
     }
 
-    const wikiUrl =
-        wiki?.summary?.content_urls?.desktop?.page ||
-        info.wikipedia;
-
+    const wikiUrl = wiki?.summary?.content_urls?.desktop?.page;
     if (wikiUrl) {
         const link = document.createElement("a");
         link.className = "taxon-card-wikipedia-link";
@@ -1380,6 +1419,8 @@ async function showTaxonInTaxonCard(taxon) {
         link.rel = "noopener noreferrer";
         link.textContent = "Wikipedia";
         card.appendChild(link);
+    } else {
+        appendCardSection(card, "Wikipedia", "No Wikipedia page available.");
     }
 }
 
@@ -1423,29 +1464,35 @@ function renderCladeCard(clade, wiki) {
         image.alt = wiki.summary.title || clade.name;
         image.loading = "lazy";
         card.appendChild(image);
+    } else {
+        appendCardSection(card, "Photo", "No photo available on Wikipedia.");
     }
 
     const description = document.createElement("p");
     description.classList.add("taxon-card-description");
     description.textContent =
         wiki?.summary?.extract ||
-        clade.description ||
-        "No Wikipedia summary is available for this clade yet.";
+        "No information available on Wikipedia.";
     card.appendChild(description);
 
     const linkUrl = wiki?.summary?.content_urls?.desktop?.page;
     if (linkUrl) {
         const link = document.createElement("a");
+        link.className = "taxon-card-wikipedia-link";
         link.href = linkUrl;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.textContent = "Wikipedia";
         card.appendChild(link);
+    } else {
+        appendCardSection(card, "Wikipedia", "No Wikipedia page available.");
     }
 }
 
 function renderTaxonCard(taxon) {
     const card = document.getElementById("taxon-card");
+    if (!card) return;
+
     const info = gameState.taxonInfo?.[taxon.id] || {};
 
     card.innerHTML = "";
@@ -1942,7 +1989,7 @@ function getBirdTaxonomyText(bird) {
     ].filter(Boolean).join(" → ");
 }
 
-function showGameOverCard(result) {
+async function showGameOverCard(result) {
     const overlay = document.getElementById("game-over-overlay");
     const newGameButton = document.getElementById("new-game-button");
     const title = document.getElementById("game-over-title");
@@ -1956,11 +2003,9 @@ function showGameOverCard(result) {
     if (!overlay || !bird) return;
 
     const details = document.querySelector(".study-card-details");
-    if (details) {
-        details.querySelectorAll(".study-card-section").forEach(section => {
-            section.remove();
-        });
-    }
+    if (!details) return;
+
+    details.querySelectorAll(".study-card-section").forEach(section => section.remove());
 
     gameState.gameStatus = result === "won" ? "won" : "lost";
 
@@ -1974,12 +2019,11 @@ function showGameOverCard(result) {
 
     birdName.textContent = bird.commonName;
     scientificName.textContent = bird.scientificName || "Unknown";
-    thaiName.textContent =
-        bird.thaiName || "No established Thai name found.";
+    thaiName.textContent = bird.thaiName || "No established Thai name found.";
     taxonomy.innerHTML = "";
 
     const taxonomyRows = [
-        ["Class", bird.class],
+        ["Class", bird.class || "Aves"],
         [
             "Clades",
             Array.isArray(bird.cladePath) && bird.cladePath.length
@@ -2011,12 +2055,9 @@ function showGameOverCard(result) {
         taxonomy.appendChild(row);
     });
 
-    const unavailable =
-        "Wikipedia information is still loading…";
+    const unavailable = "No information available on Wikipedia.";
 
     const addStudySection = (heading, value) => {
-        if (!details || !value) return;
-
         const section = document.createElement("div");
         section.className = "study-card-section";
         section.dataset.studyHeading = heading.toLowerCase();
@@ -2025,144 +2066,118 @@ function showGameOverCard(result) {
         headingElement.textContent = heading;
 
         const text = document.createElement("p");
-        text.textContent = value;
+        text.textContent = value || unavailable;
 
         section.appendChild(headingElement);
         section.appendChild(text);
         details.appendChild(section);
     };
 
-    addStudySection(
-        "Description",
-        bird.description || unavailable
-    );
-    addStudySection("Habitat", bird.habitat || unavailable);
-    addStudySection("Distribution", bird.distribution || unavailable);
-    addStudySection("Diet", bird.diet || unavailable);
-    addStudySection("Behavior", bird.behavior || unavailable);
-    addStudySection("Breeding", bird.breeding || unavailable);
-    addStudySection("Conservation", bird.conservation || unavailable);
-
     const studyImage = document.getElementById("study-bird-image");
     if (studyImage) studyImage.remove();
 
-    const studyDescription = document.getElementById("study-bird-description");
-    if (studyDescription) studyDescription.remove();
+    const photoPlaceholder = document.createElement("div");
+    photoPlaceholder.id = "study-photo-placeholder";
+    photoPlaceholder.className = "study-card-section";
+    photoPlaceholder.dataset.studyHeading = "photo";
+
+    const photoHeading = document.createElement("h4");
+    photoHeading.textContent = "Photo";
+    const photoText = document.createElement("p");
+    photoText.textContent = "Loading photo from Wikipedia...";
+    photoPlaceholder.appendChild(photoHeading);
+    photoPlaceholder.appendChild(photoText);
+    details.before(photoPlaceholder);
+
+    addStudySection("Description", unavailable);
+    addStudySection("Habitat", unavailable);
+    addStudySection("Distribution", unavailable);
+    addStudySection("Diet", unavailable);
+    addStudySection("Behavior", unavailable);
+    addStudySection("Breeding", unavailable);
+    addStudySection("Conservation", unavailable);
 
     overlay.classList.add("visible");
+    if (newGameButton) newGameButton.classList.add("visible");
 
-    if (newGameButton) {
-        newGameButton.classList.add("visible");
+    const wikiTitle = bird.wikipediaTitle || bird.commonName;
+    const wiki = await fetchWikipediaPageData(wikiTitle, true);
+
+    if (gameState.mysteryBird !== bird) return;
+
+    const sections = extractWikipediaSections(wiki?.html);
+    const description =
+        wiki?.summary?.extract ||
+        findWikipediaSection(sections, ["description", "appearance", "identification"]);
+
+    const habitat =
+        findWikipediaSection(sections, ["distribution and habitat", "habitat"]);
+    const distribution =
+        findWikipediaSection(sections, ["distribution"]);
+    const diet =
+        findWikipediaSection(sections, ["diet", "feeding"]);
+    const behavior =
+        findWikipediaSection(
+            sections,
+            ["behavior", "behaviour", "behavior and ecology", "behaviour and ecology", "ecology"]
+        );
+    const breeding =
+        findWikipediaSection(sections, ["breeding", "reproduction", "nesting"]);
+    const conservation =
+        findWikipediaSection(sections, ["conservation", "status", "threats"]);
+
+    const setStudyValue = (heading, value) => {
+        const section = document.querySelector(
+            `.study-card-section[data-study-heading="${heading.toLowerCase()}"]`
+        );
+        const paragraph = section?.querySelector("p");
+        if (paragraph) paragraph.textContent = value || unavailable;
+    };
+
+    setStudyValue("Description", description);
+    setStudyValue("Habitat", habitat);
+    setStudyValue("Distribution", distribution);
+    setStudyValue("Diet", diet);
+    setStudyValue("Behavior", behavior);
+    setStudyValue("Breeding", breeding);
+    setStudyValue("Conservation", conservation);
+
+    const placeholder = document.getElementById("study-photo-placeholder");
+    const imageSource = wiki?.summary?.thumbnail?.source;
+
+    if (placeholder) {
+        if (imageSource) {
+            placeholder.remove();
+
+            const image = document.createElement("img");
+            image.id = "study-bird-image";
+            image.className = "study-card-image study-card-hero-image";
+            image.src = imageSource;
+            image.alt = bird.commonName;
+            image.loading = "lazy";
+
+            details.before(image);
+        } else {
+            const photoText = placeholder.querySelector("p");
+            if (photoText) photoText.textContent = "No photo available on Wikipedia.";
+        }
     }
 
-    // Wikipedia is the detailed source for the study card. The existing
-    // generated dataset remains the stable game-data source, while the live
-    // article supplies descriptive sections that AviList does not contain.
-    const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    fetchWikipediaPageData(wikiTitle, true)
-        .then(wiki => {
-            if (!wiki || gameState.mysteryBird !== bird) return;
+    const wikiLink = wiki?.summary?.content_urls?.desktop?.page;
+    if (wikiLink) {
+        const wikiSection = document.createElement("div");
+        wikiSection.className = "study-card-section";
+        wikiSection.dataset.studyHeading = "wikipedia";
 
-            const sections = extractWikipediaSections(wiki.html);
-            const descriptionText =
-                wiki.summary?.extract ||
-                findWikipediaSection(
-                    sections,
-                    ["description", "appearance", "identification"]
-                );
+        const link = document.createElement("a");
+        link.href = wikiLink;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Wikipedia →";
 
-            const imageSource = wiki.summary?.thumbnail?.source;
-            if (imageSource && !document.getElementById("study-bird-image")) {
-                const image = document.createElement("img");
-                image.id = "study-bird-image";
-                image.className = "study-card-image study-card-hero-image";
-                image.src = imageSource;
-                image.alt = bird.commonName;
-                image.loading = "lazy";
-                const currentDetails =
-                    document.querySelector(".study-card-details");
-                if (currentDetails?.parentElement) {
-                    currentDetails.before(image);
-                }
-            }
-
-            const setStudyValue = (heading, value) => {
-                if (!value) return;
-
-                const section = document.querySelector(
-                    `.study-card-section[data-study-heading="${heading.toLowerCase()}"]`
-                );
-
-                const paragraph = section?.querySelector("p");
-                if (paragraph) {
-                    paragraph.textContent = value;
-                }
-            };
-
-            if (descriptionText && !bird.description) {
-                setStudyValue("Description", descriptionText);
-            }
-
-            const habitat =
-                findWikipediaSection(
-                    sections,
-                    ["distribution and habitat", "habitat"]
-                );
-            const distribution =
-                findWikipediaSection(sections, ["distribution"]);
-            const diet =
-                findWikipediaSection(sections, ["diet", "feeding"]);
-            const behavior =
-                findWikipediaSection(
-                    sections,
-                    ["behavior", "behaviour", "behavior and ecology", "behaviour and ecology", "ecology"]
-                );
-            const breeding =
-                findWikipediaSection(
-                    sections,
-                    ["breeding", "reproduction", "nesting"]
-                );
-            const conservation =
-                findWikipediaSection(
-                    sections,
-                    ["conservation", "status", "threats"]
-                );
-            const call =
-                findWikipediaSection(
-                    sections,
-                    ["call", "voice", "vocalizations", "vocalisations"]
-                );
-
-            if (habitat && !bird.habitat) setStudyValue("Habitat", habitat);
-            if (distribution && !bird.distribution) setStudyValue("Distribution", distribution);
-            if (diet && !bird.diet) setStudyValue("Diet", diet);
-            if (behavior && !bird.behavior) setStudyValue("Behavior", behavior);
-            if (breeding && !bird.breeding) setStudyValue("Breeding", breeding);
-            if (conservation && !bird.conservation) setStudyValue("Conservation", conservation);
-
-            if (call && details) {
-                addStudySection("Call", call);
-            }
-
-            if (wiki.summary?.content_urls?.desktop?.page && details) {
-                const wikiSection = document.createElement("div");
-                wikiSection.className = "study-card-section";
-                wikiSection.dataset.studyHeading = "wikipedia";
-
-                const wikiLink = document.createElement("a");
-                wikiLink.href = wiki.summary.content_urls.desktop.page;
-                wikiLink.target = "_blank";
-                wikiLink.rel = "noopener noreferrer";
-                wikiLink.textContent = "Wikipedia →";
-
-                wikiSection.appendChild(wikiLink);
-                details.appendChild(wikiSection);
-            }
-        })
-        .catch(() => {
-            // The card remains usable with the generated dataset if Wikipedia
-            // is temporarily unavailable.
-        });
+        wikiSection.appendChild(link);
+        details.appendChild(wikiSection);
+    }
 }
 
 function closeGameOverCard() {
