@@ -33,8 +33,12 @@ jobs:
         run: |
           curl -L -o AviList-v2025b-extended.xlsx             https://www.avilist.org/wp-content/uploads/2026/06/AviList-v2025b-10Jun2026-extended.xlsx
 
-      - name: Build AviList base dataset
-        run: python scripts/import_avilist.py AviList-v2025b-extended.xlsx
+      - name: Download eBird Thai common names
+        run: |
+          curl -L -o eBird-common-names.xlsx             https://cornell.box.com/shared/static/zjci66divvqnz00k98r7pmmb6kpc69zs.xlsx
+
+      - name: Build AviList base dataset + Thai bird names
+        run: python scripts/import_avilist.py AviList-v2025b-extended.xlsx eBird-common-names.xlsx
 
       - name: Validate generated data
         run: |
@@ -59,7 +63,7 @@ jobs:
 
       - name: Commit generated taxonomy
         run: |
-          rm -f data/ncbi_aves.jsonl AviList-v2025b-extended.xlsx
+          rm -f data/ncbi_aves.jsonl AviList-v2025b-extended.xlsx eBird-common-names.xlsx
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/birds.generated.json data/taxonomy.generated.json data/clade_membership.generated.json
