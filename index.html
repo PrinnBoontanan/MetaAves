@@ -81,19 +81,30 @@
         <section class="taxonomy-section">
 
             <div class="taxonomy-heading-row">
-                <h2><span class="mono-heading-icon">◆</span> Taxonomy</h2>
+                <div class="taxonomy-title">
+                    <span class="taxonomy-title-mark" aria-hidden="true">◆</span>
+                    <div>
+                        <h2>Taxonomy</h2>
+                        <p>Explore how your guesses connect.</p>
+                    </div>
+                </div>
+
                 <div class="taxonomy-view-toggle" role="group" aria-label="Taxonomy view">
                     <button id="tree-view-button" class="taxonomy-view-button active" type="button">Tree</button>
                     <button id="table-view-button" class="taxonomy-view-button" type="button">Table</button>
                 </div>
             </div>
 
-            <div id="taxonomy-tree" class="taxonomy-tree">
+            <div class="taxonomy-content">
+                <div id="taxonomy-tree" class="taxonomy-tree">
+                    <p class="tree-placeholder">
+                        Your guesses will appear here.
+                    </p>
+                </div>
 
-                <p class="tree-placeholder">
-                    Your guesses will appear here.
-                </p>
-
+                <div id="taxonomy-horizontal-scroll" class="taxonomy-horizontal-scroll" aria-label="Scroll taxonomy horizontally" tabindex="0">
+                    <div class="taxonomy-horizontal-scroll-content"></div>
+                </div>
             </div>
 
         </section>
