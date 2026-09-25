@@ -1071,6 +1071,48 @@ async function fetchOnlineThaiName(bird) {
     }
 
     const cacheValue = async () => {
+        // 1. GBIF ChecklistBank / Taxonomic Backbone.
+        // GBIF exposes vernacular names from many checklist datasets and
+        // supports Thai names without requiring an API key.
+        try {
+            const matchUrl =
+                "https://api.gbif.org/v1/species/match?name=" +
+                encodeURIComponent(scientificName);
+
+            const matchResponse = await fetch(matchUrl);
+            if (matchResponse.ok) {
+                const matchData = await matchResponse.json();
+                const usageKey = matchData?.usageKey || matchData?.taxonKey;
+
+                if (usageKey) {
+                    const namesUrl =
+                        "https://api.gbif.org/v1/species/" +
+                        encodeURIComponent(usageKey) +
+                        "/vernacularNames";
+
+                    const namesResponse = await fetch(namesUrl);
+                    if (namesResponse.ok) {
+                        const namesData = await namesResponse.json();
+                        const thai = (namesData.results || []).find(name => {
+                            const language = String(name.language || "")
+                                .trim()
+                                .toLowerCase();
+                            return language === "th" || language === "tha";
+                        });
+
+                        if (thai?.vernacularName) {
+                            return String(thai.vernacularName).trim();
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn("GBIF Thai-name lookup failed:", scientificName, error);
+        }
+
+        // 2. Wikidata fallback.
+        // Wikidata is broader than GBIF, but its Thai labels are not
+        // available for every bird.
         try {
             const searchUrl =
                 "https://www.wikidata.org/w/api.php?action=wbsearchentities" +
@@ -1079,6 +1121,7 @@ async function fetchOnlineThaiName(bird) {
 
             const searchResponse = await fetch(searchUrl);
             if (!searchResponse.ok) return null;
+
             const searchData = await searchResponse.json();
             const exactMatch = (searchData.search || []).find(result =>
                 String(result.label || "").trim().toLowerCase() === scientificName.toLowerCase() ||
@@ -1092,19 +1135,22 @@ async function fetchOnlineThaiName(bird) {
                 "https://www.wikidata.org/w/api.php?action=wbgetentities" +
                 "&ids=" + encodeURIComponent(entityId) +
                 "&props=labels&languages=th&format=json&origin=*";
+
             const entityResponse = await fetch(entityUrl);
             if (!entityResponse.ok) return null;
+
             const entityData = await entityResponse.json();
             const label = entityData.entities?.[entityId]?.labels?.th?.value;
             return label ? String(label).trim() : null;
         } catch (error) {
-            console.warn("Could not load online Thai name:", scientificName, error);
+            console.warn("Wikidata Thai-name lookup failed:", scientificName, error);
             return null;
         }
     };
 
     const promise = cacheValue();
     gameState.thaiNameCache.set(scientificName, promise);
+
     const thaiName = await promise;
     gameState.thaiNameCache.set(scientificName, thaiName);
     return thaiName;
