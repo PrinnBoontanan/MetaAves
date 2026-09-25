@@ -518,7 +518,6 @@ body {
     max-width: 100%;
     height: auto;
     max-height: 420px;
-    object-fit: contain;
     margin-left: auto;
     margin-right: auto;
     background: #f4e8d4;
@@ -1450,9 +1449,11 @@ body {
 
 .study-card-hero-image {
     display: block;
-    width: min(100%, 560px);
-    max-height: 270px;
-    object-fit: cover;
+    width: auto;
+    max-width: min(100%, 560px);
+    height: auto;
+    max-height: 420px;
+    object-fit: contain;
     margin: 18px auto 4px;
     border-radius: 14px;
     border: 1px solid #e1d3b8;
