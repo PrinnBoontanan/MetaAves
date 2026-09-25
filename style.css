@@ -517,9 +517,7 @@ body {
     width: auto;
     max-width: 100%;
     height: auto;
-    max-height: 420px;
-    margin-left: auto;
-    margin-right: auto;
+    object-fit: contain;
     background: #f4e8d4;
     padding: 10px;
     border: 1px solid #c9b98f;
