@@ -2395,3 +2395,43 @@ input:focus-visible,
 .taxonomy-table tbody tr:last-child td {
     border-bottom: 1px solid #dfd4c1;
 }
+
+
+/* Wikipedia-backed taxon card sections */
+.taxon-card-wiki-section {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #e4d9c4;
+}
+
+.taxon-card-wiki-section h4 {
+    margin: 0 0 7px;
+    color: #5d563f;
+    font-size: 16px;
+}
+
+.taxon-card-wiki-section p {
+    margin: 0 0 6px;
+    line-height: 1.65;
+    color: #555;
+}
+
+.taxon-card-taxonomy-row {
+    margin: 5px 0 !important;
+}
+
+.taxon-card-taxonomy-row strong {
+    color: #5d563f;
+}
+
+.taxon-card-wikipedia-link {
+    display: inline-block;
+    margin-top: 18px;
+    color: #587331;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.taxon-card-wikipedia-link:hover {
+    text-decoration: underline;
+}
