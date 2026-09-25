@@ -1076,7 +1076,13 @@ async function fetchWikipediaPageData(title, includeHtml = false) {
     if (!data.summaryPromise && !data.summary) {
         data.summaryPromise = fetch(
             "https://en.wikipedia.org/api/rest_v1/page/summary/" +
-            encodeURIComponent(normalizedTitle)
+            encodeURIComponent(normalizedTitle),
+            {
+                headers: {
+                    "Api-User-Agent":
+                        "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
+                }
+            }
         )
             .then(response => response.ok ? response.json() : null)
             .catch(() => null);
@@ -1090,7 +1096,13 @@ async function fetchWikipediaPageData(title, includeHtml = false) {
     if (includeHtml && !data.html) {
         data.htmlPromise = fetch(
             "https://en.wikipedia.org/api/rest_v1/page/html/" +
-            encodeURIComponent(normalizedTitle)
+            encodeURIComponent(normalizedTitle),
+            {
+                headers: {
+                    "Api-User-Agent":
+                        "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
+                }
+            }
         )
             .then(response => response.ok ? response.text() : null)
             .catch(() => null);
