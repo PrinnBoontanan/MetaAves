@@ -1,146 +1,32 @@
 {
   "_meta": {
-    "version": 2,
-    "description": "Taxonomic hierarchy used by MetaAves. Each taxon has a stable ID, rank, name, parent, and children. Additional ranks can be added without changing the game structure.",
-    "rankOrder": [
-      "kingdom",
-      "phylum",
-      "class",
-      "subclass",
-      "infraclass",
-      "cohort",
-      "superorder",
-      "order",
-      "suborder",
-      "infraorder",
-      "parvorder",
-      "superfamily",
-      "family",
-      "subfamily",
-      "tribe",
-      "subtribe",
-      "genus",
-      "subgenus",
-      "species"
-    ],
-    "rootTaxa": [
-      "class:Aves"
-    ],
+    "version": 3,
+    "description": "Detailed avian taxonomy used by MetaAves. The hierarchy preserves intermediate ranked taxa and named phylogenetic clades where the selected Wikipedia classification provides them.",
+    "rankOrder": ["kingdom","phylum","class","subclass","infraclass","cohort","superorder","order","suborder","infraorder","parvorder","superfamily","family","subfamily","tribe","subtribe","genus","subgenus","species"],
+    "rootTaxa": ["class:Aves"],
     "masterSource": {
-      "name": "AviList: The Global Avian Checklist",
-      "version": "2025b",
-      "accessed": "2026-09-23",
-      "speciesConcept": "AviList consensus taxonomy",
-      "extinctIncluded": true,
-      "url": "https://www.avilist.org/checklist/v2025b/"
+      "name": "Wikipedia avian taxonomy pages",
+      "accessed": "2026-09-25",
+      "notes": "Detailed intermediate taxa are retained rather than collapsing the hierarchy to order/family/genus. Wikipedia classifications can vary between pages and may represent phylogenetic clades separately from formal Linnaean ranks."
     },
-    "nodeTypes": [
-      "ranked_taxon",
-      "clade",
-      "species"
-    ],
-    "cladePolicy": "Clades are phylogenetic groups, not formal Linnaean ranks. They may be inserted between ranked taxa and can be nested independently of the rankOrder.",
-    "phylogenySource": {
-      "name": "AviList classification plus explicit phylogenetic clades",
-      "notes": "Named clades such as Telluraves must be represented as clade nodes rather than forced into ranks such as order or family. Phylogenetic relationships should be versioned separately from the checklist's ranked taxonomy."
-    }
+    "nodeTypes": ["ranked_taxon","clade","species"],
+    "cladePolicy": "Named phylogenetic groups may be inserted between ranked taxa. They are part of the actual path and are not automatically omitted from the underlying taxonomy."
   },
-  "class:Aves": {
-    "id": "class:Aves",
-    "rank": "class",
-    "name": "Aves",
-    "parent": null,
-    "children": [
-      "order:Bucerotiformes",
-      "order:Passeriformes"
-    ]
-  },
-  "order:Bucerotiformes": {
-    "id": "order:Bucerotiformes",
-    "rank": "order",
-    "name": "Bucerotiformes",
-    "parent": "class:Aves",
-    "children": [
-      "family:Bucerotidae"
-    ]
-  },
-  "family:Bucerotidae": {
-    "id": "family:Bucerotidae",
-    "rank": "family",
-    "name": "Bucerotidae",
-    "parent": "order:Bucerotiformes",
-    "children": [
-      "genus:Buceros",
-      "genus:Anthracoceros"
-    ]
-  },
-  "genus:Buceros": {
-    "id": "genus:Buceros",
-    "rank": "genus",
-    "name": "Buceros",
-    "parent": "family:Bucerotidae",
-    "children": [
-      "species:Buceros_bicornis"
-    ]
-  },
-  "species:Buceros_bicornis": {
-    "id": "species:Buceros_bicornis",
-    "rank": "species",
-    "name": "Buceros bicornis",
-    "commonName": "Great Hornbill",
-    "parent": "genus:Buceros",
-    "children": []
-  },
-  "genus:Anthracoceros": {
-    "id": "genus:Anthracoceros",
-    "rank": "genus",
-    "name": "Anthracoceros",
-    "parent": "family:Bucerotidae",
-    "children": [
-      "species:Anthracoceros_albirostris"
-    ]
-  },
-  "species:Anthracoceros_albirostris": {
-    "id": "species:Anthracoceros_albirostris",
-    "rank": "species",
-    "name": "Anthracoceros albirostris",
-    "commonName": "Oriental Pied Hornbill",
-    "parent": "genus:Anthracoceros",
-    "children": []
-  },
-  "order:Passeriformes": {
-    "id": "order:Passeriformes",
-    "rank": "order",
-    "name": "Passeriformes",
-    "parent": "class:Aves",
-    "children": [
-      "family:Passeridae"
-    ]
-  },
-  "family:Passeridae": {
-    "id": "family:Passeridae",
-    "rank": "family",
-    "name": "Passeridae",
-    "parent": "order:Passeriformes",
-    "children": [
-      "genus:Passer"
-    ]
-  },
-  "genus:Passer": {
-    "id": "genus:Passer",
-    "rank": "genus",
-    "name": "Passer",
-    "parent": "family:Passeridae",
-    "children": [
-      "species:Passer_domesticus"
-    ]
-  },
-  "species:Passer_domesticus": {
-    "id": "species:Passer_domesticus",
-    "rank": "species",
-    "name": "Passer domesticus",
-    "commonName": "House Sparrow",
-    "parent": "genus:Passer",
-    "children": []
-  }
+  "class:Aves": {"id":"class:Aves","rank":"class","name":"Aves","parent":null,"children":["order:Bucerotiformes","order:Passeriformes"]},
+  "order:Bucerotiformes": {"id":"order:Bucerotiformes","rank":"order","name":"Bucerotiformes","parent":"class:Aves","children":["family:Bucerotidae"]},
+  "family:Bucerotidae": {"id":"family:Bucerotidae","rank":"family","name":"Bucerotidae","parent":"order:Bucerotiformes","children":["subfamily:Bucerotinae"]},
+  "subfamily:Bucerotinae": {"id":"subfamily:Bucerotinae","rank":"subfamily","name":"Bucerotinae","parent":"family:Bucerotidae","children":["genus:Buceros","genus:Anthracoceros"]},
+  "genus:Buceros": {"id":"genus:Buceros","rank":"genus","name":"Buceros","parent":"subfamily:Bucerotinae","children":["species:Buceros_bicornis"]},
+  "species:Buceros_bicornis": {"id":"species:Buceros_bicornis","rank":"species","name":"Buceros bicornis","commonName":"Great Hornbill","parent":"genus:Buceros","children":[]},
+  "genus:Anthracoceros": {"id":"genus:Anthracoceros","rank":"genus","name":"Anthracoceros","parent":"subfamily:Bucerotinae","children":["species:Anthracoceros_albirostris"]},
+  "species:Anthracoceros_albirostris": {"id":"species:Anthracoceros_albirostris","rank":"species","name":"Anthracoceros albirostris","commonName":"Oriental Pied Hornbill","parent":"genus:Anthracoceros","children":[]},
+  "order:Passeriformes": {"id":"order:Passeriformes","rank":"order","name":"Passeriformes","parent":"class:Aves","children":["clade:Eupasseres"]},
+  "clade:Eupasseres": {"id":"clade:Eupasseres","rank":"clade","name":"Eupasseres","parent":"order:Passeriformes","children":["suborder:Passeri"]},
+  "suborder:Passeri": {"id":"suborder:Passeri","rank":"suborder","name":"Passeri","parent":"clade:Eupasseres","children":["infraorder:Passerides"]},
+  "infraorder:Passerides": {"id":"infraorder:Passerides","rank":"infraorder","name":"Passerides","parent":"suborder:Passeri","children":["parvorder:Passerida"]},
+  "parvorder:Passerida": {"id":"parvorder:Passerida","rank":"parvorder","name":"Passerida","parent":"infraorder:Passerides","children":["superfamily:Passeroidea"]},
+  "superfamily:Passeroidea": {"id":"superfamily:Passeroidea","rank":"superfamily","name":"Passeroidea","parent":"parvorder:Passerida","children":["family:Passeridae"]},
+  "family:Passeridae": {"id":"family:Passeridae","rank":"family","name":"Passeridae","parent":"superfamily:Passeroidea","children":["genus:Passer"]},
+  "genus:Passer": {"id":"genus:Passer","rank":"genus","name":"Passer","parent":"family:Passeridae","children":["species:Passer_domesticus"]},
+  "species:Passer_domesticus": {"id":"species:Passer_domesticus","rank":"species","name":"Passer domesticus","commonName":"House Sparrow","parent":"genus:Passer","children":[]}
 }
