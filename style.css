@@ -2301,3 +2301,33 @@ input:focus-visible,
         height: 430px;
     }
 }
+
+
+/* Keep the table's scrollbar track visible even when the table
+   does not currently need vertical scrolling. This makes the reserved
+   scrollbar gutter intentional rather than looking like empty space. */
+.taxonomy-tree.table-mode .taxonomy-table-wrap {
+    scrollbar-gutter: stable;
+    overflow-y: scroll;
+    scrollbar-color: #b9ab8f #eee5d5;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-track {
+    background: #eee5d5;
+    border-radius: 999px;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-thumb {
+    background: #b9ab8f;
+    border: 2px solid #eee5d5;
+    border-radius: 999px;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-thumb:hover {
+    background: #968663;
+}
