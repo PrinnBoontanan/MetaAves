@@ -1391,6 +1391,40 @@ function extractWikipediaSections(html) {
     return sections;
 }
 
+function findWikipediaInfoboxField(html, candidates) {
+    if (!html) return "";
+
+    const documentRoot = new DOMParser().parseFromString(html, "text/html");
+    const rows = documentRoot.querySelectorAll(
+        ".infobox tr, table.infobox tr"
+    );
+
+    for (const row of rows) {
+        const labelElement = row.querySelector("th");
+        const valueElement = row.querySelector("td");
+        if (!labelElement || !valueElement) continue;
+
+        const label = labelElement.textContent
+            .replace(/\\s+/g, " ")
+            .trim()
+            .toLowerCase();
+
+        if (!candidates.some(candidate =>
+            label.includes(String(candidate).toLowerCase())
+        )) {
+            continue;
+        }
+
+        const value = valueElement.textContent
+            .replace(/\\s+/g, " ")
+            .trim();
+
+        if (value) return value;
+    }
+
+    return "";
+}
+
 function findWikipediaSection(sections, candidates) {
     if (!sections) return "";
 
@@ -2322,8 +2356,17 @@ async function showGameOverCard(result) {
         );
     const breeding =
         findWikipediaSection(sections, ["breeding", "reproduction", "nesting"]);
+    // Conservation information is very often stored in the
+    // species infobox rather than in a "Conservation" article section.
+    // Read both places so common entries such as "Least Concern (IUCN 3.1)"
+    // are not lost just because the article has no dedicated conservation
+    // heading.
     const conservation =
-        findWikipediaSection(sections, ["conservation", "status", "threats"]);
+        findWikipediaSection(sections, ["conservation", "status", "threats"]) ||
+        findWikipediaInfoboxField(
+            wiki?.html,
+            ["conservation status", "conservation"]
+        );
 
     const setStudyValue = (heading, value) => {
         const section = document.querySelector(
