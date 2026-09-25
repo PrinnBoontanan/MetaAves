@@ -1947,7 +1947,7 @@ body {
 }
 
 .taxonomy-tree {
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: auto;
     scrollbar-gutter: stable;
 }
