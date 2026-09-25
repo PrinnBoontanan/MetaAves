@@ -2203,3 +2203,101 @@ input:focus-visible,
         padding: 17px;
     }
 }
+
+
+/* ========================================
+   Final taxonomy layout corrections
+======================================== */
+
+/* The title bar belongs to the taxonomy card itself; it should not look
+   like a separate white strip behind the word "Taxonomy". */
+.taxonomy-heading-row {
+    background: transparent;
+}
+
+/* Let the taxonomy card size itself instead of stretching to the
+   height of the grid row. This removes the dead space below a short tree. */
+.taxonomy-section,
+.taxon-section {
+    align-self: start;
+}
+
+/* Tree mode owns the framed viewport. */
+.taxonomy-tree:not(.table-mode) {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Table mode uses the table wrapper as the ONLY scroll container.
+   Previously the wrapper was placed inside another fixed-height
+   taxonomy-tree viewport, producing a nested scrollbar and a large
+   empty region. */
+.taxonomy-tree.table-mode {
+    min-height: 0;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap {
+    width: 100%;
+    min-height: 0;
+    height: min(520px, 62vh);
+    max-height: 620px;
+    margin: 0;
+    border-radius: 14px;
+}
+
+/* Give the table a proper breathing room from its frame and keep the
+   header visually attached to the table, not the outer card. */
+.taxonomy-table {
+    width: 100%;
+    min-width: 760px;
+    background: transparent;
+}
+
+.taxonomy-table th:first-child {
+    border-top-left-radius: 0;
+}
+
+.taxonomy-table th:last-child {
+    border-top-right-radius: 0;
+}
+
+.taxonomy-table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 0;
+}
+
+.taxonomy-table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 0;
+}
+
+/* Empty table state should occupy the actual table viewport cleanly. */
+.taxonomy-table .table-placeholder {
+    height: 420px;
+    padding: 20px;
+    vertical-align: middle;
+}
+
+/* The tree viewport should not leave a large artificial gap in the
+   taxonomy card when its content is short. */
+.taxonomy-tree:not(.table-mode) .meta-tree-canvas {
+    min-height: 0;
+}
+
+@media (max-width: 900px) {
+    .taxonomy-tree.table-mode .taxonomy-table-wrap {
+        height: min(520px, 62vh);
+    }
+}
+
+@media (max-width: 560px) {
+    .taxonomy-tree.table-mode .taxonomy-table-wrap {
+        height: 430px;
+    }
+}
