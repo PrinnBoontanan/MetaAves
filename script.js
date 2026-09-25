@@ -1068,43 +1068,56 @@ function wikipediaCacheKey(title) {
 function isWikipediaBirdPage(summary) {
     if (!summary) return false;
 
-    // Do not require one exact phrase. Wikipedia uses several valid
-    // descriptions for bird taxa, especially higher ranks such as orders
-    // and clades.
+    // Wikipedia's summary metadata is the source of truth for deciding
+    // whether a homonymous page belongs to birds. Prefer broad positive bird
+    // signals and only reject when the page clearly identifies another
+    // biological group (for example, the plant genus Gypsophila).
     const description = String(summary.description || "").toLowerCase();
     const extract = String(summary.extract || "").toLowerCase();
-
     const text = description + " " + extract;
 
-    const birdSignals = [
-        "species of bird",
-        "species of birds",
-        "genus of bird",
-        "genus of birds",
-        "family of bird",
-        "family of birds",
-        "order of bird",
-        "order of birds",
-        "order of passerine birds",
-        "class of birds",
-        "birds in the family",
-        "birds in the order",
-        "bird in the family",
-        "bird in the order",
-        "passerine birds",
-        "avian"
+    const nonBirdSignals = [
+        "genus of flowering plants",
+        "species of flowering plant",
+        "family of flowering plants",
+        "genus of plants",
+        "species of plant",
+        "family of plants",
+        "order of plants",
+        "genus of fungi",
+        "species of fungus",
+        "genus of bacteria",
+        "species of bacteria"
     ];
 
-    if (birdSignals.some(signal => text.includes(signal))) return true;
-
-    // Higher taxa sometimes identify themselves through Aves or a bird
-    // classification without using the phrases above.
-    if (/\\baves\\b/.test(text)) return true;
-    if (/\\bbird(s)?\\b/.test(text) && /\\b(order|family|genus|clade|taxon)\\b/.test(text)) {
-        return true;
+    if (nonBirdSignals.some(signal => text.includes(signal))) {
+        return false;
     }
 
-    return false;
+    const birdSignals = [
+        "bird",
+        "birds",
+        "avian",
+        "passerine",
+        "aves"
+    ];
+
+    return birdSignals.some(signal => text.includes(signal));
+}
+
+function wikipediaLookupCandidates(title) {
+    const cleanTitle = String(title || "").trim();
+    if (!cleanTitle) return [];
+
+    const candidates = [cleanTitle];
+
+    // If a plain Wikipedia title is a homonym, Wikipedia commonly provides a
+    // "(bird)" disambiguation. Try that before giving up.
+    if (!/\(bird\)$/i.test(cleanTitle)) {
+        candidates.push(cleanTitle + " (bird)");
+    }
+
+    return candidates;
 }
 
 function wikipediaLookupCandidates(title) {
