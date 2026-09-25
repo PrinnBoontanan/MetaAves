@@ -1601,3 +1601,107 @@ body {
         stroke-dashoffset: 0;
     }
 }
+
+
+/* ========================================
+   Bird search — compact floating suggestions
+======================================== */
+
+.search-container {
+    position: relative;
+}
+
+.suggestions {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 112px;
+    z-index: 50;
+
+    display: none;
+    margin: 0;
+    padding: 5px;
+
+    max-height: 320px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    background: rgba(255, 253, 248, 0.98);
+    border: 1px solid #d8cdb6;
+    border-radius: 13px;
+    box-shadow:
+        0 14px 30px rgba(74, 62, 37, 0.15),
+        0 2px 7px rgba(74, 62, 37, 0.08);
+
+    scrollbar-width: thin;
+    scrollbar-color: #b9ab8f transparent;
+}
+
+.suggestions.visible {
+    display: block;
+}
+
+.suggestions::-webkit-scrollbar {
+    width: 7px;
+}
+
+.suggestions::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 7px 0;
+}
+
+.suggestions::-webkit-scrollbar-thumb {
+    background: #b9ab8f;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    border-radius: 999px;
+}
+
+.suggestions::-webkit-scrollbar-thumb:hover {
+    background: #968663;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.suggestion {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 10px 13px;
+
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+
+    color: #4b4d43;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: left;
+
+    cursor: pointer;
+    transition: background .12s ease, color .12s ease, transform .12s ease;
+}
+
+.suggestion + .suggestion {
+    margin-top: 2px;
+}
+
+.suggestion:hover,
+.suggestion.keyboard-selected {
+    background: #edf2e6;
+    color: #4f6b30;
+}
+
+.suggestion:active {
+    transform: scale(.995);
+}
+
+@media (max-width: 560px) {
+    .suggestions {
+        left: 0;
+        right: 0;
+        max-height: 270px;
+    }
+}
