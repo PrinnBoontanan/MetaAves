@@ -662,9 +662,21 @@ function buildTreeModel() {
         const endpointIndex = path.findIndex(node => node.id === throughId);
         if (endpointIndex < 0) return;
 
-        for (let i = 0; i <= endpointIndex; i++) {
-            visibleIds.add(path[i].id);
-        }
+        // The underlying lineage is needed to find the real relationship,
+        // but only the revealed endpoint itself becomes visible. The renderer
+        // skips unrevealed intermediate taxa when connecting visible nodes.
+        // This is what allows:
+        //
+        //   Telluraves
+        //   └─ Bucerotidae
+        //
+        // instead of forcing:
+        //
+        //   Telluraves
+        //   └─ Afroaves
+        //      └─ Bucerotiformes
+        //         └─ Bucerotidae
+        visibleIds.add(path[endpointIndex].id);
     }
 
     // 1. Each wrong guess reveals only its MRCA with the mystery.
