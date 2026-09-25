@@ -1065,7 +1065,42 @@ function wikipediaCacheKey(title) {
         .replace(/\s+/g, "_");
 }
 
-async function fetchWikipediaPageData(title, includeHtml = false) {
+function isWikipediaBirdPage(summary) {
+    if (!summary) return false;
+
+    // Wikipedia has genuine name collisions across kingdoms. For example,
+    // "Gypsophila" is both a bird genus and a flowering-plant genus.
+    // Never use a page for MetaAves unless Wikipedia's own metadata/lead
+    // identifies it as a bird/taxon of birds.
+    const description = String(summary.description || "").toLowerCase();
+    const extract = String(summary.extract || "").toLowerCase();
+
+    const birdSignals = [
+        "species of bird",
+        "species of birds",
+        "genus of birds",
+        "family of birds",
+        "order of birds",
+        "class of birds",
+        "birds in the family",
+        "birds in the order",
+        "bird in the family",
+        "bird in the order",
+        "avian"
+    ];
+
+    if (birdSignals.some(signal =>
+        description.includes(signal) || extract.includes(signal)
+    )) {
+        return true;
+    }
+
+    // Some higher taxa use a scientific/taxonomic lead without the exact
+    // phrases above, but should still explicitly mention Aves.
+    return /\baves\b/.test(description) || /\baves\b/.test(extract);
+}
+
+async function fetchWikipediaPageData(title, includeHtml = false, expectedType = "bird") {
     const normalizedTitle = wikipediaCacheKey(title);
     if (!normalizedTitle) return null;
 
@@ -1076,7 +1111,8 @@ async function fetchWikipediaPageData(title, includeHtml = false) {
             summary: null,
             html: null,
             summaryPromise: null,
-            htmlPromise: null
+            htmlPromise: null,
+            validatedBird: null
         };
         gameState.wikipediaCache.set(normalizedTitle, data);
     }
@@ -1099,6 +1135,15 @@ async function fetchWikipediaPageData(title, includeHtml = false) {
     if (data.summaryPromise) {
         data.summary = await data.summaryPromise;
         data.summaryPromise = null;
+    }
+
+    if (expectedType === "bird") {
+        data.validatedBird = isWikipediaBirdPage(data.summary);
+        if (!data.validatedBird) {
+            // Keep the failed lookup cached so a plant or unrelated homonym
+            // cannot be fetched repeatedly or accidentally used as bird data.
+            return null;
+        }
     }
 
     if (includeHtml && !data.html) {
@@ -1284,7 +1329,7 @@ async function showBirdInTaxonCard(bird) {
     card.innerHTML = "<p>Loading bird information from Wikipedia...</p>";
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    const wiki = await fetchWikipediaPageData(wikiTitle, true);
+    const wiki = await fetchWikipediaPageData(wikiTitle, true, "bird");
 
     // Do not let a slower old request overwrite a newer selection.
     if (gameState.selectedTaxonId !== selectionId) return;
@@ -1384,7 +1429,8 @@ async function showTaxonInTaxonCard(taxon) {
 
         const wiki = await fetchWikipediaPageData(
             getWikipediaTitleFromTaxon(taxon, {}),
-            true
+            true,
+            "bird"
         );
 
         if (gameState.selectedTaxonId !== selectionId) return;
