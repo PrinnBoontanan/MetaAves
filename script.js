@@ -15,7 +15,8 @@ const gameState = {
     selectedTaxonId: null,
     gameStatus: "playing",
     taxonomyView: "tree",
-    wikipediaCache: new Map()
+    wikipediaCache: new Map(),
+    thaiNameCache: new Map()
 };
 
 const guessCountElement = document.getElementById("guess-count");
@@ -1057,6 +1058,56 @@ function createTreeNodeElement(node) {
     }
 
     return element;
+}
+
+async function fetchOnlineThaiName(bird) {
+    if (!bird?.scientificName) return null;
+
+    const scientificName = String(bird.scientificName).trim();
+    if (!scientificName) return null;
+
+    if (gameState.thaiNameCache.has(scientificName)) {
+        return gameState.thaiNameCache.get(scientificName);
+    }
+
+    const cacheValue = async () => {
+        try {
+            const searchUrl =
+                "https://www.wikidata.org/w/api.php?action=wbsearchentities" +
+                "&search=" + encodeURIComponent(scientificName) +
+                "&language=en&format=json&origin=*";
+
+            const searchResponse = await fetch(searchUrl);
+            if (!searchResponse.ok) return null;
+            const searchData = await searchResponse.json();
+            const exactMatch = (searchData.search || []).find(result =>
+                String(result.label || "").trim().toLowerCase() === scientificName.toLowerCase() ||
+                String(result.match?.text || "").trim().toLowerCase() === scientificName.toLowerCase()
+            );
+            const result = exactMatch || searchData.search?.[0];
+            const entityId = result?.id;
+            if (!entityId) return null;
+
+            const entityUrl =
+                "https://www.wikidata.org/w/api.php?action=wbgetentities" +
+                "&ids=" + encodeURIComponent(entityId) +
+                "&props=labels&languages=th&format=json&origin=*";
+            const entityResponse = await fetch(entityUrl);
+            if (!entityResponse.ok) return null;
+            const entityData = await entityResponse.json();
+            const label = entityData.entities?.[entityId]?.labels?.th?.value;
+            return label ? String(label).trim() : null;
+        } catch (error) {
+            console.warn("Could not load online Thai name:", scientificName, error);
+            return null;
+        }
+    };
+
+    const promise = cacheValue();
+    gameState.thaiNameCache.set(scientificName, promise);
+    const thaiName = await promise;
+    gameState.thaiNameCache.set(scientificName, thaiName);
+    return thaiName;
 }
 
 function wikipediaCacheKey(title) {
@@ -2113,7 +2164,7 @@ async function showGameOverCard(result) {
 
     birdName.textContent = bird.commonName;
     scientificName.textContent = bird.scientificName || "Unknown";
-    thaiName.textContent = bird.thaiName || "No established Thai name found.";
+    thaiName.textContent = "Loading Thai name...";
     taxonomy.innerHTML = "";
 
     const taxonomyRows = [
