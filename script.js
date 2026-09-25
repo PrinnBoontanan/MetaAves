@@ -1068,103 +1068,130 @@ function wikipediaCacheKey(title) {
 function isWikipediaBirdPage(summary) {
     if (!summary) return false;
 
-    // Wikipedia has genuine name collisions across kingdoms. For example,
-    // "Gypsophila" is both a bird genus and a flowering-plant genus.
-    // Never use a page for MetaAves unless Wikipedia's own metadata/lead
-    // identifies it as a bird/taxon of birds.
+    // Do not require one exact phrase. Wikipedia uses several valid
+    // descriptions for bird taxa, especially higher ranks such as orders
+    // and clades.
     const description = String(summary.description || "").toLowerCase();
     const extract = String(summary.extract || "").toLowerCase();
+
+    const text = description + " " + extract;
 
     const birdSignals = [
         "species of bird",
         "species of birds",
+        "genus of bird",
         "genus of birds",
+        "family of bird",
         "family of birds",
+        "order of bird",
         "order of birds",
+        "order of passerine birds",
         "class of birds",
         "birds in the family",
         "birds in the order",
         "bird in the family",
         "bird in the order",
+        "passerine birds",
         "avian"
     ];
 
-    if (birdSignals.some(signal =>
-        description.includes(signal) || extract.includes(signal)
-    )) {
+    if (birdSignals.some(signal => text.includes(signal))) return true;
+
+    // Higher taxa sometimes identify themselves through Aves or a bird
+    // classification without using the phrases above.
+    if (/\\baves\\b/.test(text)) return true;
+    if (/\\bbird(s)?\\b/.test(text) && /\\b(order|family|genus|clade|taxon)\\b/.test(text)) {
         return true;
     }
 
-    // Some higher taxa use a scientific/taxonomic lead without the exact
-    // phrases above, but should still explicitly mention Aves.
-    return /\baves\b/.test(description) || /\baves\b/.test(extract);
+    return false;
+}
+
+function wikipediaLookupCandidates(title) {
+    const cleanTitle = String(title || "").trim();
+    if (!cleanTitle) return [];
+
+    const candidates = [cleanTitle];
+
+    // Wikipedia has a deliberate disambiguation for the bird genus
+    // Gypsophila. Try the bird-specific title when the plain title is a
+    // plant or another homonym.
+    if (!/\\(bird\\)$/i.test(cleanTitle)) {
+        candidates.push(cleanTitle + " (bird)");
+    }
+
+    return candidates;
 }
 
 async function fetchWikipediaPageData(title, includeHtml = false, expectedType = "bird") {
-    const normalizedTitle = wikipediaCacheKey(title);
-    if (!normalizedTitle) return null;
+    const candidates = wikipediaLookupCandidates(title);
 
-    let data = gameState.wikipediaCache.get(normalizedTitle);
+    for (const candidateTitle of candidates) {
+        const normalizedTitle = wikipediaCacheKey(candidateTitle);
+        if (!normalizedTitle) continue;
 
-    if (!data) {
-        data = {
-            summary: null,
-            html: null,
-            summaryPromise: null,
-            htmlPromise: null,
-            validatedBird: null
-        };
-        gameState.wikipediaCache.set(normalizedTitle, data);
-    }
+        let data = gameState.wikipediaCache.get(normalizedTitle);
 
-    if (!data.summaryPromise && !data.summary) {
-        data.summaryPromise = fetch(
-            "https://en.wikipedia.org/api/rest_v1/page/summary/" +
-            encodeURIComponent(normalizedTitle),
-            {
-                headers: {
-                    "Api-User-Agent":
-                        "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
-                }
-            }
-        )
-            .then(response => response.ok ? response.json() : null)
-            .catch(() => null);
-    }
-
-    if (data.summaryPromise) {
-        data.summary = await data.summaryPromise;
-        data.summaryPromise = null;
-    }
-
-    if (expectedType === "bird") {
-        data.validatedBird = isWikipediaBirdPage(data.summary);
-        if (!data.validatedBird) {
-            // Keep the failed lookup cached so a plant or unrelated homonym
-            // cannot be fetched repeatedly or accidentally used as bird data.
-            return null;
+        if (!data) {
+            data = {
+                summary: null,
+                html: null,
+                summaryPromise: null,
+                htmlPromise: null,
+                validatedBird: null
+            };
+            gameState.wikipediaCache.set(normalizedTitle, data);
         }
-    }
 
-    if (includeHtml && !data.html) {
-        data.htmlPromise = fetch(
-            "https://en.wikipedia.org/api/rest_v1/page/html/" +
-            encodeURIComponent(normalizedTitle),
-            {
-                headers: {
-                    "Api-User-Agent":
-                        "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
+        if (!data.summaryPromise && !data.summary) {
+            data.summaryPromise = fetch(
+                "https://en.wikipedia.org/api/rest_v1/page/summary/" +
+                encodeURIComponent(normalizedTitle),
+                {
+                    headers: {
+                        "Api-User-Agent":
+                            "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
+                    }
                 }
-            }
-        )
-            .then(response => response.ok ? response.text() : null)
-            .catch(() => null);
+            )
+                .then(response => response.ok ? response.json() : null)
+                .catch(() => null);
+        }
 
-        data.html = await data.htmlPromise;
-        data.htmlPromise = null;
+        if (data.summaryPromise) {
+            data.summary = await data.summaryPromise;
+            data.summaryPromise = null;
+        }
+
+        if (!data.summary) continue;
+
+        if (expectedType === "bird") {
+            data.validatedBird = isWikipediaBirdPage(data.summary);
+            if (!data.validatedBird) continue;
+        }
+
+        if (includeHtml && !data.html) {
+            data.htmlPromise = fetch(
+                "https://en.wikipedia.org/api/rest_v1/page/html/" +
+                encodeURIComponent(normalizedTitle),
+                {
+                    headers: {
+                        "Api-User-Agent":
+                            "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
+                    }
+                }
+            )
+                .then(response => response.ok ? response.text() : null)
+                .catch(() => null);
+
+            data.html = await data.htmlPromise;
+            data.htmlPromise = null;
+        }
+
+        return data;
     }
 
-    return data;
+    return null;
 }
 
 function extractWikipediaSections(html) {
