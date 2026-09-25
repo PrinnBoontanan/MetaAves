@@ -2392,25 +2392,7 @@ input:focus-visible,
 }
 
 
-/* Give the taxonomy table clear row separation like a real data table. */
-.taxonomy-table {
-    border-collapse: separate;
-    border-spacing: 0;
-}
-
-.taxonomy-table th,
-.taxonomy-table td {
-    border-bottom: 1px solid #dfd4c1;
-}
-
-.taxonomy-table thead th {
-    border-bottom: 1px solid #d2c3a8;
-}
-
+/* Keep the original table styling; only close the bottom edge of the final row. */
 .taxonomy-table tbody tr:last-child td {
-    border-bottom: 0;
-}
-
-.taxonomy-table tbody tr:hover td {
-    border-bottom-color: #d3c6af;
+    border-bottom: 1px solid #dfd4c1;
 }
