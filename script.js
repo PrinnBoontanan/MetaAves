@@ -1117,40 +1117,74 @@ function extractWikipediaSections(html) {
     ).forEach(element => element.remove());
 
     const sections = {};
-    let currentSection = "__lead__";
-    sections[currentSection] = [];
+    sections.__lead__ = [];
 
-    [...content.children].forEach(element => {
-        if (element.matches("h2, h3, h4")) {
-            const heading = element.textContent
-                .replace(/\\[edit\\]/gi, "")
-                .replace(/\s+/g, " ")
-                .trim()
-                .toLowerCase();
+    // Current Wikipedia HTML can wrap each heading in a <section>. Handle
+    // those wrappers first, while retaining a fallback for older flat HTML.
+    const headings = [...content.querySelectorAll("h2, h3, h4")];
 
-            currentSection = heading || "__lead__";
-            if (!sections[currentSection]) {
-                sections[currentSection] = [];
-            }
-            return;
-        }
-
-        const text = element.textContent
+    headings.forEach(heading => {
+        const headingText = heading.textContent
+            .replace(/\[edit\]/gi, "")
             .replace(/\s+/g, " ")
-            .trim();
+            .trim()
+            .toLowerCase();
+
+        if (!headingText) return;
+
+        const sectionElement = heading.closest("section");
+        let text = "";
+
+        if (sectionElement) {
+            const clone = sectionElement.cloneNode(true);
+            clone.querySelectorAll(
+                "h2, h3, h4, table, style, script, noscript, .navbox, .reflist, .reference, .mw-references-wrap"
+            ).forEach(element => element.remove());
+
+            text = clone.textContent
+                .replace(/\s+/g, " ")
+                .trim();
+        } else {
+            const parts = [];
+            let sibling = heading.nextElementSibling;
+
+            while (sibling && !sibling.matches("h2, h3, h4")) {
+                const siblingText = sibling.textContent
+                    .replace(/\s+/g, " ")
+                    .trim();
+
+                if (siblingText) parts.push(siblingText);
+                sibling = sibling.nextElementSibling;
+            }
+
+            text = parts.join(" ").replace(/\s+/g, " ").trim();
+        }
 
         if (text) {
-            if (!sections[currentSection]) sections[currentSection] = [];
-            sections[currentSection].push(text);
+            sections[headingText] = text;
         }
     });
 
-    Object.keys(sections).forEach(key => {
-        sections[key] = sections[key]
-            .join(" ")
-            .replace(/\s+/g, " ")
-            .trim();
-    });
+    // Capture lead text before the first heading as well.
+    const firstHeading = headings[0];
+    const leadParts = [];
+    let leadNode = content.firstElementChild;
+
+    while (leadNode && leadNode !== firstHeading) {
+        if (!leadNode.matches("h2, h3, h4")) {
+            const leadText = leadNode.textContent
+                .replace(/\s+/g, " ")
+                .trim();
+
+            if (leadText) leadParts.push(leadText);
+        }
+        leadNode = leadNode.nextElementSibling;
+    }
+
+    sections.__lead__ = leadParts
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
 
     return sections;
 }
