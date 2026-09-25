@@ -1340,11 +1340,6 @@ function renderBirdCard(bird, wiki) {
         appendCardSection(card, "Distribution & habitat", distribution);
     }
 
-    const diet = findWikipediaSection(sections, ["diet", "feeding"]);
-    if (diet) {
-        appendCardSection(card, "Diet", diet);
-    }
-
     const behavior = findWikipediaSection(
         sections,
         ["behavior", "behaviour", "behavior and ecology", "behaviour and ecology", "ecology"]
@@ -1460,11 +1455,6 @@ async function showTaxonInTaxonCard(taxon) {
     );
     if (ecology && !info.distributionHabitat) {
         appendCardSection(card, "Ecology", ecology);
-    }
-
-    const diet = findWikipediaSection(sections, ["diet", "feeding"]);
-    if (diet) {
-        appendCardSection(card, "Diet", diet);
     }
 
     if (!info.wikipedia && wiki?.summary?.content_urls?.desktop?.page) {
