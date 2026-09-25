@@ -1304,78 +1304,14 @@ function renderBirdCard(bird, wiki) {
     rank.textContent = "SPECIES";
     card.appendChild(rank);
 
-    const taxonomyHeading = document.createElement("h4");
-    taxonomyHeading.textContent = "Taxonomy";
-    card.appendChild(taxonomyHeading);
-
-    const taxonomyText = document.createElement("p");
-    const taxonomyParts = [
-        bird.class,
-        ...((Array.isArray(bird.cladePath) && bird.cladePath.length)
-            ? bird.cladePath
-            : []),
-        bird.order,
-        bird.family,
-        bird.genus,
-        bird.species || bird.scientificName
-    ].filter(Boolean);
-    taxonomyText.textContent = taxonomyParts.join(" → ");
-    card.appendChild(taxonomyText);
-
-    appendWikipediaImage(card, wiki, "taxon-card-image");
-
-    const sections = extractWikipediaSections(wiki?.html);
     const description =
         wiki?.summary?.extract ||
-        findWikipediaSection(sections, ["description", "appearance", "identification"]) ||
         "No Wikipedia summary is available for this species yet.";
 
+    appendWikipediaImage(card, wiki, "taxon-card-image");
     appendCardSection(card, "Description", description);
 
-    const distribution = findWikipediaSection(
-        sections,
-        ["distribution and habitat", "distribution", "habitat"]
-    );
-    if (distribution) {
-        appendCardSection(card, "Distribution & habitat", distribution);
-    }
-
-    const behavior = findWikipediaSection(
-        sections,
-        ["behavior", "behaviour", "behavior and ecology", "behaviour and ecology", "ecology"]
-    );
-    if (behavior) {
-        appendCardSection(card, "Behavior & ecology", behavior);
-    }
-
-    const breeding = findWikipediaSection(
-        sections,
-        ["breeding", "reproduction", "nesting"]
-    );
-    if (breeding) {
-        appendCardSection(card, "Breeding", breeding);
-    }
-
-    const conservation = findWikipediaSection(
-        sections,
-        ["conservation", "status", "threats"]
-    );
-    if (conservation) {
-        appendCardSection(card, "Conservation", conservation);
-    }
-
-    const call = findWikipediaSection(
-        sections,
-        ["call", "voice", "vocalizations", "vocalisations"]
-    );
-    if (call) {
-        appendCardSection(card, "Call", call);
-    }
-
-    const link =
-        wiki?.summary?.content_urls?.desktop?.page ||
-        wiki?.summary?.content_urls?.desktop?.page;
-
+    const link = wiki?.summary?.content_urls?.desktop?.page;
     if (link) {
         const wikipediaLink = document.createElement("a");
         wikipediaLink.href = link;
