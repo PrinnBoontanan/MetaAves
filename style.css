@@ -2331,3 +2331,42 @@ input:focus-visible,
 .taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-thumb:hover {
     background: #968663;
 }
+
+
+/* Refine the always-visible table scrollbar so it stays inside the
+   rounded viewport and has no browser arrow buttons. */
+.taxonomy-tree.table-mode .taxonomy-table-wrap {
+    overflow-y: scroll;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #b9ab8f #eee5d5;
+    border-radius: 14px;
+    clip-path: inset(0 round 14px);
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-track {
+    margin: 1px;
+    background: #eee5d5;
+    border-radius: 999px;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-thumb {
+    background: #b9ab8f;
+    border: 2px solid #eee5d5;
+    border-radius: 999px;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-thumb:hover {
+    background: #968663;
+}
