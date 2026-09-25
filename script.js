@@ -1033,9 +1033,17 @@ function createTreeNodeElement(node) {
             element.style.pointerEvents = "auto";
 
             element.addEventListener("click", () => {
+                // The mystery species should always reopen the Study Card
+                // after the game has ended, even if the round was lost.
+                // In a lost game its nodeType remains "mystery", so checking
+                // only "correct" / "revealed-lost" would incorrectly open
+                // the normal Taxon Card instead.
                 if (
-                    node.nodeType === "correct" ||
-                    node.nodeType === "revealed-lost"
+                    node.bird === gameState.mysteryBird &&
+                    (
+                        gameState.gameStatus === "won" ||
+                        gameState.gameStatus === "lost"
+                    )
                 ) {
                     showGameOverCard(
                         gameState.gameStatus === "won" ? "won" : "lost"
