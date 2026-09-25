@@ -1338,32 +1338,14 @@ async function showTaxonInTaxonCard(taxon) {
         if (gameState.selectedTaxonId !== taxon.id) return;
         renderCladeCard(taxon, wiki);
 
-        const sections = extractWikipediaSections(wiki?.html);
-        const detail = findWikipediaSection(
-            sections,
-            ["distribution and habitat", "distribution", "ecology", "biology"]
-        );
+        const description = card.querySelector(".taxon-card-description");
 
-        if (detail) {
-            appendCardSection(card, "From Wikipedia", detail);
-        }
-
-        return;
-    }
-
-    renderTaxonCard(taxon);
-
-    const info = gameState.taxonInfo?.[taxon.id] || {};
-    const wikiTitle = getWikipediaTitleFromTaxon(taxon, info);
-    const wiki = await fetchWikipediaPageData(wikiTitle, true);
-
-    if (gameState.selectedTaxonId !== taxon.id) return;
-
-    const sections = extractWikipediaSections(wiki?.html);
-    const description = card.querySelector(".taxon-card-description");
-
-    if (description && !info.description && wiki?.summary?.extract) {
-        description.textContent = wiki.summary.extract;
+    if (description) {
+        description.textContent =
+            wiki?.summary?.extract ||
+            info.description ||
+            taxon.description ||
+            "No Wikipedia summary is available for this taxon yet.";
     }
 
     if (wiki?.summary?.thumbnail?.source && !card.querySelector(".taxon-card-image")) {
@@ -1375,30 +1357,17 @@ async function showTaxonInTaxonCard(taxon) {
         card.insertBefore(image, description || null);
     }
 
-    if (!info.distributionHabitat) {
-        const distribution = findWikipediaSection(
-            sections,
-            ["distribution and habitat", "distribution", "habitat"]
-        );
-        if (distribution) {
-            appendCardSection(card, "Distribution & habitat", distribution);
-        }
-    }
+    const wikiUrl =
+        wiki?.summary?.content_urls?.desktop?.page ||
+        info.wikipedia;
 
-    const ecology = findWikipediaSection(
-        sections,
-        ["ecology", "biology", "behavior", "behaviour"]
-    );
-    if (ecology && !info.distributionHabitat) {
-        appendCardSection(card, "Ecology", ecology);
-    }
-
-    if (!info.wikipedia && wiki?.summary?.content_urls?.desktop?.page) {
+    if (wikiUrl && !card.querySelector(".taxon-card-wikipedia-link")) {
         const link = document.createElement("a");
-        link.href = wiki.summary.content_urls.desktop.page;
+        link.className = "taxon-card-wikipedia-link";
+        link.href = wikiUrl;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
-        link.textContent = "Wikipedia →";
+        link.textContent = "Wikipedia";
         card.appendChild(link);
     }
 }
@@ -1423,6 +1392,8 @@ function selectTaxon(node) {
 
 function renderCladeCard(clade, wiki) {
     const card = document.getElementById("taxon-card");
+    if (!card) return;
+
     card.innerHTML = "";
 
     const title = document.createElement("h3");
@@ -1434,16 +1405,27 @@ function renderCladeCard(clade, wiki) {
     rank.textContent = "CLADE";
     card.appendChild(rank);
 
+    if (wiki?.summary?.thumbnail?.source) {
+        const image = document.createElement("img");
+        image.className = "taxon-card-image";
+        image.src = wiki.summary.thumbnail.source;
+        image.alt = wiki.summary.title || clade.name;
+        image.loading = "lazy";
+        card.appendChild(image);
+    }
+
     const description = document.createElement("p");
+    description.classList.add("taxon-card-description");
     description.textContent =
-        wiki?.extract ||
+        wiki?.summary?.extract ||
         clade.description ||
         "No Wikipedia summary is available for this clade yet.";
     card.appendChild(description);
 
-    if (wiki?.content_urls?.desktop?.page) {
+    const linkUrl = wiki?.summary?.content_urls?.desktop?.page;
+    if (linkUrl) {
         const link = document.createElement("a");
-        link.href = wiki.content_urls.desktop.page;
+        link.href = linkUrl;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.textContent = "Wikipedia";
@@ -1451,11 +1433,9 @@ function renderCladeCard(clade, wiki) {
     }
 }
 
-
 function renderTaxonCard(taxon) {
     const card = document.getElementById("taxon-card");
     const info = gameState.taxonInfo?.[taxon.id] || {};
-    const isClade = taxon.rank === "clade";
 
     card.innerHTML = "";
 
@@ -1473,48 +1453,12 @@ function renderTaxonCard(taxon) {
 
     const description = document.createElement("p");
     description.classList.add("taxon-card-description");
-    description.textContent =
-        info.description ||
-        taxon.description ||
-        (isClade ? "Loading information from Wikipedia…" : "Loading information from Wikipedia…");
+    description.textContent = "Loading information from Wikipedia…";
 
     card.appendChild(title);
     card.appendChild(rank);
     if (info.commonName) card.appendChild(common);
     card.appendChild(description);
-
-    if (Array.isArray(info.keyCharacteristics) && info.keyCharacteristics.length > 0) {
-        const heading = document.createElement("h4");
-        heading.textContent = "Key characteristics";
-        card.appendChild(heading);
-
-        const list = document.createElement("ul");
-        info.keyCharacteristics.forEach(item => {
-            const li = document.createElement("li");
-            li.textContent = item;
-            list.appendChild(li);
-        });
-        card.appendChild(list);
-    }
-
-    if (info.distributionHabitat) {
-        const heading = document.createElement("h4");
-        heading.textContent = "Distribution & habitat";
-        card.appendChild(heading);
-
-        const text = document.createElement("p");
-        text.textContent = info.distributionHabitat;
-        card.appendChild(text);
-    }
-
-    if (info.wikipedia) {
-        const link = document.createElement("a");
-        link.href = info.wikipedia;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = "Wikipedia";
-        card.appendChild(link);
-    }
 }
 
 function getMostUsefulTaxon() {
