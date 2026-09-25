@@ -1327,19 +1327,30 @@ async function showTaxonInTaxonCard(taxon) {
     if (!card || !taxon) return;
 
     gameState.selectedTaxonId = taxon.id;
+    const selectionId = taxon.id;
 
     if (taxon.rank === "clade") {
         card.innerHTML = "<p>Loading clade information...</p>";
+
         const wiki = await fetchWikipediaPageData(
             getWikipediaTitleFromTaxon(taxon, {}),
             true
         );
 
-        if (gameState.selectedTaxonId !== taxon.id) return;
+        if (gameState.selectedTaxonId !== selectionId) return;
         renderCladeCard(taxon, wiki);
+        return;
+    }
 
-        const description = card.querySelector(".taxon-card-description");
+    renderTaxonCard(taxon);
 
+    const info = gameState.taxonInfo?.[taxon.id] || {};
+    const wikiTitle = getWikipediaTitleFromTaxon(taxon, info);
+    const wiki = await fetchWikipediaPageData(wikiTitle, true);
+
+    if (gameState.selectedTaxonId !== selectionId) return;
+
+    const description = card.querySelector(".taxon-card-description");
     if (description) {
         description.textContent =
             wiki?.summary?.extract ||
@@ -1348,7 +1359,7 @@ async function showTaxonInTaxonCard(taxon) {
             "No Wikipedia summary is available for this taxon yet.";
     }
 
-    if (wiki?.summary?.thumbnail?.source && !card.querySelector(".taxon-card-image")) {
+    if (wiki?.summary?.thumbnail?.source) {
         const image = document.createElement("img");
         image.className = "taxon-card-image";
         image.src = wiki.summary.thumbnail.source;
@@ -1361,7 +1372,7 @@ async function showTaxonInTaxonCard(taxon) {
         wiki?.summary?.content_urls?.desktop?.page ||
         info.wikipedia;
 
-    if (wikiUrl && !card.querySelector(".taxon-card-wikipedia-link")) {
+    if (wikiUrl) {
         const link = document.createElement("a");
         link.className = "taxon-card-wikipedia-link";
         link.href = wikiUrl;
