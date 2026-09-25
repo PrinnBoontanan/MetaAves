@@ -124,90 +124,143 @@ def taxon_id(rank, name):
 
 
 def load_thai_names(path):
-    """Load eBird Thai common names, tolerating English or Thai headers."""
+    """Load Thai eBird names from either wide or long-format common-name workbooks."""
     if not path:
         return {}
 
     wb = load_workbook(path, read_only=True, data_only=True)
-    target_sheet = None
-    header_row = None
-    scientific_col = None
-    thai_col = None
 
+    def header_kind(value):
+        raw = clean(value) or ""
+        normalized = normalize_header(raw)
+        compact = normalized.replace("_", "")
+        raw_lower = raw.lower()
+
+        scientific = (
+            "scientific" in compact
+            or compact in {"scientificname", "scientificnames", "scientific_name"}
+            or "ชื่อวิทยาศาสตร์" in raw
+        )
+        thai = (
+            "thai" in raw_lower
+            or compact in {"th", "thainame", "thainames"}
+            or "ชื่อภาษาไทย" in raw
+            or "ชื่อไทย" in raw
+        )
+        common = (
+            "common" in compact
+            or "name" == compact
+            or compact in {"commonname", "commonnames", "birdname"}
+        )
+        language = (
+            compact in {"language", "languagecode", "lang", "langcode", "locale", "languageid"}
+            or "language" in compact
+        )
+        return scientific, thai, common, language
+
+    # First support the wide format: one row contains Scientific Name and Thai.
     for ws in wb.worksheets:
         for row_index, row in enumerate(ws.iter_rows(values_only=True)):
-            if row_index >= 20:
+            if row_index >= 100:
                 break
+
+            scientific_col = None
+            thai_col = None
+            common_col = None
+            language_col = None
 
             for i, value in enumerate(row):
-                if value is None:
-                    continue
-
-                raw = str(value).strip()
-                normalized = normalize_header(raw)
-                compact = normalized.replace("_", "")
-                raw_lower = raw.lower()
-
-                is_scientific = (
-                    ("scientific" in compact and
-                     ("name" in compact or compact == "scientific"))
-                    or "ชื่อวิทยาศาสตร์" in raw
-                )
-
-                # Thai column names are Unicode, so normalize_header() removes
-                # the Thai characters. Detect both English and Thai labels
-                # before normalization.
-                is_thai = (
-                    "thai" in raw_lower
-                    or compact in {"th", "thainame", "thainames"}
-                    or "ชื่อภาษาไทย" in raw
-                    or "ชื่อไทย" in raw
-                )
-
-                if is_scientific:
+                scientific, thai, common, language = header_kind(value)
+                if scientific and scientific_col is None:
                     scientific_col = i
-                if is_thai:
+                if thai and thai_col is None:
                     thai_col = i
+                if common and common_col is None:
+                    common_col = i
+                if language and language_col is None:
+                    language_col = i
 
-            if scientific_col is not None and thai_col is not None:
-                target_sheet = ws
-                header_row = row_index
+            if scientific_col is None:
+                continue
+
+            # Wide spreadsheet with a dedicated Thai column.
+            if thai_col is not None:
+                thai_names = {}
+                for data_row in ws.iter_rows(values_only=True, min_row=row_index + 2):
+                    scientific = clean(data_row[scientific_col]) if scientific_col < len(data_row) else None
+                    thai = clean(data_row[thai_col]) if thai_col < len(data_row) else None
+                    if scientific and thai:
+                        thai_names[scientific] = thai
+
+                if thai_names:
+                    print(f"Loaded {len(thai_names):,} Thai bird names from {ws.title!r}.")
+                    return thai_names
+
+    # Also support the long/matrix format used by eBird, where each row is a
+    # scientific name + common name + language/code rather than a Thai column.
+    for ws in wb.worksheets:
+        for row_index, row in enumerate(ws.iter_rows(values_only=True)):
+            if row_index >= 100:
                 break
 
-        if target_sheet is not None:
-            break
+            scientific_col = common_col = language_col = None
+            for i, value in enumerate(row):
+                scientific, thai, common, language = header_kind(value)
+                if scientific and scientific_col is None:
+                    scientific_col = i
+                if common and common_col is None:
+                    common_col = i
+                if language and language_col is None:
+                    language_col = i
 
-    if target_sheet is None:
-        samples = []
-        for ws in wb.worksheets:
-            for row_index, row in enumerate(ws.iter_rows(values_only=True)):
-                if row_index >= 5:
-                    break
-                values = [str(v).strip() for v in row if v is not None]
-                if values:
-                    samples.append(f"{ws.title!r}: {values}")
-        raise SystemExit(
-            "Could not find the scientific-name and Thai columns in the "
-            "eBird common-names workbook. Header samples: "
-            + " | ".join(samples[:8])
-        )
+            if scientific_col is None or common_col is None:
+                continue
 
-    thai_names = {}
-    rows = target_sheet.iter_rows(values_only=True)
-    for _ in range(header_row + 1):
-        next(rows, None)
+            thai_names = {}
 
-    for row in rows:
-        scientific = clean(row[scientific_col]) if scientific_col < len(row) else None
-        thai = clean(row[thai_col]) if thai_col < len(row) else None
-        if scientific and thai:
-            thai_names[scientific] = thai
+            # If the worksheet itself is clearly the Thai language sheet,
+            # every common-name value is a Thai name.
+            sheet_is_thai = "thai" in ws.title.lower() or "th" == ws.title.strip().lower()
 
-    print(
-        f"Loaded {len(thai_names):,} Thai bird names from "
-        f"{target_sheet.title!r}."
+            for data_row in ws.iter_rows(values_only=True, min_row=row_index + 2):
+                scientific = clean(data_row[scientific_col]) if scientific_col < len(data_row) else None
+                common = clean(data_row[common_col]) if common_col < len(data_row) else None
+                language = clean(data_row[language_col]) if language_col is not None and language_col < len(data_row) else None
+
+                if not scientific or not common:
+                    continue
+
+                is_thai = sheet_is_thai
+                if language:
+                    code = language.strip().lower().replace("-", "_")
+                    is_thai = (
+                        code in {"th", "th_th", "thai"}
+                        or "thai" in code
+                        or "ไทย" in language
+                    )
+
+                if is_thai:
+                    thai_names[scientific] = common
+
+            if thai_names:
+                print(f"Loaded {len(thai_names):,} Thai bird names from {ws.title!r}.")
+                return thai_names
+
+    samples = []
+    for ws in wb.worksheets:
+        for row_index, row in enumerate(ws.iter_rows(values_only=True)):
+            if row_index >= 8:
+                break
+            values = [str(v).strip() for v in row if v is not None]
+            if values:
+                samples.append(f"{ws.title!r}: {values}")
+
+    raise SystemExit(
+        "Could not find a usable scientific/Thai-name layout in the "
+        "eBird common-names workbook. Header samples: "
+        + " | ".join(samples[:12])
     )
-    return thai_names
+
 
 def thai_name_for_bird(bird, thai_names):
     """Resolve a Thai name across taxonomy-name changes.
