@@ -2370,3 +2370,23 @@ input:focus-visible,
 .taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-thumb:hover {
     background: #968663;
 }
+
+
+/* Chromium/WebKit exposes scrollbar arrow pieces through several
+   button pseudo-elements. Explicitly suppress every button variant. */
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:single-button,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:start:decrement,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:end:increment,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:vertical:start:decrement,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:vertical:end:increment,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:horizontal:start:decrement,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:horizontal:end:increment {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+}
