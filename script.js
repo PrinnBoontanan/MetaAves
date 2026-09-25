@@ -1364,7 +1364,7 @@ async function showTaxonInTaxonCard(taxon) {
         const sections = extractWikipediaSections(wiki?.html);
         const detail = findWikipediaSection(
             sections,
-            ["description", "distribution and habitat", "habitat", "ecology"]
+            ["distribution and habitat", "distribution", "ecology", "biology"]
         );
 
         if (detail) {
