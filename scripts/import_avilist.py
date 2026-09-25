@@ -455,7 +455,7 @@ def main():
         bird = {
             "commonName": common,
             "scientificName": scientific,
-            "thaiName": thai_name_for_bird(bird, thai_names),
+            "thaiName": None,
             "isExtinct": False,
             "kingdom": "Animalia",
             "phylum": "Chordata",
@@ -476,6 +476,8 @@ def main():
         }
 
         extinct_value = clean(row[cols["extinct"]]) if cols["extinct"] is not None else None
+        bird["thaiName"] = thai_name_for_bird(bird, thai_names)
+
         bird["isExtinct"] = bool(
             extinct_value
             and extinct_value.lower() in {
