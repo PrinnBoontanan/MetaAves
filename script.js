@@ -2246,9 +2246,17 @@ async function showGameOverCard(result) {
     if (newGameButton) newGameButton.classList.add("visible");
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    const wiki = await fetchWikipediaPageData(wikiTitle, true);
+    const [wiki, onlineThaiName] = await Promise.all([
+        fetchWikipediaPageData(wikiTitle, true),
+        fetchOnlineThaiName(bird)
+    ]);
 
     if (gameState.mysteryBird !== bird) return;
+
+    thaiName.textContent =
+        onlineThaiName ||
+        bird.thaiName ||
+        "No information available online.";
 
     const sections = extractWikipediaSections(wiki?.html);
     const description =
