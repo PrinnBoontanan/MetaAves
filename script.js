@@ -430,10 +430,39 @@ function getMysteryRevealTaxon() {
 // nodes are hidden. A node is shown only when it is a revealed endpoint or is
 // necessary to connect two different revealed branches.
 function buildTreeModel() {
-    // Build only the portion of the real taxonomy that the guesses justify.
-    // A guess reveals its MRCA with the mystery. If several guesses share
-    // an even deeper MRCA with each other, that deeper side branch is also
-    // revealed. We never add a complete bird path just because it was guessed.
+    /*
+     * MetaAves tree reconstruction
+     *
+     * The important distinction is between:
+     *
+     *   A) where a guess meets the mystery, and
+     *   B) how several guesses relate to each other.
+     *
+     * A single wrong guess stops at its deepest shared taxon with the
+     * mystery. It must NOT expose the rest of that bird's lineage.
+     *
+     * If several wrong guesses stop at the same taxon, however, their own
+     * lineage is now useful information. We build a small side tree from
+     * those guesses and expose the shared descendants needed to show where
+     * they split.
+     *
+     * Example:
+     *
+     *   Aves
+     *   └─ Telluraves
+     *      ├─ Afroaves
+     *      │  └─ Bucerotiformes
+     *      │     ├─ Great Hornbill
+     *      │     └─ Oriental Pied Hornbill
+     *      └─ [another branch]
+     *
+     * Great Hornbill alone would simply be a leaf at Telluraves.
+     * The Afroaves/Bucerotiformes branch appears only when another guess
+     * makes that relationship useful.
+     *
+     * Existing guesses are never moved when a later guess reveals more
+     * information.
+     */
 
     const root = {
         type: "taxon",
@@ -453,6 +482,10 @@ function buildTreeModel() {
 
     const solved = gameState.gameStatus === "won";
 
+    // ----------------------------------------
+    // 1. Determine the endpoint of every guess
+    // ----------------------------------------
+
     const wrongEntries = gameState.guesses
         .filter(
             bird =>
@@ -468,8 +501,9 @@ function buildTreeModel() {
             nodeType: "guess"
         }));
 
-    const mysteryPath =
-        getBirdPhylogenyPath(gameState.mysteryBird);
+    const mysteryPath = getBirdPhylogenyPath(
+        gameState.mysteryBird
+    );
 
     const mysteryEndpoint = finished
         ? (
@@ -488,6 +522,10 @@ function buildTreeModel() {
         nodeType: solved ? "correct" : "mystery"
     };
 
+    // ----------------------------------------
+    // 2. Cache complete lineages
+    // ----------------------------------------
+
     const pathByBird = new Map();
 
     for (const entry of [...wrongEntries, mysteryEntry]) {
@@ -496,6 +534,52 @@ function buildTreeModel() {
             getBirdPhylogenyPath(entry.bird)
         );
     }
+
+    function getPathToEndpoint(entry) {
+        const path =
+            pathByBird.get(entry.bird.commonName) || [];
+
+        const endpointIndex = path.findIndex(
+            node => node.id === entry.endpoint.id
+        );
+
+        if (endpointIndex < 0) return [];
+
+        return path.slice(0, endpointIndex + 1);
+    }
+
+    // ----------------------------------------
+    // 3. Build the full tree first, then select
+    //    which parts are allowed to be visible
+    // ----------------------------------------
+    //
+    // This is the important Metazooa-style distinction:
+    //
+    //   1. First construct the REAL combined tree containing every guess.
+    //   2. For each wrong guess, find its deepest shared taxon with the
+    //      mystery. That is the information revealed by that guess.
+    //   3. BUT if two or more guessed species share a branch with each
+    //      other, that shared branch is also visible, even if it is not
+    //      shared with the mystery.
+    //
+    // Example:
+    //
+    //   Mystery: a passerine
+    //   Guess: House Sparrow
+    //   Guess: Great Hornbill
+    //   Guess: Oriental Pied Hornbill
+    //
+    // House Sparrow may reveal Passeriformes.
+    // Both hornbills may reveal only Telluraves with the mystery.
+    // Nevertheless, because the two hornbills share:
+    //
+    //   Telluraves -> Afroaves -> Bucerotiformes -> Bucerotidae
+    //
+    // that complete shared hornbill branch is shown.
+    //
+    // A branch shared by only one guessed species remains hidden.
+
+    const entries = [...wrongEntries, mysteryEntry];
 
     function findTaxonChild(parent, taxonId) {
         return parent.children.find(
@@ -549,125 +633,160 @@ function buildTreeModel() {
         });
     }
 
-    // Every guess starts at the taxon it shares with the mystery.
-    // This is the only information a single guess is allowed to reveal.
-    const displayAnchorByBird = new Map();
+    // Select the visible projection from the COMPLETE tree.
+    //
+    // There are two independent kinds of information:
+    //
+    // 1. Guess -> mystery:
+    //    reveal the deepest shared taxon for that guess.
+    //
+    // 2. Guess -> guess:
+    //    if two guessed species share a deeper common branch, reveal
+    //    that branch too. This does NOT require that branch to be shared
+    //    with the mystery.
+    //
+    // We therefore use pairwise MRCAs instead of simply marking every
+    // taxon that happens to occur in two paths. Each MRCA is a real
+    // branching point in the combined tree.
 
-    for (const entry of wrongEntries) {
-        displayAnchorByBird.set(
-            entry.bird.commonName,
-            entry.endpoint
-        );
+    // Only reveal information that the guesses actually justify.
+    //
+    // IMPORTANT: a taxon being shared by two guesses is NOT enough by
+    // itself. The shared taxon must be a *new, deeper branch* than the
+    // point where those guesses meet the mystery. Otherwise common
+    // ancestors such as Aves / Neognathae / Telluraves would make the
+    // tree look like the whole taxonomy.
+    const visibleIds = new Set(["class:Aves"]);
+
+    function revealAncestors(path, throughId) {
+        const endpointIndex = path.findIndex(node => node.id === throughId);
+        if (endpointIndex < 0) return;
+
+        for (let i = 0; i <= endpointIndex; i++) {
+            visibleIds.add(path[i].id);
+        }
     }
 
-    // A pair of guesses can reveal a deeper branch that neither guess
-    // revealed against the mystery. For example, two hornbills can expose
-    // Afroaves/Bucerotiformes even when both individually meet the mystery
-    // at Telluraves.
+    // 1. Each wrong guess reveals only its MRCA with the mystery.
+    for (const entry of wrongEntries) {
+        const path = pathByBird.get(entry.bird.commonName) || [];
+        revealAncestors(path, entry.endpoint.id);
+    }
+
+    // 2. A side branch is revealed ONLY when multiple guesses share a
+    //    deeper MRCA than the mystery gives either of them.
+    //
+    // Example:
+    //   mystery = passerine
+    //   hornbill A -> Telluraves
+    //   hornbill B -> Telluraves
+    //   A + B -> Bucerotidae
+    //
+    // We reveal Telluraves -> Afroaves -> Bucerotiformes -> Bucerotidae,
+    // but we do NOT reveal a private genus/species branch belonging to
+    // just one hornbill.
     for (let i = 0; i < wrongEntries.length; i++) {
         const left = wrongEntries[i];
-        const leftPath =
-            pathByBird.get(left.bird.commonName) || [];
+        const leftPath = pathByBird.get(left.bird.commonName) || [];
 
         for (let j = i + 1; j < wrongEntries.length; j++) {
             const right = wrongEntries[j];
-            const rightPath =
-                pathByBird.get(right.bird.commonName) || [];
+            const rightPath = pathByBird.get(right.bird.commonName) || [];
 
-            const common = getDeepestCommonNode(
-                leftPath,
-                rightPath
-            );
-
+            const common = getDeepestCommonNode(leftPath, rightPath);
             if (!common) continue;
 
-            // The pair only adds information when its MRCA is deeper
-            // than both guesses' individual mystery relationships.
-            if (
-                common.depth <= left.endpoint.depth ||
-                common.depth <= right.endpoint.depth
-            ) {
+            const leftEndpointDepth = left.endpoint.depth;
+            const rightEndpointDepth = right.endpoint.depth;
+            const mysteryDepth = Math.max(
+                leftEndpointDepth,
+                rightEndpointDepth
+            );
+
+            // If the pair's MRCA is not deeper than both mystery
+            // relationships, it adds no new information and must stay
+            // collapsed.
+            if (common.depth <= mysteryDepth) continue;
+
+            revealAncestors(leftPath, common.id);
+        }
+    }
+
+    // 3. The mystery's current revealed position is visible.
+    visibleIds.add(mysteryEntry.endpoint.id);
+
+    // 4. At game end reveal the actual mystery lineage.
+    if (finished) {
+        const finishedMysteryPath =
+            pathByBird.get(gameState.mysteryBird.commonName) || [];
+        finishedMysteryPath.forEach(taxon => visibleIds.add(taxon.id));
+    }
+
+    // ----------------------------------------
+    // 4. Project the full tree onto the visible
+    //    nodes selected above
+    // ----------------------------------------
+
+    function addVisiblePath(path, entry, addLeaf) {
+        if (!path.length) return;
+
+        let parent = root;
+        let deepestVisibleParent = root;
+
+        for (let i = 1; i < path.length; i++) {
+            const taxon = path[i];
+
+            if (!visibleIds.has(taxon.id)) {
                 continue;
             }
 
-            const leftCurrent =
-                displayAnchorByBird.get(left.bird.commonName);
+            parent = getOrCreateTaxon(parent, taxon);
+            deepestVisibleParent = parent;
+        }
 
-            const rightCurrent =
-                displayAnchorByBird.get(right.bird.commonName);
-
-            if (
-                !leftCurrent ||
-                common.depth > leftCurrent.depth
-            ) {
-                displayAnchorByBird.set(
-                    left.bird.commonName,
-                    common
-                );
-            }
-
-            if (
-                !rightCurrent ||
-                common.depth > rightCurrent.depth
-            ) {
-                displayAnchorByBird.set(
-                    right.bird.commonName,
-                    common
-                );
-            }
+        if (addLeaf) {
+            addSpecies(deepestVisibleParent, entry);
         }
     }
 
-    // Add exactly one contiguous path from Aves to a revealed anchor.
-    // There is no skipping hidden nodes and then continuing deeper.
-    function addPathToAnchor(path, anchor, entry) {
-        if (!path.length || !anchor) return;
-
-        const anchorIndex = path.findIndex(
-            node => node.id === anchor.id
-        );
-
-        if (anchorIndex < 0) return;
-
-        let parent = root;
-
-        for (let i = 1; i <= anchorIndex; i++) {
-            parent = getOrCreateTaxon(parent, path[i]);
-        }
-
-        addSpecies(parent, entry);
-    }
-
-    // Each wrong guess is shown only as far as its currently revealed anchor.
+    // Wrong guesses use their COMPLETE real lineages here. This is what
+    // allows two guesses to expose their own shared branch below the
+    // mystery endpoint.
     for (const entry of wrongEntries) {
         const path =
             pathByBird.get(entry.bird.commonName) || [];
 
-        const anchor =
-            displayAnchorByBird.get(entry.bird.commonName);
-
-        addPathToAnchor(path, anchor, entry);
+        addVisiblePath(path, entry, true);
     }
 
-    // The mystery is attached at the deepest point currently revealed.
-    // It remains ??? until the game ends.
-    if (finished) {
-        addPathToAnchor(
-            mysteryPath,
-            mysteryPath[mysteryPath.length - 1],
-            mysteryEntry
+    // While playing, the mystery only exists as far as its deepest
+    // currently revealed shared taxon.
+    if (!finished) {
+        const mysteryPath =
+            pathByBird.get(mysteryEntry.bird.commonName) || [];
+
+        const endpointIndex = mysteryPath.findIndex(
+            node => node.id === mysteryEntry.endpoint.id
         );
+
+        const revealedMysteryPath =
+            endpointIndex >= 0
+                ? mysteryPath.slice(0, endpointIndex + 1)
+                : [mysteryPath[0]].filter(Boolean);
+
+        addVisiblePath(revealedMysteryPath, mysteryEntry, true);
     } else {
-        addPathToAnchor(
-            mysteryPath,
-            mysteryEndpoint,
-            mysteryEntry
-        );
+        // Once the game ends, reveal the mystery's complete lineage.
+        const mysteryPath =
+            pathByBird.get(mysteryEntry.bird.commonName) || [];
+
+        addVisiblePath(mysteryPath, mysteryEntry, true);
     }
 
+    // The mystery was already added by the projection above.
+    // Do not add it a second time here.
     return root;
 }
-
 // Metazooa-style tree renderer
 // ========================================
 
