@@ -134,38 +134,184 @@ function hasAlreadyBeenGuessed(bird) {
 // Autocomplete
 // ========================================
 
-function showSuggestions(searchText) {
-    suggestions.innerHTML = "";
+function normalizeSearchText(value) {
+    return String(value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\\u0300-\\u036f]/g, "")
+        .replace(/[^a-z0-9\\s-]/g, " ")
+        .replace(/\\s+/g, " ")
+        .trim();
+}
 
-    if (searchText.trim() === "") {
-        return;
+function levenshteinDistance(a, b) {
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+
+    let previous = Array.from({ length: b.length + 1 }, (_, i) => i);
+
+    for (let i = 1; i <= a.length; i++) {
+        const current = [i];
+
+        for (let j = 1; j <= b.length; j++) {
+            current[j] = Math.min(
+                current[j - 1] + 1,
+                previous[j] + 1,
+                previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+            );
+        }
+
+        previous = current;
     }
 
-    const search = searchText.toLowerCase();
+    return previous[b.length];
+}
 
-    const matches = gameState.birds.filter(bird => {
-        return (
-            bird.commonName.toLowerCase().includes(search) &&
-            !hasAlreadyBeenGuessed(bird)
+function scoreBirdSearchMatch(commonName, query) {
+    const name = normalizeSearchText(commonName);
+    const search = normalizeSearchText(query);
+
+    if (!name || !search) return -Infinity;
+
+    // Exact matches always come first.
+    if (name === search) return 10000;
+
+    const words = name.split(" ");
+    const queryWords = search.split(" ");
+
+    // Prefer names whose first word begins with what the player typed.
+    if (name.startsWith(search)) return 9000 - name.length;
+
+    // Then prefer a whole word beginning with the query.
+    const wordPrefixIndex = words.findIndex(word => word.startsWith(search));
+    if (wordPrefixIndex >= 0) {
+        return 8000 - wordPrefixIndex * 40 - name.length;
+    }
+
+    // A query matching the beginning of multiple words is especially useful
+    // for names such as "black crowned..." or "great hornbill".
+    if (
+        queryWords.length > 1 &&
+        queryWords.every((word, index) =>
+            words[index]?.startsWith(word)
+        )
+    ) {
+        return 7800 - name.length;
+    }
+
+    // Infix matches are useful, but should never outrank prefix matches.
+    const infixIndex = name.indexOf(search);
+    if (infixIndex >= 0) {
+        return 6000 - infixIndex * 12 - name.length;
+    }
+
+    // Finally allow small spelling mistakes. This makes the search forgiving
+    // without allowing distant names to flood the dropdown.
+    const compactName = name.replace(/ /g, "");
+    const compactSearch = search.replace(/ /g, "");
+    const maxDistance = compactSearch.length <= 4 ? 1 : 2;
+    const distance = levenshteinDistance(compactName, compactSearch);
+
+    if (distance <= maxDistance) {
+        return 4000 - distance * 250 - Math.abs(name.length - search.length);
+    }
+
+    return -Infinity;
+}
+
+function selectSuggestion(bird) {
+    searchInput.value = bird.commonName;
+    suggestions.innerHTML = "";
+    suggestions.classList.remove("visible");
+    searchInput.setAttribute("aria-expanded", "false");
+    searchInput.focus();
+}
+
+function showSuggestions(searchText) {
+    suggestions.innerHTML = "";
+    suggestions.classList.remove("visible");
+    searchInput.setAttribute("aria-expanded", "false");
+
+    const query = searchText.trim();
+
+    // Avoid dumping hundreds of birds into the UI for a one-letter query.
+    if (query.length < 2) return;
+
+    const ranked = gameState.birds
+        .filter(bird => !hasAlreadyBeenGuessed(bird))
+        .map((bird, index) => ({
+            bird,
+            index,
+            score: scoreBirdSearchMatch(bird.commonName, query)
+        }))
+        .filter(result => Number.isFinite(result.score))
+        .sort((a, b) =>
+            b.score - a.score ||
+            a.bird.commonName.localeCompare(b.bird.commonName)
         );
-    });
 
-    matches.forEach(bird => {
-        const suggestion = document.createElement("div");
+    // If several database records have exactly the same common name, show
+    // that name only once. The actual guess still uses the game's existing
+    // name lookup behavior.
+    const uniqueNames = [];
+    const seenNames = new Set();
 
+    for (const result of ranked) {
+        const key = normalizeSearchText(result.bird.commonName);
+        if (seenNames.has(key)) continue;
+
+        seenNames.add(key);
+        uniqueNames.push(result);
+
+        if (uniqueNames.length >= 8) break;
+    }
+
+    if (!uniqueNames.length) return;
+
+    uniqueNames.forEach((result, index) => {
+        const suggestion = document.createElement("button");
+
+        suggestion.type = "button";
         suggestion.classList.add("suggestion");
-        suggestion.textContent = bird.commonName;
+        suggestion.dataset.index = String(index);
+        suggestion.textContent = result.bird.commonName;
+
+        suggestion.addEventListener("mousedown", event => {
+            // Prevent the input from losing focus before selection.
+            event.preventDefault();
+        });
 
         suggestion.addEventListener("click", () => {
-            searchInput.value = bird.commonName;
-            suggestions.innerHTML = "";
-            searchInput.focus();
+            selectSuggestion(result.bird);
         });
 
         suggestions.appendChild(suggestion);
     });
+
+    suggestions.classList.add("visible");
+    searchInput.setAttribute("aria-expanded", "true");
 }
 
+function moveSuggestionSelection(direction) {
+    const items = [...suggestions.querySelectorAll(".suggestion")];
+    if (!items.length) return false;
+
+    const current = items.findIndex(item =>
+        item.classList.contains("keyboard-selected")
+    );
+
+    let next = current + direction;
+
+    if (next < 0) next = items.length - 1;
+    if (next >= items.length) next = 0;
+
+    items.forEach(item => item.classList.remove("keyboard-selected"));
+    items[next].classList.add("keyboard-selected");
+    items[next].scrollIntoView({ block: "nearest" });
+
+    return true;
+}
 
 // ========================================
 // Bird lineage + true shared taxon
