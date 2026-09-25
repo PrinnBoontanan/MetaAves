@@ -1965,7 +1965,32 @@ document.getElementById("game-over-overlay").addEventListener(
 guessButton.addEventListener("click", makeGuess);
 
 searchInput.addEventListener("keydown", event => {
+    if (event.key === "ArrowDown") {
+        if (moveSuggestionSelection(1)) event.preventDefault();
+        return;
+    }
+
+    if (event.key === "ArrowUp") {
+        if (moveSuggestionSelection(-1)) event.preventDefault();
+        return;
+    }
+
+    if (event.key === "Escape") {
+        suggestions.innerHTML = "";
+        suggestions.classList.remove("visible");
+        searchInput.setAttribute("aria-expanded", "false");
+        return;
+    }
+
     if (event.key === "Enter") {
+        const selected = suggestions.querySelector(".suggestion.keyboard-selected");
+
+        if (selected) {
+            selected.click();
+            event.preventDefault();
+            return;
+        }
+
         makeGuess();
     }
 });
