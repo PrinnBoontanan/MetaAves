@@ -55,15 +55,24 @@
                     id="bird-search"
                     placeholder="Enter an English bird name..."
                     autocomplete="off"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-controls="suggestions"
+                    aria-expanded="false"
                 >
 
                 <button id="guess-button">
                     <span class="button-icon">⌕</span> Guess
                 </button>
 
-            </div>
+                <div
+                    id="suggestions"
+                    class="suggestions"
+                    role="listbox"
+                    aria-label="Bird suggestions"
+                ></div>
 
-            <div id="suggestions" class="suggestions"></div>
+            </div>
 
         </section>
 
@@ -141,7 +150,7 @@
         </div>
     </div>
 
-    <script src="script.js?v=f492c091"></script>
+    <script src="script.js?v=search-rank-20260925"></script>
 
 </body>
 
