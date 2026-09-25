@@ -45,12 +45,14 @@ async function loadGameData() {
         const [
             birdResponse,
             taxonomyResponse,
+            taxonomyOverrideResponse,
             infoResponse,
             cladeResponse,
             cladeMembershipResponse
         ] = await Promise.all([
             fetch("data/birds.generated.json"),
             fetch("data/taxonomy.generated.json"),
+            fetch("data/taxonomy_overrides.json"),
             fetch("data/taxon_info.json"),
             fetch("data/clades.json"),
             fetch("data/clade_membership.generated.json")
@@ -59,6 +61,7 @@ async function loadGameData() {
         if (
             !birdResponse.ok ||
             !taxonomyResponse.ok ||
+            !taxonomyOverrideResponse.ok ||
             !infoResponse.ok ||
             !cladeResponse.ok ||
             !cladeMembershipResponse.ok
@@ -68,6 +71,7 @@ async function loadGameData() {
 
         gameState.birds = await birdResponse.json();
         gameState.taxonomy = await taxonomyResponse.json();
+        gameState.taxonomyOverrides = await taxonomyOverrideResponse.json();
         gameState.taxonInfo = await infoResponse.json();
         gameState.clades = await cladeResponse.json();
 
@@ -367,6 +371,19 @@ function getBirdPhylogenyPath(bird) {
 
         addNode(clade.id, "clade", clade.name);
         previousCladeId = clade.id;
+    }
+
+    // Detailed Wikipedia-style overrides can insert additional intermediate
+    // taxa without replacing the large generated taxonomy catalog.
+    const detailedOverride =
+        gameState.taxonomyOverrides?.[bird.scientificName];
+
+    if (Array.isArray(detailedOverride) && detailedOverride.length) {
+        for (const taxon of detailedOverride) {
+            if (!taxon?.id || seen.has(taxon.id)) continue;
+            addNode(taxon.id, taxon.rank || "clade", taxon.name);
+        }
+        return path.map((node, index) => ({ ...node, depth: index }));
     }
 
     // Ranked taxonomy comes after the deepest clade and follows the
