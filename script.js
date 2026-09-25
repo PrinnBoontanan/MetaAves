@@ -1282,7 +1282,9 @@ async function fetchWikipediaPageData(title, includeHtml = false, expectedType =
 
         if (includeHtml && !data.html) {
             data.htmlPromise = fetch(
-                "https://en.wikipedia.org/api/rest_v1/page/html/" +
+                "https://en.wikipedia.org/w/rest.php/v1/page/" +
+                encodeURIComponent(normalizedTitle) +
+                "/html" +
                 encodeURIComponent(normalizedTitle),
                 {
                     headers: {
