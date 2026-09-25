@@ -1304,6 +1304,19 @@ async function fetchWikipediaPageData(title, includeHtml = false, expectedType =
     return null;
 }
 
+function normalizeWikipediaText(value) {
+    return String(value || "")
+        .replace(/\[[^\]]*\]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function normalizeWikipediaHeading(value) {
+    return normalizeWikipediaText(value)
+        .replace(/\[edit\]/gi, "")
+        .toLowerCase();
+}
+
 function extractWikipediaSections(html) {
     if (!html) return {};
 
@@ -1314,24 +1327,24 @@ function extractWikipediaSections(html) {
 
     if (!content) return {};
 
-    content.querySelectorAll(
-        "table, style, script, noscript, .navbox, .reflist, .reference, .mw-references-wrap"
-    ).forEach(element => element.remove());
+    // Keep the original DOM intact for infobox extraction. The old parser
+    // removed every table before reading sections, which was fine for prose
+    // but also made it too easy to lose information when Wikipedia changed
+    // its HTML structure.
+    const sections = {
+        __lead__: ""
+    };
 
-    const sections = {};
-    sections.__lead__ = [];
+    const headings = [
+        ...content.querySelectorAll("h2, h3, h4, h5")
+    ];
 
-    // Current Wikipedia HTML can wrap each heading in a <section>. Handle
-    // those wrappers first, while retaining a fallback for older flat HTML.
-    const headings = [...content.querySelectorAll("h2, h3, h4")];
-
+    // Wikipedia now commonly wraps each heading in its own <section>.
+    // Store the text belonging to every heading independently. Nested
+    // sections are intentionally retained so that a field such as Diet can
+    // still be found when it lives inside Behavior and ecology.
     headings.forEach(heading => {
-        const headingText = heading.textContent
-            .replace(/\[edit\]/gi, "")
-            .replace(/\s+/g, " ")
-            .trim()
-            .toLowerCase();
-
+        const headingText = normalizeWikipediaHeading(heading.textContent);
         if (!headingText) return;
 
         const sectionElement = heading.closest("section");
@@ -1340,26 +1353,29 @@ function extractWikipediaSections(html) {
         if (sectionElement) {
             const clone = sectionElement.cloneNode(true);
             clone.querySelectorAll(
-                "h2, h3, h4, table, style, script, noscript, .navbox, .reflist, .reference, .mw-references-wrap"
+                "h2, h3, h4, h5, table, style, script, noscript, " +
+                ".navbox, .reflist, .reference, .mw-references-wrap"
             ).forEach(element => element.remove());
 
-            text = clone.textContent
-                .replace(/\s+/g, " ")
-                .trim();
+            text = normalizeWikipediaText(clone.textContent);
         } else {
             const parts = [];
             let sibling = heading.nextElementSibling;
 
-            while (sibling && !sibling.matches("h2, h3, h4")) {
-                const siblingText = sibling.textContent
-                    .replace(/\s+/g, " ")
-                    .trim();
-
-                if (siblingText) parts.push(siblingText);
+            while (
+                sibling &&
+                !sibling.matches("h2, h3, h4, h5")
+            ) {
+                if (!sibling.matches("table, style, script, noscript")) {
+                    const siblingText = normalizeWikipediaText(
+                        sibling.textContent
+                    );
+                    if (siblingText) parts.push(siblingText);
+                }
                 sibling = sibling.nextElementSibling;
             }
 
-            text = parts.join(" ").replace(/\s+/g, " ").trim();
+            text = normalizeWikipediaText(parts.join(" "));
         }
 
         if (text) {
@@ -1367,27 +1383,20 @@ function extractWikipediaSections(html) {
         }
     });
 
-    // Capture lead text before the first heading as well.
+    // Lead text before the first heading.
     const firstHeading = headings[0];
     const leadParts = [];
     let leadNode = content.firstElementChild;
 
     while (leadNode && leadNode !== firstHeading) {
-        if (!leadNode.matches("h2, h3, h4")) {
-            const leadText = leadNode.textContent
-                .replace(/\s+/g, " ")
-                .trim();
-
+        if (!leadNode.matches("table, style, script, noscript")) {
+            const leadText = normalizeWikipediaText(leadNode.textContent);
             if (leadText) leadParts.push(leadText);
         }
         leadNode = leadNode.nextElementSibling;
     }
 
-    sections.__lead__ = leadParts
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .trim();
-
+    sections.__lead__ = normalizeWikipediaText(leadParts.join(" "));
     return sections;
 }
 
@@ -1404,9 +1413,7 @@ function findWikipediaInfoboxField(html, candidates) {
         const valueElement = row.querySelector("td");
         if (!labelElement || !valueElement) continue;
 
-        const label = labelElement.textContent
-            .replace(/\\s+/g, " ")
-            .trim()
+        const label = normalizeWikipediaText(labelElement.textContent)
             .toLowerCase();
 
         if (!candidates.some(candidate =>
@@ -1415,35 +1422,180 @@ function findWikipediaInfoboxField(html, candidates) {
             continue;
         }
 
-        const value = valueElement.textContent
-            .replace(/\\s+/g, " ")
-            .trim();
-
+        const value = normalizeWikipediaText(valueElement.textContent);
         if (value) return value;
     }
 
     return "";
 }
 
+function splitWikipediaSentences(text) {
+    return normalizeWikipediaText(text)
+        .split(/(?<=[.!?])\s+/)
+        .map(sentence => sentence.trim())
+        .filter(Boolean);
+}
+
 function findWikipediaSection(sections, candidates) {
     if (!sections) return "";
 
-    for (const candidate of candidates) {
-        const exact = sections[candidate.toLowerCase()];
-        if (exact) return exact;
+    const normalizedCandidates = candidates.map(candidate =>
+        String(candidate).toLowerCase()
+    );
+
+    // Exact headings have the highest priority.
+    for (const candidate of normalizedCandidates) {
+        if (sections[candidate]) return sections[candidate];
     }
 
+    // Then allow a heading such as "Diet and feeding" or
+    // "Behavior and ecology" to match a requested field.
     for (const [heading, text] of Object.entries(sections)) {
-        if (!text) continue;
+        if (!text || heading === "__lead__") continue;
 
-        const match = candidates.some(candidate =>
-            heading.includes(candidate.toLowerCase())
-        );
-
-        if (match) return text;
+        if (normalizedCandidates.some(candidate =>
+            heading.includes(candidate)
+        )) {
+            return text;
+        }
     }
 
     return "";
+}
+
+function findWikipediaTextByKeywords(sections, keywordGroups) {
+    if (!sections) return "";
+
+    const groups = keywordGroups.map(group =>
+        group.map(keyword => String(keyword).toLowerCase())
+    );
+
+    const matches = [];
+
+    for (const [heading, text] of Object.entries(sections)) {
+        if (!text || heading === "__lead__") continue;
+
+        const sentences = splitWikipediaSentences(text);
+
+        for (const sentence of sentences) {
+            const lower = sentence.toLowerCase();
+
+            // A sentence qualifies when it contains at least one keyword
+            // from each semantic group. This lets us recover information
+            // embedded in broad sections such as "Behavior and ecology".
+            if (groups.every(group =>
+                group.some(keyword => lower.includes(keyword))
+            )) {
+                matches.push(sentence);
+            }
+        }
+    }
+
+    // Avoid returning the same sentence repeatedly when it appears in
+    // nested Wikipedia sections.
+    return [...new Set(matches)].join(" ");
+}
+
+function getWikipediaStudyData(html) {
+    const sections = extractWikipediaSections(html);
+
+    // These fields are deliberately synonym-rich. Wikipedia does not use
+    // one fixed heading for bird ecology: "Range", "Distribution and
+    // habitat", "Food and feeding", "Behavior and ecology", etc. are all
+    // common. The section pass runs first; keyword recovery then searches
+    // the prose of every section, so a field can live under another heading.
+    const data = {
+        sections,
+        habitat:
+            findWikipediaSection(sections, [
+                "distribution and habitat",
+                "habitat",
+                "ecology and habitat"
+            ]),
+        distribution:
+            findWikipediaSection(sections, [
+                "distribution",
+                "range",
+                "geographic range",
+                "distribution and habitat"
+            ]),
+        diet:
+            findWikipediaSection(sections, [
+                "diet",
+                "feeding",
+                "food and feeding",
+                "feeding ecology",
+                "food"
+            ]) ||
+            findWikipediaTextByKeywords(sections, [
+                ["diet", "feeding", "feeds", "food", "eats", "eat"],
+                ["insect", "seed", "fruit", "nectar", "prey", "plant",
+                 "fish", "vertebrate", "grain", "forage", "feeds on"]
+            ]),
+        behavior:
+            findWikipediaSection(sections, [
+                "behavior and ecology",
+                "behaviour and ecology",
+                "behavior",
+                "behaviour",
+                "ecology"
+            ]),
+        breeding:
+            findWikipediaSection(sections, [
+                "breeding",
+                "reproduction",
+                "nesting",
+                "breeding biology"
+            ]),
+        conservation:
+            findWikipediaSection(sections, [
+                "conservation",
+                "conservation status",
+                "status",
+                "threats"
+            ]) ||
+            findWikipediaInfoboxField(
+                html,
+                ["conservation status", "conservation"]
+            )
+    };
+
+    // A broad section can contain the actual field without having a
+    // dedicated heading. Recover those cases instead of showing "No
+    // information" simply because Wikipedia chose a different layout.
+    if (!data.habitat) {
+        data.habitat = findWikipediaTextByKeywords(sections, [
+            ["habitat", "inhabit", "lives", "found"],
+            ["forest", "woodland", "grassland", "wetland", "savanna",
+             "mountain", "coast", "island", "river", "shrubland"]
+        ]);
+    }
+
+    if (!data.distribution) {
+        data.distribution = findWikipediaTextByKeywords(sections, [
+            ["range", "distribution", "found", "occurs", "native"],
+            ["north", "south", "east", "west", "island", "islands",
+             "africa", "asia", "europe", "australia", "america"]
+        ]);
+    }
+
+    if (!data.breeding) {
+        data.breeding = findWikipediaTextByKeywords(sections, [
+            ["breed", "breeding", "nest", "egg", "incubat", "chick",
+             "reproduct"],
+            ["nest", "egg", "chick", "young", "incubat", "lay"]
+        ]);
+    }
+
+    if (!data.behavior) {
+        data.behavior = findWikipediaTextByKeywords(sections, [
+            ["behavior", "behaviour", "social", "forag", "vocal",
+             "territor", "roost", "migrat"],
+            ["bird", "species", "individual", "male", "female"]
+        ]);
+    }
+
+    return data;
 }
 
 function getWikipediaTitleFromTaxon(taxon, info) {
@@ -2338,34 +2490,12 @@ async function showGameOverCard(result) {
         bird.thaiName ||
         "No information available online.";
 
-    const sections = extractWikipediaSections(wiki?.html);
+    const studyData = getWikipediaStudyData(wiki?.html);
     const description =
         wiki?.summary?.extract ||
-        findWikipediaSection(sections, ["description", "appearance", "identification"]);
-
-    const habitat =
-        findWikipediaSection(sections, ["distribution and habitat", "habitat"]);
-    const distribution =
-        findWikipediaSection(sections, ["distribution"]);
-    const diet =
-        findWikipediaSection(sections, ["diet", "feeding"]);
-    const behavior =
         findWikipediaSection(
-            sections,
-            ["behavior", "behaviour", "behavior and ecology", "behaviour and ecology", "ecology"]
-        );
-    const breeding =
-        findWikipediaSection(sections, ["breeding", "reproduction", "nesting"]);
-    // Conservation information is very often stored in the
-    // species infobox rather than in a "Conservation" article section.
-    // Read both places so common entries such as "Least Concern (IUCN 3.1)"
-    // are not lost just because the article has no dedicated conservation
-    // heading.
-    const conservation =
-        findWikipediaSection(sections, ["conservation", "status", "threats"]) ||
-        findWikipediaInfoboxField(
-            wiki?.html,
-            ["conservation status", "conservation"]
+            studyData.sections,
+            ["description", "appearance", "identification"]
         );
 
     const setStudyValue = (heading, value) => {
@@ -2377,12 +2507,12 @@ async function showGameOverCard(result) {
     };
 
     setStudyValue("Description", description);
-    setStudyValue("Habitat", habitat);
-    setStudyValue("Distribution", distribution);
-    setStudyValue("Diet", diet);
-    setStudyValue("Behavior", behavior);
-    setStudyValue("Breeding", breeding);
-    setStudyValue("Conservation", conservation);
+    setStudyValue("Habitat", studyData.habitat);
+    setStudyValue("Distribution", studyData.distribution);
+    setStudyValue("Diet", studyData.diet);
+    setStudyValue("Behavior", studyData.behavior);
+    setStudyValue("Breeding", studyData.breeding);
+    setStudyValue("Conservation", studyData.conservation);
 
     const placeholder = document.getElementById("study-photo-placeholder");
     const imageSource = wiki?.summary?.thumbnail?.source;
