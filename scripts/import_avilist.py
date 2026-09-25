@@ -196,6 +196,38 @@ def load_thai_names(path):
     return thai_names
 
 
+def thai_name_for_bird(bird, thai_names):
+    """Resolve a Thai name across taxonomy-name changes.
+
+    AviList can move a species between genera while the Thai reference list
+    still uses an older scientific combination. Prefer exact scientific-name
+    matches, then match the species epithet only when the genus differs.
+    This avoids losing established Thai names merely because taxonomy changed.
+    """
+    scientific = clean(bird.get("scientificName"))
+    if not scientific:
+        return None
+
+    exact = thai_names.get(scientific)
+    if exact:
+        return exact
+
+    parts = scientific.split()
+    if len(parts) < 2:
+        return None
+
+    epithet = parts[1]
+    candidates = [
+        value for name, value in thai_names.items()
+        if len(name.split()) >= 2 and name.split()[1] == epithet
+    ]
+
+    if len(candidates) == 1:
+        return candidates[0]
+
+    return None
+
+
 def find_avilist_sheet(workbook):
     # Prefer the known current name, but normalize case/spacing so the
     # importer also works with harmless naming differences.
@@ -394,7 +426,7 @@ def main():
         bird = {
             "commonName": common,
             "scientificName": scientific,
-            "thaiName": thai_names.get(scientific),
+            "thaiName": thai_name_for_bird(bird, thai_names),
             "isExtinct": False,
             "kingdom": "Animalia",
             "phylum": "Chordata",
