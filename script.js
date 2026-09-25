@@ -251,25 +251,13 @@ function showSuggestions(searchText) {
             a.bird.commonName.localeCompare(b.bird.commonName)
         );
 
-    // If several database records have exactly the same common name, show
-    // that name only once. The actual guess still uses the game's existing
-    // name lookup behavior.
-    const uniqueNames = [];
-    const seenNames = new Set();
+    // Keep every matching database record. The ranking puts the most
+    // obvious result(s) first, while the rest remain available by scrolling
+    // through the floating dropdown. This is important because different
+    // species can share the same English common name.
+    if (!ranked.length) return;
 
-    for (const result of ranked) {
-        const key = normalizeSearchText(result.bird.commonName);
-        if (seenNames.has(key)) continue;
-
-        seenNames.add(key);
-        uniqueNames.push(result);
-
-        if (uniqueNames.length >= 8) break;
-    }
-
-    if (!uniqueNames.length) return;
-
-    uniqueNames.forEach((result, index) => {
+    ranked.forEach((result, index) => {
         const suggestion = document.createElement("button");
 
         suggestion.type = "button";
