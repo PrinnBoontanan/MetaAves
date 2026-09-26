@@ -1308,10 +1308,17 @@ function cleanWikipediaNode(node) {
 
     const clone = node.cloneNode(true);
 
-    // These elements are useful for Wikipedia's layout but are not useful
-    // study-card prose. Removing nested sections is especially important:
-    // each section is extracted independently below, so a parent section
-    // should not swallow all of its child sections.
+    // Remove the section's own heading. The heading is metadata for our
+    // parser, not article prose, so it must never appear inside a Study Card
+    // value such as "Description".
+    clone.querySelectorAll(
+        ":scope > .mw-heading, " +
+        ":scope > h1, :scope > h2, :scope > h3, " +
+        ":scope > h4, :scope > h5, :scope > h6"
+    ).forEach(element => element.remove());
+
+    // Child sections are parsed separately. Keeping them here would make a
+    // parent such as "Behaviour and ecology" swallow Diet and Breeding.
     clone.querySelectorAll(
         "section, table, style, script, noscript, " +
         ".navbox, .reflist, .reference, .mw-references-wrap, " +
@@ -1335,9 +1342,6 @@ function extractWikipediaSections(html) {
         __lead__: ""
     };
 
-    // Modern Wikipedia HTML from the MediaWiki REST API uses explicit
-    // <section data-mw-section-id="..."> wrappers. Read those first because
-    // they preserve the article's real section boundaries.
     const wrappedSections = [
         ...content.querySelectorAll("section[data-mw-section-id]")
     ];
@@ -1345,11 +1349,13 @@ function extractWikipediaSections(html) {
     if (wrappedSections.length) {
         wrappedSections.forEach(section => {
             const heading = section.querySelector(
+                ":scope > .mw-heading > h1, " +
                 ":scope > .mw-heading > h2, " +
                 ":scope > .mw-heading > h3, " +
                 ":scope > .mw-heading > h4, " +
                 ":scope > .mw-heading > h5, " +
-                ":scope > h2, :scope > h3, :scope > h4, :scope > h5"
+                ":scope > h1, :scope > h2, :scope > h3, " +
+                ":scope > h4, :scope > h5"
             );
 
             const id = section.getAttribute("data-mw-section-id");
@@ -1371,14 +1377,11 @@ function extractWikipediaSections(html) {
         return sections;
     }
 
-    // Fallback for older Wikipedia HTML that does not contain section
-    // wrappers. Build each section from its heading until the next heading
-    // of the same or higher level.
     const headings = [
-        ...content.querySelectorAll("h2, h3, h4, h5")
+        ...content.querySelectorAll("h1, h2, h3, h4, h5")
     ];
 
-    headings.forEach((heading, index) => {
+    headings.forEach(heading => {
         const headingText = normalizeWikipediaHeading(heading.textContent);
         if (!headingText) return;
 
@@ -1387,14 +1390,9 @@ function extractWikipediaSections(html) {
         let sibling = heading.nextElementSibling;
 
         while (sibling) {
-            const siblingHeading = sibling.matches("h2, h3, h4, h5")
-                ? sibling
-                : null;
-
-            if (siblingHeading) {
+            if (sibling.matches("h1, h2, h3, h4, h5")) {
                 const siblingLevel =
-                    Number(siblingHeading.tagName.substring(1));
-
+                    Number(sibling.tagName.substring(1));
                 if (siblingLevel <= level) break;
             }
 
@@ -1410,8 +1408,6 @@ function extractWikipediaSections(html) {
         if (text) sections[headingText] = text;
     });
 
-    // Lead text is everything before the first article heading, excluding
-    // the infobox and other layout-only tables.
     const firstHeading = headings[0];
     const leadParts = [];
     let leadNode = content.firstElementChild;
@@ -1436,7 +1432,6 @@ function findWikipediaInfoboxField(html, candidates) {
         normalizeWikipediaText(candidate).toLowerCase()
     );
 
-    // Standard Wikipedia infobox table rows.
     const rows = documentRoot.querySelectorAll(
         ".infobox tr, table.infobox tr"
     );
@@ -1465,8 +1460,6 @@ function findWikipediaInfoboxField(html, candidates) {
         if (value) return value;
     }
 
-    // Newer infobox markup can expose explicit label/data classes instead of
-    // a simple TH/TD pair. Match the label with its nearest data element.
     const labels = documentRoot.querySelectorAll(
         ".infobox .infobox-label, " +
         ".infobox .infobox-label-title, " +
@@ -1496,33 +1489,6 @@ function findWikipediaInfoboxField(html, candidates) {
         if (value) return value;
     }
 
-    // Last-resort structural lookup: find an element whose complete text is
-    // the requested label and inspect its immediate siblings.
-    const allElements = documentRoot.querySelectorAll(
-        ".infobox *"
-    );
-
-    for (const element of allElements) {
-        const label = normalizeWikipediaText(element.textContent)
-            .toLowerCase();
-
-        if (!normalizedCandidates.some(candidate => label === candidate)) {
-            continue;
-        }
-
-        const parent = element.parentElement;
-        if (!parent) continue;
-
-        const siblings = [...parent.children]
-            .filter(child => child !== element);
-
-        const value = normalizeWikipediaText(
-            siblings.map(child => child.textContent).join(" ")
-        );
-
-        if (value) return value;
-    }
-
     return "";
 }
 
@@ -1540,13 +1506,10 @@ function findWikipediaSection(sections, candidates) {
         normalizeWikipediaText(candidate).toLowerCase()
     );
 
-    // Exact heading matches always win.
     for (const candidate of normalizedCandidates) {
         if (sections[candidate]) return sections[candidate];
     }
 
-    // Then accept headings such as "Description and appearance" or
-    // "Food and feeding".
     for (const [heading, text] of Object.entries(sections)) {
         if (!text || heading === "__lead__") continue;
 
@@ -1560,159 +1523,219 @@ function findWikipediaSection(sections, candidates) {
     return "";
 }
 
-function findWikipediaTextByKeywords(sections, keywordGroups) {
-    if (!sections) return "";
+function collectWikipediaSentences(sections) {
+    const results = [];
 
-    const groups = keywordGroups.map(group =>
-        group.map(keyword => String(keyword).toLowerCase())
-    );
-
-    const matches = [];
-
-    for (const [heading, text] of Object.entries(sections)) {
+    for (const [heading, text] of Object.entries(sections || {})) {
         if (!text || heading === "__lead__") continue;
 
-        const sentences = splitWikipediaSentences(text);
-
-        for (const sentence of sentences) {
-            const lower = sentence.toLowerCase();
-
-            if (groups.every(group =>
-                group.some(keyword => lower.includes(keyword))
-            )) {
-                matches.push(sentence);
-            }
+        for (const sentence of splitWikipediaSentences(text)) {
+            results.push({
+                heading,
+                sentence,
+                lower: sentence.toLowerCase()
+            });
         }
     }
 
-    return [...new Set(matches)].join(" ");
+    return results;
+}
+
+function isDedicatedWikipediaHeading(heading, category) {
+    const h = String(heading || "").toLowerCase();
+
+    // A heading containing multiple study-card concepts is a combined
+    // section. Its sentences must be classified individually rather than
+    // copying the entire section into one category.
+    const categoryTerms = {
+        description: ["description", "appearance", "identification"],
+        habitat: ["habitat"],
+        distribution: ["distribution", "range", "geographic range"],
+        diet: ["diet", "feeding", "food"],
+        behavior: ["behavior", "behaviour"],
+        breeding: ["breeding", "reproduction", "nesting"],
+        conservation: ["conservation", "threat", "status"]
+    };
+
+    const terms = categoryTerms[category] || [];
+    if (!terms.some(term => h.includes(term))) return false;
+
+    const allTerms = Object.values(categoryTerms).flat();
+    const otherTerms = allTerms.filter(term =>
+        !terms.includes(term) && h.includes(term)
+    );
+
+    return otherTerms.length === 0;
+}
+
+function wikipediaSentenceMatchesCategory(sentence, category) {
+    const text = sentence.toLowerCase();
+
+    const rules = {
+        habitat: [
+            ["habitat", "inhabit", "lives in", "lives", "found in",
+             "occurs in", "occurs at", "forest", "woodland", "grassland",
+             "wetland", "savanna", "montane", "highland", "lowland",
+             "coast", "coastal", "river", "shrubland", "altitude",
+             "elevation"]
+        ],
+
+        distribution: [
+            ["distribution", "range", "distributed", "found on",
+             "found in", "occurs in", "endemic to", "native to",
+             "north", "south", "east", "west", "island", "islands",
+             "region", "country", "new guinea", "africa", "asia",
+             "europe", "australia", "america"]
+        ],
+
+        diet: [
+            ["diet", "feeds", "feed on", "feeding", "eats", "eat",
+             "forage", "forages", "consumes", "consist of", "seeds",
+             "berries", "fruit", "fruits", "insects", "invertebrates",
+             "nectar", "fish", "prey", "grubs", "worms", "spiders",
+             "arthropods", "vertebrates"]
+        ],
+
+        behavior: [
+            ["behavior", "behaviour", "shy", "secretive", "quiet",
+             "social", "solitary", "flock", "flocks", "pair", "pairs",
+             "territor", "roost", "migrat", "vocal", "call", "calls",
+             "flight", "flies", "forages", "courtship", "display"]
+        ],
+
+        breeding: [
+            ["breed", "breeding", "nest", "nesting", "egg", "eggs",
+             "clutch", "incubat", "chick", "young", "offspring",
+             "lay", "lays", "reproduct", "juvenile"]
+        ],
+
+        conservation: [
+            ["iucn", "conservation", "threatened", "near-threatened",
+             "least concern", "vulnerable", "endangered", "population",
+             "declin", "habitat loss", "deforestation", "logging",
+             "hunting", "trapped", "trapping", "illegal wildlife",
+             "bycatch", "snare", "protected area", "protected areas",
+             "conservation", "captivity", "captive", "reintroduc",
+             "released", "release into the wild"]
+        ]
+    };
+
+    return (rules[category] || []).some(group =>
+        group.some(keyword => text.includes(keyword))
+    );
+}
+
+function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
+    const values = [];
+    const sentences = collectWikipediaSentences(sections);
+
+    for (const [heading, text] of Object.entries(sections || {})) {
+        if (!text || heading === "__lead__") continue;
+
+        if (
+            dedicatedHeadings.some(candidate =>
+                heading === candidate ||
+                (
+                    heading.includes(candidate) &&
+                    isDedicatedWikipediaHeading(heading, category)
+                )
+            )
+        ) {
+            // Dedicated sections are the cleanest source. Use their prose
+            // as-is instead of trying to guess sentence by sentence.
+            values.push(text);
+        }
+    }
+
+    // Combined sections such as "Behaviour and ecology" or
+    // "Habitat and conservation status" are handled sentence by sentence.
+    for (const item of sentences) {
+        if (dedicatedHeadings.some(candidate =>
+            item.heading === candidate
+        )) {
+            continue;
+        }
+
+        if (isDedicatedWikipediaHeading(item.heading, category)) {
+            continue;
+        }
+
+        if (wikipediaSentenceMatchesCategory(item.sentence, category)) {
+            values.push(item.sentence);
+        }
+    }
+
+    return [...new Set(values)].join(" ");
 }
 
 function getWikipediaStudyData(html) {
     const sections = extractWikipediaSections(html);
 
-    // Study Card fields come from the article itself, not the short
-    // Wikipedia summary. This is important for pages where the useful
-    // information is under a real "Description", "Habitat", "Diet", etc.
-    // section.
     const data = {
         sections,
 
-        description:
-            findWikipediaSection(sections, [
-                "description",
-                "description and identification",
-                "description and appearance",
-                "appearance",
-                "identification"
-            ]),
+        description: findWikipediaSection(sections, [
+            "description",
+            "description and identification",
+            "description and appearance",
+            "appearance",
+            "identification"
+        ]),
 
-        habitat:
-            findWikipediaSection(sections, [
-                "habitat",
-                "ecology and habitat",
-                "distribution and habitat"
-            ]),
+        habitat: extractWikipediaCategoryText(sections, "habitat", [
+            "habitat",
+            "ecology and habitat",
+            "distribution and habitat"
+        ]),
 
-        distribution:
-            findWikipediaSection(sections, [
-                "distribution",
-                "range",
-                "geographic range",
-                "distribution and habitat"
-            ]),
+        distribution: extractWikipediaCategoryText(sections, "distribution", [
+            "distribution",
+            "range",
+            "geographic range",
+            "distribution and habitat",
+            "subspecies"
+        ]),
 
-        diet:
-            findWikipediaSection(sections, [
-                "diet",
-                "feeding",
-                "food and feeding",
-                "feeding ecology",
-                "food"
-            ]),
+        diet: extractWikipediaCategoryText(sections, "diet", [
+            "diet",
+            "feeding",
+            "food and feeding",
+            "feeding ecology",
+            "food"
+        ]),
 
-        behavior:
-            findWikipediaSection(sections, [
-                "behavior",
-                "behaviour",
-                "behavior and ecology",
-                "behaviour and ecology",
-                "ecology"
-            ]),
+        behavior: extractWikipediaCategoryText(sections, "behavior", [
+            "behavior",
+            "behaviour",
+            "behavior and ecology",
+            "behaviour and ecology",
+            "ecology"
+        ]),
 
-        breeding:
-            findWikipediaSection(sections, [
-                "breeding",
-                "reproduction",
-                "nesting",
-                "breeding biology",
-                "reproductive behavior",
-                "reproductive behaviour"
-            ]),
+        breeding: extractWikipediaCategoryText(sections, "breeding", [
+            "breeding",
+            "reproduction",
+            "nesting",
+            "breeding biology",
+            "reproductive behavior",
+            "reproductive behaviour"
+        ]),
 
-        conservation:
-            findWikipediaSection(sections, [
-                "conservation",
-                "conservation status",
-                "threats"
-            ]) ||
+        conservation: extractWikipediaCategoryText(sections, "conservation", [
+            "conservation",
+            "conservation status",
+            "threats",
+            "status"
+        ]) ||
             findWikipediaInfoboxField(
                 html,
                 ["conservation status", "conservation"]
             )
     };
 
-    // If Wikipedia puts useful material inside a broad section instead of a
-    // dedicated heading, recover the relevant sentences from the whole
-    // article. This is intentionally a fallback: dedicated sections remain
-    // the preferred source.
-    if (!data.habitat) {
-        data.habitat = findWikipediaTextByKeywords(sections, [
-            ["habitat", "inhabit", "lives", "found", "occurs"],
-            ["forest", "woodland", "grassland", "wetland", "savanna",
-             "mountain", "coast", "island", "river", "shrubland",
-             "highland", "lowland"]
-        ]);
-    }
-
-    if (!data.distribution) {
-        data.distribution = findWikipediaTextByKeywords(sections, [
-            ["range", "distribution", "found", "occurs", "native",
-             "endemic"],
-            ["north", "south", "east", "west", "island", "islands",
-             "africa", "asia", "europe", "australia", "america",
-             "new guinea", "pacific"]
-        ]);
-    }
-
-    if (!data.diet) {
-        data.diet = findWikipediaTextByKeywords(sections, [
-            ["diet", "feeding", "feeds", "food", "eats", "eat",
-             "forag", "consum"],
-            ["insect", "seed", "fruit", "nectar", "prey", "plant",
-             "fish", "vertebrate", "grain", "berry", "flower",
-             "caterpillar", "spider", "arthropod"]
-        ]);
-    }
-
-    if (!data.breeding) {
-        data.breeding = findWikipediaTextByKeywords(sections, [
-            ["breed", "breeding", "nest", "egg", "incubat", "chick",
-             "reproduct", "lay", "offspring"],
-            ["nest", "egg", "chick", "young", "incubat", "lay",
-             "nesting", "offspring"]
-        ]);
-    }
-
-    if (!data.behavior) {
-        data.behavior = findWikipediaTextByKeywords(sections, [
-            ["behavior", "behaviour", "social", "forag", "vocal",
-             "territor", "roost", "migrat", "flight", "call"],
-            ["bird", "species", "individual", "male", "female",
-             "group", "pair"]
-        ]);
-    }
-
+    // If the article has no dedicated heading, recover useful sentences
+    // from the rest of the article. Each sentence is assigned to a category
+    // instead of copying an entire unrelated section.
     return data;
 }
 
