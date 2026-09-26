@@ -1403,6 +1403,27 @@ async function fetchWikipediaPageData(title, includeHtml = false, expectedType =
                 );
                 if (fallback?.html) data.html = fallback.html;
             }
+
+            // Some Wikipedia pages return valid REST HTML but do not expose
+            // the infobox in that representation. Conservation status must
+            // come ONLY from the infobox, so retry with MediaWiki's parsed
+            // HTML when the current HTML has no infobox status.
+            if (
+                data.html &&
+                !findWikipediaConservationStatus(data.html)
+            ) {
+                const infoboxFallback = await fetchWikipediaMediaWikiFallback(
+                    normalizedTitle,
+                    true
+                );
+
+                if (
+                    infoboxFallback?.html &&
+                    findWikipediaConservationStatus(infoboxFallback.html)
+                ) {
+                    data.html = infoboxFallback.html;
+                }
+            }
         }
 
         return data;
