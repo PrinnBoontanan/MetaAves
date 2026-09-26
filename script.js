@@ -1290,7 +1290,7 @@ async function fetchWikipediaMediaWikiFallback(normalizedTitle, includeHtml) {
                 new URLSearchParams({
                     action: "parse",
                     page: title,
-                    prop: "text",
+                    prop: "text|wikitext",
                     redirects: "1",
                     format: "json",
                     origin: "*"
@@ -1306,6 +1306,7 @@ async function fetchWikipediaMediaWikiFallback(normalizedTitle, includeHtml) {
             if (parseResponse.ok) {
                 const parseData = await parseResponse.json();
                 result.html = parseData?.parse?.text?.["*"] || null;
+                result.wikitext = parseData?.parse?.wikitext?.["*"] || null;
             }
         } catch (error) {
             console.warn("Wikipedia Action API HTML fallback failed:", normalizedTitle, error);
@@ -1329,6 +1330,7 @@ async function fetchWikipediaPageData(title, includeHtml = false, expectedType =
             data = {
                 summary: null,
                 html: null,
+                wikitext: null,
                 summaryPromise: null,
                 htmlPromise: null,
                 validatedBird: null
@@ -1367,6 +1369,7 @@ async function fetchWikipediaPageData(title, includeHtml = false, expectedType =
 
             if (fallback?.summary) data.summary = fallback.summary;
             if (fallback?.html) data.html = fallback.html;
+            if (fallback?.wikitext) data.wikitext = fallback.wikitext;
         }
 
         if (!data.summary) continue;
@@ -1374,6 +1377,17 @@ async function fetchWikipediaPageData(title, includeHtml = false, expectedType =
         if (expectedType === "bird") {
             data.validatedBird = isWikipediaBirdPage(data.summary);
             if (!data.validatedBird) continue;
+        }
+
+        if (includeHtml && !data.wikitext) {
+            const sourceFallback = await fetchWikipediaMediaWikiFallback(
+                normalizedTitle,
+                false
+            );
+
+            if (sourceFallback?.wikitext) {
+                data.wikitext = sourceFallback.wikitext;
+            }
         }
 
         if (includeHtml && !data.html) {
@@ -1895,6 +1909,111 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
     return limitWikipediaSentences(unique, category === "diet" ? 3 : 4);
 }
 
+function findWikipediaConservationStatusFromWikitext(wikitext) {
+    if (!wikitext) return "";
+
+    const start = wikitext.search(/\{\{\s*infobox\b/i);
+    if (start < 0) return "";
+
+    let depth = 0;
+    let end = -1;
+
+    for (let i = start; i < wikitext.length - 1; i++) {
+        if (wikitext[i] === "{" && wikitext[i + 1] === "{") {
+            depth++;
+            i++;
+        } else if (wikitext[i] === "}" && wikitext[i + 1] === "}") {
+            depth--;
+            i++;
+            if (depth === 0) {
+                end = i + 1;
+                break;
+            }
+        }
+    }
+
+    if (end < 0) return "";
+
+    const infobox = wikitext.slice(start, end);
+    const fields = {};
+    let fieldStart = 0;
+    depth = 0;
+
+    for (let i = 0; i < infobox.length - 1; i++) {
+        if (infobox[i] === "{" && infobox[i + 1] === "{") {
+            depth++;
+            i++;
+        } else if (infobox[i] === "}" && infobox[i + 1] === "}") {
+            depth = Math.max(0, depth - 1);
+            i++;
+        } else if (infobox[i] === "|" && depth === 0) {
+            const field = infobox.slice(fieldStart, i);
+            const separator = field.indexOf("=");
+
+            if (separator >= 0) {
+                const key = field
+                    .slice(0, separator)
+                    .trim()
+                    .toLowerCase()
+                    .replace(/\s+/g, "_");
+                const value = field.slice(separator + 1).trim();
+
+                if (key) fields[key] = value;
+            }
+
+            fieldStart = i + 1;
+        }
+    }
+
+    const lastField = infobox.slice(fieldStart);
+    const lastSeparator = lastField.indexOf("=");
+    if (lastSeparator >= 0) {
+        const key = lastField
+            .slice(0, lastSeparator)
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, "_");
+        const value = lastField.slice(lastSeparator + 1).trim();
+        if (key) fields[key] = value;
+    }
+
+    const statusKeys = [
+        "status",
+        "conservation_status",
+        "iucn_status",
+        "iucn_red_list"
+    ];
+
+    const statusSystem = normalizeWikipediaText(
+        fields.status_system || fields.iucn_system || ""
+    );
+
+    const hasIucnSystem =
+        /iucn/i.test(statusSystem) ||
+        Object.entries(fields).some(([key, value]) =>
+            /iucn/i.test(key) || /iucn/i.test(value)
+        );
+
+    if (!hasIucnSystem) return "";
+
+    for (const key of statusKeys) {
+        if (!fields[key]) continue;
+
+        const value = normalizeWikipediaText(
+            fields[key]
+                .replace(/<!--.*?-->/gs, " ")
+                .replace(/\{\{[^{}]*\}\}/g, " ")
+                .replace(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g, "$1")
+        );
+
+        if (value && !/^iucn\s*3\.1$/i.test(value)) {
+            return value;
+        }
+    }
+
+    return "";
+}
+
 function findWikipediaConservationStatus(html) {
     if (!html) return "";
 
@@ -2025,7 +2144,7 @@ function formatWikipediaConservationStatus(rawValue) {
     return "";
 }
 
-function getWikipediaStudyData(html) {
+function getWikipediaStudyData(html, wikitext = "") {
     const sections = extractWikipediaSections(html);
     const lead = sections.__lead__ || "";
     const leadSentences = splitWikipediaSentences(lead);
@@ -2083,7 +2202,8 @@ function getWikipediaStudyData(html) {
         // Conservation must come ONLY from the Wikipedia infobox.
         // Do not read Status/Threats/Conservation prose here.
         conservation: formatWikipediaConservationStatus(
-            findWikipediaConservationStatus(html)
+            findWikipediaConservationStatus(html) ||
+            findWikipediaConservationStatusFromWikitext(wikitext)
         )
     };
 
@@ -3014,7 +3134,7 @@ async function showGameOverCard(result) {
         bird.thaiName ||
         "No information available online.";
 
-    const studyData = getWikipediaStudyData(wiki?.html);
+    const studyData = getWikipediaStudyData(wiki?.html, wiki?.wikitext);
     const description =
         studyData.description ||
         "No information available on Wikipedia.";
