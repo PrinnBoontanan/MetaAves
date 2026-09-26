@@ -1615,6 +1615,10 @@ function findWikipediaInfoboxField(html, candidates) {
 
 function splitWikipediaSentences(text) {
     return normalizeWikipediaText(text)
+        // Wikipedia prose occasionally loses a sentence boundary when
+        // references/HTML are stripped. Conjunctions such as "However,"
+        // commonly start a new sentence in those cases.
+        .replace(/\s+(?=(?:However|Nevertheless|Although|But)\b)/g, ". ")
         .split(/(?<=[.!?])\s+/)
         .map(sentence => sentence.trim())
         .filter(Boolean);
@@ -1719,10 +1723,10 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
         diet: [
             ["diet", "feeds", "feed on", "feeding", "eats", "eat",
              "consumes", "consist of", "made up of", "food includes",
-             "foods include", "seeds", "berries", "fruit", "fruits",
-             "insects", "invertebrates", "nectar", "fish", "prey",
-             "grubs", "worms", "spiders", "arthropods", "vertebrates",
-             "carrion", "nectar"]
+             "foods include", "primarily", "mainly", "mostly"],
+            ["seeds", "berries", "fruit", "fruits", "insects",
+             "invertebrates", "nectar", "fish", "prey", "grubs",
+             "worms", "spiders", "arthropods", "vertebrates", "carrion"]
         ],
 
         behavior: [
@@ -1748,6 +1752,59 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
              "released", "release into the wild"]
         ]
     };
+
+    if (category === "diet") {
+        // Food words by themselves are not enough: an article can mention
+        // "insects", "spiders", etc. while discussing habitat, threats, or
+        // another subject. Require an actual diet/feeding construction.
+        const strongDietSignals = [
+            "diet", "feeds", "feed on", "feeding", "eats", "eat",
+            "consumes", "consist of", "made up of", "food includes",
+            "foods include", "diet includes", "diet consists",
+            "primarily", "mainly", "mostly"
+        ];
+
+        const foodSignals = [
+            "seeds", "berries", "fruit", "fruits", "insects",
+            "invertebrates", "nectar", "fish", "prey", "grubs",
+            "worms", "spiders", "arthropods", "vertebrates", "carrion"
+        ];
+
+        const hasStrongDietSignal = strongDietSignals.some(signal =>
+            text.includes(signal)
+        );
+        const hasFoodSignal = foodSignals.some(signal =>
+            text.includes(signal)
+        );
+
+        if (!hasStrongDietSignal) return false;
+
+        // Reject sentences that are clearly about conservation/habitat rather
+        // than feeding. This prevents phrases such as "habitat loss" from
+        // leaking into Diet when Wikipedia uses broad mixed sections.
+        const unrelatedSignals = [
+            "habitat loss", "threatened", "threat", "ecoregion",
+            "conservation", "protected area", "protected areas",
+            "deforestation", "logging", "hunting", "population decline",
+            "iucn", "endangered", "vulnerable", "least concern"
+        ];
+
+        if (
+            unrelatedSignals.some(signal => text.includes(signal)) &&
+            !(
+                text.includes("diet") ||
+                text.includes("feeds") ||
+                text.includes("feed on") ||
+                text.includes("eats") ||
+                text.includes("consumes") ||
+                text.includes("food includes")
+            )
+        ) {
+            return false;
+        }
+
+        return hasFoodSignal || hasStrongDietSignal;
+    }
 
     return (rules[category] || []).some(group =>
         group.some(keyword => text.includes(keyword))
