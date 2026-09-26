@@ -1910,14 +1910,46 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
     return limitWikipediaSentences(unique, category === "diet" ? 3 : 4);
 }
 
+function extractIucnStatusFromWikipediaValue(rawValue) {
+    if (!rawValue) return "";
+
+    let value = String(rawValue)
+        .replace(/<!--.*?-->/gs, " ")
+        .replace(/<ref[^>]*>.*?<\/ref>/gis, " ")
+        .replace(/<ref[^>]*\/>/gi, " ");
+
+    // IUCN status is frequently wrapped in templates such as
+    // {{IUCN status|LC}} or {{IUCN3.1|LC}}. Extract the argument before
+    // stripping templates so the actual status is not lost.
+    const iucnTemplateMatch = value.match(
+        /\{\{\s*[^{}]*iucn[^{}]*\|([^{}|]+)(?:\|[^{}]*)?\}\}/i
+    );
+
+    if (iucnTemplateMatch?.[1]) {
+        value += " " + iucnTemplateMatch[1];
+    }
+
+    // Keep template arguments because a status template can contain the
+    // actual code/name as its argument.
+    value = value
+        .replace(/\{\{[^{}]*\}\}/g, " ")
+        .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
+        .replace(/\[\[([^\]]+)\]\]/g, "$1")
+        .replace(/'''?/g, " ")
+        .replace(/&nbsp;/gi, " ");
+
+    return normalizeWikipediaText(value);
+}
+
 function findWikipediaConservationStatusFromWikitext(wikitext) {
     if (!wikitext) return "";
 
-    // Bird species pages normally use {{Speciesbox}}, not {{Infobox}}.
-    // Support both, plus the common taxobox variants used by Wikipedia.
+    // Bird species pages commonly use Speciesbox/Subspeciesbox rather than
+    // a generic Infobox. Find the first taxonomy/infobox template.
     const start = wikitext.search(
         /\{\{\s*(?:speciesbox|subspeciesbox|infobox|taxobox|automatic\s+taxobox)\b/i
     );
+
     if (start < 0) return "";
 
     let depth = 0;
@@ -1944,6 +1976,21 @@ function findWikipediaConservationStatusFromWikitext(wikitext) {
     let fieldStart = 0;
     depth = 0;
 
+    function saveField(field) {
+        const separator = field.indexOf("=");
+        if (separator < 0) return;
+
+        const key = field
+            .slice(0, separator)
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, "_");
+
+        const value = field.slice(separator + 1).trim();
+
+        if (key) fields[key] = value;
+    }
+
     for (let i = 0; i < infobox.length - 1; i++) {
         if (infobox[i] === "{" && infobox[i + 1] === "{") {
             depth++;
@@ -1952,35 +1999,12 @@ function findWikipediaConservationStatusFromWikitext(wikitext) {
             depth = Math.max(0, depth - 1);
             i++;
         } else if (infobox[i] === "|" && depth === 0) {
-            const field = infobox.slice(fieldStart, i);
-            const separator = field.indexOf("=");
-
-            if (separator >= 0) {
-                const key = field
-                    .slice(0, separator)
-                    .trim()
-                    .toLowerCase()
-                    .replace(/\s+/g, "_");
-                const value = field.slice(separator + 1).trim();
-
-                if (key) fields[key] = value;
-            }
-
+            saveField(infobox.slice(fieldStart, i));
             fieldStart = i + 1;
         }
     }
 
-    const lastField = infobox.slice(fieldStart);
-    const lastSeparator = lastField.indexOf("=");
-    if (lastSeparator >= 0) {
-        const key = lastField
-            .slice(0, lastSeparator)
-            .trim()
-            .toLowerCase()
-            .replace(/\s+/g, "_");
-        const value = lastField.slice(lastSeparator + 1).trim();
-        if (key) fields[key] = value;
-    }
+    saveField(infobox.slice(fieldStart));
 
     const statusKeys = [
         "status",
@@ -1989,30 +2013,57 @@ function findWikipediaConservationStatusFromWikitext(wikitext) {
         "iucn_red_list"
     ];
 
-    const statusSystem = normalizeWikipediaText(
-        fields.status_system || fields.iucn_system || ""
-    );
+    const statusNames = [
+        ["Critically Endangered", "CR"],
+        ["Endangered", "EN"],
+        ["Vulnerable", "VU"],
+        ["Near Threatened", "NT"],
+        ["Least Concern", "LC"],
+        ["Data Deficient", "DD"],
+        ["Not Evaluated", "NE"],
+        ["Extinct in the Wild", "EW"],
+        ["Extinct", "EX"],
+        ["Conservation Dependent", "CD"]
+    ];
 
-    const hasIucnSystem =
-        /iucn/i.test(statusSystem) ||
-        Object.entries(fields).some(([key, value]) =>
-            /iucn/i.test(key) || /iucn/i.test(value)
-        );
-
-    if (!hasIucnSystem) return "";
+    const statusCodes = new Set(statusNames.map(([, code]) => code));
 
     for (const key of statusKeys) {
         if (!fields[key]) continue;
 
-        const value = normalizeWikipediaText(
-            fields[key]
-                .replace(/<!--.*?-->/gs, " ")
-                .replace(/\{\{[^{}]*\}\}/g, " ")
-                .replace(/\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g, "$1")
+        const value = extractIucnStatusFromWikipediaValue(fields[key]);
+
+        const codeMatch = value.match(
+            /\b(CR|EN|VU|NT|LC|DD|NE|EW|EX|CD)\b/i
         );
 
-        if (value && !/^iucn\s*3\.1$/i.test(value)) {
-            return value;
+        if (codeMatch && statusCodes.has(codeMatch[1].toUpperCase())) {
+            return codeMatch[1].toUpperCase();
+        }
+
+        for (const [name] of statusNames) {
+            if (value.toLowerCase().includes(name.toLowerCase())) {
+                return name;
+            }
+        }
+    }
+
+    // Some pages use a field whose name explicitly contains IUCN rather than
+    // the generic "status" key.
+    for (const [key, rawValue] of Object.entries(fields)) {
+        if (!/iucn/i.test(key)) continue;
+
+        const value = extractIucnStatusFromWikipediaValue(rawValue);
+        const codeMatch = value.match(
+            /\b(CR|EN|VU|NT|LC|DD|NE|EW|EX|CD)\b/i
+        );
+
+        if (codeMatch) return codeMatch[1].toUpperCase();
+
+        for (const [name] of statusNames) {
+            if (value.toLowerCase().includes(name.toLowerCase())) {
+                return name;
+            }
         }
     }
 
