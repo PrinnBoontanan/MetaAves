@@ -1218,6 +1218,104 @@ function wikipediaLookupCandidates(title) {
     return candidates;
 }
 
+async function fetchWikipediaMediaWikiFallback(normalizedTitle, includeHtml) {
+    const title = String(normalizedTitle || "").replace(/_/g, " ");
+    if (!title) return null;
+
+    const result = {
+        summary: null,
+        html: null
+    };
+
+    try {
+        // The Action API is a reliable browser-side fallback because anonymous
+        // cross-origin requests can explicitly opt into CORS with origin=*.
+        const summaryUrl =
+            "https://en.wikipedia.org/w/api.php?" +
+            new URLSearchParams({
+                action: "query",
+                prop: "extracts|pageimages|info",
+                exintro: "1",
+                explaintext: "1",
+                inprop: "url",
+                piprop: "thumbnail",
+                pithumbsize: "600",
+                redirects: "1",
+                titles: title,
+                format: "json",
+                origin: "*"
+            }).toString();
+
+        const summaryResponse = await fetch(summaryUrl, {
+            headers: {
+                "Api-User-Agent":
+                    "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
+            }
+        });
+
+        if (summaryResponse.ok) {
+            const summaryData = await summaryResponse.json();
+            const page = Object.values(summaryData?.query?.pages || {})[0];
+
+            if (page && !page.missing) {
+                result.summary = {
+                    title: page.title || title,
+                    extract: page.extract || "",
+                    description: page.extract
+                        ? page.extract.split(/(?<=[.!?])\s+/)[0]
+                        : "",
+                    thumbnail: page.thumbnail?.source
+                        ? { source: page.thumbnail.source }
+                        : null,
+                    content_urls: {
+                        desktop: {
+                            page: page.fullurl ||
+                                "https://en.wikipedia.org/wiki/" +
+                                encodeURIComponent(
+                                    String(page.title || title).replace(/ /g, "_")
+                                )
+                        }
+                    }
+                };
+            }
+        }
+    } catch (error) {
+        console.warn("Wikipedia Action API summary fallback failed:", normalizedTitle, error);
+    }
+
+    if (includeHtml) {
+        try {
+            const parseUrl =
+                "https://en.wikipedia.org/w/api.php?" +
+                new URLSearchParams({
+                    action: "parse",
+                    page: title,
+                    prop: "text",
+                    redirects: "1",
+                    format: "json",
+                    origin: "*"
+                }).toString();
+
+            const parseResponse = await fetch(parseUrl, {
+                headers: {
+                    "Api-User-Agent":
+                        "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
+                }
+            });
+
+            if (parseResponse.ok) {
+                const parseData = await parseResponse.json();
+                result.html = parseData?.parse?.text?.["*"] || null;
+            }
+        } catch (error) {
+            console.warn("Wikipedia Action API HTML fallback failed:", normalizedTitle, error);
+        }
+    }
+
+    if (!result.summary && !result.html) return null;
+    return result;
+}
+
 async function fetchWikipediaPageData(title, includeHtml = false, expectedType = "bird") {
     const candidates = wikipediaLookupCandidates(title);
 
@@ -1258,6 +1356,19 @@ async function fetchWikipediaPageData(title, includeHtml = false, expectedType =
             data.summaryPromise = null;
         }
 
+        // Some Wikipedia pages can be fetched by the Action API even when the
+        // REST summary endpoint does not return a usable response. This is
+        // especially important for small bird articles.
+        if (!data.summary) {
+            const fallback = await fetchWikipediaMediaWikiFallback(
+                normalizedTitle,
+                includeHtml
+            );
+
+            if (fallback?.summary) data.summary = fallback.summary;
+            if (fallback?.html) data.html = fallback.html;
+        }
+
         if (!data.summary) continue;
 
         if (expectedType === "bird") {
@@ -1282,6 +1393,16 @@ async function fetchWikipediaPageData(title, includeHtml = false, expectedType =
 
             data.html = await data.htmlPromise;
             data.htmlPromise = null;
+
+            // If the REST HTML endpoint fails, fall back to MediaWiki's
+            // parse endpoint instead of treating the article as empty.
+            if (!data.html) {
+                const fallback = await fetchWikipediaMediaWikiFallback(
+                    normalizedTitle,
+                    true
+                );
+                if (fallback?.html) data.html = fallback.html;
+            }
         }
 
         return data;
@@ -1698,6 +1819,8 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
 
 function getWikipediaStudyData(html) {
     const sections = extractWikipediaSections(html);
+    const lead = sections.__lead__ || "";
+    const leadSentences = splitWikipediaSentences(lead);
 
     const data = {
         sections,
@@ -1708,7 +1831,7 @@ function getWikipediaStudyData(html) {
             "description and appearance",
             "appearance",
             "identification"
-        ]),
+        ]) || limitWikipediaSentences(lead, 2),
 
         habitatDistribution: extractWikipediaCategoryText(
             sections,
@@ -1761,9 +1884,44 @@ function getWikipediaStudyData(html) {
             )
     };
 
-    // If the article has no dedicated heading, recover useful sentences
-    // from the rest of the article. Each sentence is assigned to a category
-    // instead of copying an entire unrelated section.
+    // Very short Wikipedia articles sometimes have no content sections at
+    // all. Their useful information lives entirely in the lead paragraph.
+    // Classify those lead sentences individually so habitat and conservation
+    // clues are still available without inventing information for diet,
+    // behaviour, or breeding.
+    const leadMatches = category => leadSentences.filter(sentence =>
+        wikipediaSentenceMatchesCategory(sentence, category)
+    );
+
+    if (!data.habitatDistribution) {
+        data.habitatDistribution =
+            leadMatches("habitatDistribution").slice(0, 2).join(" ");
+    }
+
+    if (!data.diet) {
+        data.diet =
+            leadMatches("diet").slice(0, 3).join(" ");
+    }
+
+    if (!data.behavior) {
+        data.behavior =
+            leadMatches("behavior").slice(0, 3).join(" ");
+    }
+
+    if (!data.breeding) {
+        data.breeding =
+            leadMatches("breeding").slice(0, 3).join(" ");
+    }
+
+    if (!data.conservation) {
+        data.conservation =
+            leadMatches("conservation").slice(0, 3).join(" ") ||
+            findWikipediaInfoboxField(
+                html,
+                ["conservation status", "conservation"]
+            );
+    }
+
     return data;
 }
 
