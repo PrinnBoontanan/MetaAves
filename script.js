@@ -1925,7 +1925,7 @@ function formatWikipediaConservationStatus(rawValue) {
     const normalized = value
         .replace(/\bIUCN(?:\s+Red\s+List)?(?:\s+version\s+3\.1)?\b/gi, "")
         .replace(/\bIUCN\s*3\.1\b/gi, "")
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
 
     const codeMatch = normalized.match(
