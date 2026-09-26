@@ -2328,9 +2328,23 @@ function getWikipediaStudyData(html, wikitext = "") {
             "reproductive behaviour"
         ]),
 
-        // Conservation must come ONLY from the Wikipedia infobox.
-        // Do not read Status/Threats/Conservation prose here.
-        conservation: formatWikipediaConservationStatus(
+        // Prefer the article's actual conservation/status section because
+        // Wikipedia bird pages commonly put the useful conservation detail
+        // in prose rather than the infobox. Fall back to the infobox only
+        // when no relevant conservation section exists.
+        conservation: limitWikipediaSentences(
+            findWikipediaSection(sections, [
+                "conservation status",
+                "habitat and conservation status",
+                "habitat and conservation",
+                "status and conservation",
+                "status and threats",
+                "conservation",
+                "threats",
+                "population decline"
+            ]),
+            3
+        ) || formatWikipediaConservationStatus(
             findWikipediaConservationStatus(html) ||
             findWikipediaConservationStatusFromWikitext(wikitext)
         )
@@ -2365,94 +2379,11 @@ function getWikipediaStudyData(html, wikitext = "") {
             leadMatches("breeding").slice(0, 3).join(" ");
     }
 
-    // Conservation intentionally has no prose/lead fallback.
-    // If the infobox has no conservation status, the Study Card will show
-    // "No information available on Wikipedia."
+    // Conservation is read from a dedicated Wikipedia conservation/status
+    // section first, with the infobox as a fallback. We do not invent a
+    // status from unrelated prose such as ordinary population or habitat text.
 
     return data;
-}
-
-async function fetchOnlineConservationStatus(bird) {
-    const scientificName = String(bird?.scientificName || "").trim();
-    if (!scientificName) return "";
-
-    const statusNames = {
-        0: ["NE", "Not Evaluated"],
-        5: ["DD", "Data Deficient"],
-        10: ["LC", "Least Concern"],
-        20: ["NT", "Near Threatened"],
-        30: ["VU", "Vulnerable"],
-        40: ["EN", "Endangered"],
-        50: ["CR", "Critically Endangered"],
-        60: ["EW", "Extinct in the Wild"],
-        70: ["EX", "Extinct"]
-    };
-
-    try {
-        // First resolve the exact species to an iNaturalist taxon ID.
-        const searchUrl =
-            "https://api.inaturalist.org/v1/taxa/autocomplete?" +
-            new URLSearchParams({
-                q: scientificName,
-                rank: "species",
-                per_page: "10"
-            }).toString();
-
-        const searchResponse = await fetch(searchUrl);
-        if (!searchResponse.ok) return "";
-
-        const searchPayload = await searchResponse.json();
-        const taxa = Array.isArray(searchPayload?.results)
-            ? searchPayload.results
-            : [];
-
-        const normalized = scientificName.toLowerCase();
-        const taxon =
-            taxa.find(item =>
-                String(item?.name || "").trim().toLowerCase() === normalized
-            ) || taxa[0];
-
-        if (!taxon?.id) return "";
-
-        // The v1 taxon-detail endpoint returns conservation_statuses.
-        // iNaturalist documents that the global assessment is the entry
-        // whose place is null.
-        const detailResponse = await fetch(
-            "https://api.inaturalist.org/v1/taxa/" +
-            encodeURIComponent(String(taxon.id))
-        );
-
-        if (!detailResponse.ok) return "";
-
-        const detailPayload = await detailResponse.json();
-        const statuses = Array.isArray(detailPayload?.conservation_statuses)
-            ? detailPayload.conservation_statuses
-            : [];
-
-        const globalStatus = statuses.find(status =>
-            (status?.place === null || status?.place === undefined) &&
-            status?.iucn !== null &&
-            status?.iucn !== undefined
-        );
-
-        if (!globalStatus) return "";
-
-        const mapped = statusNames[Number(globalStatus.iucn)];
-        if (mapped) return mapped[0] + " - " + mapped[1];
-
-        return String(
-            globalStatus.status_name ||
-            globalStatus.name ||
-            ""
-        ).trim();
-    } catch (error) {
-        console.warn(
-            "Online conservation status lookup failed:",
-            scientificName,
-            error
-        );
-        return "";
-    }
 }
 
 function getWikipediaTitleFromTaxon(taxon, info) {
@@ -3334,11 +3265,10 @@ async function showGameOverCard(result) {
     if (newGameButton) newGameButton.classList.add("visible");
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    const [wiki, onlineThaiName, onlineConservationStatus] =
+    const [wiki, onlineThaiName] =
         await Promise.all([
             fetchWikipediaPageData(wikiTitle, true),
-            fetchOnlineThaiName(bird),
-            fetchOnlineConservationStatus(bird)
+            fetchOnlineThaiName(bird)
         ]);
 
     if (gameState.mysteryBird !== bird) return;
@@ -3368,9 +3298,8 @@ async function showGameOverCard(result) {
     setStudyValue("Breeding", studyData.breeding);
     setStudyValue(
         "Conservation",
-        onlineConservationStatus ||
         studyData.conservation ||
-        "No information available online."
+        "No information available on Wikipedia."
     );
 
     const placeholder = document.getElementById("study-photo-placeholder");
