@@ -1898,42 +1898,78 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
 function findWikipediaConservationStatus(html) {
     if (!html) return "";
 
-    // Bird infoboxes commonly use either "Conservation status" or simply
-    // "Status" together with a separate "Status System: IUCN3.1" row.
-    // Only inspect the infobox here; article Status/Threats sections are ignored.
-    const direct = findWikipediaInfoboxField(html, [
-        "conservation status",
-        "iucn status",
-        "iucn red list"
-    ]);
-
-    if (direct) return direct;
-
     const documentRoot = new DOMParser().parseFromString(html, "text/html");
-    const rows = documentRoot.querySelectorAll(".infobox tr, table.infobox tr");
 
-    for (const row of rows) {
-        const cells = [...row.children].filter(cell =>
-            /^(TH|TD)$/i.test(cell.tagName)
+    // Wikipedia bird infoboxes are not completely uniform. Depending on the
+    // page/template, the rendered table may have .infobox, .infobox-label,
+    // plain <th>/<td> cells, or another table class. Do NOT require a
+    // particular CSS class here. We only accept a status when it is associated
+    // with IUCN inside the same table.
+    const tables = documentRoot.querySelectorAll("table");
+
+    for (const table of tables) {
+        const tableText = normalizeWikipediaText(table.textContent);
+        if (!/IUCN/i.test(tableText)) continue;
+
+        const rows = table.querySelectorAll("tr");
+
+        for (const row of rows) {
+            const cells = [...row.children].filter(cell =>
+                /^(TH|TD)$/i.test(cell.tagName)
+            );
+
+            if (cells.length < 2) continue;
+
+            const cellTexts = cells.map(cell =>
+                normalizeWikipediaText(cell.textContent)
+            );
+
+            for (let index = 0; index < cellTexts.length - 1; index++) {
+                const label = cellTexts[index].toLowerCase();
+
+                const isStatusLabel =
+                    /^(?:conservation\s+status|iucn\s+status|iucn\s+red\s+list|status)$/.test(label) ||
+                    /^status\s+(?:system|ref|reference|assessment)/.test(label);
+
+                if (!isStatusLabel) continue;
+
+                // "Status System: IUCN3.1" is metadata, not the actual status.
+                if (/^status\s+system/.test(label)) continue;
+
+                const value = cellTexts.slice(index + 1).join(" ").trim();
+                if (value) return value;
+            }
+        }
+    }
+
+    // Second pass for infobox layouts where the label/value relationship is
+    // represented by arbitrary elements rather than a normal table row.
+    const labels = documentRoot.querySelectorAll(
+        ".infobox-label, .infobox-label-title, [class*=\"infobox-label\"]"
+    );
+
+    for (const labelElement of labels) {
+        const label = normalizeWikipediaText(labelElement.textContent)
+            .toLowerCase();
+
+        if (!/^(?:conservation\s+status|iucn\s+status|iucn\s+red\s+list|status)$/.test(label)) {
+            continue;
+        }
+
+        const container = labelElement.parentElement;
+        const valueElement =
+            container?.querySelector(".infobox-data, [class*=\"infobox-data\"]") ||
+            labelElement.nextElementSibling;
+
+        const value = normalizeWikipediaText(valueElement?.textContent || "");
+        const surroundingTable = labelElement.closest("table");
+        const surroundingText = normalizeWikipediaText(
+            surroundingTable?.textContent || ""
         );
-        if (cells.length < 2) continue;
 
-        const label = normalizeWikipediaText(cells[0].textContent).toLowerCase();
-        const rowText = normalizeWikipediaText(row.textContent);
-
-        if (label !== "status" && !label.includes("status")) continue;
-
-        const tableRows = [...(row.closest("table")?.querySelectorAll("tr") || [])];
-        const hasIucn = /IUCN/i.test(rowText) || tableRows.some(otherRow =>
-            /IUCN/i.test(normalizeWikipediaText(otherRow.textContent))
-        );
-
-        if (!hasIucn) continue;
-
-        const value = normalizeWikipediaText(
-            cells.slice(1).map(cell => cell.textContent).join(" ")
-        );
-        if (value) return value;
+        if (value && /IUCN/i.test(surroundingText)) {
+            return value;
+        }
     }
 
     return "";
