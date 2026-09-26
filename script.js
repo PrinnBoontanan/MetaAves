@@ -1584,20 +1584,15 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
     const text = sentence.toLowerCase();
 
     const rules = {
-        habitat: [
-            ["habitat", "inhabit", "lives in", "lives", "found in",
+        habitatDistribution: [
+            ["habitat", "distribution", "range", "distributed", "endemic to",
+             "native to", "inhabit", "lives in", "found in", "found on",
              "occurs in", "occurs at", "forest", "woodland", "grassland",
              "wetland", "savanna", "montane", "highland", "lowland",
              "coast", "coastal", "river", "shrubland", "altitude",
-             "elevation"]
-        ],
-
-        distribution: [
-            ["distribution", "range", "distributed", "found on",
-             "found in", "occurs in", "endemic to", "native to",
-             "north", "south", "east", "west", "island", "islands",
-             "region", "country", "new guinea", "africa", "asia",
-             "europe", "australia", "america"]
+             "elevation", "north", "south", "east", "west", "island",
+             "islands", "region", "country", "new guinea", "africa",
+             "asia", "europe", "australia", "america"]
         ],
 
         diet: [
@@ -1637,6 +1632,12 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
     );
 }
 
+function limitWikipediaSentences(text, maxSentences = 3) {
+    return splitWikipediaSentences(text)
+        .slice(0, maxSentences)
+        .join(" ");
+}
+
 function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
     const values = [];
     const sentences = collectWikipediaSentences(sections);
@@ -1653,14 +1654,13 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
                 )
             )
         ) {
-            // Dedicated sections are the cleanest source. Use their prose
-            // as-is instead of trying to guess sentence by sentence.
             values.push(text);
         }
     }
 
-    // Combined sections such as "Behaviour and ecology" or
-    // "Habitat and conservation status" are handled sentence by sentence.
+    // Do not add sentences from a section that has already supplied its
+    // complete text. This prevents the same Wikipedia prose being appended
+    // twice.
     for (const item of sentences) {
         if (dedicatedHeadings.some(candidate =>
             item.heading === candidate
@@ -1677,7 +1677,11 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
         }
     }
 
-    return [...new Set(values)].join(" ");
+    const unique = [...new Set(values)].join(" ");
+
+    // Study Card fields are meant to be concise clues, not a full Wikipedia
+    // article. Keep the most relevant first few sentences.
+    return limitWikipediaSentences(unique, category === "diet" ? 3 : 4);
 }
 
 function getWikipediaStudyData(html) {
@@ -1694,19 +1698,19 @@ function getWikipediaStudyData(html) {
             "identification"
         ]),
 
-        habitat: extractWikipediaCategoryText(sections, "habitat", [
-            "habitat",
-            "ecology and habitat",
-            "distribution and habitat"
-        ]),
-
-        distribution: extractWikipediaCategoryText(sections, "distribution", [
-            "distribution",
-            "range",
-            "geographic range",
-            "distribution and habitat",
-            "subspecies"
-        ]),
+        habitatDistribution: extractWikipediaCategoryText(
+            sections,
+            "habitatDistribution",
+            [
+                "distribution and habitat",
+                "habitat and distribution",
+                "habitat",
+                "distribution",
+                "range",
+                "geographic range",
+                "ecology and habitat"
+            ]
+        ),
 
         diet: extractWikipediaCategoryText(sections, "diet", [
             "diet",
@@ -2620,8 +2624,7 @@ async function showGameOverCard(result) {
     details.before(photoPlaceholder);
 
     addStudySection("Description", unavailable);
-    addStudySection("Habitat", unavailable);
-    addStudySection("Distribution", unavailable);
+    addStudySection("Habitat & Distribution", unavailable);
     addStudySection("Diet", unavailable);
     addStudySection("Behavior", unavailable);
     addStudySection("Breeding", unavailable);
@@ -2657,8 +2660,7 @@ async function showGameOverCard(result) {
     };
 
     setStudyValue("Description", description);
-    setStudyValue("Habitat", studyData.habitat);
-    setStudyValue("Distribution", studyData.distribution);
+    setStudyValue("Habitat & Distribution", studyData.habitatDistribution);
     setStudyValue("Diet", studyData.diet);
     setStudyValue("Behavior", studyData.behavior);
     setStudyValue("Breeding", studyData.breeding);
