@@ -1224,7 +1224,8 @@ async function fetchWikipediaMediaWikiFallback(normalizedTitle, includeHtml) {
 
     const result = {
         summary: null,
-        html: null
+        html: null,
+        wikitext: null
     };
 
     try {
@@ -1313,7 +1314,7 @@ async function fetchWikipediaMediaWikiFallback(normalizedTitle, includeHtml) {
         }
     }
 
-    if (!result.summary && !result.html) return null;
+    if (!result.summary && !result.html && !result.wikitext) return null;
     return result;
 }
 
@@ -1912,7 +1913,11 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
 function findWikipediaConservationStatusFromWikitext(wikitext) {
     if (!wikitext) return "";
 
-    const start = wikitext.search(/\{\{\s*infobox\b/i);
+    // Bird species pages normally use {{Speciesbox}}, not {{Infobox}}.
+    // Support both, plus the common taxobox variants used by Wikipedia.
+    const start = wikitext.search(
+        /\{\{\s*(?:speciesbox|subspeciesbox|infobox|taxobox|automatic\s+taxobox)\b/i
+    );
     if (start < 0) return "";
 
     let depth = 0;
