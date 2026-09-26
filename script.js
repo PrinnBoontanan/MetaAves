@@ -1874,6 +1874,56 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
     return limitWikipediaSentences(unique, category === "diet" ? 3 : 4);
 }
 
+function formatWikipediaConservationStatus(rawValue) {
+    const value = normalizeWikipediaText(rawValue || "");
+    if (!value) return "";
+
+    const normalized = value
+        .replace(/\\bIUCN(?:\\s+Red\\s+List)?(?:\\s+version\\s+3\\.1)?\\b/gi, "")
+        .replace(/\\bIUCN\\s*3\\.1\\b/gi, "")
+        .replace(/\\s+/g, " ")
+        .trim();
+
+    const codeMatch = normalized.match(
+        /\\b(CR|EN|VU|NT|LC|DD|NE|EW|EX|CD)\\b/i
+    );
+
+    const statusNames = [
+        ["Critically Endangered", "CR"],
+        ["Endangered", "EN"],
+        ["Vulnerable", "VU"],
+        ["Near Threatened", "NT"],
+        ["Least Concern", "LC"],
+        ["Data Deficient", "DD"],
+        ["Not Evaluated", "NE"],
+        ["Extinct in the Wild", "EW"],
+        ["Extinct", "EX"],
+        ["Conservation Dependent", "CD"]
+    ];
+
+    let statusName = "";
+    let statusCode = codeMatch?.[1]?.toUpperCase() || "";
+
+    for (const [name, code] of statusNames) {
+        if (normalized.toLowerCase().includes(name.toLowerCase())) {
+            statusName = name;
+            if (!statusCode) statusCode = code;
+            break;
+        }
+    }
+
+    if (!statusName && statusCode) {
+        const match = statusNames.find(([, code]) => code === statusCode);
+        statusName = match?.[0] || "";
+    }
+
+    if (statusCode && statusName) {
+        return statusCode + " - " + statusName;
+    }
+
+    return "";
+}
+
 function getWikipediaStudyData(html) {
     const sections = extractWikipediaSections(html);
     const lead = sections.__lead__ || "";
@@ -1929,16 +1979,14 @@ function getWikipediaStudyData(html) {
             "reproductive behaviour"
         ]),
 
-        conservation: extractWikipediaCategoryText(sections, "conservation", [
-            "conservation",
-            "conservation status",
-            "threats",
-            "status"
-        ]) ||
+        // Conservation must come ONLY from the Wikipedia infobox.
+        // Do not read Status/Threats/Conservation prose here.
+        conservation: formatWikipediaConservationStatus(
             findWikipediaInfoboxField(
                 html,
                 ["conservation status", "conservation"]
             )
+        )
     };
 
     // Very short Wikipedia articles sometimes have no content sections at
@@ -1970,14 +2018,9 @@ function getWikipediaStudyData(html) {
             leadMatches("breeding").slice(0, 3).join(" ");
     }
 
-    if (!data.conservation) {
-        data.conservation =
-            leadMatches("conservation").slice(0, 3).join(" ") ||
-            findWikipediaInfoboxField(
-                html,
-                ["conservation status", "conservation"]
-            );
-    }
+    // Conservation intentionally has no prose/lead fallback.
+    // If the infobox has no conservation status, the Study Card will show
+    // "No information available on Wikipedia."
 
     return data;
 }
