@@ -1286,14 +1286,54 @@ async function fetchWikipediaMediaWikiFallback(normalizedTitle, includeHtml) {
 
     if (includeHtml) {
         try {
+            // Get the actual page source from the latest revision. This is
+            // the same MediaWiki API pattern used by established Wikipedia
+            // parsers: query -> revisions -> main slot -> content.
+            const revisionUrl =
+                "https://en.wikipedia.org/w/api.php?" +
+                new URLSearchParams({
+                    action: "query",
+                    prop: "revisions",
+                    titles: title,
+                    rvprop: "content",
+                    rvslots: "main",
+                    rvlimit: "1",
+                    redirects: "1",
+                    format: "json",
+                    formatversion: "2",
+                    origin: "*"
+                }).toString();
+
+            const revisionResponse = await fetch(revisionUrl, {
+                headers: {
+                    "Api-User-Agent":
+                        "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
+                }
+            });
+
+            if (revisionResponse.ok) {
+                const revisionData = await revisionResponse.json();
+                const page = revisionData?.query?.pages?.[0];
+                result.wikitext =
+                    page?.revisions?.[0]?.slots?.main?.content || null;
+            }
+        } catch (error) {
+            console.warn("Wikipedia revision source fetch failed:", normalizedTitle, error);
+        }
+
+        // Keep MediaWiki's parse endpoint as the HTML fallback. It is useful
+        // when the REST HTML endpoint is unavailable, while conservation
+        // parsing itself uses the raw revision source above.
+        try {
             const parseUrl =
                 "https://en.wikipedia.org/w/api.php?" +
                 new URLSearchParams({
                     action: "parse",
                     page: title,
-                    prop: "text|wikitext",
+                    prop: "text",
                     redirects: "1",
                     format: "json",
+                    formatversion: "2",
                     origin: "*"
                 }).toString();
 
@@ -1306,8 +1346,7 @@ async function fetchWikipediaMediaWikiFallback(normalizedTitle, includeHtml) {
 
             if (parseResponse.ok) {
                 const parseData = await parseResponse.json();
-                result.html = parseData?.parse?.text?.["*"] || null;
-                result.wikitext = parseData?.parse?.wikitext?.["*"] || null;
+                result.html = parseData?.parse?.text || null;
             }
         } catch (error) {
             console.warn("Wikipedia Action API HTML fallback failed:", normalizedTitle, error);
@@ -1944,75 +1983,6 @@ function extractIucnStatusFromWikipediaValue(rawValue) {
 function findWikipediaConservationStatusFromWikitext(wikitext) {
     if (!wikitext) return "";
 
-    // Bird species pages commonly use Speciesbox/Subspeciesbox rather than
-    // a generic Infobox. Find the first taxonomy/infobox template.
-    const start = wikitext.search(
-        /\{\{\s*(?:speciesbox|subspeciesbox|infobox|taxobox|automatic\s+taxobox)\b/i
-    );
-
-    if (start < 0) return "";
-
-    let depth = 0;
-    let end = -1;
-
-    for (let i = start; i < wikitext.length - 1; i++) {
-        if (wikitext[i] === "{" && wikitext[i + 1] === "{") {
-            depth++;
-            i++;
-        } else if (wikitext[i] === "}" && wikitext[i + 1] === "}") {
-            depth--;
-            i++;
-            if (depth === 0) {
-                end = i + 1;
-                break;
-            }
-        }
-    }
-
-    if (end < 0) return "";
-
-    const infobox = wikitext.slice(start, end);
-    const fields = {};
-    let fieldStart = 0;
-    depth = 0;
-
-    function saveField(field) {
-        const separator = field.indexOf("=");
-        if (separator < 0) return;
-
-        const key = field
-            .slice(0, separator)
-            .trim()
-            .toLowerCase()
-            .replace(/\s+/g, "_");
-
-        const value = field.slice(separator + 1).trim();
-
-        if (key) fields[key] = value;
-    }
-
-    for (let i = 0; i < infobox.length - 1; i++) {
-        if (infobox[i] === "{" && infobox[i + 1] === "{") {
-            depth++;
-            i++;
-        } else if (infobox[i] === "}" && infobox[i + 1] === "}") {
-            depth = Math.max(0, depth - 1);
-            i++;
-        } else if (infobox[i] === "|" && depth === 0) {
-            saveField(infobox.slice(fieldStart, i));
-            fieldStart = i + 1;
-        }
-    }
-
-    saveField(infobox.slice(fieldStart));
-
-    const statusKeys = [
-        "status",
-        "conservation_status",
-        "iucn_status",
-        "iucn_red_list"
-    ];
-
     const statusNames = [
         ["Critically Endangered", "CR"],
         ["Endangered", "EN"],
@@ -2028,12 +1998,10 @@ function findWikipediaConservationStatusFromWikitext(wikitext) {
 
     const statusCodes = new Set(statusNames.map(([, code]) => code));
 
-    for (const key of statusKeys) {
-        if (!fields[key]) continue;
+    function readStatus(value) {
+        const cleaned = extractIucnStatusFromWikipediaValue(value);
 
-        const value = extractIucnStatusFromWikipediaValue(fields[key]);
-
-        const codeMatch = value.match(
+        const codeMatch = cleaned.match(
             /\b(CR|EN|VU|NT|LC|DD|NE|EW|EX|CD)\b/i
         );
 
@@ -2042,29 +2010,134 @@ function findWikipediaConservationStatusFromWikitext(wikitext) {
         }
 
         for (const [name] of statusNames) {
-            if (value.toLowerCase().includes(name.toLowerCase())) {
+            if (cleaned.toLowerCase().includes(name.toLowerCase())) {
                 return name;
             }
         }
+
+        return "";
     }
 
-    // Some pages use a field whose name explicitly contains IUCN rather than
-    // the generic "status" key.
-    for (const [key, rawValue] of Object.entries(fields)) {
-        if (!/iucn/i.test(key)) continue;
+    function findTemplateEnd(source, start) {
+        let depth = 0;
 
-        const value = extractIucnStatusFromWikipediaValue(rawValue);
-        const codeMatch = value.match(
-            /\b(CR|EN|VU|NT|LC|DD|NE|EW|EX|CD)\b/i
-        );
+        for (let i = start; i < source.length - 1; i++) {
+            if (source[i] === "{" && source[i + 1] === "{") {
+                depth++;
+                i++;
+            } else if (source[i] === "}" && source[i + 1] === "}") {
+                depth--;
+                i++;
 
-        if (codeMatch) return codeMatch[1].toUpperCase();
-
-        for (const [name] of statusNames) {
-            if (value.toLowerCase().includes(name.toLowerCase())) {
-                return name;
+                if (depth === 0) return i + 1;
             }
         }
+
+        return -1;
+    }
+
+    function parseTopLevelFields(templateText) {
+        const fields = {};
+        let depth = 0;
+        let linkDepth = 0;
+        let fieldStart = 0;
+
+        const save = field => {
+            const separator = field.indexOf("=");
+
+            if (separator < 0) return;
+
+            const key = field
+                .slice(0, separator)
+                .trim()
+                .toLowerCase()
+                .replace(/[\s-]+/g, "_");
+
+            if (!key) return;
+
+            fields[key] = field.slice(separator + 1).trim();
+        };
+
+        for (let i = 0; i < templateText.length - 1; i++) {
+            if (templateText[i] === "{" && templateText[i + 1] === "{") {
+                depth++;
+                i++;
+                continue;
+            }
+
+            if (templateText[i] === "}" && templateText[i + 1] === "}") {
+                depth = Math.max(0, depth - 1);
+                i++;
+                continue;
+            }
+
+            if (templateText[i] === "[" && templateText[i + 1] === "[") {
+                linkDepth++;
+                i++;
+                continue;
+            }
+
+            if (templateText[i] === "]" && templateText[i + 1] === "]") {
+                linkDepth = Math.max(0, linkDepth - 1);
+                i++;
+                continue;
+            }
+
+            if (templateText[i] === "|" && depth === 0 && linkDepth === 0) {
+                save(templateText.slice(fieldStart, i));
+                fieldStart = i + 1;
+            }
+        }
+
+        save(templateText.slice(fieldStart));
+        return fields;
+    }
+
+    const templatePattern =
+        /\{\{\s*(speciesbox|subspeciesbox|infobox\b[^|\n]*|taxobox|automatic\s+taxobox)\b/i;
+
+    let cursor = 0;
+
+    while (cursor < wikitext.length) {
+        const relative = wikitext.slice(cursor).search(templatePattern);
+        if (relative < 0) break;
+
+        const start = cursor + relative;
+        const end = findTemplateEnd(wikitext, start);
+
+        if (end < 0) break;
+
+        const template = wikitext.slice(start, end);
+        const fields = parseTopLevelFields(template);
+
+        // Wikipedia bird pages generally expose exactly this pair:
+        //   | status = LC
+        //   | status_system = IUCN3.1
+        //
+        // Do not require status_system to exist, because some valid older
+        // pages only retain the status field.
+        const statusKeys = [
+            "status",
+            "conservation_status",
+            "iucn_status",
+            "iucn_red_list"
+        ];
+
+        for (const key of statusKeys) {
+            if (!fields[key]) continue;
+
+            const status = readStatus(fields[key]);
+            if (status) return status;
+        }
+
+        for (const [key, value] of Object.entries(fields)) {
+            if (!/iucn/i.test(key)) continue;
+
+            const status = readStatus(value);
+            if (status) return status;
+        }
+
+        cursor = end;
     }
 
     return "";
