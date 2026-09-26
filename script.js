@@ -1565,6 +1565,18 @@ function isDedicatedWikipediaHeading(heading, category) {
         !terms.includes(term) && h.includes(term)
     );
 
+    // "Ecology" is a broad umbrella heading. It commonly contains diet,
+    // behaviour and breeding together, so it must never be treated as a
+    // dedicated section for one of those categories.
+    if (
+        h.includes("ecology") &&
+        ["behavior", "behaviour", "diet", "feeding", "food",
+         "breeding", "reproduction", "nesting", "habitat"]
+            .some(term => terms.includes(term))
+    ) {
+        return false;
+    }
+
     return otherTerms.length === 0;
 }
 
