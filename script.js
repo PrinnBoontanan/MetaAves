@@ -1597,10 +1597,11 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
 
         diet: [
             ["diet", "feeds", "feed on", "feeding", "eats", "eat",
-             "forage", "forages", "consumes", "consist of", "seeds",
-             "berries", "fruit", "fruits", "insects", "invertebrates",
-             "nectar", "fish", "prey", "grubs", "worms", "spiders",
-             "arthropods", "vertebrates"]
+             "consumes", "consist of", "made up of", "food includes",
+             "foods include", "seeds", "berries", "fruit", "fruits",
+             "insects", "invertebrates", "nectar", "fish", "prey",
+             "grubs", "worms", "spiders", "arthropods", "vertebrates",
+             "carrion", "nectar"]
         ],
 
         behavior: [
@@ -1645,16 +1646,27 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
     for (const [heading, text] of Object.entries(sections || {})) {
         if (!text || heading === "__lead__") continue;
 
-        if (
-            dedicatedHeadings.some(candidate =>
-                heading === candidate ||
-                (
-                    heading.includes(candidate) &&
-                    isDedicatedWikipediaHeading(heading, category)
-                )
+        const isDedicated = dedicatedHeadings.some(candidate =>
+            heading === candidate ||
+            (
+                heading.includes(candidate) &&
+                isDedicatedWikipediaHeading(heading, category)
             )
-        ) {
-            values.push(text);
+        );
+
+        if (isDedicated) {
+            if (category === "diet") {
+                // Wikipedia sections such as "Feeding" often mix actual diet
+                // with foraging behaviour, habitat, or other ecology details.
+                // Keep only sentences that contain clear food/diet evidence.
+                for (const sentence of splitWikipediaSentences(text)) {
+                    if (wikipediaSentenceMatchesCategory(sentence, category)) {
+                        values.push(sentence);
+                    }
+                }
+            } else {
+                values.push(text);
+            }
         }
     }
 
