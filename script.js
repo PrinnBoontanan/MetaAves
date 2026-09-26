@@ -2373,24 +2373,78 @@ function getWikipediaStudyData(html, wikitext = "") {
 }
 
 async function fetchOnlineConservationStatus(bird) {
-    const scientificName = bird?.scientificName || "";
+    const scientificName = String(bird?.scientificName || "").trim();
     if (!scientificName) return "";
 
+    const statusNames = {
+        0: ["NE", "Not Evaluated"],
+        5: ["DD", "Data Deficient"],
+        10: ["LC", "Least Concern"],
+        20: ["NT", "Near Threatened"],
+        30: ["VU", "Vulnerable"],
+        40: ["EN", "Endangered"],
+        50: ["CR", "Critically Endangered"],
+        60: ["EW", "Extinct in the Wild"],
+        70: ["EX", "Extinct"]
+    };
+
+    function formatStatus(status) {
+        if (!status) return "";
+
+        const code = Number(status.iucn);
+        const mapped = statusNames[code];
+
+        if (mapped) {
+            return mapped[0] + " - " + mapped[1];
+        }
+
+        const name = String(
+            status.status_name ||
+            status.iucn_status ||
+            status.name ||
+            ""
+        ).trim();
+
+        return name;
+    }
+
+    function getGlobalStatus(statuses) {
+        if (!Array.isArray(statuses)) return null;
+
+        return statuses.find(status =>
+            (status?.place === null || status?.place === undefined) &&
+            (
+                status?.iucn !== null &&
+                status?.iucn !== undefined
+                || status?.status_name
+                || status?.iucn_status
+            )
+        ) || null;
+    }
+
     try {
-        const url =
-            "https://api.inaturalist.org/v1/taxa?" +
+        // iNaturalist's v2 API exposes conservation_statuses when the field is
+        // explicitly requested. The older v1 search response does not
+        // reliably include that field, which is why the previous lookup
+        // returned an empty status for every bird.
+        const searchUrl =
+            "https://api.inaturalist.org/v2/taxa?" +
             new URLSearchParams({
                 q: scientificName,
                 rank: "species",
-                per_page: "10"
+                per_page: "10",
+                fields: "(id,name)"
             }).toString();
 
-        const response = await fetch(url);
-        if (!response.ok) return "";
+        const searchResponse = await fetch(searchUrl);
+        if (!searchResponse.ok) return "";
 
-        const payload = await response.json();
-        const taxa = Array.isArray(payload?.results) ? payload.results : [];
-        const normalizedScientificName = scientificName.trim().toLowerCase();
+        const searchPayload = await searchResponse.json();
+        const taxa = Array.isArray(searchPayload?.results)
+            ? searchPayload.results
+            : [];
+
+        const normalizedScientificName = scientificName.toLowerCase();
 
         const taxon =
             taxa.find(item =>
@@ -2398,36 +2452,30 @@ async function fetchOnlineConservationStatus(bird) {
                 normalizedScientificName
             ) || taxa[0];
 
-        if (!taxon) return "";
+        const taxonId = taxon?.id;
+        if (!taxonId) return "";
 
-        const statuses = Array.isArray(taxon.conservation_statuses)
-            ? taxon.conservation_statuses
-            : [];
+        // Ask specifically for all conservation statuses. The global IUCN
+        // assessment is the entry whose place is null.
+        const detailUrl =
+            "https://api.inaturalist.org/v2/taxa/" +
+            encodeURIComponent(String(taxonId)) +
+            "?fields=" +
+            encodeURIComponent("(conservation_status:!t,conservation_statuses:all)");
 
-        const global = statuses.find(status =>
-            !status?.place &&
-            status?.iucn !== null &&
-            status?.iucn !== undefined
-        );
+        const detailResponse = await fetch(detailUrl);
+        if (!detailResponse.ok) return "";
 
-        if (!global) return "";
+        const detailPayload = await detailResponse.json();
+        const detail = detailPayload?.results || detailPayload;
 
-        const statusNames = {
-            0: ["NE", "Not Evaluated"],
-            5: ["DD", "Data Deficient"],
-            10: ["LC", "Least Concern"],
-            20: ["NT", "Near Threatened"],
-            30: ["VU", "Vulnerable"],
-            40: ["EN", "Endangered"],
-            50: ["CR", "Critically Endangered"],
-            60: ["EW", "Extinct in the Wild"],
-            70: ["EX", "Extinct"]
-        };
+        const globalStatus = getGlobalStatus(detail?.conservation_statuses);
+        const formattedGlobal = formatStatus(globalStatus);
+        if (formattedGlobal) return formattedGlobal;
 
-        const mapped = statusNames[Number(global.iucn)];
-        if (mapped) return mapped[0] + " - " + mapped[1];
-
-        return global.status_name ? String(global.status_name) : "";
+        // Keep the API's single global field as a fallback. Some taxa expose
+        // it even when conservation_statuses is sparse.
+        return formatStatus(detail?.conservation_status);
     } catch (error) {
         console.warn(
             "Online conservation status lookup failed:",
