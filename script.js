@@ -2388,52 +2388,14 @@ async function fetchOnlineConservationStatus(bird) {
         70: ["EX", "Extinct"]
     };
 
-    function formatStatus(status) {
-        if (!status) return "";
-
-        const code = Number(status.iucn);
-        const mapped = statusNames[code];
-
-        if (mapped) {
-            return mapped[0] + " - " + mapped[1];
-        }
-
-        const name = String(
-            status.status_name ||
-            status.iucn_status ||
-            status.name ||
-            ""
-        ).trim();
-
-        return name;
-    }
-
-    function getGlobalStatus(statuses) {
-        if (!Array.isArray(statuses)) return null;
-
-        return statuses.find(status =>
-            (status?.place === null || status?.place === undefined) &&
-            (
-                status?.iucn !== null &&
-                status?.iucn !== undefined
-                || status?.status_name
-                || status?.iucn_status
-            )
-        ) || null;
-    }
-
     try {
-        // iNaturalist's v2 API exposes conservation_statuses when the field is
-        // explicitly requested. The older v1 search response does not
-        // reliably include that field, which is why the previous lookup
-        // returned an empty status for every bird.
+        // First resolve the exact species to an iNaturalist taxon ID.
         const searchUrl =
-            "https://api.inaturalist.org/v2/taxa?" +
+            "https://api.inaturalist.org/v1/taxa/autocomplete?" +
             new URLSearchParams({
                 q: scientificName,
                 rank: "species",
-                per_page: "10",
-                fields: "(id,name)"
+                per_page: "10"
             }).toString();
 
         const searchResponse = await fetch(searchUrl);
@@ -2444,38 +2406,45 @@ async function fetchOnlineConservationStatus(bird) {
             ? searchPayload.results
             : [];
 
-        const normalizedScientificName = scientificName.toLowerCase();
-
+        const normalized = scientificName.toLowerCase();
         const taxon =
             taxa.find(item =>
-                String(item?.name || "").trim().toLowerCase() ===
-                normalizedScientificName
+                String(item?.name || "").trim().toLowerCase() === normalized
             ) || taxa[0];
 
-        const taxonId = taxon?.id;
-        if (!taxonId) return "";
+        if (!taxon?.id) return "";
 
-        // Ask specifically for all conservation statuses. The global IUCN
-        // assessment is the entry whose place is null.
-        const detailUrl =
-            "https://api.inaturalist.org/v2/taxa/" +
-            encodeURIComponent(String(taxonId)) +
-            "?fields=" +
-            encodeURIComponent("(conservation_status:!t,conservation_statuses:all)");
+        // The v1 taxon-detail endpoint returns conservation_statuses.
+        // iNaturalist documents that the global assessment is the entry
+        // whose place is null.
+        const detailResponse = await fetch(
+            "https://api.inaturalist.org/v1/taxa/" +
+            encodeURIComponent(String(taxon.id))
+        );
 
-        const detailResponse = await fetch(detailUrl);
         if (!detailResponse.ok) return "";
 
         const detailPayload = await detailResponse.json();
-        const detail = detailPayload?.results || detailPayload;
+        const statuses = Array.isArray(detailPayload?.conservation_statuses)
+            ? detailPayload.conservation_statuses
+            : [];
 
-        const globalStatus = getGlobalStatus(detail?.conservation_statuses);
-        const formattedGlobal = formatStatus(globalStatus);
-        if (formattedGlobal) return formattedGlobal;
+        const globalStatus = statuses.find(status =>
+            (status?.place === null || status?.place === undefined) &&
+            status?.iucn !== null &&
+            status?.iucn !== undefined
+        );
 
-        // Keep the API's single global field as a fallback. Some taxa expose
-        // it even when conservation_statuses is sparse.
-        return formatStatus(detail?.conservation_status);
+        if (!globalStatus) return "";
+
+        const mapped = statusNames[Number(globalStatus.iucn)];
+        if (mapped) return mapped[0] + " - " + mapped[1];
+
+        return String(
+            globalStatus.status_name ||
+            globalStatus.name ||
+            ""
+        ).trim();
     } catch (error) {
         console.warn(
             "Online conservation status lookup failed:",
