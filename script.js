@@ -2372,6 +2372,72 @@ function getWikipediaStudyData(html, wikitext = "") {
     return data;
 }
 
+async function fetchOnlineConservationStatus(bird) {
+    const scientificName = bird?.scientificName || "";
+    if (!scientificName) return "";
+
+    try {
+        const url =
+            "https://api.inaturalist.org/v1/taxa?" +
+            new URLSearchParams({
+                q: scientificName,
+                rank: "species",
+                per_page: "10"
+            }).toString();
+
+        const response = await fetch(url);
+        if (!response.ok) return "";
+
+        const payload = await response.json();
+        const taxa = Array.isArray(payload?.results) ? payload.results : [];
+        const normalizedScientificName = scientificName.trim().toLowerCase();
+
+        const taxon =
+            taxa.find(item =>
+                String(item?.name || "").trim().toLowerCase() ===
+                normalizedScientificName
+            ) || taxa[0];
+
+        if (!taxon) return "";
+
+        const statuses = Array.isArray(taxon.conservation_statuses)
+            ? taxon.conservation_statuses
+            : [];
+
+        const global = statuses.find(status =>
+            !status?.place &&
+            status?.iucn !== null &&
+            status?.iucn !== undefined
+        );
+
+        if (!global) return "";
+
+        const statusNames = {
+            0: ["NE", "Not Evaluated"],
+            5: ["DD", "Data Deficient"],
+            10: ["LC", "Least Concern"],
+            20: ["NT", "Near Threatened"],
+            30: ["VU", "Vulnerable"],
+            40: ["EN", "Endangered"],
+            50: ["CR", "Critically Endangered"],
+            60: ["EW", "Extinct in the Wild"],
+            70: ["EX", "Extinct"]
+        };
+
+        const mapped = statusNames[Number(global.iucn)];
+        if (mapped) return mapped[0] + " - " + mapped[1];
+
+        return global.status_name ? String(global.status_name) : "";
+    } catch (error) {
+        console.warn(
+            "Online conservation status lookup failed:",
+            scientificName,
+            error
+        );
+        return "";
+    }
+}
+
 function getWikipediaTitleFromTaxon(taxon, info) {
     if (info?.wikipedia) {
         try {
@@ -3251,10 +3317,12 @@ async function showGameOverCard(result) {
     if (newGameButton) newGameButton.classList.add("visible");
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    const [wiki, onlineThaiName] = await Promise.all([
-        fetchWikipediaPageData(wikiTitle, true),
-        fetchOnlineThaiName(bird)
-    ]);
+    const [wiki, onlineThaiName, onlineConservationStatus] =
+        await Promise.all([
+            fetchWikipediaPageData(wikiTitle, true),
+            fetchOnlineThaiName(bird),
+            fetchOnlineConservationStatus(bird)
+        ]);
 
     if (gameState.mysteryBird !== bird) return;
 
@@ -3281,7 +3349,12 @@ async function showGameOverCard(result) {
     setStudyValue("Diet", studyData.diet);
     setStudyValue("Behavior", studyData.behavior);
     setStudyValue("Breeding", studyData.breeding);
-    setStudyValue("Conservation", studyData.conservation);
+    setStudyValue(
+        "Conservation",
+        onlineConservationStatus ||
+        studyData.conservation ||
+        "No information available online."
+    );
 
     const placeholder = document.getElementById("study-photo-placeholder");
     const imageSource = wiki?.summary?.thumbnail?.source;
