@@ -1879,13 +1879,13 @@ function formatWikipediaConservationStatus(rawValue) {
     if (!value) return "";
 
     const normalized = value
-        .replace(/\\bIUCN(?:\\s+Red\\s+List)?(?:\\s+version\\s+3\\.1)?\\b/gi, "")
-        .replace(/\\bIUCN\\s*3\\.1\\b/gi, "")
+        .replace(/\bIUCN(?:\s+Red\s+List)?(?:\s+version\s+3\.1)?\b/gi, "")
+        .replace(/\bIUCN\s*3\.1\b/gi, "")
         .replace(/\\s+/g, " ")
         .trim();
 
     const codeMatch = normalized.match(
-        /\\b(CR|EN|VU|NT|LC|DD|NE|EW|EX|CD)\\b/i
+        /\b(CR|EN|VU|NT|LC|DD|NE|EW|EX|CD)\b/i
     );
 
     const statusNames = [
