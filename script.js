@@ -1382,7 +1382,7 @@ async function fetchWikipediaPageData(title, includeHtml = false, expectedType =
         if (includeHtml && !data.wikitext) {
             const sourceFallback = await fetchWikipediaMediaWikiFallback(
                 normalizedTitle,
-                false
+                true
             );
 
             if (sourceFallback?.wikitext) {
