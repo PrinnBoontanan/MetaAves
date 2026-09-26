@@ -1874,6 +1874,50 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
     return limitWikipediaSentences(unique, category === "diet" ? 3 : 4);
 }
 
+function findWikipediaConservationStatus(html) {
+    if (!html) return "";
+
+    // Bird infoboxes commonly use either "Conservation status" or simply
+    // "Status" together with a separate "Status System: IUCN3.1" row.
+    // Only inspect the infobox here; article Status/Threats sections are ignored.
+    const direct = findWikipediaInfoboxField(html, [
+        "conservation status",
+        "iucn status",
+        "iucn red list"
+    ]);
+
+    if (direct) return direct;
+
+    const documentRoot = new DOMParser().parseFromString(html, "text/html");
+    const rows = documentRoot.querySelectorAll(".infobox tr, table.infobox tr");
+
+    for (const row of rows) {
+        const cells = [...row.children].filter(cell =>
+            /^(TH|TD)$/i.test(cell.tagName)
+        );
+        if (cells.length < 2) continue;
+
+        const label = normalizeWikipediaText(cells[0].textContent).toLowerCase();
+        const rowText = normalizeWikipediaText(row.textContent);
+
+        if (label !== "status" && !label.includes("status")) continue;
+
+        const tableRows = [...(row.closest("table")?.querySelectorAll("tr") || [])];
+        const hasIucn = /IUCN/i.test(rowText) || tableRows.some(otherRow =>
+            /IUCN/i.test(normalizeWikipediaText(otherRow.textContent))
+        );
+
+        if (!hasIucn) continue;
+
+        const value = normalizeWikipediaText(
+            cells.slice(1).map(cell => cell.textContent).join(" ")
+        );
+        if (value) return value;
+    }
+
+    return "";
+}
+
 function formatWikipediaConservationStatus(rawValue) {
     const value = normalizeWikipediaText(rawValue || "");
     if (!value) return "";
@@ -1982,10 +2026,7 @@ function getWikipediaStudyData(html) {
         // Conservation must come ONLY from the Wikipedia infobox.
         // Do not read Status/Threats/Conservation prose here.
         conservation: formatWikipediaConservationStatus(
-            findWikipediaInfoboxField(
-                html,
-                ["conservation status", "conservation"]
-            )
+            findWikipediaConservationStatus(html)
         )
     };
 
