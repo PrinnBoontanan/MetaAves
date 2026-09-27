@@ -16,7 +16,7 @@ body {
 }
 
 .game-container {
-    width: min(1500px, 96%);
+    width: min(1650px, 96%);
     margin: 0 auto;
     padding: 40px 0;
 }
@@ -104,7 +104,7 @@ body {
    Information card stays visible beside it, like the earlier layout. */
 .taxonomy-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(390px, 420px);
+    grid-template-columns: minmax(0, 1fr) minmax(500px, 560px);
     gap: 22px;
     align-items: start;
 }
