@@ -104,7 +104,7 @@ body {
    Information card stays visible beside it, like the earlier layout. */
 .taxonomy-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 330px;
+    grid-template-columns: minmax(0, 1fr) minmax(390px, 420px);
     gap: 22px;
     align-items: start;
 }
