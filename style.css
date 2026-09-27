@@ -2582,10 +2582,9 @@ input:focus-visible,
     grid-template-areas:
         "title title"
         "rank rank"
-        "common common"
         "image description"
         "image wikipedia";
-    column-gap: 28px;
+    column-gap: 32px;
     align-items: start;
 }
 
@@ -2598,33 +2597,47 @@ input:focus-visible,
 }
 
 .taxon-card:not(.species-card) > .taxon-card-common {
-    grid-area: common;
-    margin: 6px 0 2px;
+    grid-area: image;
+    align-self: end;
+    justify-self: start;
+    z-index: 2;
+    margin: 0 0 12px 12px;
+    padding: 7px 12px;
+    border-radius: 7px;
+    background: rgba(43, 47, 35, 0.78);
+    color: #fffdf5;
+    font-weight: 600;
+    line-height: 1.2;
+    box-sizing: border-box;
 }
 
 .taxon-card:not(.species-card) > .taxon-card-image {
     grid-area: image;
     width: 100%;
     max-width: 280px;
-    max-height: 280px;
+    height: 280px;
     margin: 12px 0 0;
-    padding-right: 20px;
-    border-right: 1px solid #d9cdb5;
     object-fit: cover;
+    object-position: center;
     border-radius: 10px;
-    box-sizing: content-box;
+    box-sizing: border-box;
+    box-shadow: 0 3px 10px rgba(80, 68, 45, 0.12);
 }
 
 .taxon-card:not(.species-card) > .taxon-card-description {
     grid-area: description;
     max-width: none;
-    margin-top: 12px;
+    margin: 12px 0 0;
+    padding-left: 30px;
+    border-left: 1px solid #d9cdb5;
+    line-height: 1.7;
 }
 
 .taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
     grid-area: wikipedia;
     align-self: end;
-    margin-top: 14px;
+    margin: 18px 0 0 30px;
+    padding-left: 1px;
 }
 
 @media (max-width: 700px) {
