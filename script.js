@@ -4254,6 +4254,15 @@ function renderTaxonomyTree() {
                 );
             } else {
                 path.classList.add("meta-connection-species");
+                // The branch into the mystery species uses the same
+                // proximity color as the taxon node it comes from.
+                const parentProximity = Number.isFinite(node.__proximity)
+                    ? node.__proximity
+                    : 0;
+                path.style.setProperty(
+                    "--tree-proximity-hue",
+                    Math.round(parentProximity * 120)
+                );
             }
 
             svg.appendChild(path);
