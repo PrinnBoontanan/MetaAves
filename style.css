@@ -2461,7 +2461,7 @@ input:focus-visible,
 .taxonomy-layout {
     grid-area: taxonomy;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(600px, 680px);
+    grid-template-columns: 1fr;
     gap: 22px;
     align-items: start;
     min-width: 0;
@@ -2491,5 +2491,87 @@ input:focus-visible,
         position: static;
         max-height: none;
         overflow: visible;
+    }
+}
+
+
+/* ========================================
+   Taxon Information below the taxonomy tree
+======================================== */
+
+.taxonomy-layout > .taxon-section {
+    width: 100%;
+    box-sizing: border-box;
+    position: static;
+    max-height: none;
+    overflow: visible;
+}
+
+.taxonomy-layout > .taxon-section > h2 {
+    margin-bottom: 16px;
+}
+
+.taxonomy-layout > .taxon-section .taxon-card {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Species cards use the wide space as a clean two-column study layout:
+   photo on the left, information on the right. */
+.taxon-card:has(.taxon-card-image) {
+    display: grid;
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+    column-gap: 28px;
+    row-gap: 4px;
+    align-items: start;
+}
+
+.taxon-card:has(.taxon-card-image) > h3,
+.taxon-card:has(.taxon-card-image) > .taxon-card-rank,
+.taxon-card:has(.taxon-card-image) > .taxon-card-wiki-section,
+.taxon-card:has(.taxon-card-image) > .taxon-card-wikipedia-link {
+    grid-column: 2;
+}
+
+.taxon-card:has(.taxon-card-image) > .taxon-card-image {
+    grid-column: 1;
+    grid-row: 1 / span 8;
+    width: 100%;
+    max-height: 340px;
+    object-fit: cover;
+    border-radius: 10px;
+    align-self: start;
+}
+
+.taxon-card:has(.taxon-card-image) > .taxon-card-wiki-section {
+    margin-top: 10px;
+}
+
+.taxon-card:has(.taxon-card-image) > .taxon-card-species-taxonomy {
+    padding-top: 4px;
+    border-top: 1px solid #e3d8bf;
+}
+
+.taxon-card:has(.taxon-card-image) .taxon-card-taxonomy-row {
+    margin: 5px 0;
+}
+
+@media (max-width: 850px) {
+    .taxon-card:has(.taxon-card-image) {
+        grid-template-columns: 1fr;
+    }
+
+    .taxon-card:has(.taxon-card-image) > h3,
+    .taxon-card:has(.taxon-card-image) > .taxon-card-rank,
+    .taxon-card:has(.taxon-card-image) > .taxon-card-wiki-section,
+    .taxon-card:has(.taxon-card-image) > .taxon-card-wikipedia-link,
+    .taxon-card:has(.taxon-card-image) > .taxon-card-image {
+        grid-column: 1;
+    }
+
+    .taxon-card:has(.taxon-card-image) > .taxon-card-image {
+        grid-row: auto;
+        max-width: 420px;
+        justify-self: center;
     }
 }
