@@ -2773,16 +2773,12 @@ input:focus-visible,
     font-weight: 700;
 }
 
-.meta-tree-node.meta-species-node:not(.meta-species-mystery) {
-    background: var(--tree-proximity-color, #fffdf8);
+.meta-tree-node.meta-species-node {
+    /* Species leaves stay neutral in the Metazooa-style tree.
+       Proximity is communicated by the taxon nodes and branches. */
+    background: #fffdf8;
     color: #3f4938;
     border: 1px solid rgba(92, 78, 54, 0.30);
-}
-
-.meta-tree-node.meta-species-node.meta-species-correct {
-    background: #4f7f31;
-    color: #fffdf8;
-    border-color: rgba(55, 84, 34, 0.42);
 }
 
 .meta-connection-taxon,
