@@ -2756,3 +2756,24 @@ input:focus-visible,
 .meta-connection-species {
     stroke-width: 1.8;
 }
+
+
+/* Taxonomy colors
+   Use a restrained olive / stone palette rather than pastel colors.
+   The proximity mechanic remains: far = #978665, middle = blended
+   olive-gold, close = #5A783B. */
+.meta-tree-node[data-level="class"],
+.meta-tree-node[data-level="order"],
+.meta-tree-node[data-level="family"],
+.meta-tree-node[data-level="genus"],
+.meta-tree-node[data-level="clade"] {
+    background: var(--tree-proximity-color, #978665);
+    color: #fffdf8;
+    border: 1px solid rgba(63, 70, 56, 0.28);
+    font-weight: 700;
+}
+
+.meta-connection-taxon,
+.meta-connection-species {
+    stroke: var(--tree-proximity-color, #978665);
+}
