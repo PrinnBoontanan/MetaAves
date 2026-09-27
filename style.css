@@ -2522,11 +2522,14 @@ input:focus-visible,
    because Wikipedia supplied an image. */
 .taxon-card.species-card {
     display: grid;
-    grid-template-columns: 260px minmax(220px, 0.8fr) minmax(300px, 1.35fr) minmax(260px, 1fr);
+    grid-template-columns: 260px minmax(300px, 1.35fr) minmax(260px, 1fr);
+    grid-template-rows: auto auto auto auto auto;
     grid-template-areas:
-        "title identity description taxonomy"
-        "photo identity description taxonomy"
-        "photo wikipedia wikipedia taxonomy";
+        "title description taxonomy"
+        "scientific description taxonomy"
+        "rank description taxonomy"
+        "photo description taxonomy"
+        "photo wikipedia taxonomy";
     column-gap: 26px;
     row-gap: 6px;
     align-items: start;
@@ -2543,25 +2546,27 @@ input:focus-visible,
 
 .taxon-card.species-card > h3 {
     grid-area: title;
-    margin: 0 0 4px;
+    margin: 0;
     line-height: 1.15;
 }
 
 .taxon-card.species-card > .taxon-card-scientific {
-    grid-area: identity;
-    margin: 30px 0 0;
+    grid-area: scientific;
+    margin: 0;
     line-height: 1.25;
 }
 
 .taxon-card.species-card > .taxon-card-species-rank {
-    grid-area: identity;
-    margin: 56px 0 0;
+    grid-area: rank;
+    margin: 0;
     line-height: 1.25;
 }
 
 .taxon-card.species-card > .taxon-card-wiki-section:not(.taxon-card-species-taxonomy) {
     grid-area: description;
     margin-top: 0;
+    padding-top: 0;
+    border-top: none;
 }
 
 .taxon-card.species-card > .taxon-card-species-taxonomy {
