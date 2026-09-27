@@ -3033,6 +3033,37 @@ const taxonomyHorizontalScroll = document.getElementById("taxonomy-horizontal-sc
 const taxonomyHorizontalScrollContent =
     taxonomyHorizontalScroll?.querySelector(".taxonomy-horizontal-scroll-content");
 
+function centerTaxonomyHorizontalScroll(smooth = false) {
+    if (
+        gameState.taxonomyView !== "tree" ||
+        !taxonomyHorizontalScroll ||
+        !taxonomyHorizontalScrollContent
+    ) {
+        return;
+    }
+
+    const maxScroll = Math.max(
+        0,
+        taxonomyHorizontalScroll.scrollWidth -
+            taxonomyHorizontalScroll.clientWidth
+    );
+
+    if (maxScroll <= 0) return;
+
+    const center = maxScroll / 2;
+    const behavior = smooth ? "smooth" : "auto";
+
+    taxonomyHorizontalScroll.scrollTo({
+        left: center,
+        behavior
+    });
+
+    taxonomyTree.scrollTo({
+        left: center,
+        behavior
+    });
+}
+
 function syncTaxonomyHorizontalScroll() {
     if (!taxonomyHorizontalScroll || !taxonomyHorizontalScrollContent) return;
 
@@ -3078,7 +3109,16 @@ function renderTaxonomyView() {
         tableViewButton.classList.toggle("active", gameState.taxonomyView === "table");
     }
 
-    requestAnimationFrame(syncTaxonomyHorizontalScroll);
+    requestAnimationFrame(() => {
+        syncTaxonomyHorizontalScroll();
+
+        // Keep the newly rendered tree centered after every guess.
+        // A second frame lets the browser finish measuring the new canvas
+        // before calculating the scrollbar's true center.
+        requestAnimationFrame(() => {
+            centerTaxonomyHorizontalScroll(true);
+        });
+    });
 }
 
 function renderTaxonomyTree() {
