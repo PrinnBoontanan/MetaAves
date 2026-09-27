@@ -3291,10 +3291,54 @@ function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
 
     const rankByName = new Map();
 
+    // The generated clade catalog is the authoritative source for the
+    // formal rank of named phylogenetic groups. Wikipedia/Wikidata often
+    // calls these groups simply "clade", even when MetaAves deliberately
+    // models them as a formal rank (for example Neognathae, Passeri,
+    // Passerides and Passerida).
+    Object.values(gameState.clades || {}).forEach(entry => {
+        if (!entry?.name || !entry?.rank) return;
+
+        const key = String(entry.name).trim().toLowerCase();
+        rankByName.set(key, {
+            name: entry.name,
+            rank: entry.rank,
+            label:
+                entry.rank === "infraclass"
+                    ? "Infraclass"
+                    : entry.rank === "suborder"
+                        ? "Suborder"
+                        : entry.rank === "infraorder"
+                            ? "Infraorder"
+                            : entry.rank === "parvorder"
+                                ? "Parvorder"
+                                : entry.rank === "superfamily"
+                                    ? "Superfamily"
+                                    : entry.rank === "subfamily"
+                                        ? "Subfamily"
+                                        : entry.rank === "tribe"
+                                            ? "Tribe"
+                                            : entry.rank === "subtribe"
+                                                ? "Subtribe"
+                                                : "Clade"
+        });
+    });
+
+    // Add Wikipedia/Wikidata metadata only when the generated clade catalog
+    // does not already define that name. This prevents a generic Wikipedia
+    // "clade" label from overwriting a formal MetaAves rank.
     Object.values(detailed).forEach(entry => {
         if (!entry?.name || !entry?.label) return;
+
         const key = String(entry.name).trim().toLowerCase();
-        if (!rankByName.has(key) || entry.rank !== "clade") {
+
+        if (!rankByName.has(key)) {
+            rankByName.set(key, entry);
+            return;
+        }
+
+        const existing = rankByName.get(key);
+        if (existing.rank === "clade" && entry.rank !== "clade") {
             rankByName.set(key, entry);
         }
     });
@@ -3370,7 +3414,7 @@ function getDetailedSpeciesTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
     return mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed);
 }
 
-function renderSpeciesTaxonomyRows(container, bird, wiki) {
+function renderSpeciesTaxonomyRows(container, bird, wiki, wikidataDetailed = {}) {
     if (!container || !bird) return;
 
     container.innerHTML = "";
