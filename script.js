@@ -4816,6 +4816,34 @@ function getHintFactTokens(text, category = "general") {
         .map(([label]) => label);
 }
 
+function getMeaningfulNameWords(name) {
+    const ignoredWords = new Set([
+        "bird",
+        "birds",
+        "common",
+        "greater",
+        "lesser",
+        "little",
+        "small",
+        "large",
+        "western",
+        "eastern",
+        "northern",
+        "southern",
+        "central",
+        "new",
+        "old"
+    ]);
+
+    return normalizeHintText(name)
+        .split(/\\s+/)
+        .map(word => word.replace(/[^a-z-]/g, ""))
+        .filter(word =>
+            word.length >= 3 &&
+            !ignoredWords.has(word)
+        );
+}
+
 function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
     const categories = [
         ["Appearance", "appearance", guessedStudy?.description, mysteryStudy?.description],
@@ -4827,6 +4855,24 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
 
     const clues = [];
     const differenceClues = [];
+
+    // A shared meaningful word in the two common names is a useful name clue.
+    // Do not use name length or arbitrary word-position trivia.
+    const guessedNameWords = getMeaningfulNameWords(guessedBird?.commonName);
+    const mysteryNameWords = getMeaningfulNameWords(gameState.mysteryBird?.commonName);
+
+    const sharedNameWord = guessedNameWords.find(word =>
+        mysteryNameWords.includes(word)
+    );
+
+    if (sharedNameWord) {
+        clues.push({
+            heading: "Name clue",
+            text: "The mystery bird's common name also contains the word “" +
+                sharedNameWord +
+                "”, which it shares with the bird you guessed."
+        });
+    }
 
     for (const [label, category, left, right] of categories) {
         if (!left || !right) continue;
@@ -4896,8 +4942,8 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
             if (!text || text.length < 20) continue;
 
             const sentence = text
-                .replace(/\s+/g, " ")
-                .split(/(?<=[.!?])\s+/)
+                .replace(/\\s+/g, " ")
+                .split(/(?<=[.!?])\\s+/)
                 .map(value => value.trim())
                 .find(value => value.length >= 45 && value.length <= 260);
 
@@ -4917,7 +4963,6 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
 
     return clues.slice(0, 3);
 }
-
 function getSpeciesHintElement() {
     let hint = document.getElementById("species-hover-hint");
     if (!hint) {
