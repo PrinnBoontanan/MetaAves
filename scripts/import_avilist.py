@@ -1111,6 +1111,7 @@ def main():
 
     birds = []
     clade_membership = {}
+    post_order_clade_membership = {}
     unmapped_orders = set()
 
     taxa = {
@@ -1184,12 +1185,13 @@ def main():
 
         order_name = bird.get("order")
         clade_path = list(CLADE_PATHS_BY_ORDER.get(order_name, []))
+        if clade_path:
+            clade_membership[scientific] = clade_path
+
         family_name = bird.get("family")
         family_clade_path = PASSERINE_FAMILY_CLADE_PATHS.get(family_name)
         if order_name == "Passeriformes" and family_clade_path:
-            clade_path.extend(family_clade_path)
-        if clade_path:
-            clade_membership[scientific] = clade_path
+            post_order_clade_membership[scientific] = family_clade_path
         elif order_name:
             unmapped_orders.add(order_name)
 
@@ -1242,7 +1244,8 @@ def main():
                     "source": "Wikipedia bird phylogeny pages, using Stiller et al. 2024 where those pages identify that topology",
                     "policy": "Detailed named clades are included where the source provides a usable lineage. Contested alternative deep Neoaves relationships are not mixed into the same lineage."
                 },
-                "species": clade_membership
+                "species": clade_membership,
+                "postOrderSpecies": post_order_clade_membership
             },
             ensure_ascii=False,
             indent=2
@@ -1283,6 +1286,7 @@ def main():
     print(f"Imported {len(birds):,} species")
     print(f"Generated {len(taxa):,} ranked taxonomy nodes")
     print(f"Clade memberships: {len(clade_membership):,}")
+    print(f"Post-order clade memberships: {len(post_order_clade_membership):,}")
     print(f"Orders without a clade mapping: {len(unmapped_orders):,}")
     if unmapped_orders:
         print("Unmapped orders:", ", ".join(sorted(unmapped_orders)))
