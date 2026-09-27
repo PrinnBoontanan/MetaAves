@@ -1982,9 +1982,9 @@ body {
 
 .taxonomy-horizontal-scroll {
     display: none;
-    height: 12px;
+    height: 16px;
     margin-top: 8px;
-    padding: 3px 0;
+    padding: 2px 0;
     overflow-x: auto;
     overflow-y: hidden;
     border: 1px solid #dfd1b7;
@@ -2010,7 +2010,7 @@ body {
 }
 
 .taxonomy-horizontal-scroll::-webkit-scrollbar {
-    height: 6px;
+    height: 10px;
 }
 
 .taxonomy-horizontal-scroll::-webkit-scrollbar-track {
@@ -2019,6 +2019,8 @@ body {
 
 .taxonomy-horizontal-scroll::-webkit-scrollbar-thumb {
     background: #aa9a7c;
+    border: 1px solid transparent;
+    background-clip: padding-box;
     border-radius: 999px;
 }
 
