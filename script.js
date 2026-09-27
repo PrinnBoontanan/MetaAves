@@ -2691,6 +2691,13 @@ function getWikipediaStudyData(html, wikitext = "") {
     const lead = sections.__lead__ || "";
     const leadSentences = splitWikipediaSentences(lead);
 
+    const wikipediaIucnStatus = formatWikipediaConservationStatus(
+        findWikipediaConservationStatus(html) ||
+        findWikipediaConservationStatusFromWikitext(wikitext) ||
+        findWikipediaConservationStatusFromPlainWikitext(wikitext) ||
+        findWikipediaConservationStatusFromCategories(wikitext)
+    );
+
     const data = {
         sections,
 
@@ -2745,36 +2752,36 @@ function getWikipediaStudyData(html, wikitext = "") {
         // Wikipedia bird pages commonly put the useful conservation detail
         // in prose rather than the infobox. Fall back to the infobox only
         // when no relevant conservation section exists.
-        conservation: limitWikipediaSentences(
-            extractWikipediaWikitextSection(wikitext, [
-                "conservation status",
-                "habitat and conservation status",
-                "habitat and conservation",
-                "status and conservation",
-                "status and threats",
-                "status",
-                "conservation",
-                "threats"
-            ]),
-            3
-        ) || limitWikipediaSentences(
-            findWikipediaSection(sections, [
-                "conservation status",
-                "habitat and conservation status",
-                "habitat and conservation",
-                "status and conservation",
-                "status and threats",
-                "status",
-                "conservation",
-                "threats"
-            ]),
-            3
-        ) || formatWikipediaConservationStatus(
-            findWikipediaConservationStatus(html) ||
-            findWikipediaConservationStatusFromWikitext(wikitext) ||
-            findWikipediaConservationStatusFromPlainWikitext(wikitext) ||
-            findWikipediaConservationStatusFromCategories(wikitext)
-        )
+        // Prefer the explicit IUCN status when Wikipedia provides it in
+        // the infobox or categories. This prevents a generic conservation
+        // paragraph from hiding a clearly available "LC - Least Concern",
+        // "VU - Vulnerable", etc. status.
+        conservation: wikipediaIucnStatus ||
+            limitWikipediaSentences(
+                extractWikipediaWikitextSection(wikitext, [
+                    "conservation status",
+                    "habitat and conservation status",
+                    "habitat and conservation",
+                    "status and conservation",
+                    "status and threats",
+                    "status",
+                    "conservation",
+                    "threats"
+                ]),
+                3
+            ) || limitWikipediaSentences(
+                findWikipediaSection(sections, [
+                    "conservation status",
+                    "habitat and conservation status",
+                    "habitat and conservation",
+                    "status and conservation",
+                    "status and threats",
+                    "status",
+                    "conservation",
+                    "threats"
+                ]),
+                3
+            )
     };
 
     // Very short Wikipedia articles sometimes have no content sections at
