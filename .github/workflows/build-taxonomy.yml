@@ -61,7 +61,7 @@ jobs:
           missing = required - ranks
           assert not missing, f"Missing required ranks: {sorted(missing)}"
 
-          assert clade_membership.get("_meta", {}).get("version") == 1
+          assert clade_membership.get("_meta", {}).get("version") == 2
           assert clade_membership.get("species")
           assert clade_membership.get("postOrderSpecies") is not None
 
