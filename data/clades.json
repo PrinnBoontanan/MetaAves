@@ -838,7 +838,7 @@
   "clade:Neognathae": {
     "id": "clade:Neognathae",
     "name": "Neognathae",
-    "rank": "clade",
+    "rank": "infraclass",
     "parent": "clade:Neornithes",
     "children": [
       "clade:Galloanserae",
@@ -1147,7 +1147,7 @@
   "clade:Passeri": {
     "id": "clade:Passeri",
     "name": "Passeri",
-    "rank": "clade",
+    "rank": "suborder",
     "parent": "clade:Eupasseres",
     "children": [],
     "description": "Suborder containing the passerine songbirds (oscines)."
@@ -1155,7 +1155,7 @@
   "clade:Passerides": {
     "id": "clade:Passerides",
     "name": "Passerides",
-    "rank": "clade",
+    "rank": "infraorder",
     "parent": "clade:Passeri",
     "children": [],
     "description": "Infraorder containing major songbird radiations including Passerida."
@@ -1163,7 +1163,7 @@
   "clade:Passerida": {
     "id": "clade:Passerida",
     "name": "Passerida",
-    "rank": "clade",
+    "rank": "parvorder",
     "parent": "clade:Passerides",
     "children": [],
     "description": "Parvorder containing many of the familiar sparrows, finches, tanagers and related songbirds."
