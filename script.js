@@ -1322,20 +1322,68 @@ function isWikipediaBirdPage(summary) {
     return birdSignals.some(signal => text.includes(signal));
 }
 
-function wikipediaLookupCandidates(title) {
+function wikipediaLookupCandidates(title, scientificName = "") {
     const cleanTitle = String(title || "").trim();
-    if (!cleanTitle) return [];
+    const cleanScientificName = String(scientificName || "").trim();
+    const candidates = [];
+    const add = value => {
+        const clean = String(value || "").trim();
+        if (!clean) return;
+        if (!candidates.some(candidate => candidate.toLowerCase() === clean.toLowerCase())) {
+            candidates.push(clean);
+        }
+    };
 
-    const candidates = [cleanTitle];
+    // Try the current MetaAves common name first.
+    add(cleanTitle);
 
-    // Wikipedia has a deliberate disambiguation for the bird genus
-    // Gypsophila. Try the bird-specific title when the plain title is a
-    // plant or another homonym.
-    if (!/\(bird\)$/i.test(cleanTitle)) {
-        candidates.push(cleanTitle + " (bird)");
+    // Some bird articles use a "(bird)" disambiguator.
+    if (cleanTitle && !/\(bird\)$/i.test(cleanTitle)) {
+        add(cleanTitle + " (bird)");
     }
 
+    // Common names change between checklists. The scientific name is much
+    // more stable, so always try it as an independent Wikipedia title.
+    add(cleanScientificName);
+
     return candidates;
+}
+
+async function searchWikipediaBirdByScientificName(scientificName) {
+    const scientific = String(scientificName || "").trim();
+    if (!scientific) return [];
+
+    try {
+        const url =
+            "https://en.wikipedia.org/w/api.php?" +
+            new URLSearchParams({
+                action: "query",
+                list: "search",
+                srsearch: "\" + scientific + "\"",
+                srlimit: "5",
+                redirects: "1",
+                format: "json",
+                formatversion: "2",
+                origin: "*"
+            }).toString();
+
+        const response = await fetch(url, {
+            headers: {
+                "Api-User-Agent":
+                    "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
+            }
+        });
+
+        if (!response.ok) return [];
+
+        const data = await response.json();
+        return (data?.query?.search || [])
+            .map(item => item.title)
+            .filter(Boolean);
+    } catch (error) {
+        console.warn("Wikipedia scientific-name search failed:", scientific, error);
+        return [];
+    }
 }
 
 async function fetchWikipediaMediaWikiFallback(normalizedTitle, includeHtml) {
@@ -1477,8 +1525,32 @@ async function fetchWikipediaMediaWikiFallback(normalizedTitle, includeHtml) {
     return result;
 }
 
-async function fetchWikipediaPageData(title, includeHtml = false, expectedType = "bird") {
-    const candidates = wikipediaLookupCandidates(title);
+async function fetchWikipediaPageData(
+    title,
+    includeHtml = false,
+    expectedType = "bird",
+    scientificName = ""
+) {
+    let candidates = wikipediaLookupCandidates(title, scientificName);
+
+    // If the common-name/scientific-name title attempts fail, search
+    // Wikipedia using the stable scientific name. This catches checklist
+    // renames, split/merged species names, and pages whose current title is
+    // not the common name used by MetaAves.
+    if (expectedType === "bird" && scientificName) {
+        const searchedTitles = await searchWikipediaBirdByScientificName(
+            scientificName
+        );
+
+        candidates = [
+            ...candidates,
+            ...searchedTitles.filter(title =>
+                !candidates.some(candidate =>
+                    candidate.toLowerCase() === String(title).toLowerCase()
+                )
+            )
+        ];
+    }
 
     for (const candidateTitle of candidates) {
         const normalizedTitle = wikipediaCacheKey(candidateTitle);
@@ -2643,7 +2715,12 @@ async function showBirdInTaxonCard(bird) {
     card.innerHTML = "<p>Loading bird information from Wikipedia...</p>";
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    const wiki = await fetchWikipediaPageData(wikiTitle, true, "bird");
+    const wiki = await fetchWikipediaPageData(
+        wikiTitle,
+        true,
+        "bird",
+        bird.scientificName
+    );
 
     // Do not let a slower old request overwrite a newer selection.
     if (
@@ -3671,7 +3748,12 @@ async function showGameOverCard(result) {
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
     const [wiki, onlineThaiName, onlineConservationStatus] =
         await Promise.all([
-            fetchWikipediaPageData(wikiTitle, true),
+            fetchWikipediaPageData(
+                wikiTitle,
+                true,
+                "bird",
+                bird.scientificName
+            ),
             fetchOnlineThaiName(bird),
             fetchWikidataConservationStatus(bird)
         ]);
