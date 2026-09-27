@@ -2273,6 +2273,76 @@ function formatWikipediaConservationStatus(rawValue) {
     return "";
 }
 
+function extractWikipediaWikitextSection(wikitext, candidates) {
+    if (!wikitext) return "";
+
+    const normalizedCandidates = candidates.map(candidate =>
+        normalizeWikipediaText(candidate).toLowerCase()
+    );
+
+    const lines = String(wikitext).replace(/\r/g, "").split("\n");
+
+    const headingRegex = /^(={2,6})\\s*(.*?)\\s*\\1\\s*$/;
+    let bestText = "";
+    let bestScore = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+        const match = lines[i].match(headingRegex);
+        if (!match) continue;
+
+        const level = match[1].length;
+        const heading = normalizeWikipediaText(match[2])
+            .replace(/\\[edit\\]/gi, "")
+            .toLowerCase();
+
+        let score = -1;
+        for (let j = 0; j < normalizedCandidates.length; j++) {
+            const candidate = normalizedCandidates[j];
+            if (heading === candidate) {
+                score = 1000 - j;
+                break;
+            }
+            if (heading.includes(candidate)) {
+                score = 500 - j;
+            }
+        }
+
+        if (score < 0) continue;
+
+        const body = [];
+        for (let j = i + 1; j < lines.length; j++) {
+            const next = lines[j].match(headingRegex);
+            if (next && next[1].length <= level) break;
+            body.push(lines[j]);
+        }
+
+        let text = body.join("\n");
+
+        // Remove references, comments, files, templates and wiki markup.
+        text = text
+            .replace(/<!--(?:.|\\n)*?-->/gs, " ")
+            .replace(/<ref(?:\\s[^>]*)?>[\\s\\S]*?<\\/ref>/gi, " ")
+            .replace(/<ref\\s*\\/\\s*>/gi, " ")
+            .replace(/<[^>]+>/g, " ")
+            .replace(/\\[\\[(?:File|Image):[^\\]]+\\]\\]/gi, " ")
+            .replace(/\\{\\{[\\s\\S]*?\\}\\}/g, " ")
+            .replace(/\\[\\[([^\\]|]+)\\|([^\\]]+)\\]\\]/g, "$2")
+            .replace(/\\[\\[([^\\]]+)\\]\\]/g, "$1")
+            .replace(/\\[\\[[^\\]]+\\]\\]/g, " ")
+            .replace(/'{2,}/g, "")
+            .replace(/&nbsp;/gi, " ");
+
+        text = normalizeWikipediaText(text);
+
+        if (text && score > bestScore) {
+            bestText = text;
+            bestScore = score;
+        }
+    }
+
+    return bestText;
+}
+
 function getWikipediaStudyData(html, wikitext = "") {
     const sections = extractWikipediaSections(html);
     const lead = sections.__lead__ || "";
@@ -2333,15 +2403,27 @@ function getWikipediaStudyData(html, wikitext = "") {
         // in prose rather than the infobox. Fall back to the infobox only
         // when no relevant conservation section exists.
         conservation: limitWikipediaSentences(
+            extractWikipediaWikitextSection(wikitext, [
+                "conservation status",
+                "habitat and conservation status",
+                "habitat and conservation",
+                "status and conservation",
+                "status and threats",
+                "status",
+                "conservation",
+                "threats"
+            ]),
+            3
+        ) || limitWikipediaSentences(
             findWikipediaSection(sections, [
                 "conservation status",
                 "habitat and conservation status",
                 "habitat and conservation",
                 "status and conservation",
                 "status and threats",
+                "status",
                 "conservation",
-                "threats",
-                "population decline"
+                "threats"
             ]),
             3
         ) || formatWikipediaConservationStatus(
