@@ -3270,7 +3270,10 @@ function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
         ...(bird?.postOrderCladePath || [])
     ].filter((name, index, values) => values.indexOf(name) === index);
 
-    if (clades.length) add("Clades", clades.join(" → "));
+    // Keep every clade as its own taxonomy rank entry instead of collapsing
+    // the entire clade chain into one "Clades" row. This makes intermediate
+    // taxonomy visible alongside infraclass, suborder, infraorder, etc.
+    clades.forEach(name => add("Clade", name));
 
     const wikipediaDetailed = parseWikipediaDetailedTaxonomy(wiki?.wikitext);
     const detailed = { ...wikipediaDetailed, ...wikidataDetailed };
@@ -3337,7 +3340,9 @@ function getDetailedSpeciesTaxonomyRows(bird, wiki) {
             ...(bird.postOrderCladePath || [])
         ].filter((name, index, values) => values.indexOf(name) === index);
 
-        add("Clades", clades.join(" → "));
+        // Show the actual clade entries individually so the taxonomy card
+        // never hides several levels behind one generic "Clades" field.
+        clades.forEach(name => add("Clade", name));
     }
 
     const detailed = {
