@@ -4229,16 +4229,30 @@ function renderTaxonomyTree() {
     function getProximityColor(proximity) {
         const t = Math.max(0, Math.min(1, Number(proximity) || 0));
 
-        // Far branches: muted stone/olive.
-        // Close branches: deeper olive green.
-        const far = [151, 134, 101];
-        const close = [90, 120, 59];
+        // Metazooa-style proximity palette:
+        // far = red, then orange, yellow/olive, and finally green.
+        const stops = [
+            [0.00, [158, 48, 24]],
+            [0.33, [198, 108, 25]],
+            [0.66, [157, 151, 25]],
+            [1.00, [76, 125, 48]]
+        ];
 
-        const rgb = far.map((value, index) =>
-            Math.round(value + (close[index] - value) * t)
-        );
+        for (let i = 1; i < stops.length; i++) {
+            if (t <= stops[i][0]) {
+                const [t0, c0] = stops[i - 1];
+                const [t1, c1] = stops[i];
+                const local = (t - t0) / (t1 - t0);
 
-        return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+                const rgb = c0.map((value, index) =>
+                    Math.round(value + (c1[index] - value) * local)
+                );
+
+                return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+            }
+        }
+
+        return "rgb(76, 125, 48)";
     }
 
     function drawConnections(node) {
