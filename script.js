@@ -445,9 +445,6 @@ function getBirdPhylogenyPath(bird) {
                 // deepest-shared-node rule.
                 const detailed = bird.wikipediaDetailedTaxonomy || {};
                 const intermediateOrder = [
-                    "subclass",
-                    "infraclass",
-                    "superorder",
                     "suborder",
                     "infraorder",
                     "parvorder",
@@ -2868,35 +2865,46 @@ function getDetailedSpeciesTaxonomyRows(bird, wiki) {
 
     add("Class", bird?.class || "Aves");
 
-    if (Array.isArray(bird?.cladePath) && bird.cladePath.length) {
-        add("Clades", bird.cladePath.join(" → "));
+    if (
+        (Array.isArray(bird?.cladePath) && bird.cladePath.length) ||
+        (Array.isArray(bird?.postOrderCladePath) && bird.postOrderCladePath.length)
+    ) {
+        const clades = [
+            ...(bird.cladePath || []),
+            ...(bird.postOrderCladePath || [])
+        ].filter((name, index, values) => values.indexOf(name) === index);
+
+        add("Clades", clades.join(" → "));
     }
 
     const detailed = parseWikipediaDetailedTaxonomy(wiki?.wikitext);
 
-    // Intermediate ranks are inserted in biological order, between the
-    // existing order/family/genus levels.
-    const intermediateOrder = [
-        "subclass",
-        "infraclass",
-        "superorder",
-        "suborder",
-        "infraorder",
-        "parvorder",
-        "superfamily",
-        "subfamily",
-        "tribe",
-        "subtribe"
-    ];
+    // Ranks above Order are displayed before Order; ranks below Order are
+    // displayed in their actual biological position. We keep these separate
+    // from the clade layer so a Wikipedia rank never masquerades as a clade.
+    for (const rank of ["subclass", "infraclass", "superorder"]) {
+        const entry = detailed[rank];
+        if (entry?.name) add(entry.label, entry.name);
+    }
 
     add("Order", bird?.order);
 
-    for (const rank of intermediateOrder) {
+    for (const rank of [
+        "suborder",
+        "infraorder",
+        "parvorder",
+        "superfamily"
+    ]) {
         const entry = detailed[rank];
         if (entry?.name) add(entry.label, entry.name);
     }
 
     add("Family", bird?.family);
+
+    for (const rank of ["subfamily", "tribe", "subtribe"]) {
+        const entry = detailed[rank];
+        if (entry?.name) add(entry.label, entry.name);
+    }
     add("Genus", bird?.genus);
     add("Species", bird?.species || bird?.scientificName);
 
