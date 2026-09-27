@@ -2248,20 +2248,20 @@ function findWikipediaConservationStatusFromCategories(wikitext) {
     if (!wikitext) return "";
 
     const categoryMatches = String(wikitext).matchAll(
-        /\\[\\[Category:([^\\]]+)\\]\\]/gi
+        /\[\[Category:([^\]]+)\]\]/gi
     );
 
     const statusPatterns = [
-        [/critically\\s+endangered/i, "CR"],
+        [/critically\s+endangered/i, "CR"],
         [/endangered/i, "EN"],
         [/vulnerable/i, "VU"],
-        [/near\\s+threatened/i, "NT"],
-        [/least\\s+concern/i, "LC"],
-        [/data\\s+deficient/i, "DD"],
-        [/not\\s+evaluated/i, "NE"],
-        [/extinct\\s+in\\s+the\\s+wild/i, "EW"],
+        [/near\s+threatened/i, "NT"],
+        [/least\s+concern/i, "LC"],
+        [/data\s+deficient/i, "DD"],
+        [/not\s+evaluated/i, "NE"],
+        [/extinct\s+in\s+the\s+wild/i, "EW"],
         [/extinct/i, "EX"],
-        [/conservation\\s+dependent/i, "CD"]
+        [/conservation\s+dependent/i, "CD"]
     ];
 
     for (const match of categoryMatches) {
@@ -2298,20 +2298,20 @@ function findWikipediaConservationStatusFromPlainWikitext(wikitext) {
     ];
 
     const source = String(wikitext)
-        .replace(/<!--[\\s\\S]*?-->/g, " ")
-        .replace(/<ref[^>]*>[\\s\\S]*?<\\/ref>/gi, " ")
-        .replace(/<ref[^>]*\\/\\s*>/gi, " ");
+        .replace(/<!--[\s\S]*?-->/g, " ")
+        .replace(/<ref[^>]*>[\s\S]*?<\/ref>/gi, " ")
+        .replace(/<ref[^>]*\/\s*>/gi, " ");
 
     // Catch simple infobox fields even when the page uses a non-standard
     // infobox template that the structured template parser does not recognise.
     const fieldPattern =
-        /(?:^|\\n|\\|)\\s*(?:status|conservation_status|iucn_status|iucn_red_list)\\s*=\\s*([^\\n|]+)/i;
+        /(?:^|\n|\|)\s*(?:status|conservation_status|iucn_status|iucn_red_list)\s*=\s*([^\n|]+)/i;
     const fieldMatch = source.match(fieldPattern);
 
     if (fieldMatch?.[1]) {
         const value = extractIucnStatusFromWikipediaValue(fieldMatch[1]);
         const codeMatch = value.match(
-            /\\b(CR|EN|VU|NT|LC|DD|NE|EW|EX|CD)\\b/i
+            /\b(CR|EN|VU|NT|LC|DD|NE|EW|EX|CD)\b/i
         );
         if (codeMatch) return codeMatch[1].toUpperCase();
 
