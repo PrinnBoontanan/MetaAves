@@ -4871,31 +4871,63 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy, mysteryGenusS
         ? gameState.birds.filter(bird => bird.genus === mysteryGenus)
         : [];
 
-    if (!isSameGenus && familyGenera.size >= 5) {
-        const genusCountText =
-            familyGenera.size >= 20 ? "many genera" :
-            familyGenera.size >= 10 ? "a large number of genera" :
-            "several genera";
+    // The amount of remaining search space controls how explicit the clue should be.
+    // Large families/genus groups get sharper, more diagnostic clues; small groups
+    // get broader clues so the hint does not become an accidental giveaway.
+    const familySpecificity =
+        familyGenera.size >= 30 ? "very_specific" :
+        familyGenera.size >= 15 ? "specific" :
+        familyGenera.size >= 7 ? "moderate" :
+        "broad";
+
+    const genusSpecificity =
+        genusMembersAll.length >= 30 ? "very_specific" :
+        genusMembersAll.length >= 15 ? "specific" :
+        genusMembersAll.length >= 6 ? "moderate" :
+        "broad";
+
+    if (!isSameGenus) {
+        const familyHintText = {
+            very_specific:
+                "This family contains " + familyGenera.size +
+                " genera, so look for a distinctive combination of traits that can separate the mystery genus from the many other genera here.",
+            specific:
+                "This family contains " + familyGenera.size +
+                " genera, so a fairly specific habitat, behavior, diet, or appearance trait can help narrow down the mystery genus.",
+            moderate:
+                "This family contains " + familyGenera.size +
+                " genera, so use the biological clues to narrow down the mystery genus.",
+            broad:
+                "This family contains " + familyGenera.size +
+                " genera, so start with the broad biological traits before looking for finer differences."
+        }[familySpecificity];
 
         clues.push({
             heading: "Family structure",
-            text: "The mystery bird belongs to a family containing " +
-                genusCountText + " (" + familyGenera.size + " genera), so use the biological clues to narrow down which genus it belongs to."
+            text: familyHintText
         });
     }
 
     if (isSameGenus && genusMembersAll.length >= 2) {
         const speciesCount = genusMembersAll.length;
-        const speciesCountText =
-            speciesCount >= 20 ? "many species" :
-            speciesCount >= 10 ? "a large number of species" :
-            speciesCount >= 5 ? "several species" :
-            speciesCount + " species";
+        const genusHintText = {
+            very_specific:
+                "The mystery genus contains " + speciesCount +
+                " species. Because there are many close relatives, use very specific differences in habitat, behavior, diet, breeding, or appearance to identify the mystery species.",
+            specific:
+                "The mystery genus contains " + speciesCount +
+                " species. Look for specific differences in habitat, behavior, diet, breeding, or appearance to separate the mystery species from its relatives.",
+            moderate:
+                "The mystery genus contains " + speciesCount +
+                " species. Use the species-level clues to separate the mystery bird from its genus relatives.",
+            broad:
+                "The mystery genus contains " + speciesCount +
+                " species. Start with the broad species-level differences, then use finer details if needed."
+        }[genusSpecificity];
 
         clues.push({
             heading: "Genus structure",
-            text: "The mystery genus contains " + speciesCountText +
-                " (" + speciesCount + " species), so look for traits that separate the mystery species from its genus relatives."
+            text: genusHintText
         });
     }
 
@@ -4955,18 +4987,30 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy, mysteryGenusS
                 });
             });
 
+            const minimumSupport =
+                familySpecificity === "very_specific" ? 3 :
+                familySpecificity === "specific" ? 2 :
+                1;
+
             const repeatedTraits = [...tokenCounts.entries()]
-                .filter(([, count]) => count >= 2)
+                .filter(([, count]) => count >= minimumSupport)
                 .sort((a, b) => b[1] - a[1])
-                .slice(0, 2)
+                .slice(0, familySpecificity === "very_specific" ? 2 : 3)
                 .map(([token]) => token);
 
             if (repeatedTraits.length) {
+                const specificityText =
+                    familySpecificity === "very_specific"
+                        ? "Several species in the mystery genus repeatedly show "
+                        : familySpecificity === "specific"
+                            ? "The mystery genus is repeatedly associated with "
+                            : familySpecificity === "moderate"
+                                ? "The mystery genus is associated with "
+                                : "A broad trait found among species in the mystery genus is ";
+
                 genusClues.push({
                     heading: label + " — genus clue",
-                    text: "The genus containing the mystery bird has multiple species associated with " +
-                        repeatedTraits.join(" and ") +
-                        "."
+                    text: specificityText + repeatedTraits.join(" and ") + "."
                 });
             }
         }
@@ -5034,11 +5078,16 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy, mysteryGenusS
             const guessedOnly = leftTokens.filter(token => !rightTokens.includes(token));
 
             if (shared.length) {
+                const sharedLimit = genusSpecificity === "very_specific" ? 1 : 2;
                 clues.push({
                     heading: label,
                     text: targetIntro +
-                        "both birds show a connection to " +
-                        shared.slice(0, 2).join(" and ") +
+                        (genusSpecificity === "very_specific"
+                            ? "both birds share the specific trait "
+                            : genusSpecificity === "specific"
+                                ? "both birds share the trait "
+                                : "both birds show a connection to ") +
+                        shared.slice(0, sharedLimit).join(" and ") +
                         ", so use this trait when narrowing down the " +
                         hintTarget + "."
                 });
@@ -5048,17 +5097,25 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy, mysteryGenusS
                 differenceClues.push({
                     heading: label + " comparison",
                     text: targetIntro +
-                        "the mystery bird is associated with " +
-                        mysteryOnly.slice(0, 2).join(" and ") +
+                        (genusSpecificity === "very_specific"
+                            ? "the mystery bird has the more specific trait "
+                            : genusSpecificity === "specific"
+                                ? "the mystery bird is specifically associated with "
+                                : "the mystery bird is associated with ") +
+                        mysteryOnly.slice(0, genusSpecificity === "very_specific" ? 1 : 2).join(" and ") +
                         ", while the bird you guessed is associated with " +
-                        guessedOnly.slice(0, 2).join(" and ") + "."
+                        guessedOnly.slice(0, genusSpecificity === "very_specific" ? 1 : 2).join(" and ") + "."
                 });
             } else if (mysteryOnly.length) {
                 differenceClues.push({
                     heading: label + " comparison",
                     text: targetIntro +
-                        "the mystery bird has a " +
-                        mysteryOnly.slice(0, 2).join(" and ") +
+                        (genusSpecificity === "very_specific"
+                            ? "the mystery bird has the distinctive trait "
+                            : genusSpecificity === "specific"
+                                ? "the mystery bird has the more specific trait "
+                                : "the mystery bird has a ") +
+                        mysteryOnly.slice(0, genusSpecificity === "very_specific" ? 1 : 2).join(" and ") +
                         " association that is not described for the bird you guessed."
                 });
             }
