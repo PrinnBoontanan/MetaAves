@@ -2223,12 +2223,38 @@ function limitWikipediaSentences(text, maxSentences = 3, maxCharacters = 1800) {
     return result;
 }
 
+function isWikipediaNonContentSection(heading) {
+    const normalized = String(heading || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+
+    if (!normalized) return false;
+
+    // Never treat bibliography/citation/navigation material as biological
+    // evidence. Reference-book titles can contain words such as "forest",
+    // "range", "habitat", "feeding", etc., which would otherwise trigger the
+    // loose sentence classifier below.
+    return [
+        "references",
+        "reference",
+        "notes",
+        "citations",
+        "bibliography",
+        "further reading",
+        "external links",
+        "see also",
+        "sources",
+        "works cited"
+    ].some(blocked => normalized === blocked);
+}
+
 function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
     const values = [];
     const sentences = collectWikipediaSentences(sections);
 
     for (const [heading, text] of Object.entries(sections || {})) {
-        if (!text || heading === "__lead__") continue;
+        if (!text || heading === "__lead__" || isWikipediaNonContentSection(heading)) continue;
 
         const isDedicated = dedicatedHeadings.some(candidate =>
             heading === candidate ||
@@ -2258,9 +2284,10 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
     // complete text. This prevents the same Wikipedia prose being appended
     // twice.
     for (const item of sentences) {
-        if (dedicatedHeadings.some(candidate =>
-            item.heading === candidate
-        )) {
+        if (
+            isWikipediaNonContentSection(item.heading) ||
+            dedicatedHeadings.some(candidate => item.heading === candidate)
+        ) {
             continue;
         }
 
