@@ -3042,24 +3042,39 @@ function centerTaxonomyHorizontalScroll(smooth = false) {
         return;
     }
 
-    const maxScroll = Math.max(
+    // Center the actual tree first. The custom scrollbar has a slightly
+    // different viewport width, so using its raw maxScroll for both
+    // elements leaves the tree a little off-center.
+    const treeMaxScroll = Math.max(
+        0,
+        taxonomyTree.scrollWidth - taxonomyTree.clientWidth
+    );
+
+    if (treeMaxScroll <= 0) {
+        taxonomyTree.scrollLeft = 0;
+        taxonomyHorizontalScroll.scrollLeft = 0;
+        return;
+    }
+
+    const behavior = smooth ? "smooth" : "auto";
+    const treeCenter = treeMaxScroll / 2;
+
+    taxonomyTree.scrollTo({
+        left: treeCenter,
+        behavior
+    });
+
+    // Keep the custom scrollbar thumb at the same proportional position
+    // as the real tree viewport.
+    const scrollbarMaxScroll = Math.max(
         0,
         taxonomyHorizontalScroll.scrollWidth -
             taxonomyHorizontalScroll.clientWidth
     );
-
-    if (maxScroll <= 0) return;
-
-    const center = maxScroll / 2;
-    const behavior = smooth ? "smooth" : "auto";
+    const scrollbarCenter = scrollbarMaxScroll / 2;
 
     taxonomyHorizontalScroll.scrollTo({
-        left: center,
-        behavior
-    });
-
-    taxonomyTree.scrollTo({
-        left: center,
+        left: scrollbarCenter,
         behavior
     });
 }
