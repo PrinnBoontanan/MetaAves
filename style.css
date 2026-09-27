@@ -2831,3 +2831,67 @@ input:focus-visible,
 .taxonomy-horizontal-scroll {
     display: none !important;
 }
+
+
+/* ========================================
+   Compact detailed taxonomy — two columns
+======================================== */
+
+/* Keep every real taxonomy rank visible, but use the available card width
+   instead of making the taxonomy section one very tall list. */
+.taxon-card.species-card > .taxon-card-species-taxonomy {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 0;
+    align-content: start;
+}
+
+.taxon-card.species-card > .taxon-card-species-taxonomy > h4 {
+    grid-column: 1 / -1;
+    margin-bottom: 10px;
+}
+
+.taxon-card.species-card .taxon-card-taxonomy-row {
+    min-width: 0;
+    margin: 0 !important;
+    padding: 5px 0;
+    line-height: 1.45;
+    border-bottom: 1px solid #eee5d5;
+}
+
+.taxon-card.species-card .taxon-card-taxonomy-row:nth-last-child(-n + 2) {
+    border-bottom: 0;
+}
+
+/* The study/game-over taxonomy uses the same compact two-column treatment. */
+.study-taxonomy {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 0;
+}
+
+.study-taxonomy-row {
+    min-width: 0;
+    margin: 0;
+}
+
+@media (max-width: 700px) {
+    .taxon-card.species-card > .taxon-card-species-taxonomy,
+    .study-taxonomy {
+        grid-template-columns: 1fr;
+    }
+
+    .taxon-card.species-card > .taxon-card-species-taxonomy > h4 {
+        grid-column: 1;
+    }
+
+    .taxon-card.species-card .taxon-card-taxonomy-row:nth-last-child(-n + 2) {
+        border-bottom: 1px solid #eee5d5;
+    }
+
+    .taxon-card.species-card .taxon-card-taxonomy-row:last-child {
+        border-bottom: 0;
+    }
+}
