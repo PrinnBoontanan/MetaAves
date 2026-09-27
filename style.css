@@ -2759,21 +2759,33 @@ input:focus-visible,
 
 
 /* Taxonomy colors
-   Use a restrained olive / stone palette rather than pastel colors.
-   The proximity mechanic remains: far = #978665, middle = blended
-   olive-gold, close = #5A783B. */
+   Match the original Metazooa-style feedback:
+   distant = red, then orange/yellow, then green as the shared
+   taxonomy gets deeper. The node and its branch use the same color. */
 .meta-tree-node[data-level="class"],
 .meta-tree-node[data-level="order"],
 .meta-tree-node[data-level="family"],
 .meta-tree-node[data-level="genus"],
 .meta-tree-node[data-level="clade"] {
-    background: var(--tree-proximity-color, #978665);
+    background: var(--tree-proximity-color, #a53b1f);
     color: #fffdf8;
-    border: 1px solid rgba(63, 70, 56, 0.28);
+    border: 1px solid rgba(74, 48, 28, 0.28);
     font-weight: 700;
+}
+
+.meta-tree-node.meta-species-node:not(.meta-species-mystery) {
+    background: var(--tree-proximity-color, #fffdf8);
+    color: #3f4938;
+    border: 1px solid rgba(92, 78, 54, 0.30);
+}
+
+.meta-tree-node.meta-species-node.meta-species-correct {
+    background: #4f7f31;
+    color: #fffdf8;
+    border-color: rgba(55, 84, 34, 0.42);
 }
 
 .meta-connection-taxon,
 .meta-connection-species {
-    stroke: var(--tree-proximity-color, #978665);
+    stroke: var(--tree-proximity-color, #a53b1f);
 }
