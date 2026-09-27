@@ -2282,7 +2282,7 @@ function extractWikipediaWikitextSection(wikitext, candidates) {
 
     const lines = String(wikitext).replace(/\r/g, "").split("\n");
 
-    const headingRegex = /^(={2,6})\\s*(.*?)\\s*\\1\\s*$/;
+    const headingRegex = /^(={2,6})\s*(.*?)\s*\1\s*$/;
     let bestText = "";
     let bestScore = -1;
 
@@ -2292,7 +2292,7 @@ function extractWikipediaWikitextSection(wikitext, candidates) {
 
         const level = match[1].length;
         const heading = normalizeWikipediaText(match[2])
-            .replace(/\\[edit\\]/gi, "")
+            .replace(/\[edit\]/gi, "")
             .toLowerCase();
 
         let score = -1;
@@ -2320,15 +2320,15 @@ function extractWikipediaWikitextSection(wikitext, candidates) {
 
         // Remove references, comments, files, templates and wiki markup.
         text = text
-            .replace(/<!--(?:.|\\n)*?-->/gs, " ")
-            .replace(/<ref(?:\\s[^>]*)?>[\\s\\S]*?<\\/ref>/gi, " ")
-            .replace(/<ref\\s*\\/\\s*>/gi, " ")
+            .replace(/<!--(?:.|\n)*?-->/gs, " ")
+            .replace(/<ref(?:\s[^>]*)?>[\s\S]*?<\/ref>/gi, " ")
+            .replace(/<ref\s*\/\s*>/gi, " ")
             .replace(/<[^>]+>/g, " ")
-            .replace(/\\[\\[(?:File|Image):[^\\]]+\\]\\]/gi, " ")
-            .replace(/\\{\\{[\\s\\S]*?\\}\\}/g, " ")
-            .replace(/\\[\\[([^\\]|]+)\\|([^\\]]+)\\]\\]/g, "$2")
-            .replace(/\\[\\[([^\\]]+)\\]\\]/g, "$1")
-            .replace(/\\[\\[[^\\]]+\\]\\]/g, " ")
+            .replace(/\[\[(?:File|Image):[^\]]+\]\]/gi, " ")
+            .replace(/\{\{[\s\S]*?\}\}/g, " ")
+            .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
+            .replace(/\[\[([^\]]+)\]\]/g, "$1")
+            .replace(/\[\[[^\]]+\]\]/g, " ")
             .replace(/'{2,}/g, "")
             .replace(/&nbsp;/gi, " ");
 
