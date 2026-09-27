@@ -16,7 +16,8 @@ const gameState = {
     gameStatus: "playing",
     taxonomyView: "tree",
     wikipediaCache: new Map(),
-    thaiNameCache: new Map()
+    thaiNameCache: new Map(),
+    taxonCardRequestId: 0
 };
 
 const guessCountElement = document.getElementById("guess-count");
@@ -2617,6 +2618,7 @@ async function showBirdInTaxonCard(bird) {
 
     gameState.selectedTaxonId = "species:" + (bird.scientificName || bird.commonName);
     const selectionId = gameState.selectedTaxonId;
+    const requestId = ++gameState.taxonCardRequestId;
 
     card.innerHTML = "<p>Loading bird information from Wikipedia...</p>";
 
@@ -2624,7 +2626,10 @@ async function showBirdInTaxonCard(bird) {
     const wiki = await fetchWikipediaPageData(wikiTitle, true, "bird");
 
     // Do not let a slower old request overwrite a newer selection.
-    if (gameState.selectedTaxonId !== selectionId) return;
+    if (
+        gameState.selectedTaxonId !== selectionId ||
+        gameState.taxonCardRequestId !== requestId
+    ) return;
 
     renderBirdCard(bird, wiki);
 }
@@ -2715,6 +2720,7 @@ async function showTaxonInTaxonCard(taxon) {
 
     gameState.selectedTaxonId = taxon.id;
     const selectionId = taxon.id;
+    const requestId = ++gameState.taxonCardRequestId;
 
     if (taxon.rank === "clade") {
         card.innerHTML = "<p>Loading clade information from Wikipedia...</p>";
@@ -2725,7 +2731,10 @@ async function showTaxonInTaxonCard(taxon) {
             "bird"
         );
 
-        if (gameState.selectedTaxonId !== selectionId) return;
+        if (
+            gameState.selectedTaxonId !== selectionId ||
+            gameState.taxonCardRequestId !== requestId
+        ) return;
         renderCladeCard(taxon, wiki);
         return;
     }
@@ -2736,7 +2745,18 @@ async function showTaxonInTaxonCard(taxon) {
     const wikiTitle = getWikipediaTitleFromTaxon(taxon, info);
     const wiki = await fetchWikipediaPageData(wikiTitle, true);
 
-    if (gameState.selectedTaxonId !== selectionId) return;
+    if (
+        gameState.selectedTaxonId !== selectionId ||
+        gameState.taxonCardRequestId !== requestId
+    ) return;
+
+    // The same taxon can be selected more than once while its Wikipedia
+    // request is still in flight. Remove any previously-added dynamic
+    // elements before appending the fresh result so a photo or Wikipedia
+    // link can never appear twice.
+    card.querySelectorAll(
+        ".taxon-card-image, .taxon-card-wikipedia-link, [data-taxon-card-dynamic='true']"
+    ).forEach(element => element.remove());
 
     const description = card.querySelector(".taxon-card-description");
     if (description) {
