@@ -2182,15 +2182,36 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
     );
 }
 
-function limitWikipediaSentences(text, maxSentences = 3) {
+function limitWikipediaSentences(text, maxSentences = 3, maxCharacters = 1800) {
     const sentences = splitWikipediaSentences(text)
         .slice(0, maxSentences);
 
-    // Study-card prose should be useful and readable, not a copied
-    // Wikipedia article. Eight sentences gives room for roughly 20–30
-    // lines in the side card while keeping very long species descriptions
-    // under control.
-    return sentences.join(" ");
+    let result = "";
+
+    for (const sentence of sentences) {
+        const candidate = result ? result + " " + sentence : sentence;
+
+        if (candidate.length > maxCharacters) {
+            break;
+        }
+
+        result = candidate;
+    }
+
+    // If the first sentence itself is unusually long, keep it readable
+    // instead of allowing a single Wikipedia paragraph to fill the card.
+    if (!result && sentences[0]) {
+        result = sentences[0].slice(0, maxCharacters).trim();
+
+        const lastSpace = result.lastIndexOf(" ");
+        if (lastSpace > Math.floor(maxCharacters * 0.8)) {
+            result = result.slice(0, lastSpace);
+        }
+
+        result += "…";
+    }
+
+    return result;
 }
 
 function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
@@ -2746,7 +2767,8 @@ function getWikipediaStudyData(html, wikitext = "") {
                 "appearance",
                 "identification"
             ]) || lead,
-            8
+            7,
+            1800
         ),
 
         habitatDistribution: extractWikipediaCategoryText(
