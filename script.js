@@ -4248,8 +4248,11 @@ function renderTaxonomyTree() {
                 getComputedStyle(parent.element).backgroundColor ||
                 "hsl(0, 58%, 40%)";
             const childColor =
-                getComputedStyle(childPosition.element).backgroundColor ||
-                "hsl(120, 58%, 40%)";
+                child.type === "taxon"
+                    ? getComputedStyle(childPosition.element).backgroundColor ||
+                      "hsl(120, 52%, 72%)"
+                    : getComputedStyle(parent.element).backgroundColor ||
+                      "hsl(120, 52%, 72%)";
 
             const gradient = document.createElementNS(
                 "http://www.w3.org/2000/svg",
