@@ -1196,7 +1196,106 @@ function isWikipediaBirdPage(summary) {
         "birds",
         "avian",
         "passerine",
-        "aves"
+        "aves",
+        // Wikipedia often describes bird pages by their specific group
+        // instead of literally saying "bird". For example, Tropical
+        // screech owl is described as "Species of owl".
+        "owl",
+        "owls",
+        "penguin",
+        "penguins",
+        "parrot",
+        "parrots",
+        "macaw",
+        "macaws",
+        "cockatoo",
+        "cockatoos",
+        "pigeon",
+        "pigeons",
+        "dove",
+        "doves",
+        "duck",
+        "ducks",
+        "goose",
+        "geese",
+        "swan",
+        "swans",
+        "heron",
+        "herons",
+        "egret",
+        "egrets",
+        "stork",
+        "storks",
+        "ibis",
+        "ibises",
+        "kingfisher",
+        "kingfishers",
+        "hornbill",
+        "hornbills",
+        "woodpecker",
+        "woodpeckers",
+        "hummingbird",
+        "hummingbirds",
+        "toucan",
+        "toucans",
+        "flamingo",
+        "flamingos",
+        "crane",
+        "cranes",
+        "rail",
+        "rails",
+        "galliform",
+        "galliforms",
+        "pheasant",
+        "pheasants",
+        "grouse",
+        "grouses",
+        "quail",
+        "quails",
+        "falcon",
+        "falcons",
+        "hawk",
+        "hawks",
+        "eagle",
+        "eagles",
+        "kite",
+        "kites",
+        "vulture",
+        "vultures",
+        "harrier",
+        "harriers",
+        "tern",
+        "terns",
+        "gull",
+        "gulls",
+        "albatross",
+        "albatrosses",
+        "petrel",
+        "petrels",
+        "cuckoo",
+        "cuckoos",
+        "nightjar",
+        "nightjars",
+        "swift",
+        "swifts",
+        "kinglet",
+        "kinglets",
+        "warbler",
+        "warblers",
+        "thrush",
+        "thrushes",
+        "sparrow",
+        "sparrows",
+        "finch",
+        "finches",
+        "tit",
+        "tits",
+        "wren",
+        "wrens",
+        "starling",
+        "starlings",
+        "monarch",
+        "monarchs"
     ];
 
     return birdSignals.some(signal => text.includes(signal));
@@ -3224,6 +3323,134 @@ function renderTaxonomyTree() {
 
 
 // ========================================
+// Online conservation status
+// ========================================
+//
+// Wikipedia's conservation infobox is not consistent across bird articles.
+// Use Wikidata's structured IUCN property (P141) as the primary online
+// source, then keep the Wikipedia parser as a fallback.
+//
+// Wikidata P141 is explicitly the "IUCN conservation status" property.
+// We resolve the bird by its scientific name (P225), then read the P141
+// item and its English label.
+
+async function fetchWikidataConservationStatus(bird) {
+    const scientificName = String(bird?.scientificName || "").trim();
+    if (!scientificName) return "";
+
+    const statusLabels = {
+        Q211005: ["LC", "Least Concern"],
+        Q719675: ["NT", "Near Threatened"],
+        Q278113: ["VU", "Vulnerable"],
+        Q96377276: ["EN", "Endangered"],
+        Q219127: ["CR", "Critically Endangered"],
+        Q239509: ["EW", "Extinct in the Wild"],
+        Q237350: ["EX", "Extinct"],
+        Q3245245: ["DD", "Data Deficient"],
+        Q3350324: ["NE", "Not Evaluated"]
+    };
+
+    try {
+        const searchUrl =
+            "https://www.wikidata.org/w/api.php?" +
+            new URLSearchParams({
+                action: "wbsearchentities",
+                search: scientificName,
+                language: "en",
+                uselang: "en",
+                type: "item",
+                limit: "10",
+                format: "json",
+                origin: "*"
+            }).toString();
+
+        const searchResponse = await fetch(searchUrl);
+        if (!searchResponse.ok) return "";
+
+        const searchData = await searchResponse.json();
+        const candidates = searchData?.search || [];
+
+        const entityId =
+            candidates.find(item =>
+                String(item?.label || "").trim().toLowerCase() ===
+                scientificName.toLowerCase()
+            )?.id ||
+            candidates.find(item =>
+                String(item?.description || "").toLowerCase().includes("species of bird")
+            )?.id ||
+            candidates[0]?.id;
+
+        if (!entityId) return "";
+
+        const entityUrl =
+            "https://www.wikidata.org/w/api.php?" +
+            new URLSearchParams({
+                action: "wbgetentities",
+                ids: entityId,
+                props: "claims|labels",
+                languages: "en",
+                format: "json",
+                origin: "*"
+            }).toString();
+
+        const entityResponse = await fetch(entityUrl);
+        if (!entityResponse.ok) return "";
+
+        const entityData = await entityResponse.json();
+        const entity = entityData?.entities?.[entityId];
+        if (!entity) return "";
+
+        // Make sure a search result for a similarly named taxon cannot be
+        // accidentally used for this bird.
+        const scientificClaims = entity.claims?.P225 || [];
+        const exactScientificName = scientificClaims.some(claim =>
+            String(claim?.mainsnak?.datavalue?.value || "").trim().toLowerCase() ===
+            scientificName.toLowerCase()
+        );
+
+        if (!exactScientificName) return "";
+
+        const p141Claims = entity.claims?.P141 || [];
+        if (!p141Claims.length) return "";
+
+        // Prefer a preferred-rank P141 statement, otherwise use the first
+        // normal statement. Wikidata documents P141 as the IUCN status.
+        const rankedClaims = [
+            ...p141Claims.filter(claim => claim?.rank === "preferred"),
+            ...p141Claims.filter(claim => claim?.rank === "normal")
+        ];
+
+        for (const claim of rankedClaims) {
+            const statusId =
+                claim?.mainsnak?.datavalue?.value?.id;
+
+            if (!statusId) continue;
+
+            if (statusLabels[statusId]) {
+                const [code, name] = statusLabels[statusId];
+                return code + " - " + name;
+            }
+
+            const label =
+                entityData?.entities?.[statusId]?.labels?.en?.value;
+
+            if (label) {
+                return label;
+            }
+        }
+
+        return "";
+    } catch (error) {
+        console.warn(
+            "Wikidata conservation lookup failed:",
+            scientificName,
+            error
+        );
+        return "";
+    }
+}
+
+// ========================================
 // Game Over Card
 // ========================================
 
@@ -3347,10 +3574,11 @@ async function showGameOverCard(result) {
     if (newGameButton) newGameButton.classList.add("visible");
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    const [wiki, onlineThaiName] =
+    const [wiki, onlineThaiName, onlineConservationStatus] =
         await Promise.all([
             fetchWikipediaPageData(wikiTitle, true),
-            fetchOnlineThaiName(bird)
+            fetchOnlineThaiName(bird),
+            fetchWikidataConservationStatus(bird)
         ]);
 
     if (gameState.mysteryBird !== bird) return;
@@ -3380,8 +3608,9 @@ async function showGameOverCard(result) {
     setStudyValue("Breeding", studyData.breeding);
     setStudyValue(
         "Conservation",
+        onlineConservationStatus ||
         studyData.conservation ||
-        "No information available on Wikipedia."
+        "No information available online."
     );
 
     const placeholder = document.getElementById("study-photo-placeholder");
