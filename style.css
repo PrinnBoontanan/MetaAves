@@ -2524,7 +2524,7 @@ input:focus-visible,
     display: grid;
     grid-template-columns: 260px minmax(220px, 0.8fr) minmax(300px, 1.35fr) minmax(260px, 1fr);
     grid-template-areas:
-        "photo identity description taxonomy"
+        "title identity description taxonomy"
         "photo identity description taxonomy"
         "photo wikipedia wikipedia taxonomy";
     column-gap: 26px;
@@ -2542,8 +2542,8 @@ input:focus-visible,
 }
 
 .taxon-card.species-card > h3 {
-    grid-area: identity;
-    margin: 0 0 2px;
+    grid-area: title;
+    margin: 0 0 4px;
     line-height: 1.15;
 }
 
