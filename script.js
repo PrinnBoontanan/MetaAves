@@ -713,6 +713,19 @@ function buildTreeModel() {
     };
 
     if (!gameState.mysteryBird || gameState.guesses.length === 0) {
+        // Start every round with the hidden mystery leaf already visible:
+        // Aves → ???. This gives the player the same visual starting point
+        // as the normal revealed tree without exposing any taxonomy beyond
+        // the Aves root.
+        if (gameState.mysteryBird) {
+            root.children.push({
+                type: "species",
+                name: "???",
+                nodeType: "mystery",
+                bird: null
+            });
+        }
+
         return root;
     }
 
