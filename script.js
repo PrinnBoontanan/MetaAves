@@ -100,12 +100,15 @@ async function loadGameData() {
                     ? passerineFamilyCladePaths[bird.family]
                     : null;
 
-            bird.postOrderCladePath =
-                Array.isArray(generatedPostOrder) && generatedPostOrder.length
-                    ? generatedPostOrder
-                    : Array.isArray(fallbackPostOrder)
-                        ? fallbackPostOrder
-                        : [];
+            // Always merge the family fallback with generated data.
+            // This makes the detailed passerine clade layer resilient when
+            // the generated membership file is older than clades.json.
+            bird.postOrderCladePath = [
+                ...(Array.isArray(generatedPostOrder) ? generatedPostOrder : []),
+                ...(Array.isArray(fallbackPostOrder) ? fallbackPostOrder : [])
+            ].filter(
+                (name, index, values) => values.indexOf(name) === index
+            );
         });
 
         // Select a random species from the full imported dataset.
@@ -479,11 +482,24 @@ function getBirdPhylogenyPath(bird) {
                 });
             }
 
-            if (
-                node.level === "order" &&
-                Array.isArray(bird.postOrderCladePath)
-            ) {
-                bird.postOrderCladePath.forEach(cladeName => {
+            if (node.level === "order") {
+                const fallbackFamilyPath =
+                    bird.order === "Passeriformes"
+                        ? gameState.clades?._meta?.passerineFamilyCladePaths?.[bird.family]
+                        : null;
+
+                const postOrderPath = [
+                    ...(Array.isArray(bird.postOrderCladePath)
+                        ? bird.postOrderCladePath
+                        : []),
+                    ...(Array.isArray(fallbackFamilyPath)
+                        ? fallbackFamilyPath
+                        : [])
+                ].filter(
+                    (name, index, values) => values.indexOf(name) === index
+                );
+
+                postOrderPath.forEach(cladeName => {
                     const clade = cladeByName.get(cladeName);
                     if (!clade || seen.has(clade.id)) return;
                     addNode(clade.id, "clade", clade.name);
