@@ -3483,6 +3483,14 @@ function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
     }
 
     add("Genus", bird?.genus || detailed.genus?.name);
+
+    // Keep a formally recognized subgenus when a detailed source provides
+    // one. AviList does not currently publish this intermediary rank.
+    const subgenus = detailed.subgenus;
+    if (subgenus?.name) {
+        add(subgenus.label || "Subgenus", subgenus.name);
+    }
+
     add(
         "Species",
         bird?.species || bird?.scientificName || detailed.species?.name
