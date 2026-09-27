@@ -2579,6 +2579,7 @@ input:focus-visible,
 .taxon-card:not(.species-card) {
     display: grid;
     grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-rows: auto auto 280px auto;
     grid-template-areas:
         "title title"
         "rank rank"
@@ -2607,10 +2608,10 @@ input:focus-visible,
     z-index: 2;
     margin: 0 0 14px 12px;
     padding: 0;
-    color: #fffdf5;
+    color: #4f5d42;
     font-weight: 700;
     line-height: 1.2;
-    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.75);
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
     box-sizing: border-box;
 }
 
