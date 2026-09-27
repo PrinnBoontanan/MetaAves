@@ -1548,27 +1548,19 @@ body {
 .meta-tree-node[data-level="family"],
 .meta-tree-node[data-level="genus"],
 .meta-tree-node[data-level="clade"] {
-    background:
-        linear-gradient(
-            135deg,
-            hsl(
-                var(--tree-proximity-hue, 0),
-                58%,
-                38%
-            ),
-            hsl(
-                var(--tree-proximity-hue, 0),
-                58%,
-                45%
-            )
-        );
+    /* Keep the depth color consistent across the whole node instead of
+       mixing two different shades with a gradient. */
+    background: hsl(
+        var(--tree-proximity-hue, 0),
+        58%,
+        40%
+    );
     color: #fff;
-    border: 1px solid
-        hsl(
-            var(--tree-proximity-hue, 0),
-            60%,
-            30%
-        );
+    border: 1px solid hsl(
+        var(--tree-proximity-hue, 0),
+        58%,
+        30%
+    );
     font-weight: 700;
 }
 
@@ -1576,9 +1568,18 @@ body {
     stroke: hsl(
         var(--tree-proximity-hue, 0),
         58%,
-        34%
+        40%
     );
     stroke-width: 5;
+}
+
+.meta-tree-connection.meta-connection-species {
+    stroke: hsl(
+        var(--tree-proximity-hue, 0),
+        58%,
+        40%
+    );
+    stroke-width: 3.5;
 }
 
 /* Curved branches + sequential growing animation. */
