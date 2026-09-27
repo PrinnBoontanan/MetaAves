@@ -3563,17 +3563,38 @@ function renderBirdCard(bird, wiki, wikidataDetailed = {}) {
     taxonomyHeading.textContent = "Taxonomy";
     taxonomySection.appendChild(taxonomyHeading);
 
-    getDetailedSpeciesTaxonomyRows(bird, wiki, wikidataDetailed).forEach(([label, value]) => {
-        const row = document.createElement("p");
-        row.className = "taxon-card-taxonomy-row";
+    const taxonomyRows = getDetailedSpeciesTaxonomyRows(
+        bird,
+        wiki,
+        wikidataDetailed
+    );
 
-        const labelElement = document.createElement("strong");
-        labelElement.textContent = label + ": ";
+    const columnCount = 2;
+    const rowsPerColumn = Math.ceil(taxonomyRows.length / columnCount);
 
-        row.appendChild(labelElement);
-        row.appendChild(document.createTextNode(value));
-        taxonomySection.appendChild(row);
-    });
+    for (let columnIndex = 0; columnIndex < columnCount; columnIndex += 1) {
+        const column = document.createElement("div");
+        column.className = "taxon-card-taxonomy-column";
+
+        taxonomyRows
+            .slice(
+                columnIndex * rowsPerColumn,
+                (columnIndex + 1) * rowsPerColumn
+            )
+            .forEach(([label, value]) => {
+                const row = document.createElement("p");
+                row.className = "taxon-card-taxonomy-row";
+
+                const labelElement = document.createElement("strong");
+                labelElement.textContent = label + ": ";
+
+                row.appendChild(labelElement);
+                row.appendChild(document.createTextNode(value));
+                column.appendChild(row);
+            });
+
+        taxonomySection.appendChild(column);
+    }
 
     card.appendChild(taxonomySection);
 
@@ -3659,17 +3680,38 @@ async function showTaxonInTaxonCard(taxon) {
         heading.textContent = "Taxonomy";
         taxonomySection.appendChild(heading);
 
-        mergeDetailedTaxonomyRows(taxon, wiki, wikidataDetailed).forEach(([label, value]) => {
-            const row = document.createElement("p");
-            row.className = "taxon-card-taxonomy-row";
+        const taxonomyRows = mergeDetailedTaxonomyRows(
+            taxon,
+            wiki,
+            wikidataDetailed
+        );
 
-            const labelElement = document.createElement("strong");
-            labelElement.textContent = label + ": ";
+        const columnCount = 2;
+        const rowsPerColumn = Math.ceil(taxonomyRows.length / columnCount);
 
-            row.appendChild(labelElement);
-            row.appendChild(document.createTextNode(value));
-            taxonomySection.appendChild(row);
-        });
+        for (let columnIndex = 0; columnIndex < columnCount; columnIndex += 1) {
+            const column = document.createElement("div");
+            column.className = "taxon-card-taxonomy-column";
+
+            taxonomyRows
+                .slice(
+                    columnIndex * rowsPerColumn,
+                    (columnIndex + 1) * rowsPerColumn
+                )
+                .forEach(([label, value]) => {
+                    const row = document.createElement("p");
+                    row.className = "taxon-card-taxonomy-row";
+
+                    const labelElement = document.createElement("strong");
+                    labelElement.textContent = label + ": ";
+
+                    row.appendChild(labelElement);
+                    row.appendChild(document.createTextNode(value));
+                    column.appendChild(row);
+                });
+
+            taxonomySection.appendChild(column);
+        }
 
         card.appendChild(taxonomySection);
     }
