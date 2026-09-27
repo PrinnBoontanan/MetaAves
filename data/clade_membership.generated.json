@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 1,
+    "version": 2,
     "generatedBy": "scripts/import_avilist.py",
     "source": "Wikipedia bird phylogeny pages, using Stiller et al. 2024 where those pages identify that topology",
     "policy": "Detailed named clades are included where the source provides a usable lineage. Contested alternative deep Neoaves relationships are not mixed into the same lineage."
