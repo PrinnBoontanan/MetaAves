@@ -1982,16 +1982,16 @@ body {
 
 .taxonomy-horizontal-scroll {
     display: none;
-    height: 16px;
+    height: 18px;
     margin-top: 8px;
-    padding: 2px 0;
+    padding: 1px 0;
     overflow-x: auto;
     overflow-y: hidden;
     border: 1px solid #dfd1b7;
     border-radius: 999px;
     background: #eee5d5;
     box-shadow: inset 0 1px 2px rgba(76, 61, 33, .07);
-    scrollbar-width: thin;
+    scrollbar-width: auto;
     scrollbar-color: #aa9a7c transparent;
     cursor: grab;
 }
@@ -2010,7 +2010,7 @@ body {
 }
 
 .taxonomy-horizontal-scroll::-webkit-scrollbar {
-    height: 10px;
+    height: 14px;
 }
 
 .taxonomy-horizontal-scroll::-webkit-scrollbar-track {
@@ -2022,6 +2022,7 @@ body {
     border: 1px solid transparent;
     background-clip: padding-box;
     border-radius: 999px;
+    min-height: 14px;
 }
 
 .taxonomy-horizontal-scroll::-webkit-scrollbar-thumb:hover {
