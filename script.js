@@ -3459,12 +3459,12 @@ function renderBirdCard(bird, wiki, wikidataDetailed = {}) {
     card.appendChild(title);
 
     const scientific = document.createElement("p");
-    scientific.classList.add("taxon-card-rank");
+    scientific.classList.add("taxon-card-rank", "taxon-card-scientific");
     scientific.textContent = bird.scientificName || "Scientific name unavailable";
     card.appendChild(scientific);
 
     const rank = document.createElement("p");
-    rank.classList.add("taxon-card-rank");
+    rank.classList.add("taxon-card-rank", "taxon-card-species-rank");
     rank.textContent = "SPECIES";
     card.appendChild(rank);
 
