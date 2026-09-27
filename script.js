@@ -1133,25 +1133,13 @@ function assignTreeNodeProximity(root) {
 
 function getProximityColor(proximity) {
     const t = Math.max(0, Math.min(1, Number(proximity) || 0));
-    const stops = [
-        [0.00, [158, 48, 24]],
-        [0.33, [198, 108, 25]],
-        [0.66, [157, 151, 25]],
-        [1.00, [76, 125, 48]]
-    ];
 
-    for (let i = 1; i < stops.length; i++) {
-        if (t <= stops[i][0]) {
-            const [t0, c0] = stops[i - 1];
-            const [t1, c1] = stops[i];
-            const local = (t - t0) / (t1 - t0);
-            const rgb = c0.map((value, index) =>
-                Math.round(value + (c1[index] - value) * local)
-            );
-            return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
-        }
-    }
-
+    // Match Metazooa's discrete tree colors rather than a smooth gradient.
+    // Far/shared-broad taxonomy = red, then orange, yellow/olive, and
+    // finally green for the deepest shared taxonomy.
+    if (t < 0.25) return "rgb(158, 48, 24)";
+    if (t < 0.50) return "rgb(190, 99, 24)";
+    if (t < 0.75) return "rgb(145, 139, 25)";
     return "rgb(76, 125, 48)";
 }
 
@@ -1182,22 +1170,7 @@ function createTreeNodeElement(node) {
         element.classList.add(`meta-species-${node.nodeType}`);
         element.textContent = node.name;
 
-        // Guessed species use the same proximity color as their branch.
-        // Keep the hidden mystery node neutral until the answer is revealed.
-        if (node.nodeType !== "mystery") {
-            const proximity = Math.max(
-                0,
-                Math.min(1, Number(node.__proximity) || 0)
-            );
-            element.style.setProperty(
-                "--tree-proximity-color",
-                getProximityColor(proximity)
-            );
-            element.style.setProperty(
-                "--tree-proximity-proximity",
-                proximity
-            );
-        }
+
 
         // Guessed / revealed species can be opened in the taxon card.
         if (node.bird) {
