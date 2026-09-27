@@ -3265,14 +3265,22 @@ function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
 
     add("Class", bird?.class || "Aves");
 
+    // The compact generated bird record may contain only a subset of the
+    // phylogenetic clades. Detailed Wikipedia/Wikidata taxonomy is therefore
+    // authoritative for the card when available.
     const clades = [
         ...(bird?.cladePath || []),
-        ...(bird?.postOrderCladePath || [])
-    ].filter((name, index, values) => values.indexOf(name) === index);
+        ...(bird?.postOrderCladePath || []),
+        ...Object.values(wikipediaDetailed || {})
+            .filter(entry => entry?.rank === "clade")
+            .map(entry => entry.name),
+        ...Object.values(wikidataDetailed || {})
+            .filter(entry => entry?.rank === "clade")
+            .map(entry => entry.name)
+    ].filter((name, index, values) =>
+        name && values.indexOf(name) === index
+    );
 
-    // Keep every clade as its own taxonomy rank entry instead of collapsing
-    // the entire clade chain into one "Clades" row. This makes intermediate
-    // taxonomy visible alongside infraclass, suborder, infraorder, etc.
     clades.forEach(name => add("Clade", name));
 
     const wikipediaDetailed = parseWikipediaDetailedTaxonomy(wiki?.wikitext);
@@ -3315,11 +3323,17 @@ function getDetailedSpeciesTaxonomyRows(bird, wiki) {
         const cleaned = cleanWikipediaTaxonomyValue(value);
         if (!cleaned) return;
 
-        // Avoid showing the same rank twice when Wikipedia and AviList use
-        // the same value.
+        // Real named ranks are unique, but multiple distinct clades are
+        // legitimate and must remain visible individually.
+        if (
+            label !== "Clade" &&
+            rows.some(row => row[0] === label)
+        ) {
+            return;
+        }
+
         if (
             rows.some(row =>
-                row[0] === label ||
                 String(row[1]).toLowerCase() === cleaned.toLowerCase()
             )
         ) {
