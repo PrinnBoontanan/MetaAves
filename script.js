@@ -3451,6 +3451,8 @@ function renderBirdCard(bird, wiki, wikidataDetailed = {}) {
     if (!card) return;
 
     card.innerHTML = "";
+    card.classList.remove("species-card", "clade-card");
+    card.classList.add("species-card");
 
     const title = document.createElement("h3");
     title.textContent = bird.commonName;
@@ -3468,7 +3470,7 @@ function renderBirdCard(bird, wiki, wikidataDetailed = {}) {
 
     const hasWikiSummary = Boolean(wiki?.summary?.extract);
     const description = hasWikiSummary
-        ? wiki.summary.extract
+        ? limitWikipediaSentences(wiki.summary.extract, 6, 1400)
         : "No information available on Wikipedia.";
 
     appendWikipediaImage(card, wiki, "taxon-card-image");
@@ -3520,11 +3522,14 @@ async function showTaxonInTaxonCard(taxon) {
     const card = document.getElementById("taxon-card");
     if (!card || !taxon) return;
 
+    card.classList.remove("species-card", "clade-card");
+
     gameState.selectedTaxonId = taxon.id;
     const selectionId = taxon.id;
     const requestId = ++gameState.taxonCardRequestId;
 
     if (taxon.rank === "clade") {
+        card.classList.add("clade-card");
         card.innerHTML = "<p>Loading clade information from Wikipedia...</p>";
 
         const wiki = await fetchWikipediaPageData(
@@ -3564,7 +3569,11 @@ async function showTaxonInTaxonCard(taxon) {
         const description = card.querySelector(".taxon-card-description");
         if (description) {
             description.textContent =
-                wiki?.summary?.extract ||
+                limitWikipediaSentences(
+                    wiki?.summary?.extract || "",
+                    6,
+                    1400
+                ) ||
                 "No information available on Wikipedia.";
         }
 
@@ -3603,7 +3612,11 @@ async function showTaxonInTaxonCard(taxon) {
     const description = card.querySelector(".taxon-card-description");
     if (description) {
         description.textContent =
-            wiki?.summary?.extract ||
+            limitWikipediaSentences(
+                wiki?.summary?.extract || "",
+                6,
+                1400
+            ) ||
             "No information available on Wikipedia.";
     }
 
@@ -3666,6 +3679,8 @@ function renderCladeCard(clade, wiki) {
     const card = document.getElementById("taxon-card");
     if (!card) return;
 
+    card.classList.remove("species-card", "clade-card");
+    card.classList.add("clade-card");
     card.innerHTML = "";
 
     const title = document.createElement("h3");
@@ -3691,7 +3706,11 @@ function renderCladeCard(clade, wiki) {
     const description = document.createElement("p");
     description.classList.add("taxon-card-description");
     description.textContent =
-        wiki?.summary?.extract ||
+        limitWikipediaSentences(
+            wiki?.summary?.extract || "",
+            6,
+            1400
+        ) ||
         "No information available on Wikipedia.";
     card.appendChild(description);
 
