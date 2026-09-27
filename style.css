@@ -2516,11 +2516,12 @@ input:focus-visible,
     box-sizing: border-box;
 }
 
-/* Species cards: use the wide screen horizontally so the card stays
-   compact vertically. */
-.taxon-card:has(.taxon-card-image) {
+/* Species cards use the wide screen horizontally. Higher-taxon cards
+   keep their normal compact flow and must never inherit this layout merely
+   because Wikipedia supplied an image. */
+.taxon-card.species-card {
     display: grid;
-    grid-template-columns: 260px minmax(220px, 0.9fr) minmax(300px, 1.5fr) minmax(260px, 1fr);
+    grid-template-columns: 260px minmax(180px, 0.8fr) minmax(300px, 1.35fr) minmax(260px, 1fr);
     grid-template-areas:
         "photo identity description taxonomy"
         "photo identity description wikipedia";
@@ -2528,7 +2529,7 @@ input:focus-visible,
     align-items: start;
 }
 
-.taxon-card:has(.taxon-card-image) > .taxon-card-image {
+.taxon-card.species-card > .taxon-card-image {
     grid-area: photo;
     width: 100%;
     max-height: 280px;
@@ -2536,25 +2537,25 @@ input:focus-visible,
     border-radius: 10px;
 }
 
-.taxon-card:has(.taxon-card-image) > h3 {
+.taxon-card.species-card > h3 {
     grid-area: identity;
     margin-top: 4px;
 }
 
-.taxon-card:has(.taxon-card-image) > .taxon-card-rank {
+.taxon-card.species-card > .taxon-card-rank {
     grid-area: identity;
 }
 
-.taxon-card:has(.taxon-card-image) > .taxon-card-rank + .taxon-card-rank {
+.taxon-card.species-card > .taxon-card-rank + .taxon-card-rank {
     margin-top: 28px;
 }
 
-.taxon-card:has(.taxon-card-image) > .taxon-card-wiki-section:not(.taxon-card-species-taxonomy) {
+.taxon-card.species-card > .taxon-card-wiki-section:not(.taxon-card-species-taxonomy) {
     grid-area: description;
     margin-top: 0;
 }
 
-.taxon-card:has(.taxon-card-image) > .taxon-card-species-taxonomy {
+.taxon-card.species-card > .taxon-card-species-taxonomy {
     grid-area: taxonomy;
     margin-top: 0;
     padding-top: 0;
@@ -2563,25 +2564,41 @@ input:focus-visible,
     padding-left: 22px;
 }
 
-.taxon-card:has(.taxon-card-image) > .taxon-card-wikipedia-link {
+.taxon-card.species-card > .taxon-card-wikipedia-link {
     grid-area: wikipedia;
     align-self: end;
 }
 
-.taxon-card:has(.taxon-card-image) .taxon-card-taxonomy-row {
+.taxon-card.species-card .taxon-card-taxonomy-row {
     margin: 5px 0;
 }
 
-/* On medium screens reduce the number of columns before going vertical. */
+/* Ordinary rank/clade cards stay compact even when they have a Wikipedia
+   image. Their content is allowed to flow naturally instead of being forced
+   into the species four-column grid. */
+.taxon-card:not(.species-card) {
+    display: block;
+}
+
+.taxon-card:not(.species-card) .taxon-card-image {
+    max-width: 420px;
+    max-height: 280px;
+    margin: 16px 0;
+}
+
+.taxon-card:not(.species-card) .taxon-card-description {
+    max-width: 1100px;
+}
+
 @media (max-width: 1100px) {
-    .taxon-card:has(.taxon-card-image) {
+    .taxon-card.species-card {
         grid-template-columns: 230px minmax(180px, 0.8fr) minmax(280px, 1.4fr);
         grid-template-areas:
             "photo identity description"
             "photo taxonomy wikipedia";
     }
 
-    .taxon-card:has(.taxon-card-image) > .taxon-card-species-taxonomy {
+    .taxon-card.species-card > .taxon-card-species-taxonomy {
         border-left: none;
         border-top: 1px solid #e3d8bf;
         padding-left: 0;
