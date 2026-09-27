@@ -133,7 +133,9 @@
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Aequornithes"
+        "Aequornithes",
+        "Feraequornithes",
+        "Pelecanimorphae"
       ],
       "Suliformes": [
         "Neornithes",
@@ -141,7 +143,10 @@
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Aequornithes"
+        "Aequornithes",
+        "Feraequornithes",
+        "Pelecanimorphae",
+        "Pelecanes"
       ],
       "Pelecaniformes": [
         "Neornithes",
@@ -149,7 +154,10 @@
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Aequornithes"
+        "Aequornithes",
+        "Feraequornithes",
+        "Pelecanimorphae",
+        "Pelecanes"
       ],
       "Phaethontiformes": [
         "Neornithes",
@@ -348,6 +356,18 @@
         "Australaves",
         "Eufalconimorphae",
         "Psittacopasserae"
+      ],
+      "Galbuliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves",
+        "Eucavitaves",
+        "Picocoraciae",
+        "Picodynastornithes"
       ]
     }
   },
@@ -699,5 +719,33 @@
     "parent": "clade:Passerides",
     "children": [],
     "description": "Parvorder containing many of the familiar sparrows, finches, tanagers and related songbirds."
+  },
+  "clade:Feraequornithes": {
+    "id": "clade:Feraequornithes",
+    "name": "Feraequornithes",
+    "rank": "clade",
+    "parent": "clade:Aequornithes",
+    "children": [
+      "clade:Pelecanimorphae"
+    ],
+    "description": "Aequornithes clade comprising Procellariiformes, Sphenisciformes, Ciconiiformes, Suliformes and Pelecaniformes."
+  },
+  "clade:Pelecanimorphae": {
+    "id": "clade:Pelecanimorphae",
+    "name": "Pelecanimorphae",
+    "rank": "clade",
+    "parent": "clade:Feraequornithes",
+    "children": [
+      "clade:Pelecanes"
+    ],
+    "description": "Clade containing Ciconiiformes and the Pelecanes lineage."
+  },
+  "clade:Pelecanes": {
+    "id": "clade:Pelecanes",
+    "name": "Pelecanes",
+    "rank": "clade",
+    "parent": "clade:Pelecanimorphae",
+    "children": [],
+    "description": "Clade uniting Pelecaniformes and Suliformes."
   }
 }
