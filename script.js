@@ -1116,9 +1116,16 @@ function assignTreeNodeProximity(root) {
             node.__proximity = inheritedProximity;
         }
 
-        (node.children || []).forEach(child =>
-            walk(child, node.__proximity)
-        );
+        (node.children || []).forEach(child => {
+            if (child.type === "taxon") {
+                walk(child, node.__proximity);
+            } else {
+                // Leaf species inherit the proximity of the taxonomic branch
+                // where they attach, matching the warm/cool feedback used by
+                // Metazooa's tree.
+                child.__proximity = node.__proximity;
+            }
+        });
     }
 
     walk(root, 0);
@@ -1131,16 +1138,14 @@ function createTreeNodeElement(node) {
 
     if (node.type === "taxon") {
         const proximity = getTreeNodeProximity(node);
-        const hue = Math.round(proximity * 120);
-        element.style.setProperty("--tree-proximity-hue", hue);
+        const proximityColor = getProximityColor(proximity);
+        element.style.setProperty("--tree-proximity-color", proximityColor);
         element.style.setProperty(
-            "--tree-proximity-saturation",
-            "58%"
+            "--tree-proximity-hue",
+            Math.round(proximity * 120)
         );
-        element.style.setProperty(
-            "--tree-proximity-lightness",
-            "38%"
-        );
+        element.style.setProperty("--tree-proximity-saturation", "68%");
+        element.style.setProperty("--tree-proximity-lightness", "38%");
         element.classList.add("meta-taxon-node");
         element.dataset.taxon = node.name;
         element.dataset.taxonId = node.taxonId || "";
@@ -1152,6 +1157,23 @@ function createTreeNodeElement(node) {
         element.classList.add("meta-species-node");
         element.classList.add(`meta-species-${node.nodeType}`);
         element.textContent = node.name;
+
+        // Guessed species use the same proximity color as their branch.
+        // Keep the hidden mystery node neutral until the answer is revealed.
+        if (node.nodeType !== "mystery") {
+            const proximity = Math.max(
+                0,
+                Math.min(1, Number(node.__proximity) || 0)
+            );
+            element.style.setProperty(
+                "--tree-proximity-color",
+                getProximityColor(proximity)
+            );
+            element.style.setProperty(
+                "--tree-proximity-proximity",
+                proximity
+            );
+        }
 
         // Guessed / revealed species can be opened in the taxon card.
         if (node.bird) {
