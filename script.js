@@ -4854,6 +4854,51 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy, mysteryGenusS
         ? "Use this clue to distinguish the mystery species from other species in this genus: "
         : "Use this clue to narrow down the mystery bird's genus: ";
 
+    // The size of the family/genus can itself be informative. For large
+    // families, structural clues help the player navigate the many possible
+    // genera; once inside a genus, the number of species helps distinguish
+    // how broad the remaining search space is.
+    const mysteryFamily = gameState.mysteryBird?.family;
+    const mysteryGenus = gameState.mysteryBird?.genus;
+
+    const familyMembers = mysteryFamily
+        ? gameState.birds.filter(bird => bird.family === mysteryFamily)
+        : [];
+    const familyGenera = new Set(
+        familyMembers.map(bird => bird.genus).filter(Boolean)
+    );
+    const genusMembersAll = mysteryGenus
+        ? gameState.birds.filter(bird => bird.genus === mysteryGenus)
+        : [];
+
+    if (!isSameGenus && familyGenera.size >= 5) {
+        const genusCountText =
+            familyGenera.size >= 20 ? "many genera" :
+            familyGenera.size >= 10 ? "a large number of genera" :
+            "several genera";
+
+        clues.push({
+            heading: "Family structure",
+            text: "The mystery bird belongs to a family containing " +
+                genusCountText + " (" + familyGenera.size + " genera), so use the biological clues to narrow down which genus it belongs to."
+        });
+    }
+
+    if (isSameGenus && genusMembersAll.length >= 2) {
+        const speciesCount = genusMembersAll.length;
+        const speciesCountText =
+            speciesCount >= 20 ? "many species" :
+            speciesCount >= 10 ? "a large number of species" :
+            speciesCount >= 5 ? "several species" :
+            speciesCount + " species";
+
+        clues.push({
+            heading: "Genus structure",
+            text: "The mystery genus contains " + speciesCountText +
+                " (" + speciesCount + " species), so look for traits that separate the mystery species from its genus relatives."
+        });
+    }
+
     // Name clues are useful as a secondary clue, but never use arbitrary
     // facts such as name length.
     const guessedNameWords = getMeaningfulNameWords(guessedBird?.commonName);
@@ -4924,6 +4969,16 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy, mysteryGenusS
                         "."
                 });
             }
+        }
+
+        // If the family is especially large, also give the player a structural
+        // clue about how broad the family search is.
+        if (familyGenera.size >= 10) {
+            genusClues.push({
+                heading: "Genus search",
+                text: "There are " + familyGenera.size +
+                    " genera in the mystery bird's family, so the next step is to identify the genus from its recurring biological traits rather than the exact species appearance."
+            });
         }
 
         // If the genus profile is too sparse, use a concrete fact from the
