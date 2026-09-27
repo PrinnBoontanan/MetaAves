@@ -3026,6 +3026,7 @@ function parseWikipediaDetailedTaxonomy(wikitext) {
         ["subclass", "Subclass"],
         ["infraclass", "Infraclass"],
         ["superorder", "Superorder"],
+        ["clade", "Clade"],
         ["suborder", "Suborder"],
         ["infraorder", "Infraorder"],
         ["parvorder", "Parvorder"],
@@ -3065,6 +3066,32 @@ function parseWikipediaDetailedTaxonomy(wikitext) {
             };
             found = true;
         }
+
+        // Wikipedia taxoboxes can expose several phylogenetic clades as
+        // clade, clade1, clade2, ... . Keep every one as its own entry.
+        Object.keys(fields)
+            .filter(field => /^clade\\d*$/i.test(field))
+            .sort((a, b) => {
+                const aNumber = a.toLowerCase() === "clade"
+                    ? 0
+                    : Number(a.replace(/[^0-9]/g, "")) || 0;
+                const bNumber = b.toLowerCase() === "clade"
+                    ? 0
+                    : Number(b.replace(/[^0-9]/g, "")) || 0;
+                return aNumber - bNumber;
+            })
+            .forEach(field => {
+                const value = cleanWikipediaTaxonomyValue(fields[field]);
+                if (!value) return;
+
+                const key = field.toLowerCase();
+                result[key] = {
+                    rank: "clade",
+                    label: "Clade",
+                    name: value
+                };
+                found = true;
+            });
 
         if (found) return result;
 
@@ -3250,48 +3277,65 @@ async function fetchWikidataDetailedTaxonomy(bird) {
 
 function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
     const rows = [];
-    const seenLabels = new Set();
+    const seenValues = new Set();
+
+    const wikipediaDetailed = parseWikipediaDetailedTaxonomy(wiki?.wikitext);
+    const detailed = {
+        ...wikipediaDetailed,
+        ...(bird?.wikipediaDetailedTaxonomy || {}),
+        ...wikidataDetailed
+    };
+
+    const rankByName = new Map();
+
+    Object.values(detailed).forEach(entry => {
+        if (!entry?.name || !entry?.label) return;
+        const key = String(entry.name).trim().toLowerCase();
+        if (!rankByName.has(key) || entry.rank !== "clade") {
+            rankByName.set(key, entry);
+        }
+    });
 
     const add = (label, value) => {
         const cleaned = cleanWikipediaTaxonomyValue(value);
         if (!cleaned) return;
 
-        const key = label.toLowerCase();
-        if (seenLabels.has(key)) return;
+        const key = cleaned.toLowerCase();
+        if (seenValues.has(key)) return;
 
-        seenLabels.add(key);
+        seenValues.add(key);
         rows.push([label, cleaned]);
     };
 
+    const addTaxon = (value, fallbackLabel = "Clade") => {
+        const cleaned = cleanWikipediaTaxonomyValue(value);
+        if (!cleaned) return;
+
+        const entry = rankByName.get(cleaned.toLowerCase());
+        add(entry?.label || fallbackLabel, cleaned);
+    };
+
+    // Keep the taxonomy in biological order. The important difference from
+    // the old renderer is that every name uses its actual rank metadata.
     add("Class", bird?.class || "Aves");
-
-    // The compact generated bird record may contain only a subset of the
-    // phylogenetic clades. Detailed Wikipedia/Wikidata taxonomy is therefore
-    // authoritative for the card when available.
-    const clades = [
-        ...(bird?.cladePath || []),
-        ...(bird?.postOrderCladePath || []),
-        ...Object.values(wikipediaDetailed || {})
-            .filter(entry => entry?.rank === "clade")
-            .map(entry => entry.name),
-        ...Object.values(wikidataDetailed || {})
-            .filter(entry => entry?.rank === "clade")
-            .map(entry => entry.name)
-    ].filter((name, index, values) =>
-        name && values.indexOf(name) === index
-    );
-
-    clades.forEach(name => add("Clade", name));
-
-    const wikipediaDetailed = parseWikipediaDetailedTaxonomy(wiki?.wikitext);
-    const detailed = { ...wikipediaDetailed, ...wikidataDetailed };
 
     for (const rank of ["subclass", "infraclass", "superorder"]) {
         const entry = detailed[rank];
         if (entry?.name) add(entry.label, entry.name);
     }
 
+    // The generated clade backbone contains the complete phylogenetic path.
+    // If Wikidata says a member is actually an infraclass/suborder/etc.,
+    // addTaxon() uses that real rank instead of calling it "Clade".
+    [
+        ...(bird?.cladePath || []),
+    ].forEach(name => addTaxon(name));
+
     add("Order", bird?.order || detailed.order?.name);
+
+    [
+        ...(bird?.postOrderCladePath || [])
+    ].forEach(name => addTaxon(name));
 
     for (const rank of [
         "suborder",
@@ -3311,89 +3355,16 @@ function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
     }
 
     add("Genus", bird?.genus || detailed.genus?.name);
-    add("Species", bird?.species || bird?.scientificName || detailed.species?.name);
+    add(
+        "Species",
+        bird?.species || bird?.scientificName || detailed.species?.name
+    );
 
     return rows;
 }
 
-function getDetailedSpeciesTaxonomyRows(bird, wiki) {
-    const rows = [];
-
-    const add = (label, value) => {
-        const cleaned = cleanWikipediaTaxonomyValue(value);
-        if (!cleaned) return;
-
-        // Real named ranks are unique, but multiple distinct clades are
-        // legitimate and must remain visible individually.
-        if (
-            label !== "Clade" &&
-            rows.some(row => row[0] === label)
-        ) {
-            return;
-        }
-
-        if (
-            rows.some(row =>
-                String(row[1]).toLowerCase() === cleaned.toLowerCase()
-            )
-        ) {
-            return;
-        }
-
-        rows.push([label, cleaned]);
-    };
-
-    add("Class", bird?.class || "Aves");
-
-    if (
-        (Array.isArray(bird?.cladePath) && bird.cladePath.length) ||
-        (Array.isArray(bird?.postOrderCladePath) && bird.postOrderCladePath.length)
-    ) {
-        const clades = [
-            ...(bird.cladePath || []),
-            ...(bird.postOrderCladePath || [])
-        ].filter((name, index, values) => values.indexOf(name) === index);
-
-        // Show the actual clade entries individually so the taxonomy card
-        // never hides several levels behind one generic "Clades" field.
-        clades.forEach(name => add("Clade", name));
-    }
-
-    const detailed = {
-        ...parseWikipediaDetailedTaxonomy(wiki?.wikitext),
-        ...(bird?.wikipediaDetailedTaxonomy || {})
-    };
-
-    // Ranks above Order are displayed before Order; ranks below Order are
-    // displayed in their actual biological position. We keep these separate
-    // from the clade layer so a Wikipedia rank never masquerades as a clade.
-    for (const rank of ["subclass", "infraclass", "superorder"]) {
-        const entry = detailed[rank];
-        if (entry?.name) add(entry.label, entry.name);
-    }
-
-    add("Order", bird?.order);
-
-    for (const rank of [
-        "suborder",
-        "infraorder",
-        "parvorder",
-        "superfamily"
-    ]) {
-        const entry = detailed[rank];
-        if (entry?.name) add(entry.label, entry.name);
-    }
-
-    add("Family", bird?.family);
-
-    for (const rank of ["subfamily", "tribe", "subtribe"]) {
-        const entry = detailed[rank];
-        if (entry?.name) add(entry.label, entry.name);
-    }
-    add("Genus", bird?.genus);
-    add("Species", bird?.species || bird?.scientificName);
-
-    return rows;
+function getDetailedSpeciesTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
+    return mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed);
 }
 
 function renderSpeciesTaxonomyRows(container, bird, wiki) {
@@ -3545,7 +3516,7 @@ function renderBirdCard(bird, wiki, wikidataDetailed = {}) {
     taxonomyHeading.textContent = "Taxonomy";
     taxonomySection.appendChild(taxonomyHeading);
 
-    getDetailedSpeciesTaxonomyRows(bird, wiki).forEach(([label, value]) => {
+    getDetailedSpeciesTaxonomyRows(bird, wiki, wikidataDetailed).forEach(([label, value]) => {
         const row = document.createElement("p");
         row.className = "taxon-card-taxonomy-row";
 
