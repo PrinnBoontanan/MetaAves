@@ -22,66 +22,787 @@ from openpyxl import load_workbook
 # stop at stable/useful named clades rather than encoding every disputed deep
 # Neoaves relationship.
 CLADE_PATHS_BY_ORDER = {
-    "Struthioniformes": ["Neornithes", "Palaeognathae"],
-    "Casuariiformes": ["Neornithes", "Palaeognathae"],
-    "Apterygiformes": ["Neornithes", "Palaeognathae"],
-    "Rheiformes": ["Neornithes", "Palaeognathae"],
-    "Tinamiformes": ["Neornithes", "Palaeognathae"],
-
-    "Anseriformes": ["Neornithes", "Neognathae", "Galloanserae"],
-    "Galliformes": ["Neornithes", "Neognathae", "Galloanserae"],
-
-    "Phoenicopteriformes": ["Neornithes", "Neognathae", "Neoaves", "Mirandornithes"],
-    "Podicipediformes": ["Neornithes", "Neognathae", "Neoaves", "Mirandornithes"],
-
-    "Musophagiformes": ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
-    "Otidiformes": ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
-    "Cuculiformes": ["Neornithes", "Neognathae", "Neoaves", "Otidimorphae"],
-
-    "Mesitornithiformes": ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
-    "Pterocliformes": ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
-    "Columbiformes": ["Neornithes", "Neognathae", "Neoaves", "Columbimorphae"],
-
-    "Gaviiformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-    "Sphenisciformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-    "Procellariiformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-    "Ciconiiformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-    "Suliformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-    "Pelecaniformes": ["Neornithes", "Neognathae", "Neoaves", "Aequornithes"],
-
-    "Caprimulgiformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-    "Steatornithiformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-    "Nyctibiiformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-    "Podargiformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-    "Aegotheliformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-    "Apodiformes": ["Neornithes", "Neognathae", "Neoaves", "Strisores"],
-
-    "Phaethontiformes": ["Neornithes", "Neognathae", "Neoaves", "Eurypygimorphae"],
-    "Eurypygiformes": ["Neornithes", "Neognathae", "Neoaves", "Eurypygimorphae"],
-
-    "Accipitriformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    "Cathartiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    "Strigiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    "Coliiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    "Leptosomiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    "Trogoniformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    "Bucerotiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    "Coraciiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    "Galbuliformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-    "Piciformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Afroaves"],
-
-    "Cariamiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves"],
-    "Falconiformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves"],
-    "Psittaciformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves", "Psittacopasserae"],
-    "Passeriformes": ["Neornithes", "Neognathae", "Neoaves", "Telluraves", "Australaves", "Psittacopasserae"],
-
-    # These orders are retained at Neoaves level because deeper placement
-    # is not encoded as settled in the MetaAves backbone.
-    "Gruiformes": ["Neornithes", "Neognathae", "Neoaves"],
-    "Charadriiformes": ["Neornithes", "Neognathae", "Neoaves"],
-    "Opisthocomiformes": ["Neornithes", "Neognathae", "Neoaves"],
+    "Struthioniformes": [
+        "Neornithes",
+        "Palaeognathae"
+    ],
+    "Casuariiformes": [
+        "Neornithes",
+        "Palaeognathae"
+    ],
+    "Apterygiformes": [
+        "Neornithes",
+        "Palaeognathae"
+    ],
+    "Rheiformes": [
+        "Neornithes",
+        "Palaeognathae"
+    ],
+    "Tinamiformes": [
+        "Neornithes",
+        "Palaeognathae"
+    ],
+    "Anseriformes": [
+        "Neornithes",
+        "Neognathae",
+        "Galloanserae"
+    ],
+    "Galliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Galloanserae"
+    ],
+    "Phoenicopteriformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Mirandornithes"
+    ],
+    "Podicipediformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Mirandornithes"
+    ],
+    "Mesitornithiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbaves",
+        "Columbimorphae"
+    ],
+    "Pterocliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbaves",
+        "Columbimorphae"
+    ],
+    "Columbiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbaves",
+        "Columbimorphae"
+    ],
+    "Musophagiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbaves",
+        "Otidimorphae"
+    ],
+    "Otidiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbaves",
+        "Otidimorphae"
+    ],
+    "Cuculiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbaves",
+        "Otidimorphae"
+    ],
+    "Gaviiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Aequornithes"
+    ],
+    "Sphenisciformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Aequornithes"
+    ],
+    "Procellariiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Aequornithes"
+    ],
+    "Ciconiiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Aequornithes"
+    ],
+    "Suliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Aequornithes"
+    ],
+    "Pelecaniformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Aequornithes"
+    ],
+    "Phaethontiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Eurypygimorphae"
+    ],
+    "Eurypygiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Eurypygimorphae"
+    ],
+    "Caprimulgiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Strisores"
+    ],
+    "Steatornithiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Strisores"
+    ],
+    "Nyctibiiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Strisores"
+    ],
+    "Podargiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Strisores"
+    ],
+    "Aegotheliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Strisores"
+    ],
+    "Apodiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Strisores"
+    ],
+    "Opisthocomiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Opisthocomiformes"
+    ],
+    "Gruiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Cursorimorphae"
+    ],
+    "Charadriiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Cursorimorphae"
+    ],
+    "Accipitriformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Hieraves"
+    ],
+    "Cathartiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Hieraves"
+    ],
+    "Strigiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Hieraves"
+    ],
+    "Coliiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae"
+    ],
+    "Leptosomiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves"
+    ],
+    "Trogoniformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves",
+        "Eucavitaves"
+    ],
+    "Bucerotiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves",
+        "Eucavitaves",
+        "Picocoraciae"
+    ],
+    "Coraciiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves",
+        "Eucavitaves",
+        "Picocoraciae",
+        "Picodynastornithes"
+    ],
+    "Piciformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves",
+        "Eucavitaves",
+        "Picocoraciae",
+        "Picodynastornithes"
+    ],
+    "Cariamiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Australaves"
+    ],
+    "Falconiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Australaves",
+        "Eufalconimorphae"
+    ],
+    "Psittaciformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Australaves",
+        "Eufalconimorphae",
+        "Psittacopasserae"
+    ],
+    "Passeriformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Australaves",
+        "Eufalconimorphae",
+        "Psittacopasserae"
+    ]
 }
 
+# Additional family-level passerine clades. These are appended after the
+# order-level backbone and are based on the current Wikipedia passerine
+# phylogeny, which follows Oliveros et al. (2019) for these subdivisions.
+PASSERINE_FAMILY_CLADE_PATHS = {
+    "Philepittidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+    ],
+    "Eurylaimidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+    ],
+    "Calyptomenidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+    ],
+    "Sapayoidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+    ],
+    "Pittidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+    ],
+    "Melanopareiidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+    ],
+    "Conopophagidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+    ],
+    "Thamnophilidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+    ],
+    "Grallariidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+    ],
+    "Rhinocryptidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+    ],
+    "Formicariidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+    ],
+    "Furnariidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+    ],
+    "Pipridae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+    ],
+    "Cotingidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+    ],
+    "Tityridae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+    ],
+    "Oxyruncidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+    ],
+    "Onychorhynchidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+    ],
+    "Tyrannidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+    ],
+    "Atrichornithidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Menuridae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Climacteridae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Ptilonorhynchidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Pomatostomidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Orthonychidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Acanthizidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Meliphagidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Maluridae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Dasyornithidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Pardalotidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Cinclosomatidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Campephagidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Mohouidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Neosittidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Psophodidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Eulacestomatidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Falcunculidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Oreoicidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Paramythiidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Vireonidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Pachycephalidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Oriolidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Machaerirhynchidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Artamidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Rhipiduridae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Dicruridae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Laniidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Corvidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Paridae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Remizidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Regulidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Bombycillidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Certhiidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Sittidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Troglodytidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Muscicapidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Turdidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Sturnidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Buphagidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Cinclidae": [
+        "Eupasseres",
+        "Passeri"
+    ],
+    "Motacillidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Prunellidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Passeridae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Nectariniidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Dicaeidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Chloropseidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Irenidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Urocynchramidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Estrildidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Ploceidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Viduidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Fringillidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Peucedramidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Icteridae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Parulidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Icteriidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Phaenicophilidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Zeledoniidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Teretistridae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Thraupidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Mitrospingidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Rhodinocichlidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Calyptophilidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Nesospingidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Spindalidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Cardinalidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Emberizidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Passerellidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Calcariidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+    ],
+    "Acanthisittidae": [
+        "Acanthisitti"
+    ]
+}
 
 RANKS = ["class", "order", "family", "genus", "species"]
 
@@ -462,7 +1183,11 @@ def main():
         birds.append(bird)
 
         order_name = bird.get("order")
-        clade_path = CLADE_PATHS_BY_ORDER.get(order_name)
+        clade_path = list(CLADE_PATHS_BY_ORDER.get(order_name, []))
+        family_name = bird.get("family")
+        family_clade_path = PASSERINE_FAMILY_CLADE_PATHS.get(family_name)
+        if order_name == "Passeriformes" and family_clade_path:
+            clade_path.extend(family_clade_path)
         if clade_path:
             clade_membership[scientific] = clade_path
         elif order_name:
@@ -514,8 +1239,8 @@ def main():
                 "_meta": {
                     "version": 1,
                     "generatedBy": "scripts/import_avilist.py",
-                    "source": "MetaAves broad phylogenetic backbone",
-                    "policy": "Broad named clades only; contested deep Neoaves relationships are not forced."
+                    "source": "Wikipedia bird phylogeny pages, using Stiller et al. 2024 where those pages identify that topology",
+                    "policy": "Detailed named clades are included where the source provides a usable lineage. Contested alternative deep Neoaves relationships are not mixed into the same lineage."
                 },
                 "species": clade_membership
             },
