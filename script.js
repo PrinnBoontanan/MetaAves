@@ -53,12 +53,12 @@ async function loadGameData() {
             cladeResponse,
             cladeMembershipResponse
         ] = await Promise.all([
-            fetch("data/birds.generated.json"),
-            fetch("data/taxonomy.generated.json"),
-            fetch("data/taxonomy_overrides.json"),
-            fetch("data/taxon_info.json"),
-            fetch("data/clades.json"),
-            fetch("data/clade_membership.generated.json")
+            fetch("data/birds.generated.json?v=20260927-taxonomy"),
+            fetch("data/taxonomy.generated.json?v=20260927-taxonomy"),
+            fetch("data/taxonomy_overrides.json?v=20260927-taxonomy"),
+            fetch("data/taxon_info.json?v=20260927-taxonomy"),
+            fetch("data/clades.json?v=20260927-taxonomy"),
+            fetch("data/clade_membership.generated.json?v=20260927-taxonomy")
         ]);
 
         if (
@@ -86,10 +86,26 @@ async function loadGameData() {
         // Join both parts of the generated clade layer to the generated bird
         // records. The scientific name is the stable species key produced by
         // AviList.
+        const passerineFamilyCladePaths =
+            gameState.clades?._meta?.passerineFamilyCladePaths || {};
+
         gameState.birds.forEach(bird => {
             bird.cladePath = membershipBySpecies[bird.scientificName] || [];
+
+            const generatedPostOrder =
+                postOrderMembershipBySpecies[bird.scientificName];
+
+            const fallbackPostOrder =
+                bird.order === "Passeriformes"
+                    ? passerineFamilyCladePaths[bird.family]
+                    : null;
+
             bird.postOrderCladePath =
-                postOrderMembershipBySpecies[bird.scientificName] || [];
+                Array.isArray(generatedPostOrder) && generatedPostOrder.length
+                    ? generatedPostOrder
+                    : Array.isArray(fallbackPostOrder)
+                        ? fallbackPostOrder
+                        : [];
         });
 
         // Select a random species from the full imported dataset.
