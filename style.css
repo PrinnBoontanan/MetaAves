@@ -2601,13 +2601,12 @@ input:focus-visible,
     align-self: end;
     justify-self: start;
     z-index: 2;
-    margin: 0 0 12px 12px;
-    padding: 7px 12px;
-    border-radius: 7px;
-    background: rgba(43, 47, 35, 0.78);
+    margin: 0 0 14px 12px;
+    padding: 0;
     color: #fffdf5;
-    font-weight: 600;
+    font-weight: 700;
     line-height: 1.2;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.75);
     box-sizing: border-box;
 }
 
@@ -2626,17 +2625,30 @@ input:focus-visible,
 
 .taxon-card:not(.species-card) > .taxon-card-description {
     grid-area: description;
+    position: relative;
     max-width: none;
     margin: 12px 0 0;
     padding-left: 30px;
-    border-left: 1px solid #d9cdb5;
+    border-left: 0;
     line-height: 1.7;
+}
+
+/* A full-height divider separates the image from the text column instead
+   of stopping when the paragraph happens to end. */
+.taxon-card:not(.species-card) > .taxon-card-description::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 280px;
+    background: #d9cdb5;
 }
 
 .taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
     grid-area: wikipedia;
-    align-self: end;
-    margin: 18px 0 0 30px;
+    align-self: start;
+    margin: 10px 0 0 30px;
     padding-left: 1px;
 }
 
