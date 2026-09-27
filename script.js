@@ -437,6 +437,35 @@ function getBirdPhylogenyPath(bird) {
             // rather than above it. Insert them after the order and before
             // family/genus/species. This preserves the biological lineage
             // without changing the deepest-shared-node mechanic.
+            if (node.level === "order") {
+                // Wikipedia taxoboxes can provide useful intermediate ranked
+                // groups that are absent from the compact AviList hierarchy.
+                // Add only ranks that were actually verified on the species
+                // page. This enriches the lineage without changing the
+                // deepest-shared-node rule.
+                const detailed = bird.wikipediaDetailedTaxonomy || {};
+                const intermediateOrder = [
+                    "subclass",
+                    "infraclass",
+                    "superorder",
+                    "suborder",
+                    "infraorder",
+                    "parvorder",
+                    "superfamily",
+                    "subfamily",
+                    "tribe",
+                    "subtribe"
+                ];
+
+                intermediateOrder.forEach(rank => {
+                    const entry = detailed[rank];
+                    if (!entry?.name) return;
+
+                    const id = nodeIdForTaxon(rank, entry.name);
+                    addNode(id, rank, entry.name);
+                });
+            }
+
             if (
                 node.level === "order" &&
                 Array.isArray(bird.postOrderCladePath)
@@ -2660,6 +2689,252 @@ function getWikipediaStudyData(html, wikitext = "") {
     return data;
 }
 
+
+function cleanWikipediaTaxonomyValue(value) {
+    if (!value) return "";
+
+    let cleaned = String(value)
+        .replace(/<!--[\s\S]*?-->/g, " ")
+        .replace(/<ref[^>]*>[\s\S]*?<\/ref>/gi, " ")
+        .replace(/<ref[^>]*\/>/gi, " ")
+        .replace(/<br\s*\/?>/gi, " ")
+        .replace(/\{\{[\s\S]*?\}\}/g, " ")
+        .replace(/\[\[([^|\]]+)\|([^\]]+)\]\]/g, "$2")
+        .replace(/\[\[([^\]]+)\]\]/g, "$1")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/'{2,}/g, "")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    // Taxobox fields sometimes contain a trailing citation or parenthetical
+    // reference marker. Keep the taxon name itself, not the citation markup.
+    cleaned = cleaned.replace(/\s*\[[0-9]+\]\s*$/g, "").trim();
+
+    return cleaned;
+}
+
+function parseWikipediaDetailedTaxonomy(wikitext) {
+    if (!wikitext) return {};
+
+    function findTemplateEnd(source, start) {
+        let depth = 0;
+
+        for (let i = start; i < source.length - 1; i++) {
+            if (source[i] === "{" && source[i + 1] === "{") {
+                depth++;
+                i++;
+            } else if (source[i] === "}" && source[i + 1] === "}") {
+                depth--;
+                i++;
+
+                if (depth === 0) return i + 1;
+            }
+        }
+
+        return -1;
+    }
+
+    function parseFields(templateText) {
+        const fields = {};
+        let depth = 0;
+        let linkDepth = 0;
+        let fieldStart = 0;
+
+        const save = field => {
+            const separator = field.indexOf("=");
+            if (separator < 0) return;
+
+            const key = field
+                .slice(0, separator)
+                .trim()
+                .toLowerCase()
+                .replace(/[\s-]+/g, "_");
+
+            if (!key) return;
+            fields[key] = field.slice(separator + 1).trim();
+        };
+
+        for (let i = 0; i < templateText.length - 1; i++) {
+            if (templateText[i] === "{" && templateText[i + 1] === "{") {
+                depth++;
+                i++;
+                continue;
+            }
+
+            if (templateText[i] === "}" && templateText[i + 1] === "}") {
+                depth = Math.max(0, depth - 1);
+                i++;
+                continue;
+            }
+
+            if (templateText[i] === "[" && templateText[i + 1] === "[") {
+                linkDepth++;
+                i++;
+                continue;
+            }
+
+            if (templateText[i] === "]" && templateText[i + 1] === "]") {
+                linkDepth = Math.max(0, linkDepth - 1);
+                i++;
+                continue;
+            }
+
+            if (templateText[i] === "|" && depth === 0 && linkDepth === 0) {
+                save(templateText.slice(fieldStart, i));
+                fieldStart = i + 1;
+            }
+        }
+
+        save(templateText.slice(fieldStart));
+        return fields;
+    }
+
+    // These are the useful intermediate ranks between the broad AviList
+    // order/family/genus levels. We deliberately do not treat every possible
+    // informal grouping as a taxonomic rank.
+    const rankDefinitions = [
+        ["subclass", "Subclass"],
+        ["infraclass", "Infraclass"],
+        ["superorder", "Superorder"],
+        ["suborder", "Suborder"],
+        ["infraorder", "Infraorder"],
+        ["parvorder", "Parvorder"],
+        ["superfamily", "Superfamily"],
+        ["subfamily", "Subfamily"],
+        ["tribe", "Tribe"],
+        ["subtribe", "Subtribe"]
+    ];
+
+    const templatePattern =
+        /\{\{\s*(speciesbox|subspeciesbox|infobox\b[^|\n]*|taxobox|automatic\s+taxobox)\b/i;
+
+    let cursor = 0;
+
+    while (cursor < wikitext.length) {
+        const relative = wikitext.slice(cursor).search(templatePattern);
+        if (relative < 0) break;
+
+        const start = cursor + relative;
+        const end = findTemplateEnd(wikitext, start);
+        if (end < 0) break;
+
+        const template = wikitext.slice(start, end);
+        const fields = parseFields(template);
+
+        const result = {};
+        let found = false;
+
+        for (const [field, label] of rankDefinitions) {
+            const value = cleanWikipediaTaxonomyValue(fields[field]);
+            if (!value) continue;
+
+            result[field] = {
+                rank: field,
+                label,
+                name: value
+            };
+            found = true;
+        }
+
+        if (found) return result;
+
+        cursor = end;
+    }
+
+    return {};
+}
+
+function getDetailedSpeciesTaxonomyRows(bird, wiki) {
+    const rows = [];
+
+    const add = (label, value) => {
+        const cleaned = cleanWikipediaTaxonomyValue(value);
+        if (!cleaned) return;
+
+        // Avoid showing the same rank twice when Wikipedia and AviList use
+        // the same value.
+        if (
+            rows.some(row =>
+                row[0] === label ||
+                String(row[1]).toLowerCase() === cleaned.toLowerCase()
+            )
+        ) {
+            return;
+        }
+
+        rows.push([label, cleaned]);
+    };
+
+    add("Class", bird?.class || "Aves");
+
+    if (Array.isArray(bird?.cladePath) && bird.cladePath.length) {
+        add("Clades", bird.cladePath.join(" → "));
+    }
+
+    const detailed = parseWikipediaDetailedTaxonomy(wiki?.wikitext);
+
+    // Intermediate ranks are inserted in biological order, between the
+    // existing order/family/genus levels.
+    const intermediateOrder = [
+        "subclass",
+        "infraclass",
+        "superorder",
+        "suborder",
+        "infraorder",
+        "parvorder",
+        "superfamily",
+        "subfamily",
+        "tribe",
+        "subtribe"
+    ];
+
+    add("Order", bird?.order);
+
+    for (const rank of intermediateOrder) {
+        const entry = detailed[rank];
+        if (entry?.name) add(entry.label, entry.name);
+    }
+
+    add("Family", bird?.family);
+    add("Genus", bird?.genus);
+    add("Species", bird?.species || bird?.scientificName);
+
+    return rows;
+}
+
+function renderSpeciesTaxonomyRows(container, bird, wiki) {
+    if (!container || !bird) return;
+
+    container.innerHTML = "";
+
+    getDetailedSpeciesTaxonomyRows(bird, wiki).forEach(([label, value]) => {
+        const row = document.createElement("div");
+        row.className = "study-taxonomy-row";
+
+        const labelElement = document.createElement("span");
+        labelElement.className = "study-taxonomy-label";
+        labelElement.textContent = label;
+
+        const valueElement = document.createElement("span");
+        valueElement.className = "study-taxonomy-value";
+        valueElement.textContent = value;
+
+        row.appendChild(labelElement);
+        row.appendChild(valueElement);
+        container.appendChild(row);
+    });
+}
+
+function attachDetailedTaxonomyToBird(bird, wiki) {
+    if (!bird || !wiki?.wikitext) return;
+
+    const detailed = parseWikipediaDetailedTaxonomy(wiki.wikitext);
+    if (Object.keys(detailed).length) {
+        bird.wikipediaDetailedTaxonomy = detailed;
+    }
+}
+
 function getWikipediaTitleFromTaxon(taxon, info) {
     if (info?.wikipedia) {
         try {
@@ -2728,6 +3003,7 @@ async function showBirdInTaxonCard(bird) {
         gameState.taxonCardRequestId !== requestId
     ) return;
 
+    attachDetailedTaxonomyToBird(bird, wiki);
     renderBirdCard(bird, wiki);
 }
 
@@ -2773,17 +3049,7 @@ function renderBirdCard(bird, wiki) {
     taxonomyHeading.textContent = "Taxonomy";
     taxonomySection.appendChild(taxonomyHeading);
 
-    const taxonomyRows = [
-        ["Class", bird.class || "Aves"],
-        ["Order", bird.order],
-        ["Family", bird.family],
-        ["Genus", bird.genus],
-        ["Species", bird.species || bird.scientificName]
-    ];
-
-    taxonomyRows.forEach(([label, value]) => {
-        if (!value) return;
-
+    getDetailedSpeciesTaxonomyRows(bird, wiki).forEach(([label, value]) => {
         const row = document.createElement("p");
         row.className = "taxon-card-taxonomy-row";
 
@@ -3769,6 +4035,9 @@ async function showGameOverCard(result) {
         onlineThaiName ||
         bird.thaiName ||
         "No information available online.";
+
+    attachDetailedTaxonomyToBird(bird, wiki);
+    renderSpeciesTaxonomyRows(taxonomy, bird, wiki);
 
     const studyData = getWikipediaStudyData(wiki?.html, wiki?.wikitext);
     const description =
