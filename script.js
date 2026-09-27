@@ -1082,37 +1082,29 @@ function assignTreeNodeProximity(root) {
     const mysteryPath = getBirdPhylogenyPath(gameState.mysteryBird);
     if (!mysteryPath.length) return;
 
+    // Proximity is based on the mystery bird's ACTUAL full lineage.
+    // Do not normalize against the currently revealed/visible part of the
+    // tree, because that makes a shallow reveal look artificially close.
     const mysteryIndexById = new Map(
         mysteryPath.map((taxon, index) => [taxon.id, index])
     );
 
-    // While the game is running, the mystery is only revealed as far as the
-    // deepest shared taxon learned so far. At game end the full mystery path
-    // is revealed.
-    const revealedMysteryId =
-        gameState.gameStatus === "playing"
-            ? getMysteryRevealTaxon().id
-            : mysteryPath[mysteryPath.length - 1].id;
-
-    const revealedMysteryIndex =
-        mysteryIndexById.get(revealedMysteryId) ?? 0;
+    const fullMysteryDepth = Math.max(1, mysteryPath.length - 1);
 
     function walk(node, inheritedProximity = 0) {
         if (!node || node.type !== "taxon") return;
 
         const mysteryIndex = mysteryIndexById.get(node.taxonId);
 
-        if (
-            mysteryIndex !== undefined &&
-            mysteryIndex <= revealedMysteryIndex
-        ) {
-            node.__proximity =
-                revealedMysteryIndex > 0
-                    ? mysteryIndex / revealedMysteryIndex
-                    : 0;
+        if (mysteryIndex !== undefined) {
+            // Aves = 0; deeper shared taxonomy = closer to the real mystery.
+            node.__proximity = Math.max(
+                0,
+                Math.min(1, mysteryIndex / fullMysteryDepth)
+            );
         } else {
-            // This is a side branch. Its apparent closeness is determined by
-            // where it attaches, not by its private depth.
+            // A side branch keeps the proximity of the point where it
+            // diverges from the mystery lineage.
             node.__proximity = inheritedProximity;
         }
 
@@ -1120,9 +1112,8 @@ function assignTreeNodeProximity(root) {
             if (child.type === "taxon") {
                 walk(child, node.__proximity);
             } else {
-                // Leaf species inherit the proximity of the taxonomic branch
-                // where they attach, matching the warm/cool feedback used by
-                // Metazooa's tree.
+                // Species leaves stay neutral. This value is only used by
+                // their final connector.
                 child.__proximity = node.__proximity;
             }
         });
@@ -1134,9 +1125,8 @@ function assignTreeNodeProximity(root) {
 function getProximityColor(proximity) {
     const t = Math.max(0, Math.min(1, Number(proximity) || 0));
 
-    // Match Metazooa's discrete tree colors rather than a smooth gradient.
-    // Far/shared-broad taxonomy = red, then orange, yellow/olive, and
-    // finally green for the deepest shared taxonomy.
+    // Metazooa-style red → orange → yellow/olive → green feedback.
+    // The proximity value above is based on the complete mystery lineage.
     if (t < 0.25) return "rgb(158, 48, 24)";
     if (t < 0.50) return "rgb(190, 99, 24)";
     if (t < 0.75) return "rgb(145, 139, 25)";
@@ -4270,22 +4260,56 @@ function renderTaxonomyTree() {
             path.style.strokeDasharray = `${branchLength}px`;
             path.style.strokeDashoffset = `${branchLength}px`;
 
-            // Each branch gets one solid color based on how close it is
-            // to the mystery bird. Taxon and species branches use the same
-            // proximity mechanic: red/brown when far away, muted gold in
-            // the middle, and green when close.
-            const branchProximity = Number.isFinite(child.__proximity)
+            const parentProximity = Number.isFinite(node.__proximity)
+                ? node.__proximity
+                : 0;
+            const childProximity = Number.isFinite(child.__proximity)
                 ? child.__proximity
-                : Number.isFinite(parent.__proximity)
-                    ? parent.__proximity
-                    : 0;
+                : parentProximity;
 
-            const branchColor = getProximityColor(branchProximity);
-            path.style.stroke = branchColor;
+            const parentColor = getProximityColor(parentProximity);
+            const childColor = getProximityColor(childProximity);
 
             if (child.type === "taxon") {
+                // Taxon-to-taxon branches smoothly transition from the
+                // parent's actual proximity color to the child's.
+                const gradient = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "linearGradient"
+                );
+
+                const gradientName = `meta-tree-gradient-${gradientId++}`;
+                gradient.setAttribute("id", gradientName);
+                gradient.setAttribute("gradientUnits", "userSpaceOnUse");
+                gradient.setAttribute("x1", String(startX));
+                gradient.setAttribute("y1", String(startY));
+                gradient.setAttribute("x2", String(endX));
+                gradient.setAttribute("y2", String(endY));
+
+                const startStop = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "stop"
+                );
+                startStop.setAttribute("offset", "0%");
+                startStop.setAttribute("stop-color", parentColor);
+
+                const endStop = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "stop"
+                );
+                endStop.setAttribute("offset", "100%");
+                endStop.setAttribute("stop-color", childColor);
+
+                gradient.appendChild(startStop);
+                gradient.appendChild(endStop);
+                defs.appendChild(gradient);
+
+                path.style.stroke = `url(#${gradientName})`;
                 path.classList.add("meta-connection-taxon");
             } else {
+                // The branch directly entering a species node is the one
+                // exception: keep it a single solid color from its parent.
+                path.style.stroke = parentColor;
                 path.classList.add("meta-connection-species");
             }
 
