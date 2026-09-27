@@ -4256,13 +4256,17 @@ function renderTaxonomyTree() {
                 path.classList.add("meta-connection-species");
                 // The branch into the mystery species uses the same
                 // proximity color as the taxon node it comes from.
-                const parentProximity = Number.isFinite(node.__proximity)
-                    ? node.__proximity
-                    : 0;
-                path.style.setProperty(
-                    "--tree-proximity-hue",
-                    Math.round(parentProximity * 120)
+                // Read the exact hue from the rendered parent node so
+                // the branch can never fall back to red independently.
+                const parentHue = parent.element?.style.getPropertyValue(
+                    "--tree-proximity-hue"
                 );
+                if (parentHue) {
+                    path.style.setProperty(
+                        "--tree-proximity-hue",
+                        parentHue
+                    );
+                }
             }
 
             svg.appendChild(path);
