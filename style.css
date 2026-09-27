@@ -2525,9 +2525,9 @@ input:focus-visible,
     grid-template-columns: 320px minmax(300px, 1.35fr) minmax(260px, 1fr);
     grid-template-rows: auto auto auto auto auto;
     grid-template-areas:
-        "title . taxonomy"
-        "scientific . taxonomy"
-        "rank . taxonomy"
+        "title . ."
+        "scientific . ."
+        "rank . ."
         "photo description taxonomy"
         "photo wikipedia taxonomy";
     column-gap: 26px;
