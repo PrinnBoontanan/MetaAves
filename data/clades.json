@@ -465,7 +465,9 @@
     "name": "Aequornithes",
     "rank": "clade",
     "parent": "clade:Neoaves",
-    "children": [],
+    "children": [
+      "clade:Feraequornithes"
+    ],
     "status": "backbone_external",
     "note": "Included as a named Neoaves clade, but its exact placement relative to other major Neoaves lineages is not hard-coded here."
   },
