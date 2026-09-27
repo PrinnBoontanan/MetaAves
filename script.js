@@ -1029,21 +1029,67 @@ function buildTreeModel() {
 function getTreeNodeProximity(node) {
     if (!node || node.type !== "taxon") return 0;
 
-    // Metazooa's visual gradient follows the revealed tree itself:
-    // shallow/root nodes are red, middle nodes are yellow/orange, and
-    // deeper nodes nearer the species leaves become green. This is based
-    // on the displayed tree depth, not on taxonomic rank or guess order.
-    const depth = Number.isFinite(node.__renderDepth)
-        ? node.__renderDepth
-        : 0;
-    const maxDepth = Math.max(
-        1,
-        Number.isFinite(node.__renderMaxDepth)
-            ? node.__renderMaxDepth
-            : depth
+    // Color represents biological closeness to the mystery, not how many
+    // visible UI levels happen to be between this node and Aves.
+    //
+    // A node on the mystery's revealed lineage gets a progressively greener
+    // color as it approaches the mystery. A side branch inherits the color of
+    // the point where that branch joins the mystery lineage, so adding extra
+    // taxa such as Bucerotiformes -> Bucerotidae -> Bucerotinae cannot make
+    // that side branch look artificially closer.
+    if (Number.isFinite(node.__proximity)) {
+        return Math.max(0, Math.min(1, node.__proximity));
+    }
+
+    return 0;
+}
+
+function assignTreeNodeProximity(root) {
+    if (!root) return;
+
+    const mysteryPath = getBirdPhylogenyPath(gameState.mysteryBird);
+    if (!mysteryPath.length) return;
+
+    const mysteryIndexById = new Map(
+        mysteryPath.map((taxon, index) => [taxon.id, index])
     );
 
-    return Math.max(0, Math.min(1, depth / maxDepth));
+    // While the game is running, the mystery is only revealed as far as the
+    // deepest shared taxon learned so far. At game end the full mystery path
+    // is revealed.
+    const revealedMysteryId =
+        gameState.gameStatus === "playing"
+            ? getMysteryRevealTaxon().id
+            : mysteryPath[mysteryPath.length - 1].id;
+
+    const revealedMysteryIndex =
+        mysteryIndexById.get(revealedMysteryId) ?? 0;
+
+    function walk(node, inheritedProximity = 0) {
+        if (!node || node.type !== "taxon") return;
+
+        const mysteryIndex = mysteryIndexById.get(node.taxonId);
+
+        if (
+            mysteryIndex !== undefined &&
+            mysteryIndex <= revealedMysteryIndex
+        ) {
+            node.__proximity =
+                revealedMysteryIndex > 0
+                    ? mysteryIndex / revealedMysteryIndex
+                    : 0;
+        } else {
+            // This is a side branch. Its apparent closeness is determined by
+            // where it attaches, not by its private depth.
+            node.__proximity = inheritedProximity;
+        }
+
+        (node.children || []).forEach(child =>
+            walk(child, node.__proximity)
+        );
+    }
+
+    walk(root, 0);
 }
 
 function createTreeNodeElement(node) {
@@ -3449,6 +3495,18 @@ function selectTaxon(node) {
         );
     }
 
+    // Detailed ranked nodes such as subfamily/tribe/suborder can come from
+    // Wikipedia/Wikidata enrichment rather than the compact generated
+    // AviList taxonomy. They are still real clickable tree taxa, so create a
+    // lightweight taxon record when they are not present in the main catalog.
+    if (!taxon && node.taxonId && node.name) {
+        taxon = {
+            id: node.taxonId,
+            name: node.name,
+            rank: node.level || "clade"
+        };
+    }
+
     if (!taxon) return;
 
     showTaxonInTaxonCard(taxon);
@@ -3789,6 +3847,11 @@ function renderTaxonomyTree() {
     if (!gameState.mysteryBird) return;
 
     const model = buildTreeModel();
+
+    // Calculate biological color proximity before measuring/rendering nodes.
+    // This keeps the temporary measurement elements and the final elements
+    // visually consistent.
+    assignTreeNodeProximity(model);
 
     const canvas = document.createElement("div");
     canvas.classList.add("meta-tree-canvas");
