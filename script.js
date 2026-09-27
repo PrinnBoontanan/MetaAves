@@ -2244,6 +2244,85 @@ function extractIucnStatusFromWikipediaValue(rawValue) {
     return normalizeWikipediaText(value);
 }
 
+function findWikipediaConservationStatusFromCategories(wikitext) {
+    if (!wikitext) return "";
+
+    const categoryMatches = String(wikitext).matchAll(
+        /\\[\\[Category:([^\\]]+)\\]\\]/gi
+    );
+
+    const statusPatterns = [
+        [/critically\\s+endangered/i, "CR"],
+        [/endangered/i, "EN"],
+        [/vulnerable/i, "VU"],
+        [/near\\s+threatened/i, "NT"],
+        [/least\\s+concern/i, "LC"],
+        [/data\\s+deficient/i, "DD"],
+        [/not\\s+evaluated/i, "NE"],
+        [/extinct\\s+in\\s+the\\s+wild/i, "EW"],
+        [/extinct/i, "EX"],
+        [/conservation\\s+dependent/i, "CD"]
+    ];
+
+    for (const match of categoryMatches) {
+        const category = String(match[1] || "").replace(/_/g, " ");
+        // Only use categories that explicitly describe IUCN/Red List status.
+        // This avoids interpreting unrelated categories such as "Endangered
+        // birds" as a global IUCN assessment.
+        if (!/(?:IUCN|Red List)/i.test(category)) continue;
+
+        for (const [pattern, code] of statusPatterns) {
+            if (pattern.test(category)) {
+                return code;
+            }
+        }
+    }
+
+    return "";
+}
+
+function findWikipediaConservationStatusFromPlainWikitext(wikitext) {
+    if (!wikitext) return "";
+
+    const statusNames = [
+        ["Critically Endangered", "CR"],
+        ["Endangered", "EN"],
+        ["Vulnerable", "VU"],
+        ["Near Threatened", "NT"],
+        ["Least Concern", "LC"],
+        ["Data Deficient", "DD"],
+        ["Not Evaluated", "NE"],
+        ["Extinct in the Wild", "EW"],
+        ["Extinct", "EX"],
+        ["Conservation Dependent", "CD"]
+    ];
+
+    const source = String(wikitext)
+        .replace(/<!--[\\s\\S]*?-->/g, " ")
+        .replace(/<ref[^>]*>[\\s\\S]*?<\\/ref>/gi, " ")
+        .replace(/<ref[^>]*\\/\\s*>/gi, " ");
+
+    // Catch simple infobox fields even when the page uses a non-standard
+    // infobox template that the structured template parser does not recognise.
+    const fieldPattern =
+        /(?:^|\\n|\\|)\\s*(?:status|conservation_status|iucn_status|iucn_red_list)\\s*=\\s*([^\\n|]+)/i;
+    const fieldMatch = source.match(fieldPattern);
+
+    if (fieldMatch?.[1]) {
+        const value = extractIucnStatusFromWikipediaValue(fieldMatch[1]);
+        const codeMatch = value.match(
+            /\\b(CR|EN|VU|NT|LC|DD|NE|EW|EX|CD)\\b/i
+        );
+        if (codeMatch) return codeMatch[1].toUpperCase();
+
+        for (const [name, code] of statusNames) {
+            if (value.toLowerCase().includes(name.toLowerCase())) return code;
+        }
+    }
+
+    return "";
+}
+
 function findWikipediaConservationStatusFromWikitext(wikitext) {
     if (!wikitext) return "";
 
@@ -2692,7 +2771,9 @@ function getWikipediaStudyData(html, wikitext = "") {
             3
         ) || formatWikipediaConservationStatus(
             findWikipediaConservationStatus(html) ||
-            findWikipediaConservationStatusFromWikitext(wikitext)
+            findWikipediaConservationStatusFromWikitext(wikitext) ||
+            findWikipediaConservationStatusFromPlainWikitext(wikitext) ||
+            findWikipediaConservationStatusFromCategories(wikitext)
         )
     };
 
@@ -4072,8 +4153,11 @@ function renderTaxonomyTree() {
 
             if (child.type === "taxon") {
                 path.classList.add("meta-connection-taxon");
-                const branchProximity = maxDepth > 0
-                    ? Math.max(0, Math.min(1, childPosition.depth / maxDepth))
+                // Use the child's biological proximity, not its
+                // rendered depth. A deep side branch must keep the color of
+                // the point where it joins the mystery lineage.
+                const branchProximity = Number.isFinite(child.__proximity)
+                    ? child.__proximity
                     : 0;
                 path.style.setProperty(
                     "--tree-proximity-hue",
@@ -4153,24 +4237,20 @@ async function fetchWikidataConservationStatus(bird) {
 
         const searchData = await searchResponse.json();
         const candidates = searchData?.search || [];
+        const candidateIds = candidates
+            .map(item => item?.id)
+            .filter(Boolean);
 
-        const entityId =
-            candidates.find(item =>
-                String(item?.label || "").trim().toLowerCase() ===
-                scientificName.toLowerCase()
-            )?.id ||
-            candidates.find(item =>
-                String(item?.description || "").toLowerCase().includes("species of bird")
-            )?.id ||
-            candidates[0]?.id;
+        if (!candidateIds.length) return "";
 
-        if (!entityId) return "";
-
+        // The scientific name is stored in Wikidata as P225, while the
+        // English label is normally the common name. Do not require the
+        // label itself to equal the scientific name.
         const entityUrl =
             "https://www.wikidata.org/w/api.php?" +
             new URLSearchParams({
                 action: "wbgetentities",
-                ids: entityId,
+                ids: candidateIds.join("|"),
                 props: "claims|labels",
                 languages: "en",
                 format: "json",
@@ -4181,19 +4261,23 @@ async function fetchWikidataConservationStatus(bird) {
         if (!entityResponse.ok) return "";
 
         const entityData = await entityResponse.json();
-        const entity = entityData?.entities?.[entityId];
-        if (!entity) return "";
+        const normalizedScientific = scientificName.toLowerCase();
 
-        // Make sure a search result for a similarly named taxon cannot be
-        // accidentally used for this bird.
-        const scientificClaims = entity.claims?.P225 || [];
-        const exactScientificName = scientificClaims.some(claim =>
-            String(claim?.mainsnak?.datavalue?.value || "").trim().toLowerCase() ===
-            scientificName.toLowerCase()
-        );
+        const matchingEntity = candidateIds
+            .map(id => entityData?.entities?.[id])
+            .find(entity => {
+                const scientificClaims = entity?.claims?.P225 || [];
+                return scientificClaims.some(claim =>
+                    String(claim?.mainsnak?.datavalue?.value || "")
+                        .trim()
+                        .toLowerCase() === normalizedScientific
+                );
+            });
 
-        if (!exactScientificName) return "";
+        if (!matchingEntity) return "";
 
+        const entity = matchingEntity;
+        const entityId = entity.id;
         const p141Claims = entity.claims?.P141 || [];
         if (!p141Claims.length) return "";
 
