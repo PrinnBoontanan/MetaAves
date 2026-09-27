@@ -3744,6 +3744,7 @@ function renderTaxonCard(taxon) {
     rank.textContent = (info.rank || taxon.rank || "").toUpperCase();
 
     const common = document.createElement("p");
+    common.classList.add("taxon-card-common");
     if (info.commonName) {
         common.textContent = info.commonName;
     }
