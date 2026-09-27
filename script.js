@@ -4741,62 +4741,172 @@ function getHintEvidenceTokens(text) {
     return groups.filter(([, terms]) => terms.some(term => new RegExp("\\b" + term + "\\b", "i").test(normalized))).map(([label]) => label);
 }
 
-function getHintFactTokens(text) {
+function getHintFactTokens(text, category = "general") {
     const normalized = normalizeHintText(text);
-    const groups = [
-        ["black", ["black", "dark", "blackish"]],
-        ["white", ["white", "pale", "whitish"]],
-        ["brown", ["brown", "rufous", "chestnut", "buff"]],
-        ["grey", ["grey", "gray", "silvery"]],
-        ["blue", ["blue", "azure", "cobalt"]],
-        ["green", ["green", "olive"]],
-        ["red", ["red", "crimson", "scarlet", "rufous"]],
-        ["yellow", ["yellow", "golden"]],
-        ["orange", ["orange", "ochre", "ochreous"]],
-        ["black-and-white plumage", ["black-and-white", "black and white"]],
-        ["crest", ["crest", "crested"]],
-        ["long tail", ["long tail", "long-tailed"]],
-        ["short tail", ["short tail", "short-tailed"]],
-        ["long bill", ["long bill", "long-billed"]],
-        ["short bill", ["short bill", "short-billed"]],
-        ["hooked bill", ["hooked bill", "hooked beak"]],
-        ["large", ["large", "big", "heavy"]],
-        ["small", ["small", "tiny", "little"]],
-        ["insects", ["insect", "insects", "beetle", "beetles", "ant", "ants", "termite", "termites"]],
-        ["fruit", ["fruit", "fruits", "berry", "berries"]],
-        ["seeds", ["seed", "seeds", "grain", "grains"]],
-        ["nectar", ["nectar", "flower nectar"]],
-        ["fish", ["fish", "fishes"]],
-        ["reptiles", ["reptile", "reptiles", "lizard", "lizards", "snake", "snakes"]],
-        ["amphibians", ["frog", "frogs", "toad", "toads", "amphibian", "amphibians"]],
-        ["crustaceans", ["crustacean", "crustaceans", "crab", "crabs", "shrimp"]],
-        ["molluscs", ["mollusc", "molluscs", "mollusk", "mollusks", "snail", "snails"]],
-        ["carrion", ["carrion", "carcass", "carcasses"]],
-        ["forest", ["forest", "forests", "woodland", "woodlands", "rainforest"]],
-        ["grassland", ["grassland", "grasslands"]],
-        ["wetlands", ["wetland", "wetlands", "marsh", "marshes", "swamp", "swamps"]],
-        ["mangroves", ["mangrove", "mangroves"]],
-        ["savanna", ["savanna", "savannah"]],
-        ["shrubland", ["shrubland", "shrublands", "scrub"]],
-        ["farmland", ["farmland", "farmlands", "cropland", "agricultural"]],
-        ["urban areas", ["urban", "cities", "city", "towns", "town"]],
-        ["coasts", ["coast", "coastal", "shore", "shores", "seashore"]],
-        ["mountains", ["mountain", "mountains", "montane", "alpine"]],
-        ["islands", ["island", "islands"]],
-        ["migratory", ["migratory", "migration", "migrate", "migrates"]],
-        ["flocks", ["flock", "flocks", "gregarious", "groups", "group"]],
-        ["solitary", ["solitary", "alone"]],
-        ["nocturnal", ["nocturnal", "nighttime", "night"]],
-        ["diurnal", ["diurnal", "daytime", "day"]],
-        ["territorial", ["territorial", "territory", "territories"]],
-        ["cavity nesting", ["cavity", "cavities", "hollow", "tree-hole", "treehole"]]
-    ];
+    if (!normalized) return [];
+
+    const groupsByCategory = {
+        appearance: [
+            ["black", ["black", "dark", "blackish"]],
+            ["white", ["white", "pale", "whitish"]],
+            ["brown", ["brown", "rufous", "chestnut", "buff"]],
+            ["grey", ["grey", "gray", "silvery"]],
+            ["blue", ["blue", "azure", "cobalt"]],
+            ["green", ["green", "olive"]],
+            ["red", ["red", "crimson", "scarlet"]],
+            ["yellow", ["yellow", "golden"]],
+            ["orange", ["orange", "ochre", "ochreous"]],
+            ["black-and-white plumage", ["black-and-white", "black and white"]],
+            ["crest", ["crest", "crested"]],
+            ["long tail", ["long tail", "long-tailed"]],
+            ["short tail", ["short tail", "short-tailed"]],
+            ["long bill", ["long bill", "long-billed"]],
+            ["short bill", ["short bill", "short-billed"]],
+            ["hooked bill", ["hooked bill", "hooked beak"]],
+            ["large", ["large", "big", "heavy"]],
+            ["small", ["small", "tiny", "little"]]
+        ],
+        diet: [
+            ["insects", ["insect", "insects", "beetle", "beetles", "ant", "ants", "termite", "termites", "moth", "moths", "fly", "flies", "wasp", "wasps"]],
+            ["fruit", ["fruit", "fruits", "berry", "berries"]],
+            ["seeds", ["seed", "seeds", "grain", "grains"]],
+            ["nectar", ["nectar", "flower nectar"]],
+            ["fish", ["fish", "fishes"]],
+            ["reptiles", ["reptile", "reptiles", "lizard", "lizards", "snake", "snakes"]],
+            ["amphibians", ["frog", "frogs", "toad", "toads", "amphibian", "amphibians"]],
+            ["crustaceans", ["crustacean", "crustaceans", "crab", "crabs", "shrimp"]],
+            ["molluscs", ["mollusc", "molluscs", "mollusk", "mollusks", "snail", "snails"]],
+            ["carrion", ["carrion", "carcass", "carcasses"]]
+        ],
+        habitat: [
+            ["forest", ["forest", "forests", "woodland", "woodlands", "rainforest"]],
+            ["grassland", ["grassland", "grasslands"]],
+            ["wetlands", ["wetland", "wetlands", "marsh", "marshes", "swamp", "swamps"]],
+            ["mangroves", ["mangrove", "mangroves"]],
+            ["savanna", ["savanna", "savannah"]],
+            ["shrubland", ["shrubland", "shrublands", "scrub"]],
+            ["farmland", ["farmland", "farmlands", "cropland", "agricultural"]],
+            ["urban areas", ["urban", "cities", "city", "towns", "town"]],
+            ["coasts", ["coast", "coastal", "shore", "shores", "seashore"]],
+            ["mountains", ["mountain", "mountains", "montane", "alpine"]],
+            ["islands", ["island", "islands"]]
+        ],
+        behavior: [
+            ["migratory", ["migratory", "migration", "migrate", "migrates"]],
+            ["flocks", ["flock", "flocks", "gregarious", "groups", "group"]],
+            ["solitary", ["solitary", "alone"]],
+            ["nocturnal", ["nocturnal", "nighttime", "night"]],
+            ["diurnal", ["diurnal", "daytime", "day"]],
+            ["territorial", ["territorial", "territory", "territories"]]
+        ],
+        breeding: [
+            ["cavity nesting", ["cavity", "cavities", "hollow", "tree-hole", "treehole"]]
+        ],
+        general: []
+    };
+
+    const groups = groupsByCategory[category] || groupsByCategory.general;
 
     return groups
         .filter(([, terms]) =>
-            terms.some(term => new RegExp("\\b" + term + "\\b", "i").test(normalized))
+            terms.some(term =>
+                new RegExp("\\b" + term + "\\b", "i").test(normalized)
+            )
         )
         .map(([label]) => label);
+}
+
+function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
+    const categories = [
+        ["Appearance", "appearance", guessedStudy?.description, mysteryStudy?.description],
+        ["Habitat", "habitat", guessedStudy?.habitatDistribution, mysteryStudy?.habitatDistribution],
+        ["Diet", "diet", guessedStudy?.diet, mysteryStudy?.diet],
+        ["Behavior", "behavior", guessedStudy?.behavior, mysteryStudy?.behavior],
+        ["Breeding", "breeding", guessedStudy?.breeding, mysteryStudy?.breeding]
+    ];
+
+    const clues = [];
+    const differences = [];
+
+    for (const [label, category, left, right] of categories) {
+        if (!left || !right) continue;
+
+        const leftTokens = getHintFactTokens(left, category);
+        const rightTokens = getHintFactTokens(right, category);
+        const shared = leftTokens.filter(token => rightTokens.includes(token));
+
+        if (shared.length) {
+            clues.push({
+                heading: label,
+                text: "Both birds are associated with " + shared.slice(0, 3).join(", ") + "."
+            });
+        }
+
+        const mysteryOnly = rightTokens.filter(token => !leftTokens.includes(token));
+        if (mysteryOnly.length) {
+            differences.push({
+                heading: label + " difference",
+                text: "The mystery bird is associated with " +
+                    mysteryOnly.slice(0, 2).join(" and ") +
+                    ", which is not listed for the bird you guessed."
+            });
+        }
+    }
+
+    // If a category produces only weak/shared appearance clues, give the
+    // player a useful contrast from the mystery bird instead of repeating
+    // another generic similarity.
+    if (clues.length < 3 && differences.length) {
+        clues.push(differences[0]);
+    }
+
+    // Add a clue about the hidden common name without revealing the name.
+    const mysteryNameTokens = getHintNameTokens(gameState.mysteryBird?.commonName || "");
+    if (mysteryNameTokens.length) {
+        const token = mysteryNameTokens[Math.floor(Math.random() * mysteryNameTokens.length)];
+        clues.push({
+            heading: "Name clue",
+            text: "The mystery bird's common name contains a word of " + token.length + " letters."
+        });
+    }
+
+    // If the two pages share no useful keyword, give the player a concrete
+    // fact about the mystery bird instead of a dead-end message.
+    if (!clues.length) {
+        const mysteryCategories = [
+            ["Appearance", mysteryStudy?.description],
+            ["Habitat", mysteryStudy?.habitatDistribution],
+            ["Diet", mysteryStudy?.diet],
+            ["Behavior", mysteryStudy?.behavior],
+            ["Breeding", mysteryStudy?.breeding]
+        ];
+
+        for (const [label, text] of mysteryCategories) {
+            if (!text || text.length < 20) continue;
+
+            const sentence = text
+                .replace(/\s+/g, " ")
+                .split(/(?<=[.!?])\s+/)
+                .map(value => value.trim())
+                .find(value => value.length >= 30 && value.length <= 260);
+
+            if (sentence) {
+                clues.push({ heading: label, text: sentence });
+                break;
+            }
+        }
+    }
+
+    if (!clues.length) {
+        clues.push({
+            heading: "Hint",
+            text: "There is not enough reliable information available online to generate a useful clue for this bird."
+        });
+    }
+
+    // The player already knows why this hover is available, so never state
+    // that the two birds share a family or genus.
+    return clues.slice(0, 4);
 }
 
 function getHintNameTokens(name) {
