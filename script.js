@@ -4257,32 +4257,10 @@ function renderTaxonomyTree() {
             const branchColor = getProximityColor(branchProximity);
             path.style.stroke = branchColor;
 
-            path.classList.add("meta-connection-taxon");
-                // Use the child's biological proximity, not its
-                // rendered depth. A deep side branch must keep the color of
-                // the point where it joins the mystery lineage.
-                const branchProximity = Number.isFinite(child.__proximity)
-                    ? child.__proximity
-                    : 0;
-                path.style.setProperty(
-                    "--tree-proximity-hue",
-                    Math.round(branchProximity * 120)
-                );
+            if (child.type === "taxon") {
+                path.classList.add("meta-connection-taxon");
             } else {
                 path.classList.add("meta-connection-species");
-                // The branch into the mystery species uses the same
-                // proximity color as the taxon node it comes from.
-                // Read the exact hue from the rendered parent node so
-                // the branch can never fall back to red independently.
-                const parentHue = parent.element?.style.getPropertyValue(
-                    "--tree-proximity-hue"
-                );
-                if (parentHue) {
-                    path.style.setProperty(
-                        "--tree-proximity-hue",
-                        parentHue
-                    );
-                }
             }
 
             svg.appendChild(path);
