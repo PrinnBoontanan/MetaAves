@@ -4204,6 +4204,21 @@ function renderTaxonomyTree() {
         });
     });
 
+    function getProximityColor(proximity) {
+        const t = Math.max(0, Math.min(1, Number(proximity) || 0));
+
+        // Far branches: muted stone/olive.
+        // Close branches: deeper olive green.
+        const far = [151, 134, 101];
+        const close = [90, 120, 59];
+
+        const rgb = far.map((value, index) =>
+            Math.round(value + (close[index] - value) * t)
+        );
+
+        return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+    }
+
     function drawConnections(node) {
         if (node.type !== "taxon") return;
 
@@ -4243,6 +4258,13 @@ function renderTaxonomyTree() {
             }
 
             path.classList.add("meta-tree-connection");
+
+            // Give the animation the real length of this branch.
+            // Without this, the generic 1000px fallback can hide shorter paths.
+            const branchLength = path.getTotalLength();
+            path.style.setProperty("--branch-length", `${branchLength}px`);
+            path.style.strokeDasharray = `${branchLength}px`;
+            path.style.strokeDashoffset = `${branchLength}px`;
 
             // Each branch gets one solid color based on how close it is
             // to the mystery bird. Taxon and species branches use the same
