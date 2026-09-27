@@ -2909,3 +2909,63 @@ input:focus-visible,
         border-bottom: 0;
     }
 }
+
+
+/* ========================================
+   Family / Genus species hover hint
+======================================== */
+
+.species-hover-hint {
+    position: fixed;
+    z-index: 2500;
+    width: min(390px, calc(100vw - 24px));
+    max-height: min(360px, calc(100vh - 24px));
+    overflow-y: auto;
+    padding: 15px 17px;
+    background: #fffdf8;
+    color: #4f4a3e;
+    border: 1px solid #c9b98f;
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(45, 38, 25, 0.22);
+    font-size: 13px;
+    line-height: 1.5;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-3px);
+    transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s ease;
+}
+
+.species-hover-hint.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.species-hover-hint-title {
+    margin-bottom: 10px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #5d563f;
+}
+
+.species-hover-hint-section + .species-hover-hint-section {
+    margin-top: 11px;
+    padding-top: 10px;
+    border-top: 1px solid #e3dac7;
+}
+
+.species-hover-hint-heading {
+    margin-bottom: 3px;
+    font-weight: 800;
+    color: #70852e;
+}
+
+.species-hover-hint-text {
+    color: #5c574c;
+}
+
+.species-hover-hint-loading {
+    color: #8a816f;
+    font-style: italic;
+}
