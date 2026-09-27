@@ -4032,6 +4032,15 @@ function renderTaxonomyTree() {
     );
     svg.classList.add("meta-tree-lines");
 
+    // Every branch gets its own gradient so its color smoothly transitions
+    // from the parent node to the child node.
+    const defs = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "defs"
+    );
+    svg.appendChild(defs);
+    let gradientId = 0;
+
     const nodeLayer = document.createElement("div");
     nodeLayer.classList.add("meta-tree-nodes");
 
@@ -4234,6 +4243,45 @@ function renderTaxonomyTree() {
             }
 
             path.classList.add("meta-tree-connection");
+
+            const parentColor =
+                getComputedStyle(parent.element).backgroundColor ||
+                "hsl(0, 58%, 40%)";
+            const childColor =
+                getComputedStyle(childPosition.element).backgroundColor ||
+                "hsl(120, 58%, 40%)";
+
+            const gradient = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "linearGradient"
+            );
+            const currentGradientId = "meta-tree-gradient-" + gradientId++;
+            gradient.setAttribute("id", currentGradientId);
+            gradient.setAttribute("gradientUnits", "userSpaceOnUse");
+            gradient.setAttribute("x1", startX);
+            gradient.setAttribute("y1", startY);
+            gradient.setAttribute("x2", endX);
+            gradient.setAttribute("y2", endY);
+
+            const startStop = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "stop"
+            );
+            startStop.setAttribute("offset", "0%");
+            startStop.setAttribute("stop-color", parentColor);
+
+            const endStop = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "stop"
+            );
+            endStop.setAttribute("offset", "100%");
+            endStop.setAttribute("stop-color", childColor);
+
+            gradient.appendChild(startStop);
+            gradient.appendChild(endStop);
+            defs.appendChild(gradient);
+
+            path.style.stroke = "url(#" + currentGradientId + ")";
 
             const pathLength = path.getTotalLength();
             path.style.strokeDasharray = pathLength;
