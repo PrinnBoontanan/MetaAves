@@ -351,7 +351,10 @@ function getBirdPhylogenyPath(bird) {
     // Their parent relationships determine where they belong.
     const cladeByName = new Map(
         Object.values(gameState.clades || {})
-            .filter(entry => entry?.rank === "clade")
+            .filter(entry =>
+                entry?.id?.startsWith("clade:") &&
+                entry?.name
+            )
             .map(entry => [entry.name, entry])
     );
 
