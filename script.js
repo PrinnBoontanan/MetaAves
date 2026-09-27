@@ -4826,52 +4826,63 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
     ];
 
     const clues = [];
-    const differences = [];
+    const differenceClues = [];
 
     for (const [label, category, left, right] of categories) {
         if (!left || !right) continue;
 
         const leftTokens = getHintFactTokens(left, category);
         const rightTokens = getHintFactTokens(right, category);
+
         const shared = leftTokens.filter(token => rightTokens.includes(token));
+        const mysteryOnly = rightTokens.filter(token => !leftTokens.includes(token));
+        const guessedOnly = leftTokens.filter(token => !rightTokens.includes(token));
 
         if (shared.length) {
             clues.push({
                 heading: label,
-                text: "Both birds are associated with " + shared.slice(0, 3).join(", ") + "."
+                text: "Both birds show a connection to " +
+                    shared.slice(0, 2).join(" and ") +
+                    ", so look for other traits around this part of their biology."
             });
         }
 
-        const mysteryOnly = rightTokens.filter(token => !leftTokens.includes(token));
-        if (mysteryOnly.length) {
-            differences.push({
-                heading: label + " difference",
+        if (mysteryOnly.length && guessedOnly.length) {
+            differenceClues.push({
+                heading: label + " comparison",
                 text: "The mystery bird is associated with " +
                     mysteryOnly.slice(0, 2).join(" and ") +
-                    ", which is not listed for the bird you guessed."
+                    ", while the bird you guessed is associated with " +
+                    guessedOnly.slice(0, 2).join(" and ") + "."
+            });
+        } else if (mysteryOnly.length) {
+            differenceClues.push({
+                heading: label + " comparison",
+                text: "The mystery bird has a " +
+                    mysteryOnly.slice(0, 2).join(" and ") +
+                    " association that is not described for the bird you guessed."
             });
         }
     }
 
-    // If a category produces only weak/shared appearance clues, give the
-    // player a useful contrast from the mystery bird instead of repeating
-    // another generic similarity.
-    if (clues.length < 3 && differences.length) {
-        clues.push(differences[0]);
-    }
+    // Prefer comparisons that actually distinguish the mystery bird from
+    // the bird being hovered, rather than giving generic trivia.
+    differenceClues
+        .sort((a, b) => {
+            const order = {
+                "Diet comparison": 0,
+                "Behavior comparison": 1,
+                "Habitat comparison": 2,
+                "Breeding comparison": 3,
+                "Appearance comparison": 4
+            };
+            return (order[a.heading] ?? 9) - (order[b.heading] ?? 9);
+        })
+        .slice(0, 2)
+        .forEach(clue => clues.push(clue));
 
-    // Add a clue about the hidden common name without revealing the name.
-    const mysteryNameTokens = getHintNameTokens(gameState.mysteryBird?.commonName || "");
-    if (mysteryNameTokens.length) {
-        const token = mysteryNameTokens[Math.floor(Math.random() * mysteryNameTokens.length)];
-        clues.push({
-            heading: "Name clue",
-            text: "The mystery bird's common name contains a word of " + token.length + " letters."
-        });
-    }
-
-    // If the two pages share no useful keyword, give the player a concrete
-    // fact about the mystery bird instead of a dead-end message.
+    // If there is no useful comparison, give one concrete fact about the
+    // mystery bird as a fallback. This is not the normal hint style.
     if (!clues.length) {
         const mysteryCategories = [
             ["Appearance", mysteryStudy?.description],
@@ -4888,7 +4899,7 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
                 .replace(/\s+/g, " ")
                 .split(/(?<=[.!?])\s+/)
                 .map(value => value.trim())
-                .find(value => value.length >= 30 && value.length <= 260);
+                .find(value => value.length >= 45 && value.length <= 260);
 
             if (sentence) {
                 clues.push({ heading: label, text: sentence });
@@ -4900,102 +4911,11 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
     if (!clues.length) {
         clues.push({
             heading: "Hint",
-            text: "There is not enough reliable information available online to generate a useful clue for this bird."
+            text: "There is not enough reliable information online to make a meaningful comparison between these birds."
         });
     }
 
-    // The player already knows why this hover is available, so never state
-    // that the two birds share a family or genus.
-    return clues.slice(0, 4);
-}
-
-function getHintNameTokens(name) {
-    const words = normalizeHintText(name)
-        .split(/\s+/)
-        .filter(word => word.length >= 4);
-
-    const stopWords = new Set([
-        "bird", "birds", "common", "great", "little", "lesser",
-        "greater", "small", "large", "plain", "true", "black",
-        "white", "grey", "gray"
-    ]);
-
-    return words.filter(word => !stopWords.has(word));
-}
-
-function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
-    const categories = [
-        ["Appearance", guessedStudy?.description, mysteryStudy?.description],
-        ["Habitat", guessedStudy?.habitatDistribution, mysteryStudy?.habitatDistribution],
-        ["Diet", guessedStudy?.diet, mysteryStudy?.diet],
-        ["Behavior", guessedStudy?.behavior, mysteryStudy?.behavior],
-        ["Breeding", guessedStudy?.breeding, mysteryStudy?.breeding]
-    ];
-
-    const clues = [];
-
-    for (const [label, left, right] of categories) {
-        if (!left || !right) continue;
-
-        const leftTokens = getHintFactTokens(left);
-        const rightTokens = getHintFactTokens(right);
-        const shared = leftTokens.filter(token => rightTokens.includes(token));
-
-        if (shared.length) {
-            clues.push({
-                heading: label,
-                text: "Both birds are associated with " + shared.slice(0, 3).join(", ") + "."
-            });
-        }
-    }
-
-    // Add a clue about the hidden common name without revealing the name.
-    const mysteryNameTokens = getHintNameTokens(gameState.mysteryBird?.commonName || "");
-    if (mysteryNameTokens.length) {
-        const token = mysteryNameTokens[Math.floor(Math.random() * mysteryNameTokens.length)];
-        clues.push({
-            heading: "Name clue",
-            text: "The mystery bird's common name contains a word of " + token.length + " letters."
-        });
-    }
-
-    // If the two pages share no useful keyword, give the player a concrete
-    // fact about the mystery bird instead of a dead-end message.
-    if (!clues.length) {
-        const mysteryCategories = [
-            ["Appearance", mysteryStudy?.description],
-            ["Habitat", mysteryStudy?.habitatDistribution],
-            ["Diet", mysteryStudy?.diet],
-            ["Behavior", mysteryStudy?.behavior],
-            ["Breeding", mysteryStudy?.breeding]
-        ];
-
-        for (const [label, text] of mysteryCategories) {
-            if (!text || text.length < 20) continue;
-
-            const sentence = text
-                .replace(/\s+/g, " ")
-                .split(/(?<=[.!?])\s+/)
-                .map(value => value.trim())
-                .find(value => value.length >= 30 && value.length <= 260);
-
-            if (sentence) {
-                clues.push({ heading: label, text: sentence });
-                break;
-            }
-        }
-    }
-
-    if (!clues.length) {
-        clues.push({
-            heading: "Hint",
-            text: "There is not enough reliable information available online to generate a useful clue for this bird."
-        });
-    }
-
-    // The player already knows why this hover is available, so never state
-    // that the two birds share a family or genus.
-    return clues.slice(0, 4);
+    return clues.slice(0, 3);
 }
 
 function getSpeciesHintElement() {
