@@ -3114,8 +3114,11 @@ async function fetchWikidataDetailedTaxonomy(bird) {
     const cached = gameState.wikipediaCache.get(cacheKey);
     if (cached?.detailedTaxonomy) return cached.detailedTaxonomy;
 
+    // Wikidata's P105/P171 pair is particularly useful here: P105 tells us
+    // the actual rank of a taxon and P171 links it to its closest parent.
+    // This lets MetaAves recover intermediate ranks that AviList deliberately
+    // does not publish, including superfamily and subfamily.
     const rankLabels = new Map([
-        ["class", "Class"],
         ["subclass", "Subclass"],
         ["infraclass", "Infraclass"],
         ["superorder", "Superorder"],
@@ -3128,16 +3131,58 @@ async function fetchWikidataDetailedTaxonomy(bird) {
         ["subfamily", "Subfamily"],
         ["tribe", "Tribe"],
         ["subtribe", "Subtribe"],
+        ["supertribe", "Supertribe"],
         ["genus", "Genus"],
+        ["subgenus", "Subgenus"],
         ["species", "Species"]
     ]);
 
-    try {
+    const normalizeRank = value =>
+        String(value || "")
+            .toLowerCase()
+            .replace(/[^a-z]/g, "");
+
+    const canonicalRankFromLabel = value => {
+        const normalized = normalizeRank(value);
+        if (!normalized) return null;
+
+        for (const rank of rankLabels.keys()) {
+            if (normalized === normalizeRank(rank)) return rank;
+        }
+
+        return null;
+    };
+
+    async function fetchEntity(entityId) {
+        if (!entityId) return null;
+
+        const entityUrl =
+            "https://www.wikidata.org/w/api.php?" +
+            new URLSearchParams({
+                action: "wbgetentities",
+                ids: entityId,
+                props: "claims|labels",
+                languages: "en",
+                format: "json",
+                origin: "*"
+            }).toString();
+
+        const response = await fetch(entityUrl);
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        return data?.entities?.[entityId] || null;
+    }
+
+    async function fetchExactEntityId(label) {
+        const search = String(label || "").trim();
+        if (!search) return null;
+
         const searchUrl =
             "https://www.wikidata.org/w/api.php?" +
             new URLSearchParams({
                 action: "wbsearchentities",
-                search: scientificName,
+                search,
                 language: "en",
                 uselang: "en",
                 type: "item",
@@ -3146,100 +3191,67 @@ async function fetchWikidataDetailedTaxonomy(bird) {
                 origin: "*"
             }).toString();
 
-        const searchResponse = await fetch(searchUrl);
-        if (!searchResponse.ok) return {};
+        const response = await fetch(searchUrl);
+        if (!response.ok) return null;
 
-        const searchData = await searchResponse.json();
-        const candidates = searchData?.search || [];
+        const data = await response.json();
+        const candidates = data?.search || [];
 
-        const entityId =
-            candidates.find(item =>
-                String(item?.label || "").trim().toLowerCase() ===
-                scientificName.toLowerCase()
-            )?.id;
+        return (
+            candidates.find(
+                item =>
+                    String(item?.label || "").trim().toLowerCase() ===
+                    search.toLowerCase()
+            )?.id || null
+        );
+    }
 
-        if (!entityId) return {};
-
-        const entities = new Map();
+    async function collectParentChain(entityId, rows) {
         let currentId = entityId;
         const visited = new Set();
-        const rows = [];
 
-        // Follow P171 (parent taxon) upward. Each entity gives us its
-        // structured taxonomic rank (P105), so this works even when the
-        // species' Wikipedia taxobox only exposes genus/species.
-        for (let depth = 0; depth < 20 && currentId && !visited.has(currentId); depth++) {
+        for (
+            let depth = 0;
+            depth < 30 && currentId && !visited.has(currentId);
+            depth++
+        ) {
             visited.add(currentId);
 
-            const entityUrl =
-                "https://www.wikidata.org/w/api.php?" +
-                new URLSearchParams({
-                    action: "wbgetentities",
-                    ids: currentId,
-                    props: "claims|labels",
-                    languages: "en",
-                    format: "json",
-                    origin: "*"
-                }).toString();
-
-            const response = await fetch(entityUrl);
-            if (!response.ok) break;
-
-            const data = await response.json();
-            const entity = data?.entities?.[currentId];
+            const entity = await fetchEntity(currentId);
             if (!entity) break;
 
-            entities.set(currentId, entity);
-
             const rankClaims = entity.claims?.P105 || [];
-            const rankId =
-                rankClaims.find(claim => claim?.rank === "preferred")?.mainsnak?.datavalue?.value?.id ||
-                rankClaims.find(claim => claim?.rank === "normal")?.mainsnak?.datavalue?.value?.id ||
-                rankClaims[0]?.mainsnak?.datavalue?.value?.id;
+            const orderedRankClaims = [
+                ...rankClaims.filter(claim => claim?.rank === "preferred"),
+                ...rankClaims.filter(claim => claim?.rank === "normal"),
+                ...rankClaims.filter(claim => claim?.rank === "deprecated")
+            ];
 
-            const rankEntityIds = rankId ? [rankId] : [];
-            if (rankEntityIds.length) {
-                const rankUrl =
-                    "https://www.wikidata.org/w/api.php?" +
-                    new URLSearchParams({
-                        action: "wbgetentities",
-                        ids: rankEntityIds.join("|"),
-                        props: "labels",
-                        languages: "en",
-                        format: "json",
-                        origin: "*"
-                    }).toString();
+            const rankId = orderedRankClaims
+                .map(claim => claim?.mainsnak?.datavalue?.value?.id)
+                .find(Boolean);
 
-                const rankResponse = await fetch(rankUrl);
-                if (rankResponse.ok) {
-                    const rankData = await rankResponse.json();
-                    const rankName =
-                        rankData?.entities?.[rankId]?.labels?.en?.value || "";
+            if (rankId) {
+                const rankEntity = await fetchEntity(rankId);
+                const rankName =
+                    rankEntity?.labels?.en?.value || "";
 
-                    const normalizedRank = String(rankName)
-                        .toLowerCase()
-                        .replace(/[^a-z]/g, "");
+                const canonicalRank = canonicalRankFromLabel(rankName);
 
-                    const canonicalRank =
-                        [...rankLabels.keys()].find(key =>
-                            normalizedRank === key.replace(/[^a-z]/g, "") ||
-                            normalizedRank === ("sub" + key).replace(/[^a-z]/g, "")
-                        );
-
-                    if (canonicalRank && !rows.some(row => row.rank === canonicalRank)) {
-                        rows.push({
-                            rank: canonicalRank,
-                            label: rankLabels.get(canonicalRank),
-                            name:
-                                entity.labels?.en?.value ||
-                                entityId
-                        });
-                    }
+                if (
+                    canonicalRank &&
+                    !rows.some(row => row.rank === canonicalRank)
+                ) {
+                    rows.push({
+                        rank: canonicalRank,
+                        label: rankLabels.get(canonicalRank),
+                        name:
+                            entity.labels?.en?.value ||
+                            entityId
+                    });
                 }
             }
 
-            // Species can have multiple P171 statements. Prefer the first
-            // preferred/normal parent, but stop if we hit a taxon outside Aves.
             const parentClaims = entity.claims?.P171 || [];
             const orderedParents = [
                 ...parentClaims.filter(claim => claim?.rank === "preferred"),
@@ -3254,13 +3266,75 @@ async function fetchWikidataDetailedTaxonomy(bird) {
             if (!parentId || parentId === currentId) break;
             currentId = parentId;
         }
+    }
+
+    try {
+        // First follow the bird itself. This is the normal path and preserves
+        // the most specific classification available for the species.
+        const entityId = await fetchExactEntityId(scientificName);
+        if (!entityId) return {};
+
+        const rows = [];
+        await collectParentChain(entityId, rows);
+
+        // A species chain can legitimately stop at a family when Wikidata
+        // does not model that family's intermediate ranks. In that case,
+        // follow the family item separately so the family can contribute
+        // superfamily/subfamily information without inventing a rank.
+        const hasSuperfamily = rows.some(row => row.rank === "superfamily");
+        const hasSubfamily = rows.some(row => row.rank === "subfamily");
+
+        if (
+            (!hasSuperfamily || !hasSubfamily) &&
+            bird?.family
+        ) {
+            const familyId = await fetchExactEntityId(bird.family);
+
+            if (familyId) {
+                await collectParentChain(familyId, rows);
+            }
+
+            // Wikipedia family pages are a second independent fallback.
+            // They often expose a superfamily/subfamily in the taxobox even
+            // when the individual species page does not.
+            if (!rows.some(row => row.rank === "superfamily") ||
+                !rows.some(row => row.rank === "subfamily")) {
+                try {
+                    const familyWiki = await fetchWikipediaPageData(
+                        bird.family,
+                        true,
+                        "bird"
+                    );
+                    const familyDetailed = parseWikipediaDetailedTaxonomy(
+                        familyWiki?.wikitext || ""
+                    );
+
+                    ["superfamily", "subfamily", "tribe", "subtribe"].forEach(
+                        rank => {
+                            const entry = familyDetailed?.[rank];
+                            if (!entry?.name) return;
+
+                            if (!rows.some(row => row.rank === rank)) {
+                                rows.push({
+                                    rank,
+                                    label: rankLabels.get(rank),
+                                    name: entry.name
+                                });
+                            }
+                        }
+                    );
+                } catch (error) {
+                    console.warn(
+                        "Family Wikipedia taxonomy fallback failed:",
+                        bird.family,
+                        error
+                    );
+                }
+            }
+        }
 
         const ordered = rows.reverse();
 
-        // Wikidata occasionally has a more specific rank chain than AviList,
-        // but we never let it replace the authoritative common/order/family/
-        // genus fields already in MetaAves. It only fills missing intermediate
-        // ranks.
         const detailed = {};
         for (const row of ordered) {
             detailed[row.rank] = {
@@ -3270,10 +3344,17 @@ async function fetchWikidataDetailedTaxonomy(bird) {
             };
         }
 
-        gameState.wikipediaCache.set(cacheKey, { detailedTaxonomy: detailed });
+        gameState.wikipediaCache.set(cacheKey, {
+            detailedTaxonomy: detailed
+        });
+
         return detailed;
     } catch (error) {
-        console.warn("Wikidata detailed taxonomy lookup failed:", scientificName, error);
+        console.warn(
+            "Wikidata detailed taxonomy lookup failed:",
+            scientificName,
+            error
+        );
         return {};
     }
 }
