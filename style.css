@@ -114,10 +114,11 @@ body {
 
 .taxonomy-tree {
     position: relative;
-    min-height: 420px;
+    min-height: 560px;
+    height: min(68vh, 760px);
     padding: 10px 0;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: auto;
     background: #f8ead5;
     border-radius: 4px;
 }
@@ -612,18 +613,19 @@ body {
 }
 
 .game-container {
-    width: min(1500px, 96vw);
+    width: min(1800px, 97vw);
     min-height: 100vh;
     margin: 0 auto;
     padding: 28px 0 42px;
     display: grid;
-    grid-template-columns: minmax(0, 1.75fr) minmax(330px, 0.85fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-        "header header"
-        "info info"
-        "guess guess"
-        "tree taxon";
-    gap: 18px 20px;
+        "header"
+        "info"
+        "guess"
+        "tree"
+        "taxon";
+    gap: 18px;
 }
 
 .game-header {
@@ -2227,7 +2229,7 @@ input:focus-visible,
 /* Tree mode owns the framed viewport. */
 .taxonomy-tree:not(.table-mode) {
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
 }
 
 /* Table mode uses the table wrapper as the ONLY scroll container.
