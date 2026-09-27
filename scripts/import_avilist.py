@@ -136,7 +136,9 @@ CLADE_PATHS_BY_ORDER = {
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Aequornithes"
+        "Aequornithes",
+        "Feraequornithes",
+        "Pelecanimorphae"
     ],
     "Suliformes": [
         "Neornithes",
@@ -144,7 +146,10 @@ CLADE_PATHS_BY_ORDER = {
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Aequornithes"
+        "Aequornithes",
+        "Feraequornithes",
+        "Pelecanimorphae",
+        "Pelecanes"
     ],
     "Pelecaniformes": [
         "Neornithes",
@@ -152,7 +157,10 @@ CLADE_PATHS_BY_ORDER = {
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Aequornithes"
+        "Aequornithes",
+        "Feraequornithes",
+        "Pelecanimorphae",
+        "Pelecanes"
     ],
     "Phaethontiformes": [
         "Neornithes",
@@ -294,6 +302,18 @@ CLADE_PATHS_BY_ORDER = {
         "Cavitaves",
         "Eucavitaves",
         "Picocoraciae"
+    ],
+    "Galbuliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves",
+        "Eucavitaves",
+        "Picocoraciae",
+        "Picodynastornithes"
     ],
     "Coraciiformes": [
         "Neornithes",
