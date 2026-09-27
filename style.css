@@ -2725,3 +2725,34 @@ input:focus-visible,
         justify-self: center;
     }
 }
+
+
+/* Final taxonomy color refinement:
+   keep the red → yellow → green proximity mechanic, but make the
+   node colors muted and pastel like the site's text palette. */
+.meta-tree-node[data-level="class"],
+.meta-tree-node[data-level="order"],
+.meta-tree-node[data-level="family"],
+.meta-tree-node[data-level="genus"],
+.meta-tree-node[data-level="clade"] {
+    background: hsl(
+        var(--tree-proximity-hue, 0),
+        22%,
+        68%
+    );
+    color: #3f4638;
+    border: 1px solid hsl(
+        var(--tree-proximity-hue, 0),
+        24%,
+        56%
+    );
+    font-weight: 700;
+}
+
+.meta-connection-taxon {
+    stroke-width: 2.4;
+}
+
+.meta-connection-species {
+    stroke-width: 1.8;
+}
