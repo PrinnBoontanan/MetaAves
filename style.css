@@ -2461,7 +2461,7 @@ input:focus-visible,
 .taxonomy-layout {
     grid-area: taxonomy;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 330px;
+    grid-template-columns: minmax(0, 1fr) minmax(600px, 680px);
     gap: 22px;
     align-items: start;
     min-width: 0;
