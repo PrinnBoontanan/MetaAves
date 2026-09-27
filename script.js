@@ -4246,45 +4246,52 @@ function renderTaxonomyTree() {
 
             const parentColor =
                 getComputedStyle(parent.element).backgroundColor ||
-                "hsl(0, 58%, 40%)";
-            const childColor =
-                child.type === "taxon"
-                    ? getComputedStyle(childPosition.element).backgroundColor ||
-                      "hsl(120, 52%, 72%)"
-                    : getComputedStyle(parent.element).backgroundColor ||
-                      "hsl(120, 52%, 72%)";
+                "rgb(63, 70, 56)";
 
-            const gradient = document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "linearGradient"
-            );
-            const currentGradientId = "meta-tree-gradient-" + gradientId++;
-            gradient.setAttribute("id", currentGradientId);
-            gradient.setAttribute("gradientUnits", "userSpaceOnUse");
-            gradient.setAttribute("x1", startX);
-            gradient.setAttribute("y1", startY);
-            gradient.setAttribute("x2", endX);
-            gradient.setAttribute("y2", endY);
+            // Taxon-to-species branches are deliberately solid. Only
+            // taxon-to-taxon branches transition from the parent's muted
+            // pastel color to the child's muted pastel color.
+            if (child.type === "taxon") {
+                const childColor =
+                    getComputedStyle(childPosition.element).backgroundColor ||
+                    "rgb(63, 70, 56)";
 
-            const startStop = document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "stop"
-            );
-            startStop.setAttribute("offset", "0%");
-            startStop.setAttribute("stop-color", parentColor);
+                const gradient = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "linearGradient"
+                );
+                const currentGradientId = "meta-tree-gradient-" + gradientId++;
+                gradient.setAttribute("id", currentGradientId);
+                gradient.setAttribute("gradientUnits", "userSpaceOnUse");
+                gradient.setAttribute("x1", startX);
+                gradient.setAttribute("y1", startY);
+                gradient.setAttribute("x2", endX);
+                gradient.setAttribute("y2", endY);
 
-            const endStop = document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "stop"
-            );
-            endStop.setAttribute("offset", "100%");
-            endStop.setAttribute("stop-color", childColor);
+                const startStop = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "stop"
+                );
+                startStop.setAttribute("offset", "0%");
+                startStop.setAttribute("stop-color", parentColor);
 
-            gradient.appendChild(startStop);
-            gradient.appendChild(endStop);
-            defs.appendChild(gradient);
+                const endStop = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "stop"
+                );
+                endStop.setAttribute("offset", "100%");
+                endStop.setAttribute("stop-color", childColor);
 
-            path.style.stroke = "url(#" + currentGradientId + ")";
+                gradient.appendChild(startStop);
+                gradient.appendChild(endStop);
+                defs.appendChild(gradient);
+
+                path.style.stroke = "url(#" + currentGradientId + ")";
+            } else {
+                // Species branches use exactly the parent's rendered node
+                // color, with no SVG gradient at all.
+                path.style.stroke = parentColor;
+            }
 
             const pathLength = path.getTotalLength();
             path.style.strokeDasharray = pathLength;
