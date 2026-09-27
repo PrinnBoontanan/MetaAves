@@ -17,7 +17,9 @@ const gameState = {
     taxonomyView: "tree",
     wikipediaCache: new Map(),
     thaiNameCache: new Map(),
-    taxonCardRequestId: 0
+    taxonCardRequestId: 0,
+    hintCache: new Map(),
+    hintRequestId: 0
 };
 
 const guessCountElement = document.getElementById("guess-count");
@@ -1182,6 +1184,14 @@ function createTreeNodeElement(node) {
         if (node.bird) {
             element.classList.add("meta-species-clickable");
             element.style.pointerEvents = "auto";
+
+            element.addEventListener("mouseenter", event => {
+                showSpeciesHint(node.bird, event.currentTarget);
+            });
+            element.addEventListener("mousemove", event => {
+                positionSpeciesHint(event.currentTarget);
+            });
+            element.addEventListener("mouseleave", hideSpeciesHint);
 
             element.addEventListener("click", () => {
                 // The mystery species should always reopen the Study Card
@@ -4672,6 +4682,176 @@ async function fetchWikidataConservationStatus(bird) {
     }
 }
 
+// ========================================
+// Family / Genus hover hints
+// ========================================
+
+function getHintRelationship(guessedBird) {
+    const mystery = gameState.mysteryBird;
+    if (!guessedBird || !mystery || guessedBird === mystery) return null;
+
+    if (guessedBird.genus && mystery.genus && guessedBird.genus === mystery.genus) {
+        return { rank: "Genus", value: guessedBird.genus };
+    }
+
+    if (guessedBird.family && mystery.family && guessedBird.family === mystery.family) {
+        return { rank: "Family", value: guessedBird.family };
+    }
+
+    return null;
+}
+
+function normalizeHintText(value) {
+    return normalizeWikipediaText(value).toLowerCase().replace(/[^a-z0-9\\s-]/g, " ").replace(/\\s+/g, " ").trim();
+}
+
+function getHintEvidenceTokens(text) {
+    const normalized = normalizeHintText(text);
+    if (!normalized) return [];
+    const groups = [
+        ["insects", ["insect", "insects", "beetle", "beetles", "ant", "ants", "termite", "termites", "moth", "moths", "fly", "flies", "wasp", "wasps"]],
+        ["fruit", ["fruit", "fruits", "berry", "berries"]],
+        ["seeds", ["seed", "seeds", "grain", "grains"]],
+        ["nectar", ["nectar"]],
+        ["fish", ["fish", "fishes"]],
+        ["reptiles", ["reptile", "reptiles", "lizard", "lizards", "snake", "snakes"]],
+        ["amphibians", ["frog", "frogs", "toad", "toads", "amphibian", "amphibians"]],
+        ["crustaceans", ["crustacean", "crustaceans", "crab", "crabs", "shrimp"]],
+        ["molluscs", ["mollusc", "molluscs", "mollusk", "mollusks", "snail", "snails"]],
+        ["carrion", ["carrion", "carcass", "carcasses"]],
+        ["forest", ["forest", "forests", "woodland", "woodlands", "rainforest"]],
+        ["grassland", ["grassland", "grasslands"]],
+        ["wetland", ["wetland", "wetlands", "marsh", "marshes", "swamp", "swamps"]],
+        ["mangroves", ["mangrove", "mangroves"]],
+        ["savanna", ["savanna", "savannah"]],
+        ["shrubland", ["shrubland", "shrublands", "scrub"]],
+        ["farmland", ["farmland", "farmlands", "cropland", "agricultural"]],
+        ["urban areas", ["urban", "cities", "city", "towns", "town"]],
+        ["coasts", ["coast", "coastal", "shore", "shores", "seashore"]],
+        ["mountains", ["mountain", "mountains", "montane", "alpine"]],
+        ["islands", ["island", "islands"]],
+        ["migratory", ["migratory", "migration", "migrate", "migrates"]],
+        ["flocks", ["flock", "flocks", "gregarious"]],
+        ["solitary", ["solitary"]],
+        ["nocturnal", ["nocturnal", "nighttime"]],
+        ["diurnal", ["diurnal", "daytime"]],
+        ["territorial", ["territorial", "territory", "territories"]],
+        ["cavity nesting", ["cavity", "cavities", "hollow", "tree-hole", "treehole"]]
+    ];
+    return groups.filter(([, terms]) => terms.some(term => new RegExp("\\b" + term + "\\b", "i").test(normalized))).map(([label]) => label);
+}
+
+function buildSpeciesHint(relationship, guessedStudy, mysteryStudy) {
+    const categories = [
+        ["Habitat", guessedStudy?.habitatDistribution, mysteryStudy?.habitatDistribution],
+        ["Diet", guessedStudy?.diet, mysteryStudy?.diet],
+        ["Behavior", guessedStudy?.behavior, mysteryStudy?.behavior],
+        ["Breeding", guessedStudy?.breeding, mysteryStudy?.breeding]
+    ];
+    const common = [];
+    const different = [];
+
+    for (const [label, left, right] of categories) {
+        if (!left || !right) continue;
+        const leftTokens = getHintEvidenceTokens(left);
+        const rightTokens = getHintEvidenceTokens(right);
+        const shared = leftTokens.filter(token => rightTokens.includes(token));
+        const leftOnly = leftTokens.filter(token => !rightTokens.includes(token));
+        const rightOnly = rightTokens.filter(token => !leftTokens.includes(token));
+        if (shared.length) common.push(label + ": both are associated with " + shared.slice(0, 2).join(" and ") + ".");
+        else if (leftOnly.length || rightOnly.length) {
+            if (leftOnly.length && rightOnly.length) different.push(label + ": the guessed bird is associated with " + leftOnly.slice(0, 2).join(" and ") + ", while the mystery is associated with " + rightOnly.slice(0, 2).join(" and ") + ".");
+            else if (leftOnly.length) different.push(label + ": the guessed bird is associated with " + leftOnly.slice(0, 2).join(" and ") + ", which is not reported for the mystery in the available data.");
+            else different.push(label + ": the mystery is associated with " + rightOnly.slice(0, 2).join(" and ") + " in the available data.");
+        }
+    }
+
+    const sections = [{
+        heading: relationship.rank === "Genus" ? "Same genus: " + relationship.value : "Same family: " + relationship.value,
+        text: relationship.rank === "Genus" ? "These birds belong to the same genus." : "These birds belong to the same family, but may be in different genera."
+    }];
+    if (common.length) sections.push({ heading: "What they have in common", text: common.slice(0, 3).join(" ") });
+    if (different.length) sections.push({ heading: "Useful differences", text: different.slice(0, 2).join(" ") });
+    if (!common.length && !different.length) sections.push({ heading: "Not enough information", text: "There is not enough reliable information available for both birds to generate a useful hint." });
+    return sections;
+}
+
+function getSpeciesHintElement() {
+    let hint = document.getElementById("species-hover-hint");
+    if (!hint) {
+        hint = document.createElement("div");
+        hint.id = "species-hover-hint";
+        hint.className = "species-hover-hint";
+        hint.setAttribute("role", "tooltip");
+        document.body.appendChild(hint);
+    }
+    return hint;
+}
+
+function positionSpeciesHint(anchor) {
+    const hint = document.getElementById("species-hover-hint");
+    if (!hint || !anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    const margin = 12;
+    const hintRect = hint.getBoundingClientRect();
+    let left = rect.left + rect.width / 2 - hintRect.width / 2;
+    let top = rect.bottom + margin;
+    if (left < margin) left = margin;
+    if (left + hintRect.width > window.innerWidth - margin) left = window.innerWidth - hintRect.width - margin;
+    if (top + hintRect.height > window.innerHeight - margin) top = rect.top - hintRect.height - margin;
+    hint.style.left = Math.max(margin, left) + "px";
+    hint.style.top = Math.max(margin, top) + "px";
+}
+
+function hideSpeciesHint() {
+    const hint = document.getElementById("species-hover-hint");
+    if (hint) hint.classList.remove("visible");
+    gameState.hintRequestId++;
+}
+
+async function showSpeciesHint(guessedBird, anchor) {
+    const relationship = getHintRelationship(guessedBird);
+    if (!relationship || gameState.gameStatus !== "playing") { hideSpeciesHint(); return; }
+    const hint = getSpeciesHintElement();
+    const requestId = ++gameState.hintRequestId;
+    const cacheKey = (guessedBird.scientificName || guessedBird.commonName) + "|" + (gameState.mysteryBird.scientificName || gameState.mysteryBird.commonName);
+    hint.innerHTML = '<div class="species-hover-hint-title">Hint</div><div class="species-hover-hint-loading">Finding a useful clue…</div>';
+    hint.classList.add("visible");
+    positionSpeciesHint(anchor);
+
+    let hintData = gameState.hintCache.get(cacheKey);
+    if (!hintData) {
+        try {
+            const [guessedWiki, mysteryWiki] = await Promise.all([
+                fetchWikipediaPageData(guessedBird.wikipediaTitle || guessedBird.commonName, true, "bird", guessedBird.scientificName),
+                fetchWikipediaPageData(gameState.mysteryBird.wikipediaTitle || gameState.mysteryBird.commonName, true, "bird", gameState.mysteryBird.scientificName)
+            ]);
+            if (requestId !== gameState.hintRequestId) return;
+            hintData = buildSpeciesHint(relationship, getWikipediaStudyData(guessedWiki?.html, guessedWiki?.wikitext), getWikipediaStudyData(mysteryWiki?.html, mysteryWiki?.wikitext));
+            gameState.hintCache.set(cacheKey, hintData);
+        } catch (error) {
+            console.warn("Species hint generation failed:", error);
+            hintData = [{ heading: "Not enough information", text: "There is not enough reliable information available for both birds to generate a useful hint." }];
+        }
+    }
+    if (requestId !== gameState.hintRequestId) return;
+    hint.innerHTML = "";
+    hintData.forEach(section => {
+        const block = document.createElement("div");
+        block.className = "species-hover-hint-section";
+        const heading = document.createElement("div");
+        heading.className = "species-hover-hint-heading";
+        heading.textContent = section.heading;
+        const text = document.createElement("div");
+        text.className = "species-hover-hint-text";
+        text.textContent = section.text;
+        block.appendChild(heading);
+        block.appendChild(text);
+        hint.appendChild(block);
+    });
+    hint.classList.add("visible");
+    positionSpeciesHint(anchor);
+}
 // ========================================
 // Game Over Card
 // ========================================
