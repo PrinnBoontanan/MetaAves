@@ -2582,7 +2582,9 @@ input:focus-visible,
     grid-template-areas:
         "title title"
         "rank rank"
-        "image description";
+        "common common"
+        "image description"
+        "image wikipedia";
     column-gap: 28px;
     align-items: start;
 }
@@ -2595,20 +2597,34 @@ input:focus-visible,
     grid-area: rank;
 }
 
+.taxon-card:not(.species-card) > .taxon-card-common {
+    grid-area: common;
+    margin: 6px 0 2px;
+}
+
 .taxon-card:not(.species-card) > .taxon-card-image {
     grid-area: image;
     width: 100%;
     max-width: 280px;
     max-height: 280px;
     margin: 12px 0 0;
+    padding-right: 20px;
+    border-right: 1px solid #d9cdb5;
     object-fit: cover;
     border-radius: 10px;
+    box-sizing: content-box;
 }
 
 .taxon-card:not(.species-card) > .taxon-card-description {
     grid-area: description;
     max-width: none;
     margin-top: 12px;
+}
+
+.taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
+    grid-area: wikipedia;
+    align-self: end;
+    margin-top: 14px;
 }
 
 @media (max-width: 700px) {
