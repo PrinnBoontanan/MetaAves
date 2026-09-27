@@ -532,6 +532,7 @@ body {
     width: auto;
     max-width: 100%;
     height: auto;
+    max-height: none;
     object-fit: contain;
     background: #f4e8d4;
     padding: 10px;
@@ -1465,7 +1466,7 @@ body {
     width: auto;
     max-width: min(100%, 560px);
     height: auto;
-    max-height: 420px;
+    max-height: none;
     object-fit: contain;
     margin: 18px auto 4px;
     border-radius: 14px;
@@ -2532,8 +2533,9 @@ input:focus-visible,
 .taxon-card.species-card > .taxon-card-image {
     grid-area: photo;
     width: 100%;
-    max-height: 280px;
-    object-fit: cover;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
     border-radius: 10px;
 }
 
@@ -2619,9 +2621,10 @@ input:focus-visible,
     grid-area: image;
     width: 100%;
     max-width: 280px;
-    height: 280px;
+    height: auto;
+    max-height: none;
     margin: 8px 0 0;
-    object-fit: cover;
+    object-fit: contain;
     object-position: center;
     border-radius: 10px;
     box-sizing: border-box;
