@@ -16,7 +16,7 @@ body {
 }
 
 .game-container {
-    width: min(1000px, 92%);
+    width: min(1500px, 96%);
     margin: 0 auto;
     padding: 40px 0;
 }
@@ -97,10 +97,20 @@ body {
 
 
 /* ========================================
-   Taxonomy Section
+   Taxonomy + Taxon Information Layout
 ======================================== */
 
+/* On desktop the tree gets the large left column while the Taxon
+   Information card stays visible beside it, like the earlier layout. */
+.taxonomy-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 22px;
+    align-items: start;
+}
+
 .taxonomy-section {
+    min-width: 0;
     background: white;
     padding: 25px;
     border-radius: 14px;
@@ -114,8 +124,8 @@ body {
 
 .taxonomy-tree {
     position: relative;
-    min-height: 560px;
-    height: min(68vh, 760px);
+    min-height: 620px;
+    height: min(72vh, 820px);
     padding: 10px 0;
     overflow-x: auto;
     overflow-y: auto;
@@ -298,6 +308,11 @@ body {
     background: white;
     padding: 25px;
     border-radius: 14px;
+    min-width: 0;
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
 }
 
 .taxon-card {
@@ -2439,4 +2454,19 @@ input:focus-visible,
 
 .taxon-card-wikipedia-link:hover {
     text-decoration: underline;
+}
+
+
+/* Keep the information card beside the tree on desktop, but stack it
+   below the tree when there is not enough horizontal room. */
+@media (max-width: 1050px) {
+    .taxonomy-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .taxon-section {
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
 }
