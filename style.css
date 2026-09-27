@@ -2847,6 +2847,16 @@ input:focus-visible,
     align-content: start;
 }
 
+.taxon-card-taxonomy-column {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.taxon-card-taxonomy-column .taxon-card-taxonomy-row {
+    flex: 0 0 auto;
+}
+
 .taxon-card.species-card > .taxon-card-species-taxonomy > h4 {
     grid-column: 1 / -1;
     margin-bottom: 10px;
@@ -2881,6 +2891,10 @@ input:focus-visible,
     .taxon-card.species-card > .taxon-card-species-taxonomy,
     .study-taxonomy {
         grid-template-columns: 1fr;
+    }
+
+    .taxon-card-taxonomy-column {
+        width: 100%;
     }
 
     .taxon-card.species-card > .taxon-card-species-taxonomy > h4 {
