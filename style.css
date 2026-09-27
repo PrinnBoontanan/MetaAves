@@ -2590,10 +2590,14 @@ input:focus-visible,
 
 .taxon-card:not(.species-card) > h3 {
     grid-area: title;
+    margin: 0 0 8px;
+    line-height: 1.15;
 }
 
 .taxon-card:not(.species-card) > .taxon-card-rank {
     grid-area: rank;
+    margin: 0;
+    line-height: 1.2;
 }
 
 .taxon-card:not(.species-card) > .taxon-card-common {
@@ -2615,7 +2619,7 @@ input:focus-visible,
     width: 100%;
     max-width: 280px;
     height: 280px;
-    margin: 12px 0 0;
+    margin: 8px 0 0;
     object-fit: cover;
     object-position: center;
     border-radius: 10px;
