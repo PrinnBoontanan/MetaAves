@@ -2842,6 +2842,237 @@ function parseWikipediaDetailedTaxonomy(wikitext) {
     return {};
 }
 
+
+async function fetchWikidataDetailedTaxonomy(bird) {
+    const scientificName = String(bird?.scientificName || "").trim();
+    if (!scientificName) return {};
+
+    const cacheKey = "wikidata-taxonomy:" + scientificName.toLowerCase();
+    gameState.wikipediaCache ||= new Map();
+    const cached = gameState.wikipediaCache.get(cacheKey);
+    if (cached?.detailedTaxonomy) return cached.detailedTaxonomy;
+
+    const rankLabels = new Map([
+        ["class", "Class"],
+        ["subclass", "Subclass"],
+        ["infraclass", "Infraclass"],
+        ["superorder", "Superorder"],
+        ["order", "Order"],
+        ["suborder", "Suborder"],
+        ["infraorder", "Infraorder"],
+        ["parvorder", "Parvorder"],
+        ["superfamily", "Superfamily"],
+        ["family", "Family"],
+        ["subfamily", "Subfamily"],
+        ["tribe", "Tribe"],
+        ["subtribe", "Subtribe"],
+        ["genus", "Genus"],
+        ["species", "Species"]
+    ]);
+
+    try {
+        const searchUrl =
+            "https://www.wikidata.org/w/api.php?" +
+            new URLSearchParams({
+                action: "wbsearchentities",
+                search: scientificName,
+                language: "en",
+                uselang: "en",
+                type: "item",
+                limit: "10",
+                format: "json",
+                origin: "*"
+            }).toString();
+
+        const searchResponse = await fetch(searchUrl);
+        if (!searchResponse.ok) return {};
+
+        const searchData = await searchResponse.json();
+        const candidates = searchData?.search || [];
+
+        const entityId =
+            candidates.find(item =>
+                String(item?.label || "").trim().toLowerCase() ===
+                scientificName.toLowerCase()
+            )?.id;
+
+        if (!entityId) return {};
+
+        const entities = new Map();
+        let currentId = entityId;
+        const visited = new Set();
+        const rows = [];
+
+        // Follow P171 (parent taxon) upward. Each entity gives us its
+        // structured taxonomic rank (P105), so this works even when the
+        // species' Wikipedia taxobox only exposes genus/species.
+        for (let depth = 0; depth < 20 && currentId && !visited.has(currentId); depth++) {
+            visited.add(currentId);
+
+            const entityUrl =
+                "https://www.wikidata.org/w/api.php?" +
+                new URLSearchParams({
+                    action: "wbgetentities",
+                    ids: currentId,
+                    props: "claims|labels",
+                    languages: "en",
+                    format: "json",
+                    origin: "*"
+                }).toString();
+
+            const response = await fetch(entityUrl);
+            if (!response.ok) break;
+
+            const data = await response.json();
+            const entity = data?.entities?.[currentId];
+            if (!entity) break;
+
+            entities.set(currentId, entity);
+
+            const rankClaims = entity.claims?.P105 || [];
+            const rankId =
+                rankClaims.find(claim => claim?.rank === "preferred")?.mainsnak?.datavalue?.value?.id ||
+                rankClaims.find(claim => claim?.rank === "normal")?.mainsnak?.datavalue?.value?.id ||
+                rankClaims[0]?.mainsnak?.datavalue?.value?.id;
+
+            const rankEntityIds = rankId ? [rankId] : [];
+            if (rankEntityIds.length) {
+                const rankUrl =
+                    "https://www.wikidata.org/w/api.php?" +
+                    new URLSearchParams({
+                        action: "wbgetentities",
+                        ids: rankEntityIds.join("|"),
+                        props: "labels",
+                        languages: "en",
+                        format: "json",
+                        origin: "*"
+                    }).toString();
+
+                const rankResponse = await fetch(rankUrl);
+                if (rankResponse.ok) {
+                    const rankData = await rankResponse.json();
+                    const rankName =
+                        rankData?.entities?.[rankId]?.labels?.en?.value || "";
+
+                    const normalizedRank = String(rankName)
+                        .toLowerCase()
+                        .replace(/[^a-z]/g, "");
+
+                    const canonicalRank =
+                        [...rankLabels.keys()].find(key =>
+                            normalizedRank === key.replace(/[^a-z]/g, "") ||
+                            normalizedRank === ("sub" + key).replace(/[^a-z]/g, "")
+                        );
+
+                    if (canonicalRank && !rows.some(row => row.rank === canonicalRank)) {
+                        rows.push({
+                            rank: canonicalRank,
+                            label: rankLabels.get(canonicalRank),
+                            name:
+                                entity.labels?.en?.value ||
+                                entityId
+                        });
+                    }
+                }
+            }
+
+            // Species can have multiple P171 statements. Prefer the first
+            // preferred/normal parent, but stop if we hit a taxon outside Aves.
+            const parentClaims = entity.claims?.P171 || [];
+            const orderedParents = [
+                ...parentClaims.filter(claim => claim?.rank === "preferred"),
+                ...parentClaims.filter(claim => claim?.rank === "normal"),
+                ...parentClaims.filter(claim => claim?.rank === "deprecated")
+            ];
+
+            const parentId = orderedParents
+                .map(claim => claim?.mainsnak?.datavalue?.value?.id)
+                .find(Boolean);
+
+            if (!parentId || parentId === currentId) break;
+            currentId = parentId;
+        }
+
+        const ordered = rows.reverse();
+
+        // Wikidata occasionally has a more specific rank chain than AviList,
+        // but we never let it replace the authoritative common/order/family/
+        // genus fields already in MetaAves. It only fills missing intermediate
+        // ranks.
+        const detailed = {};
+        for (const row of ordered) {
+            detailed[row.rank] = {
+                rank: row.rank,
+                label: row.label,
+                name: row.name
+            };
+        }
+
+        gameState.wikipediaCache.set(cacheKey, { detailedTaxonomy: detailed });
+        return detailed;
+    } catch (error) {
+        console.warn("Wikidata detailed taxonomy lookup failed:", scientificName, error);
+        return {};
+    }
+}
+
+function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
+    const rows = [];
+    const seenLabels = new Set();
+
+    const add = (label, value) => {
+        const cleaned = cleanWikipediaTaxonomyValue(value);
+        if (!cleaned) return;
+
+        const key = label.toLowerCase();
+        if (seenLabels.has(key)) return;
+
+        seenLabels.add(key);
+        rows.push([label, cleaned]);
+    };
+
+    add("Class", bird?.class || "Aves");
+
+    const clades = [
+        ...(bird?.cladePath || []),
+        ...(bird?.postOrderCladePath || [])
+    ].filter((name, index, values) => values.indexOf(name) === index);
+
+    if (clades.length) add("Clades", clades.join(" → "));
+
+    const wikipediaDetailed = parseWikipediaDetailedTaxonomy(wiki?.wikitext);
+    const detailed = { ...wikipediaDetailed, ...wikidataDetailed };
+
+    for (const rank of ["subclass", "infraclass", "superorder"]) {
+        const entry = detailed[rank];
+        if (entry?.name) add(entry.label, entry.name);
+    }
+
+    add("Order", bird?.order || detailed.order?.name);
+
+    for (const rank of [
+        "suborder",
+        "infraorder",
+        "parvorder",
+        "superfamily"
+    ]) {
+        const entry = detailed[rank];
+        if (entry?.name) add(entry.label, entry.name);
+    }
+
+    add("Family", bird?.family || detailed.family?.name);
+
+    for (const rank of ["subfamily", "tribe", "subtribe"]) {
+        const entry = detailed[rank];
+        if (entry?.name) add(entry.label, entry.name);
+    }
+
+    add("Genus", bird?.genus || detailed.genus?.name);
+    add("Species", bird?.species || bird?.scientificName || detailed.species?.name);
+
+    return rows;
+}
+
 function getDetailedSpeciesTaxonomyRows(bird, wiki) {
     const rows = [];
 
@@ -2877,7 +3108,10 @@ function getDetailedSpeciesTaxonomyRows(bird, wiki) {
         add("Clades", clades.join(" → "));
     }
 
-    const detailed = parseWikipediaDetailedTaxonomy(wiki?.wikitext);
+    const detailed = {
+        ...parseWikipediaDetailedTaxonomy(wiki?.wikitext),
+        ...(bird?.wikipediaDetailedTaxonomy || {})
+    };
 
     // Ranks above Order are displayed before Order; ranks below Order are
     // displayed in their actual biological position. We keep these separate
@@ -2916,7 +3150,7 @@ function renderSpeciesTaxonomyRows(container, bird, wiki) {
 
     container.innerHTML = "";
 
-    getDetailedSpeciesTaxonomyRows(bird, wiki).forEach(([label, value]) => {
+    mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed).forEach(([label, value]) => {
         const row = document.createElement("div");
         row.className = "study-taxonomy-row";
 
@@ -3012,10 +3246,11 @@ async function showBirdInTaxonCard(bird) {
     ) return;
 
     attachDetailedTaxonomyToBird(bird, wiki);
-    renderBirdCard(bird, wiki);
+    const wikidataDetailed = await fetchWikidataDetailedTaxonomy(bird);
+    renderBirdCard(bird, wiki, wikidataDetailed);
 }
 
-function renderBirdCard(bird, wiki) {
+function renderBirdCard(bird, wiki, wikidataDetailed = {}) {
     const card = document.getElementById("taxon-card");
     if (!card) return;
 
@@ -3125,6 +3360,41 @@ async function showTaxonInTaxonCard(taxon) {
         gameState.selectedTaxonId !== selectionId ||
         gameState.taxonCardRequestId !== requestId
     ) return;
+
+    if (taxon.rank === "species") {
+        const wikidataDetailed = await fetchWikidataDetailedTaxonomy(taxon);
+        attachDetailedTaxonomyToBird(taxon, wiki);
+
+        const description = card.querySelector(".taxon-card-description");
+        if (description) {
+            description.textContent =
+                wiki?.summary?.extract ||
+                "No information available on Wikipedia.";
+        }
+
+        const taxonomySection = document.createElement("div");
+        taxonomySection.className =
+            "taxon-card-wiki-section taxon-card-species-taxonomy";
+        taxonomySection.dataset.taxonCardDynamic = "true";
+
+        const heading = document.createElement("h4");
+        heading.textContent = "Taxonomy";
+        taxonomySection.appendChild(heading);
+
+        mergeDetailedTaxonomyRows(taxon, wiki, wikidataDetailed).forEach(([label, value]) => {
+            const row = document.createElement("p");
+            row.className = "taxon-card-taxonomy-row";
+
+            const labelElement = document.createElement("strong");
+            labelElement.textContent = label + ": ";
+
+            row.appendChild(labelElement);
+            row.appendChild(document.createTextNode(value));
+            taxonomySection.appendChild(row);
+        });
+
+        card.appendChild(taxonomySection);
+    }
 
     // The same taxon can be selected more than once while its Wikipedia
     // request is still in flight. Remove any previously-added dynamic
@@ -4025,7 +4295,7 @@ async function showGameOverCard(result) {
     if (newGameButton) newGameButton.classList.add("visible");
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    const [wiki, onlineThaiName, onlineConservationStatus] =
+    const [wiki, onlineThaiName, onlineConservationStatus, wikidataDetailed] =
         await Promise.all([
             fetchWikipediaPageData(
                 wikiTitle,
@@ -4034,7 +4304,8 @@ async function showGameOverCard(result) {
                 bird.scientificName
             ),
             fetchOnlineThaiName(bird),
-            fetchWikidataConservationStatus(bird)
+            fetchWikidataConservationStatus(bird),
+            fetchWikidataDetailedTaxonomy(bird)
         ]);
 
     if (gameState.mysteryBird !== bird) return;
@@ -4045,7 +4316,23 @@ async function showGameOverCard(result) {
         "No information available online.";
 
     attachDetailedTaxonomyToBird(bird, wiki);
-    renderSpeciesTaxonomyRows(taxonomy, bird, wiki);
+    taxonomy.innerHTML = "";
+    mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed).forEach(([label, value]) => {
+        const row = document.createElement("div");
+        row.className = "study-taxonomy-row";
+
+        const labelElement = document.createElement("span");
+        labelElement.className = "study-taxonomy-label";
+        labelElement.textContent = label;
+
+        const valueElement = document.createElement("span");
+        valueElement.className = "study-taxonomy-value";
+        valueElement.textContent = value;
+
+        row.appendChild(labelElement);
+        row.appendChild(valueElement);
+        taxonomy.appendChild(row);
+    });
 
     const studyData = getWikipediaStudyData(wiki?.html, wiki?.wikitext);
     const description =
