@@ -80,11 +80,16 @@ async function loadGameData() {
 
         const cladeMembership = await cladeMembershipResponse.json();
         const membershipBySpecies = cladeMembership.species || {};
+        const postOrderMembershipBySpecies =
+            cladeMembership.postOrderSpecies || {};
 
-        // Join the generated clade layer to the generated bird records.
-        // The scientific name is the stable species key produced by AviList.
+        // Join both parts of the generated clade layer to the generated bird
+        // records. The scientific name is the stable species key produced by
+        // AviList.
         gameState.birds.forEach(bird => {
             bird.cladePath = membershipBySpecies[bird.scientificName] || [];
+            bird.postOrderCladePath =
+                postOrderMembershipBySpecies[bird.scientificName] || [];
         });
 
         // Select a random species from the full imported dataset.
@@ -425,9 +430,24 @@ function getBirdPhylogenyPath(bird) {
     }
 
     if (rankedPath.length && rankedPath[0].id === "class:Aves") {
-        rankedPath.slice(1).forEach(node =>
-            addNode(node.id, node.level, node.value)
-        );
+        rankedPath.slice(1).forEach(node => {
+            addNode(node.id, node.level, node.value);
+
+            // Some useful phylogenetic clades live *inside* a ranked order,
+            // rather than above it. Insert them after the order and before
+            // family/genus/species. This preserves the biological lineage
+            // without changing the deepest-shared-node mechanic.
+            if (
+                node.level === "order" &&
+                Array.isArray(bird.postOrderCladePath)
+            ) {
+                bird.postOrderCladePath.forEach(cladeName => {
+                    const clade = cladeByName.get(cladeName);
+                    if (!clade || seen.has(clade.id)) return;
+                    addNode(clade.id, "clade", clade.name);
+                });
+            }
+        });
     } else {
         for (const level of ["order", "family", "genus"]) {
             const value = bird[level];
