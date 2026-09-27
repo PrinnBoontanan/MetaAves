@@ -8,6 +8,8 @@ on:
       - "build_metaves_local.py"
       - "requirements.txt"
       - "data/data_sources.json"
+      - "data/clades.json"
+      - "script.js"
       - ".github/workflows/build-taxonomy.yml"
   workflow_dispatch:
 
@@ -48,6 +50,7 @@ jobs:
 
           taxonomy = json.loads(Path("data/taxonomy.generated.json").read_text())
           birds = json.loads(Path("data/birds.generated.json").read_text())
+          clade_membership = json.loads(Path("data/clade_membership.generated.json").read_text())
 
           assert taxonomy["class:Aves"]["name"] == "Aves"
           assert taxonomy["_meta"]["rankOrder"]
@@ -58,7 +61,20 @@ jobs:
           missing = required - ranks
           assert not missing, f"Missing required ranks: {sorted(missing)}"
 
-          print(f"Validated {len(birds):,} birds and {len(taxonomy)-1:,} taxonomy nodes.")
+          assert clade_membership.get("_meta", {}).get("version") == 1
+          assert clade_membership.get("species")
+          assert clade_membership.get("postOrderSpecies") is not None
+
+          for scientific_name, path in clade_membership["postOrderSpecies"].items():
+              assert scientific_name
+              assert isinstance(path, list) and path
+              assert path[0] in {"Acanthisitti", "Eupasseres"}
+
+          print(
+              f"Validated {len(birds):,} birds, {len(taxonomy)-1:,} taxonomy nodes, "
+              f"{len(clade_membership['species']):,} backbone clade memberships, and "
+              f"{len(clade_membership['postOrderSpecies']):,} post-order clade memberships."
+          )
           PY
 
       - name: Commit generated taxonomy
