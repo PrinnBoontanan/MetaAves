@@ -2183,9 +2183,14 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
 }
 
 function limitWikipediaSentences(text, maxSentences = 3) {
-    return splitWikipediaSentences(text)
-        .slice(0, maxSentences)
-        .join(" ");
+    const sentences = splitWikipediaSentences(text)
+        .slice(0, maxSentences);
+
+    // Study-card prose should be useful and readable, not a copied
+    // Wikipedia article. Eight sentences gives room for roughly 20–30
+    // lines in the side card while keeping very long species descriptions
+    // under control.
+    return sentences.join(" ");
 }
 
 function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
@@ -2733,13 +2738,16 @@ function getWikipediaStudyData(html, wikitext = "") {
     const data = {
         sections,
 
-        description: findWikipediaSection(sections, [
-            "description",
-            "description and identification",
-            "description and appearance",
-            "appearance",
-            "identification"
-        ]) || limitWikipediaSentences(lead, 2),
+        description: limitWikipediaSentences(
+            findWikipediaSection(sections, [
+                "description",
+                "description and identification",
+                "description and appearance",
+                "appearance",
+                "identification"
+            ]) || lead,
+            8
+        ),
 
         habitatDistribution: extractWikipediaCategoryText(
             sections,
