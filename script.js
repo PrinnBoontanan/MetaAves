@@ -4845,6 +4845,9 @@ function getMeaningfulNameWords(name) {
 }
 
 function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
+    const relationship = getHintRelationship(guessedBird);
+    const hintTarget = relationship?.rank === "Genus" ? "species" : "genus";
+
     const categories = [
         ["Appearance", "appearance", guessedStudy?.description, mysteryStudy?.description],
         ["Habitat", "habitat", guessedStudy?.habitatDistribution, mysteryStudy?.habitatDistribution],
@@ -4855,6 +4858,13 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
 
     const clues = [];
     const differenceClues = [];
+
+    // At family level, clues should help the player narrow down the
+    // mystery's genus. Once the genus is found, switch to clues that
+    // distinguish the mystery species from its close relatives.
+    const targetIntro = hintTarget === "genus"
+        ? "Use this clue to narrow down the mystery bird's genus: "
+        : "Use this clue to distinguish the mystery species from other species in this genus: ";
 
     // A shared meaningful word in the two common names is a useful name clue.
     // Do not use name length or arbitrary word-position trivia.
@@ -4868,7 +4878,8 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
     if (sharedNameWord) {
         clues.push({
             heading: "Name clue",
-            text: "The mystery bird's common name also contains the word “" +
+            text: targetIntro +
+                "the mystery bird's common name also contains the word “" +
                 sharedNameWord +
                 "”, which it shares with the bird you guessed."
         });
@@ -4887,16 +4898,19 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
         if (shared.length) {
             clues.push({
                 heading: label,
-                text: "Both birds show a connection to " +
+                text: targetIntro +
+                    "both birds show a connection to " +
                     shared.slice(0, 2).join(" and ") +
-                    ", so look for other traits around this part of their biology."
+                    ", so use this trait when narrowing down the " +
+                    hintTarget + "."
             });
         }
 
         if (mysteryOnly.length && guessedOnly.length) {
             differenceClues.push({
                 heading: label + " comparison",
-                text: "The mystery bird is associated with " +
+                text: targetIntro +
+                    "the mystery bird is associated with " +
                     mysteryOnly.slice(0, 2).join(" and ") +
                     ", while the bird you guessed is associated with " +
                     guessedOnly.slice(0, 2).join(" and ") + "."
@@ -4904,7 +4918,8 @@ function buildSpeciesHint(guessedBird, guessedStudy, mysteryStudy) {
         } else if (mysteryOnly.length) {
             differenceClues.push({
                 heading: label + " comparison",
-                text: "The mystery bird has a " +
+                text: targetIntro +
+                    "the mystery bird has a " +
                     mysteryOnly.slice(0, 2).join(" and ") +
                     " association that is not described for the bird you guessed."
             });
