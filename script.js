@@ -1359,7 +1359,7 @@ async function searchWikipediaBirdByScientificName(scientificName) {
             new URLSearchParams({
                 action: "query",
                 list: "search",
-                srsearch: "\" + scientific + "\"",
+                srsearch: '"' + scientific + '"',
                 srlimit: "5",
                 redirects: "1",
                 format: "json",
@@ -2840,7 +2840,12 @@ async function showTaxonInTaxonCard(taxon) {
 
     const info = gameState.taxonInfo?.[taxon.id] || {};
     const wikiTitle = getWikipediaTitleFromTaxon(taxon, info);
-    const wiki = await fetchWikipediaPageData(wikiTitle, true);
+    const wiki = await fetchWikipediaPageData(
+        wikiTitle,
+        true,
+        taxon.rank === "species" ? "bird" : "bird",
+        taxon.rank === "species" ? taxon.scientificName : ""
+    );
 
     if (
         gameState.selectedTaxonId !== selectionId ||
