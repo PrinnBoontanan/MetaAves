@@ -1131,6 +1131,30 @@ function assignTreeNodeProximity(root) {
     walk(root, 0);
 }
 
+function getProximityColor(proximity) {
+    const t = Math.max(0, Math.min(1, Number(proximity) || 0));
+    const stops = [
+        [0.00, [158, 48, 24]],
+        [0.33, [198, 108, 25]],
+        [0.66, [157, 151, 25]],
+        [1.00, [76, 125, 48]]
+    ];
+
+    for (let i = 1; i < stops.length; i++) {
+        if (t <= stops[i][0]) {
+            const [t0, c0] = stops[i - 1];
+            const [t1, c1] = stops[i];
+            const local = (t - t0) / (t1 - t0);
+            const rgb = c0.map((value, index) =>
+                Math.round(value + (c1[index] - value) * local)
+            );
+            return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+        }
+    }
+
+    return "rgb(76, 125, 48)";
+}
+
 function createTreeNodeElement(node) {
     const element = document.createElement("div");
 
@@ -4225,35 +4249,6 @@ function renderTaxonomyTree() {
             element
         });
     });
-
-    function getProximityColor(proximity) {
-        const t = Math.max(0, Math.min(1, Number(proximity) || 0));
-
-        // Metazooa-style proximity palette:
-        // far = red, then orange, yellow/olive, and finally green.
-        const stops = [
-            [0.00, [158, 48, 24]],
-            [0.33, [198, 108, 25]],
-            [0.66, [157, 151, 25]],
-            [1.00, [76, 125, 48]]
-        ];
-
-        for (let i = 1; i < stops.length; i++) {
-            if (t <= stops[i][0]) {
-                const [t0, c0] = stops[i - 1];
-                const [t1, c1] = stops[i];
-                const local = (t - t0) / (t1 - t0);
-
-                const rgb = c0.map((value, index) =>
-                    Math.round(value + (c1[index] - value) * local)
-                );
-
-                return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
-            }
-        }
-
-        return "rgb(76, 125, 48)";
-    }
 
     function drawConnections(node) {
         if (node.type !== "taxon") return;
