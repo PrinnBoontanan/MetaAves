@@ -637,7 +637,7 @@ body {
         "header header"
         "info info"
         "guess guess"
-        "tree taxon";
+        "taxonomy taxonomy";
     gap: 18px 20px;
 }
 
@@ -2454,6 +2454,31 @@ input:focus-visible,
     text-decoration: underline;
 }
 
+
+/* Keep the taxonomy tree and Taxon Information card together as one
+   grid item in the main page layout. The two panels are then laid out
+   side-by-side inside this wrapper. */
+.taxonomy-layout {
+    grid-area: taxonomy;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 22px;
+    align-items: start;
+    min-width: 0;
+}
+
+.taxonomy-layout > .taxonomy-section,
+.taxonomy-layout > .taxon-section {
+    grid-area: auto;
+}
+
+.taxonomy-layout > .taxonomy-section {
+    min-width: 0;
+}
+
+.taxonomy-layout > .taxon-section {
+    min-width: 0;
+}
 
 /* Keep the information card beside the tree on desktop, but stack it
    below the tree when there is not enough horizontal room. */
