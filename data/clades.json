@@ -369,6 +369,452 @@
         "Picocoraciae",
         "Picodynastornithes"
       ]
+    },
+    "passerineFamilyCladePaths": {
+      "Philepittidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+      ],
+      "Eurylaimidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+      ],
+      "Calyptomenidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+      ],
+      "Sapayoidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+      ],
+      "Pittidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+      ],
+      "Melanopareiidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Conopophagidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Thamnophilidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Grallariidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Rhinocryptidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Formicariidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Furnariidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Pipridae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+      ],
+      "Cotingidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+      ],
+      "Tityridae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+      ],
+      "Oxyruncidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+      ],
+      "Onychorhynchidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+      ],
+      "Tyrannidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+      ],
+      "Atrichornithidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Menuridae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Climacteridae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Ptilonorhynchidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Pomatostomidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Orthonychidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Acanthizidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Meliphagidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Maluridae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Dasyornithidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Pardalotidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Cinclosomatidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Campephagidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Mohouidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Neosittidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Psophodidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Eulacestomatidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Falcunculidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Oreoicidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Paramythiidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Vireonidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Pachycephalidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Oriolidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Machaerirhynchidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Artamidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Rhipiduridae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Dicruridae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Laniidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Corvidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Paridae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Remizidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Regulidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Bombycillidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Certhiidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Sittidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Troglodytidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Muscicapidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Turdidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Sturnidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Buphagidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Cinclidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Motacillidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Prunellidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Passeridae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Nectariniidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Dicaeidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Chloropseidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Irenidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Urocynchramidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Estrildidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Ploceidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Viduidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Fringillidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Peucedramidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Icteridae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Parulidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Icteriidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Phaenicophilidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Zeledoniidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Teretistridae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Thraupidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Mitrospingidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Rhodinocichlidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Calyptophilidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Nesospingidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Spindalidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Cardinalidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Emberizidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Passerellidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Calcariidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Acanthisittidae": [
+        "Acanthisitti"
+      ]
     }
   },
   "clade:Neornithes": {
