@@ -1552,14 +1552,14 @@ body {
        mixing two different shades with a gradient. */
     background: hsl(
         var(--tree-proximity-hue, 0),
-        58%,
-        40%
+        52%,
+        72%
     );
-    color: #fff;
+    color: #3f4938;
     border: 1px solid hsl(
         var(--tree-proximity-hue, 0),
-        58%,
-        30%
+        48%,
+        58%
     );
     font-weight: 700;
 }
