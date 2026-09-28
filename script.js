@@ -2352,7 +2352,8 @@ async function fetchWikipediaPageData(
     title,
     includeHtml = false,
     expectedType = "bird",
-    scientificName = ""
+    scientificName = "",
+    requireThumbnail = false
 ) {
     // Fast path: try the exact/common Wikipedia title first. The previous
     // implementation searched by scientific name BEFORE trying this, which
@@ -2465,16 +2466,26 @@ async function fetchWikipediaPageData(
         return data;
     };
 
-    // First pass: direct titles only. Usually the first candidate succeeds.
+    // First pass: direct titles only. Keep searching when a valid page has
+    // no image and this card explicitly requested a thumbnail.
+    let firstValidData = null;
+
     for (const candidateTitle of candidates) {
         const normalizedTitle = wikipediaCacheKey(candidateTitle);
         if (!normalizedTitle) continue;
 
         const data = await loadCandidate(normalizedTitle);
-        if (data) return data;
+        if (!data) continue;
+
+        if (!firstValidData) firstValidData = data;
+
+        if (!requireThumbnail || data?.summary?.thumbnail?.source) {
+            return data;
+        }
     }
 
-    // Slow fallback only when the direct title attempts failed.
+    // Slow fallback when the direct title attempts failed to produce the
+    // requested image (or failed completely).
     if (expectedType === "bird" && scientificName) {
         const searchedTitles = await searchWikipediaBirdByScientificName(
             scientificName
@@ -2485,11 +2496,17 @@ async function fetchWikipediaPageData(
             if (!normalizedTitle) continue;
 
             const data = await loadCandidate(normalizedTitle);
-            if (data) return data;
+            if (!data) continue;
+
+            if (!firstValidData) firstValidData = data;
+
+            if (!requireThumbnail || data?.summary?.thumbnail?.source) {
+                return data;
+            }
         }
     }
 
-    return null;
+    return firstValidData;
 }
 
 function normalizeWikipediaText(value) {
@@ -4296,7 +4313,8 @@ async function showBirdInTaxonCard(bird) {
         bird.wikipediaTitle || bird.commonName,
         false,
         "bird",
-        bird.scientificName
+        bird.scientificName,
+        true
     );
 
     if (
@@ -4317,7 +4335,8 @@ async function showBirdInTaxonCard(bird) {
             bird.wikipediaTitle || bird.commonName,
             true,
             "bird",
-            bird.scientificName
+            bird.scientificName,
+            true
         ),
         fetchWikidataDetailedTaxonomy(bird),
         gameState.mode === "thailand"
@@ -4491,7 +4510,8 @@ async function showTaxonInTaxonCard(taxon) {
         wikiTitle,
         true,
         taxon.rank === "species" ? "bird" : "taxon",
-        taxon.rank === "species" ? taxon.scientificName : ""
+        taxon.rank === "species" ? taxon.scientificName : "",
+        true
     );
 
     if (
