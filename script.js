@@ -150,13 +150,28 @@ async function loadGameData() {
         renderTaxonomyView();
         updateAutomaticTaxonCard();
 
-        console.log("Bird database loaded:", gameState.allBirds);
-        console.log("Taxonomy loaded:", gameState.taxonomy);
-        console.log("Taxon information loaded:", gameState.taxonInfo);
         openModeSelector(true);
     } catch (error) {
         console.error("Error loading bird database:", error);
+        showDataLoadError(error);
     }
+}
+
+function showDataLoadError(error) {
+    let panel = document.getElementById("data-load-error");
+
+    if (!panel) {
+        panel = document.createElement("section");
+        panel.id = "data-load-error";
+        panel.setAttribute("role", "alert");
+        panel.innerHTML = `
+            <strong>MetaAves could not load its bird database.</strong>
+            <p>Please refresh the page and try again.</p>
+        `;
+        document.body.prepend(panel);
+    }
+
+    panel.dataset.error = error?.message || "Unknown data loading error";
 }
 
 
@@ -328,6 +343,7 @@ function startNewRoundForMode(mode) {
     suggestions.innerHTML = "";
     suggestions.classList.remove("visible");
     searchInput.setAttribute("aria-expanded", "false");
+    updateClearButtonVisibility(birdSearchClear, searchInput);
 
     closeGameOverCard();
 
@@ -374,12 +390,7 @@ async function warmThailandThaiNames(birds) {
         )
     );
 
-    console.log(
-        "Thailand Thai-name warmup complete:",
-        queue.filter(bird => bird.thaiName).length,
-        "/",
-        queue.length
-    );
+
 }
 
 function chooseGameMode(mode) {
@@ -404,11 +415,17 @@ function chooseGameMode(mode) {
 }
 
 
+function updateClearButtonVisibility(button, input) {
+    if (!button || !input) return;
+    button.hidden = !input.value.trim();
+}
+
 function clearBirdSearch() {
     searchInput.value = "";
     suggestions.innerHTML = "";
     suggestions.classList.remove("visible");
     searchInput.setAttribute("aria-expanded", "false");
+    updateClearButtonVisibility(birdSearchClear, searchInput);
     searchInput.focus();
 }
 
@@ -416,6 +433,7 @@ function clearThaiTranslatorSearch() {
     if (!thaiTranslatorSearch) return;
     thaiTranslatorSearch.value = "";
     renderThaiTranslatorResults("");
+    updateClearButtonVisibility(thaiTranslatorClear, thaiTranslatorSearch);
     thaiTranslatorSearch.focus();
 }
 
@@ -599,11 +617,14 @@ function closeThaiTranslator() {
     // Closing the helper always starts it fresh next time.
     if (thaiTranslatorSearch) thaiTranslatorSearch.value = "";
     if (thaiTranslatorResults) renderThaiTranslatorResults("");
+    updateClearButtonVisibility(thaiTranslatorClear, thaiTranslatorSearch);
 }
 
 function initializeSearchClearButtons() {
     birdSearchClear?.addEventListener("click", clearBirdSearch);
     thaiTranslatorClear?.addEventListener("click", clearThaiTranslatorSearch);
+    updateClearButtonVisibility(birdSearchClear, searchInput);
+    updateClearButtonVisibility(thaiTranslatorClear, thaiTranslatorSearch);
 }
 
 initializeSearchClearButtons();
@@ -666,9 +687,10 @@ function updateGuessCounter() {
 // ========================================
 
 function findBirdByName(name) {
+    const normalizedName = normalizeSearchText(name);
+
     return gameState.birds.find(
-        bird =>
-            bird.commonName.toLowerCase() === name.toLowerCase()
+        bird => normalizeSearchText(bird.commonName) === normalizedName
     );
 }
 
@@ -1114,8 +1136,7 @@ function makeGuess() {
 
     if (hasAlreadyBeenGuessed(bird)) {
         console.log("You already guessed this bird.");
-        searchInput.value = "";
-        suggestions.innerHTML = "";
+        clearBirdSearch();
         return;
     }
 
@@ -1135,6 +1156,9 @@ function makeGuess() {
     // input never remains populated while the tree/card re-renders.
     searchInput.value = "";
     suggestions.innerHTML = "";
+    suggestions.classList.remove("visible");
+    searchInput.setAttribute("aria-expanded", "false");
+    updateClearButtonVisibility(birdSearchClear, searchInput);
 
     updateGuessCounter();
     renderTaxonomyView();
@@ -6411,6 +6435,7 @@ searchInput.addEventListener("keydown", event => {
 });
 
 searchInput.addEventListener("input", () => {
+    updateClearButtonVisibility(birdSearchClear, searchInput);
     showSuggestions(searchInput.value);
 });
 
