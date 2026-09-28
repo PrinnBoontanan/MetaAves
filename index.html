@@ -7,7 +7,7 @@
 
     <title>MetaAves</title>
 
-    <link rel="stylesheet" href="style.css?v=translator-mode-confirm-20260928">
+    <link rel="stylesheet" href="style.css?v=search-clear-20260928">
 </head>
 
 <body>
@@ -50,16 +50,19 @@
 
             <div class="search-container">
 
-                <input
-                    type="text"
-                    id="bird-search"
-                    placeholder="Enter an English bird name..."
-                    autocomplete="off"
-                    role="combobox"
-                    aria-autocomplete="list"
-                    aria-controls="suggestions"
-                    aria-expanded="false"
-                >
+                <div class="main-search-input-wrap">
+                    <input
+                        type="text"
+                        id="bird-search"
+                        placeholder="Enter an English bird name..."
+                        autocomplete="off"
+                        role="combobox"
+                        aria-autocomplete="list"
+                        aria-controls="suggestions"
+                        aria-expanded="false"
+                    >
+                    <button id="bird-search-clear" class="search-clear-button" type="button" aria-label="Clear bird search" title="Clear">×</button>
+                </div>
 
                 <button id="guess-button">
                     <span class="button-icon">⌕</span> Guess
@@ -147,7 +150,10 @@
             <button id="thai-translator-close" class="thai-translator-close" type="button" aria-label="Close translator">×</button>
         </div>
         <p class="thai-translator-description">Look up a bird by its Thai or English common name.</p>
-        <input id="thai-translator-search" type="text" placeholder="พิมพ์ชื่อไทยหรือ English name..." autocomplete="off">
+        <div class="translator-search-wrap">
+            <input id="thai-translator-search" type="text" placeholder="พิมพ์ชื่อไทยหรือ English name..." autocomplete="off">
+            <button id="thai-translator-clear" class="search-clear-button" type="button" aria-label="Clear translator search" title="Clear">×</button>
+        </div>
         <div id="thai-translator-results" class="thai-translator-results" aria-live="polite"></div>
     </div>
 
@@ -206,7 +212,7 @@
         </div>
     </div>
 
-    <script src="script.js?v=translator-mode-confirm-20260928"></script>
+    <script src="script.js?v=search-clear-20260928"></script>
 
 </body>
 
