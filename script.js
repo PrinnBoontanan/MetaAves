@@ -1736,9 +1736,8 @@ function assignTreeNodeProximity(root) {
 function getProximityColor(proximity) {
     const t = Math.max(0, Math.min(1, Number(proximity) || 0));
 
-    // Restore MetaAves' earlier, earthier palette. These were the
-    // original colors before the brighter recent revision:
-    // distant = deep red, then burnt orange, olive, and forest green.
+    // Metazooa-style red → orange → yellow/olive → green feedback.
+    // The proximity value above is based on the complete mystery lineage.
     if (t < 0.25) return "rgb(158, 48, 24)";
     if (t < 0.50) return "rgb(190, 99, 24)";
     if (t < 0.75) return "rgb(145, 139, 25)";
@@ -4499,38 +4498,19 @@ async function showTaxonInTaxonCard(taxon) {
     const selectionId = taxon.id;
     const requestId = ++gameState.taxonCardRequestId;
 
-    if (taxon.rank === "clade") {
-        card.classList.add("clade-card");
-        card.innerHTML = "<p>Loading clade information from Wikipedia...</p>";
+    const wikiTitle = getWikipediaTitleFromTaxon(
+        taxon,
+        gameState.taxonInfo?.[taxon.id] || {}
+    );
 
-        // Clade cards only use Wikipedia's top section, image, and link.
-        // Avoid downloading the full article HTML.
-        const wiki = await fetchWikipediaPageData(
-            getWikipediaTitleFromTaxon(taxon, {}),
-            false,
-            "taxon",
-            "",
-            true
-        );
-
-        if (
-            gameState.selectedTaxonId !== selectionId ||
-            gameState.taxonCardRequestId !== requestId
-        ) return;
-        renderCladeCard(taxon, wiki);
-        return;
-    }
-
-    renderTaxonCard(taxon);
-
-    const info = gameState.taxonInfo?.[taxon.id] || {};
-    const wikiTitle = getWikipediaTitleFromTaxon(taxon, info);
-    const wiki = await fetchWikipediaPageData(
+    // First paint: fetch only the lightweight Wikipedia summary.
+    // This keeps the card responsive instead of waiting for Wikidata,
+    // full article parsing, thumbnail candidate retries, and Thai lookup.
+    const wikiSummary = await fetchWikipediaPageData(
         wikiTitle,
-        true,
+        false,
         taxon.rank === "species" ? "bird" : "taxon",
-        taxon.rank === "species" ? taxon.scientificName : "",
-        true
+        taxon.rank === "species" ? taxon.scientificName : ""
     );
 
     if (
@@ -4538,137 +4518,190 @@ async function showTaxonInTaxonCard(taxon) {
         gameState.taxonCardRequestId !== requestId
     ) return;
 
-    // Remove dynamic content from the previous selection BEFORE building
-    // the current species taxonomy. Otherwise the cleanup would delete the
-    // taxonomy we just created.
-    card.querySelectorAll(
-        ".taxon-card-image, .taxon-card-wikipedia-link, [data-taxon-card-dynamic='true']"
-    ).forEach(element => element.remove());
-
-    if (taxon.rank === "species") {
-        card.classList.add("species-card");
-
-        const [wikidataDetailed, thaiName] = await Promise.all([
-            fetchWikidataDetailedTaxonomy(taxon),
-            gameState.mode === "thailand"
-                ? fetchOnlineThaiName(taxon)
-                : Promise.resolve("")
-        ]);
-
-        const displayThaiName =
-            gameState.mode === "thailand"
-                ? (thaiName || taxon.thaiName || "")
-                : "";
-
-        if (displayThaiName) taxon.thaiName = displayThaiName;
-        attachDetailedTaxonomyToBird(taxon, wiki);
-
-        // The dynamic Thai-name line belongs only to Thailand mode.
-        if (gameState.mode === "thailand") {
-            const title = card.querySelector("h3");
-            if (title) {
-                const thai = document.createElement("p");
-                thai.className = "taxon-card-thai-name";
-                thai.textContent = displayThaiName || "Thai name unavailable";
-                title.insertAdjacentElement("afterend", thai);
-            }
-        }
+    if (taxon.rank === "clade") {
+        renderCladeCard(taxon, wikiSummary);
+    } else {
+        renderTaxonCard(taxon);
 
         const description = card.querySelector(".taxon-card-description");
         if (description) {
             description.textContent =
                 limitWikipediaSentences(
-                    wiki?.summary?.extract || "",
+                    wikiSummary?.summary?.extract || "",
                     6,
                     1400
                 ) ||
                 "No information available on Wikipedia.";
         }
 
-        const taxonomySection = document.createElement("div");
-        taxonomySection.className =
-            "taxon-card-wiki-section taxon-card-species-taxonomy";
-        taxonomySection.dataset.taxonCardDynamic = "true";
-
-        const heading = document.createElement("h4");
-        heading.textContent = "Taxonomy";
-        taxonomySection.appendChild(heading);
-
-        const taxonomyRows = mergeDetailedTaxonomyRows(
-            taxon,
-            wiki,
-            wikidataDetailed
-        );
-
-        const columnCount = 2;
-        const rowsPerColumn = Math.ceil(taxonomyRows.length / columnCount);
-
-        for (let columnIndex = 0; columnIndex < columnCount; columnIndex += 1) {
-            const column = document.createElement("div");
-            column.className = "taxon-card-taxonomy-column";
-
-            taxonomyRows
-                .slice(
-                    columnIndex * rowsPerColumn,
-                    (columnIndex + 1) * rowsPerColumn
-                )
-                .forEach(([label, value]) => {
-                    const row = document.createElement("p");
-                    row.className = "taxon-card-taxonomy-row";
-
-                    const labelElement = document.createElement("strong");
-                    labelElement.textContent = label + ": ";
-
-                    row.appendChild(labelElement);
-                    row.appendChild(document.createTextNode(value));
-                    column.appendChild(row);
-                });
-
-            taxonomySection.appendChild(column);
+        if (taxon.rank === "species") {
+            card.classList.add("species-card");
         }
 
-        card.appendChild(taxonomySection);
+        if (wikiSummary?.summary?.thumbnail?.source) {
+            const photo = document.createElement("div");
+            photo.className = "taxon-card-photo";
+
+            const image = document.createElement("img");
+            image.className = "taxon-card-image";
+            image.src = wikiSummary.summary.thumbnail.source;
+            image.alt = wikiSummary.summary.title || taxon.name;
+            image.loading = "lazy";
+
+            photo.appendChild(image);
+            card.insertBefore(photo, description || null);
+        }
+
+        const wikiUrl = wikiSummary?.summary?.content_urls?.desktop?.page;
+        if (wikiUrl) {
+            const link = document.createElement("a");
+            link.className = "taxon-card-wikipedia-link";
+            link.href = wikiUrl;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = "Wikipedia";
+            card.appendChild(link);
+        }
     }
 
-    const description = card.querySelector(".taxon-card-description");
-    if (description) {
-        description.textContent =
-            limitWikipediaSentences(
-                wiki?.summary?.extract || "",
-                6,
-                1400
-            ) ||
-            "No information available on Wikipedia.";
-    }
+    // Second paint: enrich the already-visible card.
+    Promise.all([
+        fetchWikipediaPageData(
+            wikiTitle,
+            true,
+            taxon.rank === "species" ? "bird" : "taxon",
+            taxon.rank === "species" ? taxon.scientificName : "",
+            true
+        ),
+        taxon.rank === "species"
+            ? fetchWikidataDetailedTaxonomy(taxon)
+            : Promise.resolve({}),
+        taxon.rank === "species" && gameState.mode === "thailand"
+            ? fetchOnlineThaiName(taxon)
+            : Promise.resolve("")
+    ]).then(async ([wiki, wikidataDetailed, thaiName]) => {
+        if (
+            gameState.selectedTaxonId !== selectionId ||
+            gameState.taxonCardRequestId !== requestId
+        ) return;
 
-    if (wiki?.summary?.thumbnail?.source) {
-        const photo = document.createElement("div");
-        photo.className = "taxon-card-photo";
+        const finalWiki = wiki || wikiSummary;
 
-        const image = document.createElement("img");
-        image.className = "taxon-card-image";
-        image.src = wiki.summary.thumbnail.source;
-        image.alt = wiki.summary.title || taxon.name;
-        image.loading = "lazy";
+        if (taxon.rank === "clade") {
+            renderCladeCard(taxon, finalWiki);
+            return;
+        }
 
-        photo.appendChild(image);
-        card.insertBefore(photo, description || null);
-    } else {
-        appendCardSection(card, "Photo", "No photo available on Wikipedia.");
-    }
+        // Rebuild the useful local card only after the slow enrichment has
+        // finished. The user never has to stare at a blank loading card.
+        renderTaxonCard(taxon);
+        const description = card.querySelector(".taxon-card-description");
+        if (description) {
+            description.textContent =
+                limitWikipediaSentences(
+                    finalWiki?.summary?.extract || "",
+                    6,
+                    1400
+                ) ||
+                "No information available on Wikipedia.";
+        }
 
-    const wikiUrl = wiki?.summary?.content_urls?.desktop?.page;
-    if (wikiUrl) {
-        const link = document.createElement("a");
-        link.className = "taxon-card-wikipedia-link";
-        link.href = wikiUrl;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = "Wikipedia";
-        card.appendChild(link);
-    } else {
-        appendCardSection(card, "Wikipedia", "No Wikipedia page available.");
-    }
+        if (taxon.rank === "species") {
+            card.classList.add("species-card");
+
+            const displayThaiName =
+                gameState.mode === "thailand"
+                    ? (thaiName || taxon.thaiName || "")
+                    : "";
+
+            if (displayThaiName) taxon.thaiName = displayThaiName;
+            attachDetailedTaxonomyToBird(taxon, finalWiki);
+
+            if (gameState.mode === "thailand") {
+                const title = card.querySelector("h3");
+                if (title) {
+                    const thai = document.createElement("p");
+                    thai.className = "taxon-card-thai-name";
+                    thai.textContent =
+                        displayThaiName || "Thai name unavailable";
+                    title.insertAdjacentElement("afterend", thai);
+                }
+            }
+
+            const taxonomySection = document.createElement("div");
+            taxonomySection.className =
+                "taxon-card-wiki-section taxon-card-species-taxonomy";
+            taxonomySection.dataset.taxonCardDynamic = "true";
+
+            const heading = document.createElement("h4");
+            heading.textContent = "Taxonomy";
+            taxonomySection.appendChild(heading);
+
+            const taxonomyRows = mergeDetailedTaxonomyRows(
+                taxon,
+                finalWiki,
+                wikidataDetailed
+            );
+
+            const columnCount = 2;
+            const rowsPerColumn = Math.ceil(
+                taxonomyRows.length / columnCount
+            );
+
+            for (let columnIndex = 0; columnIndex < columnCount; columnIndex += 1) {
+                const column = document.createElement("div");
+                column.className = "taxon-card-taxonomy-column";
+
+                taxonomyRows
+                    .slice(
+                        columnIndex * rowsPerColumn,
+                        (columnIndex + 1) * rowsPerColumn
+                    )
+                    .forEach(([label, value]) => {
+                        const row = document.createElement("p");
+                        row.className = "taxon-card-taxonomy-row";
+
+                        const labelElement = document.createElement("strong");
+                        labelElement.textContent = label + ": ";
+
+                        row.appendChild(labelElement);
+                        row.appendChild(document.createTextNode(value));
+                        column.appendChild(row);
+                    });
+
+                taxonomySection.appendChild(column);
+            }
+
+            card.appendChild(taxonomySection);
+        }
+
+        if (finalWiki?.summary?.thumbnail?.source) {
+            const photo = document.createElement("div");
+            photo.className = "taxon-card-photo";
+
+            const image = document.createElement("img");
+            image.className = "taxon-card-image";
+            image.src = finalWiki.summary.thumbnail.source;
+            image.alt = finalWiki.summary.title || taxon.name;
+            image.loading = "lazy";
+
+            photo.appendChild(image);
+            card.insertBefore(photo, description || null);
+        }
+
+        const wikiUrl = finalWiki?.summary?.content_urls?.desktop?.page;
+        if (wikiUrl) {
+            const link = document.createElement("a");
+            link.className = "taxon-card-wikipedia-link";
+            link.href = wikiUrl;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = "Wikipedia";
+            card.appendChild(link);
+        }
+    }).catch(error => {
+        console.warn("Taxon card enrichment failed:", error);
+    });
 }
 
 function selectTaxon(node) {
@@ -5342,15 +5375,6 @@ function renderTaxonomyTree() {
                 );
                 startStop.setAttribute("offset", "0%");
                 startStop.setAttribute("stop-color", parentColor);
-                startStop.setAttribute("stop-opacity", "0.48");
-
-                const middleStop = document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "stop"
-                );
-                middleStop.setAttribute("offset", "42%");
-                middleStop.setAttribute("stop-color", parentColor);
-                middleStop.setAttribute("stop-opacity", "0.96");
 
                 const endStop = document.createElementNS(
                     "http://www.w3.org/2000/svg",
@@ -5358,10 +5382,8 @@ function renderTaxonomyTree() {
                 );
                 endStop.setAttribute("offset", "100%");
                 endStop.setAttribute("stop-color", childColor);
-                endStop.setAttribute("stop-opacity", "1");
 
                 gradient.appendChild(startStop);
-                gradient.appendChild(middleStop);
                 gradient.appendChild(endStop);
                 defs.appendChild(gradient);
 
