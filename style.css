@@ -2611,17 +2611,17 @@ input:focus-visible,
    because Wikipedia supplied an image. */
 .taxon-card.species-card {
     display: grid;
-    grid-template-columns: minmax(280px, 390px) minmax(0, 1fr);
+    grid-template-columns: minmax(260px, 340px) minmax(300px, 1.05fr) minmax(300px, 1fr);
     grid-template-areas:
-        "title title"
-        "thai thai"
-        "scientific scientific"
-        "rank rank"
-        "photo description"
-        "photo taxonomy"
-        "photo wikipedia";
+        "title title title"
+        "thai thai thai"
+        "scientific scientific scientific"
+        "rank rank rank"
+        "photo description taxonomy"
+        "photo description taxonomy"
+        "photo wikipedia taxonomy";
     column-gap: 28px;
-    row-gap: 10px;
+    row-gap: 8px;
     align-items: start;
 }
 
@@ -2691,14 +2691,16 @@ input:focus-visible,
    into the species four-column grid. */
 .taxon-card:not(.species-card) {
     display: grid;
-    grid-template-columns: 280px minmax(0, 1fr);
-    grid-template-rows: auto auto 280px auto;
+    grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto;
     grid-template-areas:
         "title title"
         "rank rank"
+        "common common"
         "image description"
         "image wikipedia";
     column-gap: 32px;
+    row-gap: 8px;
     align-items: start;
 }
 
@@ -2715,16 +2717,12 @@ input:focus-visible,
 }
 
 .taxon-card:not(.species-card) > .taxon-card-common {
-    grid-area: image;
-    align-self: end;
-    justify-self: start;
-    z-index: 2;
-    margin: 0 0 14px 12px;
+    grid-area: common;
+    margin: 0;
     padding: 0;
     color: #4f5d42;
     font-weight: 700;
     line-height: 1.2;
-    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
     box-sizing: border-box;
 }
 
@@ -3958,5 +3956,161 @@ a:focus-visible,
             "description"
             "taxonomy"
             "wikipedia";
+    }
+}
+
+
+/* ========================================
+   Final Taxon Card structure — no overlap
+======================================== */
+
+.taxon-card.species-card {
+    display: grid !important;
+    grid-template-columns: minmax(250px, 340px) minmax(300px, 1.05fr) minmax(300px, 1fr) !important;
+    grid-template-areas:
+        "title title title"
+        "thai thai thai"
+        "scientific scientific scientific"
+        "rank rank rank"
+        "photo description taxonomy"
+        "photo description taxonomy"
+        "photo wikipedia taxonomy" !important;
+    column-gap: 28px !important;
+    row-gap: 8px !important;
+    align-items: start !important;
+}
+
+.taxon-card.species-card > h3,
+.taxon-card.species-card > .taxon-card-thai-name,
+.taxon-card.species-card > .taxon-card-scientific,
+.taxon-card.species-card > .taxon-card-species-rank {
+    grid-column: 1 / -1 !important;
+    position: static !important;
+    clear: both !important;
+}
+
+.taxon-card.species-card > .taxon-card-image {
+    grid-area: photo !important;
+    position: static !important;
+    float: none !important;
+    clear: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 4px 0 0 !important;
+}
+
+.taxon-card.species-card > .taxon-card-description {
+    grid-area: description !important;
+    min-width: 0 !important;
+    margin: 4px 0 0 !important;
+}
+
+.taxon-card.species-card > .taxon-card-species-taxonomy {
+    grid-area: taxonomy !important;
+    min-width: 0 !important;
+    margin: 4px 0 0 !important;
+    padding-left: 22px !important;
+    border-left: 1px solid #e3d8bf !important;
+    border-top: 0 !important;
+}
+
+.taxon-card.species-card > .taxon-card-wikipedia-link {
+    grid-area: wikipedia !important;
+}
+
+.taxon-card:not(.species-card) {
+    grid-template-columns: minmax(240px, 320px) minmax(0, 1fr) !important;
+    grid-template-areas:
+        "title title"
+        "rank rank"
+        "common common"
+        "image description"
+        "image wikipedia" !important;
+}
+
+.taxon-card:not(.species-card) > h3,
+.taxon-card:not(.species-card) > .taxon-card-rank,
+.taxon-card:not(.species-card) > .taxon-card-common {
+    position: static !important;
+    float: none !important;
+    clear: both !important;
+}
+
+.taxon-card:not(.species-card) > .taxon-card-image {
+    grid-area: image !important;
+    position: static !important;
+    float: none !important;
+    clear: none !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 4px 0 0 !important;
+}
+
+.taxon-card:not(.species-card) > .taxon-card-description {
+    grid-area: description !important;
+}
+
+.taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
+    grid-area: wikipedia !important;
+}
+
+/* Do not let legacy HSL rules wash the feedback colors out. */
+.meta-tree-node.meta-taxon-node {
+    background: var(--tree-proximity-color) !important;
+    color: #fffdf8 !important;
+    border: 1px solid rgba(72, 49, 30, 0.30) !important;
+    font-weight: 700 !important;
+}
+
+.meta-connection-taxon,
+.meta-connection-species {
+    stroke: var(--tree-proximity-color, #d64b3f) !important;
+}
+
+@media (max-width: 1100px) {
+    .taxon-card.species-card {
+        grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) !important;
+        grid-template-areas:
+            "title title"
+            "thai thai"
+            "scientific scientific"
+            "rank rank"
+            "photo description"
+            "photo taxonomy"
+            "photo wikipedia" !important;
+    }
+
+    .taxon-card.species-card > .taxon-card-species-taxonomy {
+        border-left: 0 !important;
+        border-top: 1px solid #e3d8bf !important;
+        padding-left: 0 !important;
+        padding-top: 14px !important;
+    }
+}
+
+@media (max-width: 700px) {
+    .taxon-card.species-card,
+    .taxon-card:not(.species-card) {
+        grid-template-columns: 1fr !important;
+        grid-template-areas:
+            "title"
+            "thai"
+            "scientific"
+            "rank"
+            "common"
+            "photo"
+            "description"
+            "taxonomy"
+            "wikipedia" !important;
+    }
+
+    .taxon-card:not(.species-card) {
+        grid-template-areas:
+            "title"
+            "rank"
+            "common"
+            "image"
+            "description"
+            "wikipedia" !important;
     }
 }
