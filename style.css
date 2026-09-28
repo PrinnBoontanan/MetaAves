@@ -2611,17 +2611,17 @@ input:focus-visible,
    because Wikipedia supplied an image. */
 .taxon-card.species-card {
     display: grid;
-    grid-template-columns: minmax(260px, 340px) minmax(300px, 1.05fr) minmax(300px, 1fr);
+    grid-template-columns: 390px minmax(300px, 1.35fr) minmax(260px, 1fr);
+    grid-template-rows: auto auto auto auto auto auto;
     grid-template-areas:
-        "title title title"
-        "thai thai thai"
-        "scientific scientific scientific"
-        "rank rank rank"
-        "photo description taxonomy"
+        "title . ."
+        "thai . ."
+        "scientific . ."
+        "rank . ."
         "photo description taxonomy"
         "photo wikipedia taxonomy";
-    column-gap: 28px;
-    row-gap: 8px;
+    column-gap: 26px;
+    row-gap: 3px;
     align-items: start;
 }
 
@@ -2691,16 +2691,14 @@ input:focus-visible,
    into the species four-column grid. */
 .taxon-card:not(.species-card) {
     display: grid;
-    grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto;
+    grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-rows: auto auto 280px auto;
     grid-template-areas:
         "title title"
         "rank rank"
-        "common common"
         "image description"
         "image wikipedia";
     column-gap: 32px;
-    row-gap: 8px;
     align-items: start;
 }
 
@@ -2717,17 +2715,32 @@ input:focus-visible,
 }
 
 .taxon-card:not(.species-card) > .taxon-card-common {
-    grid-area: common;
-    margin: 0;
+    grid-area: image;
+    align-self: end;
+    justify-self: start;
+    z-index: 2;
+    margin: 0 0 14px 12px;
     padding: 0;
     color: #4f5d42;
     font-weight: 700;
     line-height: 1.2;
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
     box-sizing: border-box;
 }
 
-/* Ordinary taxon photos are wrapped in .taxon-card-photo so the divider
-   can track the image's real rendered height. */
+.taxon-card:not(.species-card) > .taxon-card-image {
+    grid-area: image;
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    max-height: none;
+    margin: 8px 0 0;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 10px;
+    box-sizing: border-box;
+    box-shadow: 0 3px 10px rgba(80, 68, 45, 0.12);
+}
 
 .taxon-card:not(.species-card) > .taxon-card-description {
     grid-area: description;
@@ -2739,49 +2752,16 @@ input:focus-visible,
     line-height: 1.7;
 }
 
-/* The divider is anchored to the photo wrapper, so its height always
-   follows the actual rendered Wikipedia image instead of a fixed pixel
-   value. It sits in the grid gap immediately before the description. */
-.taxon-card-photo {
-    position: relative;
-    grid-area: image;
-    width: 100%;
-    max-width: 280px;
-    align-self: start;
-}
-
-.taxon-card-photo::after {
+/* A full-height divider separates the image from the text column instead
+   of stopping when the paragraph happens to end. */
+.taxon-card:not(.species-card) > .taxon-card-description::before {
     content: "";
     position: absolute;
+    left: 0;
     top: 0;
-    right: -32px;
     width: 1px;
-    height: 100%;
-    background: linear-gradient(
-        to bottom,
-        transparent 0%,
-        #d9cdb5 14%,
-        #d9cdb5 86%,
-        transparent 100%
-    );
-}
-
-.taxon-card-photo > .taxon-card-image {
-    display: block;
-    width: 100%;
-    max-width: none;
-    height: auto;
-    margin: 8px 0 0;
-    object-fit: contain;
-    object-position: center;
-    border-radius: 10px;
-    box-sizing: border-box;
-    box-shadow: 0 3px 10px rgba(80, 68, 45, 0.12);
-}
-
-/* Keep the description from growing a second, independent divider. */
-.taxon-card:not(.species-card) > .taxon-card-description::before {
-    display: none;
+    height: 280px;
+    background: #d9cdb5;
 }
 
 .taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
@@ -2801,12 +2781,8 @@ input:focus-visible,
             "description";
     }
 
-    .taxon-card:not(.species-card) > .taxon-card-photo {
+    .taxon-card:not(.species-card) > .taxon-card-image {
         max-width: 320px;
-    }
-
-    .taxon-card-photo::after {
-        display: none;
     }
 }
 
@@ -3660,136 +3636,7 @@ a:focus-visible,
     }
 }
 
-
-/* ========================================
-   MetaAves UI correction — final layout
-======================================== */
-
-/* Keep the autocomplete layer above every later section. */
-.guess-section {
-    position: relative;
-    z-index: 20;
-}
-
-.taxonomy-layout {
-    position: relative;
-    z-index: 1;
-}
-
-/* The earlier side-by-side layout: large taxonomy tree + persistent
-   taxon information card on the right. */
-.taxonomy-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
-    gap: 22px;
-    align-items: start;
-}
-
-.taxonomy-layout > .taxonomy-section {
-    width: auto;
-    margin-bottom: 0;
-}
-
-.taxonomy-layout > .taxon-section {
-    width: auto;
-    position: sticky;
-    top: 20px;
-    max-height: calc(100vh - 40px);
-    overflow-y: auto;
-    margin-top: 0;
-}
-
-/* Autocomplete must float over the taxonomy card instead of being painted
-   underneath it by the later stacking context. */
-.suggestions {
-    z-index: 9999;
-}
-
-/* Every taxonomy node uses the same red → yellow → green proximity system.
-   This includes intermediate ranks such as suborder, infraorder, parvorder,
-   superfamily, subfamily, tribe, etc., not only class/order/family/genus. */
-.meta-tree-node.meta-taxon-node {
-    background: var(--tree-proximity-color, #9e3018);
-    color: #fffdf8;
-    border: 1px solid rgba(74, 48, 28, 0.30);
-    font-weight: 700;
-}
-
-.meta-tree-node.meta-taxon-node:hover {
-    filter: brightness(1.06);
-}
-
-/* Make the clear controls unmistakable and easy to hit. */
-.search-clear-button {
-    z-index: 5;
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    right: 8px;
-    color: #777565;
-    font-size: 22px;
-    font-weight: 700;
-    line-height: 1;
-}
-
-.search-clear-button[hidden] {
-    display: none !important;
-}
-
-@media (max-width: 1050px) {
-    .taxonomy-layout {
-        display: block;
-    }
-
-    .taxonomy-layout > .taxonomy-section {
-        width: 100%;
-        margin-bottom: 22px;
-    }
-
-    .taxonomy-layout > .taxon-section {
-        width: 100%;
-        position: static;
-        max-height: none;
-        overflow: visible;
-    }
-}
-
-
-/* ========================================
-   Intended final UI layout
-======================================== */
-
-/* Taxon Information belongs UNDER the taxonomy tree. */
-.taxonomy-layout {
-    display: block !important;
-    position: relative;
-    z-index: 1;
-}
-
-.taxonomy-layout > .taxonomy-section {
-    width: 100% !important;
-    margin: 0 0 22px !important;
-}
-
-.taxonomy-layout > .taxon-section {
-    width: 100% !important;
-    position: static !important;
-    top: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-    margin: 0 !important;
-}
-
-/* Autocomplete is attached to the input wrapper itself, so it is exactly
-   the same width as the search field at every desktop width. */
-.main-search-input-wrap {
-    position: relative;
-    flex: 1 1 auto;
-    min-width: 0;
-    z-index: 30;
-}
-
+/* Post-polish functional fix: suggestions match the search field exactly. */
 .main-search-input-wrap .suggestions {
     position: absolute;
     top: calc(100% + 7px);
@@ -3808,32 +3655,6 @@ a:focus-visible,
 .search-container {
     position: relative;
 }
-
-/* Keep the species/title text in normal flow so the photo can never cover it. */
-.taxon-card h3 {
-    position: relative;
-    z-index: 1;
-    margin: 0 0 7px;
-    line-height: 1.2;
-    overflow-wrap: anywhere;
-}
-
-.taxon-card-rank {
-    position: relative;
-    z-index: 1;
-}
-
-.taxon-card-image {
-    position: relative;
-    z-index: 0;
-    clear: both;
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-    margin: 16px 0;
-    object-fit: contain;
-}
-
 /* ========================================
    In-game forfeit confirmation
 ======================================== */
@@ -3932,8 +3753,14 @@ a:focus-visible,
 }
 
 
-/* Taxon card final image/identity separation.
-   Identity always occupies its own rows above the photo. */
+
+
+/* ========================================
+   Stable taxon-card layout
+   Based on the pre-release polish baseline.
+======================================== */
+
+/* Species identity spans the full card width. */
 .taxon-card.species-card > h3,
 .taxon-card.species-card > .taxon-card-thai-name,
 .taxon-card.species-card > .taxon-card-scientific,
@@ -3941,116 +3768,59 @@ a:focus-visible,
     grid-column: 1 / -1;
 }
 
-.taxon-card.species-card > .taxon-card-image {
-    grid-area: photo !important;
-    display: block;
-    position: static;
-    clear: none;
+/* Species photo wrapper occupies the left column. */
+.taxon-card.species-card > .taxon-card-photo {
+    grid-area: photo;
     width: 100%;
-    max-width: 100%;
-    height: auto;
-    margin: 4px 0 0;
+    max-width: 390px;
     align-self: start;
-    justify-self: stretch;
-    box-sizing: border-box;
+    margin-top: 6px;
 }
 
-.taxon-card.species-card > .taxon-card-description {
-    grid-area: description !important;
-    min-width: 0;
-    margin: 4px 0 0;
+.taxon-card.species-card > .taxon-card-photo > .taxon-card-image {
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    margin: 0;
+    object-fit: contain;
+    border-radius: 10px;
 }
 
+/* The taxonomy panel stays on the right. */
 .taxon-card.species-card > .taxon-card-species-taxonomy {
-    grid-area: taxonomy !important;
-    min-width: 0;
+    grid-area: taxonomy;
+    align-self: start;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    border-left: 1px solid #e3d8bf;
+    padding-left: 22px;
+}
+
+/* Keep description and Wikipedia link aligned to exactly the same
+   horizontal origin within their column. */
+.taxon-card.species-card > .taxon-card-wiki-section:not(.taxon-card-species-taxonomy) {
+    grid-area: description;
+    margin: 0;
+    padding: 0;
+    border: 0;
 }
 
 .taxon-card.species-card > .taxon-card-wikipedia-link {
-    grid-area: wikipedia !important;
+    grid-area: wikipedia;
     align-self: start !important;
     justify-self: start !important;
     display: inline-flex !important;
     width: fit-content;
     height: fit-content;
     margin: 8px 0 0 !important;
+    padding: 0 !important;
     line-height: 1.35;
 }
 
-@media (max-width: 850px) {
-    .taxon-card.species-card {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-            "title"
-            "thai"
-            "scientific"
-            "rank"
-            "photo"
-            "description"
-            "taxonomy"
-            "wikipedia";
-    }
-}
-
-
-/* ========================================
-   Final Taxon Card structure — no overlap
-======================================== */
-
-.taxon-card.species-card {
-    display: grid !important;
-    grid-template-columns: minmax(250px, 340px) minmax(300px, 1.05fr) minmax(300px, 1fr) !important;
-    grid-template-areas:
-        "title title title"
-        "thai thai thai"
-        "scientific scientific scientific"
-        "rank rank rank"
-        "photo description taxonomy"
-        "photo description taxonomy"
-        "photo wikipedia taxonomy" !important;
-    column-gap: 28px !important;
-    row-gap: 8px !important;
-    align-items: start !important;
-}
-
-.taxon-card.species-card > h3,
-.taxon-card.species-card > .taxon-card-thai-name,
-.taxon-card.species-card > .taxon-card-scientific,
-.taxon-card.species-card > .taxon-card-species-rank {
-    grid-column: 1 / -1 !important;
-    position: static !important;
-    clear: both !important;
-}
-
-.taxon-card.species-card > .taxon-card-image {
-    grid-area: photo !important;
-    position: static !important;
-    float: none !important;
-    clear: none !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 4px 0 0 !important;
-}
-
-.taxon-card.species-card > .taxon-card-description {
-    grid-area: description !important;
-    min-width: 0 !important;
-    margin: 4px 0 0 !important;
-}
-
-.taxon-card.species-card > .taxon-card-species-taxonomy {
-    grid-area: taxonomy !important;
-    min-width: 0 !important;
-    margin: 4px 0 0 !important;
-    padding-left: 22px !important;
-    border-left: 1px solid #e3d8bf !important;
-    border-top: 0 !important;
-}
-
-.taxon-card.species-card > .taxon-card-wikipedia-link {
-    grid-area: wikipedia !important;
-}
-
+/* Higher-rank cards: keep common name separate from the photo so it can
+   never overlap the image. */
 .taxon-card:not(.species-card) {
     grid-template-columns: minmax(240px, 320px) minmax(0, 1fr) !important;
     grid-template-areas:
@@ -4069,18 +3839,55 @@ a:focus-visible,
     clear: both !important;
 }
 
-.taxon-card:not(.species-card) > .taxon-card-image {
+.taxon-card:not(.species-card) > .taxon-card-common {
+    grid-area: common !important;
+    margin: 0 0 4px !important;
+}
+
+.taxon-card:not(.species-card) > .taxon-card-photo {
     grid-area: image !important;
-    position: static !important;
-    float: none !important;
-    clear: none !important;
-    width: 100% !important;
-    max-width: 320px !important;
-    margin: 4px 0 0 !important;
+    width: 100%;
+    max-width: 280px;
+    align-self: start;
+    position: relative;
+    margin: 8px 0 0 !important;
+}
+
+.taxon-card:not(.species-card) > .taxon-card-photo::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -32px;
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        #d9cdb5 14%,
+        #d9cdb5 86%,
+        transparent 100%
+    );
+    pointer-events: none;
+}
+
+.taxon-card:not(.species-card) > .taxon-card-photo > .taxon-card-image {
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    margin: 0;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(80, 68, 45, 0.12);
 }
 
 .taxon-card:not(.species-card) > .taxon-card-description {
     grid-area: description !important;
+    margin: 8px 0 0 !important;
+    padding-left: 30px !important;
+    border-left: 0 !important;
+    line-height: 1.7;
 }
 
 .taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
@@ -4090,21 +3897,16 @@ a:focus-visible,
     display: inline-flex !important;
     width: fit-content;
     height: fit-content;
-    margin: 8px 0 0 !important;
+    margin: 8px 0 0 30px !important;
+    padding: 0 !important;
     line-height: 1.35;
 }
 
-/* Do not let legacy HSL rules wash the feedback colors out. */
-.meta-tree-node.meta-taxon-node {
-    background: var(--tree-proximity-color) !important;
-    color: #fffdf8 !important;
-    border: 1px solid rgba(72, 49, 30, 0.30) !important;
-    font-weight: 700 !important;
-}
-
+/* Never let the legacy connector color override the SVG gradient.
+   The renderer owns the actual stroke color. */
 .meta-connection-taxon,
 .meta-connection-species {
-    stroke: var(--tree-proximity-color, #d64b3f) !important;
+    stroke-width: initial;
 }
 
 @media (max-width: 1100px) {
@@ -4126,50 +3928,23 @@ a:focus-visible,
         padding-left: 0 !important;
         padding-top: 14px !important;
     }
+
+    .taxon-card.species-card > .taxon-card-photo {
+        max-width: 280px;
+    }
 }
 
 @media (max-width: 700px) {
     .taxon-card.species-card,
     .taxon-card:not(.species-card) {
         grid-template-columns: 1fr !important;
-        grid-template-areas:
-            "title"
-            "thai"
-            "scientific"
-            "rank"
-            "common"
-            "photo"
-            "description"
-            "taxonomy"
-            "wikipedia" !important;
     }
 
-    .taxon-card:not(.species-card) {
-        grid-template-areas:
-            "title"
-            "rank"
-            "common"
-            "image"
-            "description"
-            "wikipedia" !important;
+    .taxon-card:not(.species-card) > .taxon-card-photo::after {
+        display: none;
     }
-}
 
-
-/* ========================================
-   Final tree connector treatment
-======================================== */
-
-/* Taxon-to-taxon connectors are gradients. The gradient is supplied
-   inline by the renderer from the parent's proximity color to the
-   child's proximity color, with a soft fade at the parent end.
-   Species-leaf connectors intentionally remain solid. */
-.meta-tree-connection.meta-connection-taxon {
-    stroke-width: 3.6px !important;
-    stroke-linecap: round;
-}
-
-.meta-tree-connection.meta-connection-species {
-    stroke-width: 3px !important;
-    stroke-linecap: round;
+    .taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
+        margin-left: 0 !important;
+    }
 }
