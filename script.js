@@ -43,6 +43,8 @@ const thaiTranslatorPanel = document.getElementById("thai-translator-panel");
 const thaiTranslatorClose = document.getElementById("thai-translator-close");
 const thaiTranslatorSearch = document.getElementById("thai-translator-search");
 const thaiTranslatorResults = document.getElementById("thai-translator-results");
+const birdSearchClear = document.getElementById("bird-search-clear");
+const thaiTranslatorClear = document.getElementById("thai-translator-clear");
 
 
 // MetaAves uses a deliberately simple ranked taxonomy:
@@ -402,6 +404,21 @@ function chooseGameMode(mode) {
 }
 
 
+function clearBirdSearch() {
+    searchInput.value = "";
+    suggestions.innerHTML = "";
+    suggestions.classList.remove("visible");
+    searchInput.setAttribute("aria-expanded", "false");
+    searchInput.focus();
+}
+
+function clearThaiTranslatorSearch() {
+    if (!thaiTranslatorSearch) return;
+    thaiTranslatorSearch.value = "";
+    renderThaiTranslatorResults("");
+    thaiTranslatorSearch.focus();
+}
+
 function normalizeThaiSearchText(value) {
     return String(value || "")
         .toLowerCase()
@@ -578,7 +595,18 @@ function closeThaiTranslator() {
     thaiTranslatorPanel.classList.remove("visible");
     thaiTranslatorPanel.setAttribute("aria-hidden", "true");
     thaiTranslatorButton?.setAttribute("aria-expanded", "false");
+
+    // Closing the helper always starts it fresh next time.
+    if (thaiTranslatorSearch) thaiTranslatorSearch.value = "";
+    if (thaiTranslatorResults) renderThaiTranslatorResults("");
 }
+
+function initializeSearchClearButtons() {
+    birdSearchClear?.addEventListener("click", clearBirdSearch);
+    thaiTranslatorClear?.addEventListener("click", clearThaiTranslatorSearch);
+}
+
+initializeSearchClearButtons();
 
 function initializeThaiTranslator() {
     thaiTranslatorButton?.addEventListener("click", () => {
