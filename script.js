@@ -2305,31 +2305,12 @@ async function fetchWikipediaPageData(
     expectedType = "bird",
     scientificName = ""
 ) {
+    // Fast path: try the exact/common Wikipedia title first. The previous
+    // implementation searched by scientific name BEFORE trying this, which
+    // added an unnecessary network round trip to almost every card open.
     let candidates = wikipediaLookupCandidates(title, scientificName);
 
-    // If the common-name/scientific-name title attempts fail, search
-    // Wikipedia using the stable scientific name. This catches checklist
-    // renames, split/merged species names, and pages whose current title is
-    // not the common name used by MetaAves.
-    if (expectedType === "bird" && scientificName) {
-        const searchedTitles = await searchWikipediaBirdByScientificName(
-            scientificName
-        );
-
-        candidates = [
-            ...candidates,
-            ...searchedTitles.filter(title =>
-                !candidates.some(candidate =>
-                    candidate.toLowerCase() === String(title).toLowerCase()
-                )
-            )
-        ];
-    }
-
-    for (const candidateTitle of candidates) {
-        const normalizedTitle = wikipediaCacheKey(candidateTitle);
-        if (!normalizedTitle) continue;
-
+    const loadCandidate = async normalizedTitle => {
         let data = gameState.wikipediaCache.get(normalizedTitle);
 
         if (!data) {
@@ -2364,89 +2345,99 @@ async function fetchWikipediaPageData(
             data.summaryPromise = null;
         }
 
-        // Some Wikipedia pages can be fetched by the Action API even when the
-        // REST summary endpoint does not return a usable response. This is
-        // especially important for small bird articles.
         if (!data.summary) {
             const fallback = await fetchWikipediaMediaWikiFallback(
                 normalizedTitle,
-                includeHtml
+                false
             );
 
             if (fallback?.summary) data.summary = fallback.summary;
-            if (fallback?.html) data.html = fallback.html;
-            if (fallback?.wikitext) data.wikitext = fallback.wikitext;
         }
 
-        if (!data.summary) continue;
+        if (!data.summary) return null;
 
         if (expectedType === "bird") {
             data.validatedBird = isWikipediaBirdPage(data.summary);
-            if (!data.validatedBird) continue;
+            if (!data.validatedBird) return null;
         }
 
-        if (includeHtml && !data.wikitext) {
-            const sourceFallback = await fetchWikipediaMediaWikiFallback(
-                normalizedTitle,
-                true
-            );
+        if (!includeHtml) return data;
+
+        // Detailed article data is deliberately loaded only after the fast
+        // summary is available. This keeps card opening responsive.
+        if (!data.wikitext || !data.html) {
+            const [sourceFallback, restHtml] = await Promise.all([
+                !data.wikitext
+                    ? fetchWikipediaMediaWikiFallback(normalizedTitle, true)
+                    : Promise.resolve(null),
+                !data.html
+                    ? fetch(
+                        "https://en.wikipedia.org/w/rest.php/v1/page/" +
+                        encodeURIComponent(normalizedTitle) +
+                        "/html",
+                        {
+                            headers: {
+                                "Api-User-Agent":
+                                    "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
+                            }
+                        }
+                    )
+                        .then(response => response.ok ? response.text() : null)
+                        .catch(() => null)
+                    : Promise.resolve(data.html)
+            ]);
 
             if (sourceFallback?.wikitext) {
                 data.wikitext = sourceFallback.wikitext;
             }
-        }
+            if (sourceFallback?.html && !data.html) {
+                data.html = sourceFallback.html;
+            }
+            if (restHtml) {
+                data.html = restHtml;
+            }
 
-        if (includeHtml && !data.html) {
-            data.htmlPromise = fetch(
-                "https://en.wikipedia.org/w/rest.php/v1/page/" +
-                encodeURIComponent(normalizedTitle) +
-                "/html",
-                {
-                    headers: {
-                        "Api-User-Agent":
-                            "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
-                    }
-                }
-            )
-                .then(response => response.ok ? response.text() : null)
-                .catch(() => null);
-
-            data.html = await data.htmlPromise;
-            data.htmlPromise = null;
-
-            // If the REST HTML endpoint fails, fall back to MediaWiki's
-            // parse endpoint instead of treating the article as empty.
-            if (!data.html) {
+            // Only make the parsed-HTML fallback request when the REST page
+            // actually failed or omitted the infobox conservation field.
+            if (
+                data.html &&
+                !findWikipediaConservationStatus(data.html) &&
+                !data.wikitext
+            ) {
                 const fallback = await fetchWikipediaMediaWikiFallback(
                     normalizedTitle,
                     true
                 );
                 if (fallback?.html) data.html = fallback.html;
-            }
-
-            // Some Wikipedia pages return valid REST HTML but do not expose
-            // the infobox in that representation. Conservation status must
-            // come ONLY from the infobox, so retry with MediaWiki's parsed
-            // HTML when the current HTML has no infobox status.
-            if (
-                data.html &&
-                !findWikipediaConservationStatus(data.html)
-            ) {
-                const infoboxFallback = await fetchWikipediaMediaWikiFallback(
-                    normalizedTitle,
-                    true
-                );
-
-                if (
-                    infoboxFallback?.html &&
-                    findWikipediaConservationStatus(infoboxFallback.html)
-                ) {
-                    data.html = infoboxFallback.html;
-                }
+                if (fallback?.wikitext) data.wikitext = fallback.wikitext;
             }
         }
 
         return data;
+    };
+
+    // First pass: direct titles only. Usually the first candidate succeeds.
+    for (const candidateTitle of candidates) {
+        const normalizedTitle = wikipediaCacheKey(candidateTitle);
+        if (!normalizedTitle) continue;
+
+        const data = await loadCandidate(normalizedTitle);
+        if (data) return data;
+    }
+
+    // Slow fallback only when the direct title attempts failed.
+    if (expectedType === "bird" && scientificName) {
+        const searchedTitles = await searchWikipediaBirdByScientificName(
+            scientificName
+        );
+
+        for (const searchedTitle of searchedTitles) {
+            const normalizedTitle = wikipediaCacheKey(searchedTitle);
+            if (!normalizedTitle) continue;
+
+            const data = await loadCandidate(normalizedTitle);
+            if (data) return data;
+        }
     }
 
     return null;
