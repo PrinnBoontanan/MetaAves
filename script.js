@@ -1481,12 +1481,28 @@ function buildTreeModel() {
                 rightEndpointDepth
             );
 
-            // If the pair's MRCA is not deeper than both mystery
-            // relationships, it adds no new information and must stay
-            // collapsed.
-            if (common.depth <= mysteryDepth) continue;
+            // Side branches are deliberately summarized at FAMILY level.
+            // This keeps the tree readable and matches the Metazooa-style
+            // presentation: two guesses can reveal their shared family
+            // without exposing every subfamily/genus node that happens to
+            // sit below it. Species/genus closeness to the mystery itself is
+            // still handled by the normal guess -> mystery path.
+            const commonIndex = leftPath.findIndex(
+                node => node.id === common.id
+            );
+            const familyNode =
+                commonIndex >= 0
+                    ? [...leftPath.slice(0, commonIndex + 1)]
+                        .reverse()
+                        .find(node => node.level === "family")
+                    : null;
+            const sideBranchEndpoint = familyNode || common;
 
-            revealAncestors(leftPath, common.id);
+            // If the pair's shared branch is not deeper than both mystery
+            // relationships, it adds no new information and stays collapsed.
+            if (sideBranchEndpoint.depth <= mysteryDepth) continue;
+
+            revealAncestors(leftPath, sideBranchEndpoint.id);
         }
     }
 
