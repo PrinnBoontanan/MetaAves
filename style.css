@@ -3065,3 +3065,125 @@ input:focus-visible,
     color: #8a816f;
     font-style: italic;
 }
+
+
+/* ========================================
+   Thai ↔ English Bird Name Helper
+======================================== */
+
+.thai-translator-button {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1500;
+    padding: 10px 15px;
+    border: 1px solid #d5c7aa;
+    border-radius: 10px;
+    background: #fffdf8;
+    color: #587331;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(74, 62, 37, 0.12);
+}
+.thai-translator-button:hover {
+    filter: brightness(1.03);
+    transform: translateY(-1px);
+}
+.thai-translator-panel {
+    position: fixed;
+    right: 24px;
+    bottom: 74px;
+    z-index: 1501;
+    width: min(390px, calc(100vw - 32px));
+    max-height: min(560px, calc(100vh - 110px));
+    padding: 20px;
+    overflow: hidden;
+    background: #fffdf8;
+    border: 1px solid #d5c7aa;
+    border-radius: 14px;
+    box-shadow: 0 14px 40px rgba(54, 47, 31, 0.20);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+}
+.thai-translator-panel.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+.thai-translator-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+.thai-translator-header h2 {
+    margin: 0;
+    color: #4f472f;
+}
+.thai-translator-close {
+    border: 0;
+    background: transparent;
+    color: #6b634f;
+    font-size: 27px;
+    line-height: 1;
+    cursor: pointer;
+}
+.thai-translator-description {
+    margin: 8px 0 14px;
+    color: #6b6658;
+    line-height: 1.45;
+}
+#thai-translator-search {
+    width: 100%;
+    padding: 12px 13px;
+    border: 1px solid #d8cdb6;
+    border-radius: 9px;
+    background: #fff;
+    font: inherit;
+}
+.thai-translator-results {
+    max-height: 350px;
+    margin-top: 10px;
+    overflow-y: auto;
+}
+.thai-translator-result {
+    padding: 11px 12px;
+    border-bottom: 1px solid #e8dfcf;
+}
+.thai-translator-result:last-child {
+    border-bottom: 0;
+}
+.thai-translator-english {
+    font-weight: 800;
+    color: #4f5f34;
+}
+.thai-translator-thai {
+    margin-top: 3px;
+    color: #5f5b50;
+}
+.thai-translator-scientific {
+    margin-top: 2px;
+    color: #8a8374;
+    font-size: 12px;
+    font-style: italic;
+}
+.thai-translator-empty {
+    padding: 14px 4px;
+    color: #8a8374;
+    text-align: center;
+}
+@media (max-width: 600px) {
+    .thai-translator-button {
+        right: 14px;
+        bottom: 14px;
+    }
+    .thai-translator-panel {
+        right: 14px;
+        bottom: 64px;
+    }
+}
