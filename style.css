@@ -3730,3 +3730,179 @@ a:focus-visible,
         overflow: visible;
     }
 }
+
+
+/* ========================================
+   Intended final UI layout
+======================================== */
+
+/* Taxon Information belongs UNDER the taxonomy tree. */
+.taxonomy-layout {
+    display: block !important;
+    position: relative;
+    z-index: 1;
+}
+
+.taxonomy-layout > .taxonomy-section {
+    width: 100% !important;
+    margin: 0 0 22px !important;
+}
+
+.taxonomy-layout > .taxon-section {
+    width: 100% !important;
+    position: static !important;
+    top: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+}
+
+/* Autocomplete is attached to the input wrapper itself, so it is exactly
+   the same width as the search field at every desktop width. */
+.main-search-input-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    z-index: 30;
+}
+
+.main-search-input-wrap .suggestions {
+    position: absolute;
+    top: calc(100% + 7px);
+    left: 0;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0;
+    z-index: 9999;
+}
+
+.guess-section {
+    position: relative;
+    z-index: 50;
+}
+
+.search-container {
+    position: relative;
+}
+
+/* Keep the species/title text in normal flow so the photo can never cover it. */
+.taxon-card h3 {
+    position: relative;
+    z-index: 1;
+    margin: 0 0 7px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.taxon-card-rank {
+    position: relative;
+    z-index: 1;
+}
+
+.taxon-card-image {
+    position: relative;
+    z-index: 0;
+    clear: both;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 16px 0;
+    object-fit: contain;
+}
+
+/* ========================================
+   In-game forfeit confirmation
+======================================== */
+
+.forfeit-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(40, 35, 25, 0.55);
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .18s ease, visibility .18s ease;
+}
+
+.forfeit-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.forfeit-card {
+    position: relative;
+    width: min(480px, 100%);
+    padding: 30px;
+    background: #fffdf8;
+    border: 1px solid #d5c7aa;
+    border-radius: 20px;
+    box-shadow: 0 24px 70px rgba(40, 35, 25, 0.24);
+}
+
+.forfeit-card h2 {
+    margin: 0 0 8px;
+    color: #4f472f;
+    font-family: Georgia, "Times New Roman", serif;
+}
+
+.forfeit-card > p:not(.study-card-label) {
+    margin: 0;
+    color: #6b6658;
+    line-height: 1.55;
+}
+
+.forfeit-close {
+    position: absolute;
+    top: 12px;
+    right: 15px;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    background: transparent;
+    color: #6b634f;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.forfeit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.forfeit-actions button {
+    padding: 11px 17px;
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #668542, #4e6c2e);
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #3f5926;
+}
+
+.forfeit-actions button.secondary {
+    background: #e8dfcf;
+    color: #5d563f;
+    box-shadow: none;
+}
+
+@media (max-width: 600px) {
+    .forfeit-actions {
+        flex-direction: column-reverse;
+    }
+
+    .forfeit-actions button {
+        width: 100%;
+    }
+}
