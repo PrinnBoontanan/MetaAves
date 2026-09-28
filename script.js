@@ -5342,7 +5342,7 @@ function renderTaxonomyTree() {
                 );
                 startStop.setAttribute("offset", "0%");
                 startStop.setAttribute("stop-color", parentColor);
-                startStop.setAttribute("stop-opacity", "0.18");
+                startStop.setAttribute("stop-opacity", "0.48");
 
                 const middleStop = document.createElementNS(
                     "http://www.w3.org/2000/svg",
@@ -5350,7 +5350,7 @@ function renderTaxonomyTree() {
                 );
                 middleStop.setAttribute("offset", "42%");
                 middleStop.setAttribute("stop-color", parentColor);
-                middleStop.setAttribute("stop-opacity", "0.82");
+                middleStop.setAttribute("stop-opacity", "0.96");
 
                 const endStop = document.createElementNS(
                     "http://www.w3.org/2000/svg",
