@@ -3902,13 +3902,6 @@ a:focus-visible,
     line-height: 1.35;
 }
 
-/* Never let the legacy connector color override the SVG gradient.
-   The renderer owns the actual stroke color. */
-.meta-connection-taxon,
-.meta-connection-species {
-    stroke-width: initial;
-}
-
 @media (max-width: 1100px) {
     .taxon-card.species-card {
         grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) !important;
@@ -3947,4 +3940,18 @@ a:focus-visible,
     .taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
         margin-left: 0 !important;
     }
+}
+
+/* Final pre-release tree connector finish.
+   SVG supplies the gradient stroke color; CSS only controls weight. */
+.meta-connection-taxon {
+    stroke-width: 5px;
+}
+
+.meta-connection-species {
+    stroke-width: 3.5px;
+}
+
+.meta-tree-connection {
+    stroke-linecap: round;
 }
