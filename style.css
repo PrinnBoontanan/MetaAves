@@ -2611,17 +2611,17 @@ input:focus-visible,
    because Wikipedia supplied an image. */
 .taxon-card.species-card {
     display: grid;
-    grid-template-columns: 390px minmax(300px, 1.35fr) minmax(260px, 1fr);
-    grid-template-rows: auto auto auto auto auto auto;
+    grid-template-columns: minmax(280px, 390px) minmax(0, 1fr);
     grid-template-areas:
-        "title . ."
-        "thai . ."
-        "scientific . ."
-        "rank . ."
-        "photo description taxonomy"
-        "photo wikipedia taxonomy";
-    column-gap: 26px;
-    row-gap: 3px;
+        "title title"
+        "thai thai"
+        "scientific scientific"
+        "rank rank"
+        "photo description"
+        "photo taxonomy"
+        "photo wikipedia";
+    column-gap: 28px;
+    row-gap: 10px;
     align-items: start;
 }
 
@@ -3904,5 +3904,59 @@ a:focus-visible,
 
     .forfeit-actions button {
         width: 100%;
+    }
+}
+
+
+/* Taxon card final image/identity separation.
+   Identity always occupies its own rows above the photo. */
+.taxon-card.species-card > h3,
+.taxon-card.species-card > .taxon-card-thai-name,
+.taxon-card.species-card > .taxon-card-scientific,
+.taxon-card.species-card > .taxon-card-species-rank {
+    grid-column: 1 / -1;
+}
+
+.taxon-card.species-card > .taxon-card-image {
+    grid-area: photo !important;
+    display: block;
+    position: static;
+    clear: none;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 4px 0 0;
+    align-self: start;
+    justify-self: stretch;
+    box-sizing: border-box;
+}
+
+.taxon-card.species-card > .taxon-card-description {
+    grid-area: description !important;
+    min-width: 0;
+    margin: 4px 0 0;
+}
+
+.taxon-card.species-card > .taxon-card-species-taxonomy {
+    grid-area: taxonomy !important;
+    min-width: 0;
+}
+
+.taxon-card.species-card > .taxon-card-wikipedia-link {
+    grid-area: wikipedia !important;
+}
+
+@media (max-width: 850px) {
+    .taxon-card.species-card {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "title"
+            "thai"
+            "scientific"
+            "rank"
+            "photo"
+            "description"
+            "taxonomy"
+            "wikipedia";
     }
 }
