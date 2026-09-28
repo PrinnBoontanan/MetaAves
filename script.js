@@ -4379,6 +4379,19 @@ function renderTaxonomyTree() {
 
     place(model, 0, leftOffset);
 
+    // Record the rendered parent position so the Aves trunk can be forced
+    // perfectly vertical without changing the biological tree layout.
+    positions.forEach(position => {
+        position.node.__parentPosition = null;
+    });
+    positions.forEach(position => {
+        if (!position.node.children) return;
+        position.node.children.forEach(child => {
+            const childPosition = positions.find(candidate => candidate.node === child);
+            if (childPosition) childPosition.node.__parentPosition = position;
+        });
+    });
+
     const maxDepth = Math.max(
         ...positions.map(position => position.depth),
         0
@@ -4406,7 +4419,18 @@ function renderTaxonomyTree() {
         const nodeHeight = element.offsetHeight || 34;
         const actualWidth = element.offsetWidth || position.width;
 
-        const x = position.x - actualWidth / 2;
+        // Keep the first revealed taxon directly below Aves. This avoids
+        // the tiny/slanted trunk caused by measuring different node widths.
+        let renderedCenterX = position.x;
+        const parentPosition = position.node.__parentPosition;
+        if (
+            parentPosition &&
+            parentPosition.node?.taxonId === "class:Aves"
+        ) {
+            renderedCenterX = parentPosition.x;
+        }
+
+        const x = renderedCenterX - actualWidth / 2;
         const y =
             28 +
             position.depth * levelGap -
