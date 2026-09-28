@@ -70,14 +70,16 @@ async function loadGameData() {
             taxonomyOverrideResponse,
             infoResponse,
             cladeResponse,
-            cladeMembershipResponse
+            cladeMembershipResponse,
+            taxonomyEnrichmentResponse
         ] = await Promise.all([
             fetch("data/birds.generated.json?v=20260927-taxonomy"),
             fetch("data/taxonomy.generated.json?v=20260927-taxonomy"),
             fetch("data/taxonomy_overrides.json?v=20260927-taxonomy"),
             fetch("data/taxon_info.json?v=20260927-taxonomy"),
             fetch("data/clades.json?v=20260927-taxonomy"),
-            fetch("data/clade_membership.generated.json?v=20260927-taxonomy")
+            fetch("data/clade_membership.generated.json?v=20260927-taxonomy"),
+            fetch("data/taxonomy_enrichment.generated.json?v=global-taxonomy-20260928")
         ]);
 
         if (
@@ -86,7 +88,8 @@ async function loadGameData() {
             !taxonomyOverrideResponse.ok ||
             !infoResponse.ok ||
             !cladeResponse.ok ||
-            !cladeMembershipResponse.ok
+            !cladeMembershipResponse.ok ||
+            !taxonomyEnrichmentResponse.ok
         ) {
             throw new Error("Could not load MetaAves data.");
         }
@@ -97,6 +100,9 @@ async function loadGameData() {
         gameState.taxonomyOverrides = await taxonomyOverrideResponse.json();
         gameState.taxonInfo = await infoResponse.json();
         gameState.clades = await cladeResponse.json();
+
+        const taxonomyEnrichment = await taxonomyEnrichmentResponse.json();
+        gameState.taxonomyEnrichment = taxonomyEnrichment?.species || {};
 
         const cladeMembership = await cladeMembershipResponse.json();
         const membershipBySpecies = cladeMembership.species || {};
@@ -110,6 +116,8 @@ async function loadGameData() {
             gameState.clades?._meta?.passerineFamilyCladePaths || {};
 
         gameState.allBirds.forEach(bird => {
+            bird.generatedDetailedTaxonomy =
+                gameState.taxonomyEnrichment[bird.scientificName] || {};
             bird.cladePath = membershipBySpecies[bird.scientificName] || [];
 
             const generatedPostOrder =
@@ -4082,6 +4090,7 @@ function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
     const detailed = {
         ...wikipediaDetailed,
         ...(bird?.wikipediaDetailedTaxonomy || {}),
+        ...(bird?.generatedDetailedTaxonomy || {}),
         ...wikidataDetailed
     };
 
