@@ -3984,9 +3984,14 @@ async function showBirdInTaxonCard(bird) {
     ) return;
 
     attachDetailedTaxonomyToBird(bird, wiki);
-    if (thaiName) bird.thaiName = thaiName;
+    const displayThaiName =
+        gameState.mode === "thailand"
+            ? (thaiName || bird.thaiName || "")
+            : "";
+    if (displayThaiName) bird.thaiName = displayThaiName;
+
     const wikidataDetailed = await fetchWikidataDetailedTaxonomy(bird);
-    renderBirdCard(bird, wiki, wikidataDetailed, thaiName || bird.thaiName);
+    renderBirdCard(bird, wiki, wikidataDetailed, displayThaiName);
 }
 
 function renderBirdCard(
@@ -4136,13 +4141,41 @@ async function showTaxonInTaxonCard(taxon) {
         gameState.taxonCardRequestId !== requestId
     ) return;
 
+    // Remove dynamic content from the previous selection BEFORE building
+    // the current species taxonomy. Otherwise the cleanup would delete the
+    // taxonomy we just created.
+    card.querySelectorAll(
+        ".taxon-card-image, .taxon-card-wikipedia-link, [data-taxon-card-dynamic='true']"
+    ).forEach(element => element.remove());
+
     if (taxon.rank === "species") {
+        card.classList.add("species-card");
+
         const [wikidataDetailed, thaiName] = await Promise.all([
             fetchWikidataDetailedTaxonomy(taxon),
-            fetchOnlineThaiName(taxon)
+            gameState.mode === "thailand"
+                ? fetchOnlineThaiName(taxon)
+                : Promise.resolve("")
         ]);
-        if (thaiName) taxon.thaiName = thaiName;
+
+        const displayThaiName =
+            gameState.mode === "thailand"
+                ? (thaiName || taxon.thaiName || "")
+                : "";
+
+        if (displayThaiName) taxon.thaiName = displayThaiName;
         attachDetailedTaxonomyToBird(taxon, wiki);
+
+        // The dynamic Thai-name line belongs only to Thailand mode.
+        if (gameState.mode === "thailand") {
+            const title = card.querySelector("h3");
+            if (title) {
+                const thai = document.createElement("p");
+                thai.className = "taxon-card-thai-name";
+                thai.textContent = displayThaiName || "Thai name unavailable";
+                title.insertAdjacentElement("afterend", thai);
+            }
+        }
 
         const description = card.querySelector(".taxon-card-description");
         if (description) {
@@ -4199,14 +4232,6 @@ async function showTaxonInTaxonCard(taxon) {
 
         card.appendChild(taxonomySection);
     }
-
-    // The same taxon can be selected more than once while its Wikipedia
-    // request is still in flight. Remove any previously-added dynamic
-    // elements before appending the fresh result so a photo or Wikipedia
-    // link can never appear twice.
-    card.querySelectorAll(
-        ".taxon-card-image, .taxon-card-wikipedia-link, [data-taxon-card-dynamic='true']"
-    ).forEach(element => element.remove());
 
     const description = card.querySelector(".taxon-card-description");
     if (description) {
