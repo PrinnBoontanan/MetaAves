@@ -5237,6 +5237,15 @@ function buildSpeciesHint(
         }
     }
 
+    if (!clues.length) {
+        return [{
+            heading: isSameGenus ? "Species clue" : "Genus clue",
+            text: isSameGenus
+                ? "There is not enough reliable information online to make a useful distinction between the mystery species and its close relatives."
+                : "There is not enough reliable information online to make a useful distinction between the mystery genus and the other genera on this branch."
+        }];
+    }
+
     return clues.slice(0, 3);
 }
 
