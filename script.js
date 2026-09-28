@@ -4277,6 +4277,22 @@ function appendWikipediaImage(card, wiki, className) {
     card.appendChild(image);
 }
 
+function appendTaxonCardPhoto(card, wiki) {
+    if (!card || !wiki?.summary?.thumbnail?.source) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "taxon-card-photo";
+
+    const image = document.createElement("img");
+    image.className = "taxon-card-image";
+    image.src = wiki.summary.thumbnail.source;
+    image.alt = wiki.summary.title || "";
+    image.loading = "lazy";
+
+    wrapper.appendChild(image);
+    card.appendChild(wrapper);
+}
+
 function appendCardSection(card, heading, text) {
     if (!card || !text) return;
 
@@ -4625,12 +4641,17 @@ async function showTaxonInTaxonCard(taxon) {
     }
 
     if (wiki?.summary?.thumbnail?.source) {
+        const photo = document.createElement("div");
+        photo.className = "taxon-card-photo";
+
         const image = document.createElement("img");
         image.className = "taxon-card-image";
         image.src = wiki.summary.thumbnail.source;
         image.alt = wiki.summary.title || taxon.name;
         image.loading = "lazy";
-        card.insertBefore(image, description || null);
+
+        photo.appendChild(image);
+        card.insertBefore(photo, description || null);
     } else {
         appendCardSection(card, "Photo", "No photo available on Wikipedia.");
     }
@@ -4698,7 +4719,7 @@ function renderCladeCard(clade, wiki) {
     // Higher-taxon cards use the same Wikipedia image treatment as
     // species cards when Wikipedia provides one.
     if (wiki?.summary?.thumbnail?.source) {
-        appendWikipediaImage(card, wiki, "taxon-card-image");
+        appendTaxonCardPhoto(card, wiki);
     } else {
         appendCardSection(card, "Photo", "No photo available on Wikipedia.");
     }
@@ -5320,6 +5341,15 @@ function renderTaxonomyTree() {
                 );
                 startStop.setAttribute("offset", "0%");
                 startStop.setAttribute("stop-color", parentColor);
+                startStop.setAttribute("stop-opacity", "0.18");
+
+                const middleStop = document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "stop"
+                );
+                middleStop.setAttribute("offset", "42%");
+                middleStop.setAttribute("stop-color", parentColor);
+                middleStop.setAttribute("stop-opacity", "0.82");
 
                 const endStop = document.createElementNS(
                     "http://www.w3.org/2000/svg",
@@ -5327,8 +5357,10 @@ function renderTaxonomyTree() {
                 );
                 endStop.setAttribute("offset", "100%");
                 endStop.setAttribute("stop-color", childColor);
+                endStop.setAttribute("stop-opacity", "1");
 
                 gradient.appendChild(startStop);
+                gradient.appendChild(middleStop);
                 gradient.appendChild(endStop);
                 defs.appendChild(gradient);
 
