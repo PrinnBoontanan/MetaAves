@@ -1,0 +1,29 @@
+{
+  "masterTaxonomy": {
+    "name": "AviList: The Global Avian Checklist",
+    "version": "2025b",
+    "url": "https://www.avilist.org/checklist/v2025b/",
+    "notes": "Use AviList v2025b as the current consensus master checklist. IOC World Bird List v15.2 is retained only as a historical/reference source because IOC announced v15.2 as its final independent update and encouraged adoption of AviList."
+  },
+  "enrichment": {
+    "name": "Wikipedia",
+    "notes": "Use Wikipedia for introductory descriptions and lead images only. Structured fields such as diet, breeding and conservation should be separately verified."
+  },
+  "thaiNames": {
+    "notes": "Thai common names are enrichment data and are not accepted by the guessing input."
+  },
+  "phylogeny": {
+    "name": "MetaAves Phylogenetic Clade Layer",
+    "notes": "Maintain clades separately from ranked taxonomy. Example: Telluraves is a clade and must not be encoded as an order/family. Clades can contain multiple orders and can be nested between ranked nodes."
+  },
+  "taxonomyPolicy": {
+    "rankedTaxonomy": [
+      "class",
+      "order",
+      "family",
+      "genus",
+      "species"
+    ],
+    "clades": "Separate phylogenetic layer; clades never occupy ranked taxonomy fields."
+  }
+}
