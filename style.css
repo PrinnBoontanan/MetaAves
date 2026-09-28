@@ -49,6 +49,94 @@ body {
     border-radius: 10px;
 }
 
+.mode-display {
+    border: 1px solid transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mode-display:hover {
+    border-color: #d5c7aa;
+    box-shadow: 0 2px 8px rgba(74, 62, 37, 0.08);
+}
+.mode-display strong { color: #587331; }
+
+.mode-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(40, 35, 25, 0.55);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+.mode-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+.mode-card {
+    position: relative;
+    width: min(620px, 100%);
+    padding: 32px;
+    background: #fffdf8;
+    border: 1px solid #d5c7aa;
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+.mode-card h2 { margin: 0 0 7px; color: #4f472f; }
+.mode-description { margin: 0 0 22px; color: #6b6658; line-height: 1.55; }
+.mode-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    color: #6b634f;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+}
+.mode-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+.mode-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 150px;
+    padding: 20px;
+    text-align: left;
+    background: #f7f0e2;
+    border: 1px solid #d5c7aa;
+    border-radius: 12px;
+    color: #4f4a3e;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mode-option:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: #9d8d67;
+    box-shadow: 0 7px 18px rgba(74, 62, 37, 0.12);
+}
+.mode-option:disabled { opacity: 0.58; cursor: wait; }
+.mode-option-title { font-size: 19px; font-weight: 800; color: #587331; }
+.mode-option-description { margin-top: 8px; line-height: 1.5; color: #666052; }
+.mode-option-status { margin-top: auto; padding-top: 12px; font-size: 12px; color: #8a816f; }
+@media (max-width: 700px) {
+    .mode-options { grid-template-columns: 1fr; }
+}
+
 .guess-section {
     background: white;
     padding: 25px;
