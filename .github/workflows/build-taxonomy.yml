@@ -86,31 +86,3 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "Rebuild classic MetaAves taxonomy from AviList"
           git push
-
-
-  # One-time maintenance job used to consolidate the noisy development history.
-  # It runs only when a commit message explicitly contains the marker below.
-  consolidate-history:
-    if: ${{ always() && contains(github.event.head_commit.message, '[consolidate-history]') }}
-    needs: build-taxonomy
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout the latest main branch
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Squash development history
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # Keep the complete current working tree and collapse its history
-          # into one clean release commit. No source/data files are removed.
-          ROOT="$(git rev-list --max-parents=0 HEAD)"
-          git reset --soft "$ROOT"
-          git commit -m "MetaAves public release"
-          git push --force origin HEAD:main
