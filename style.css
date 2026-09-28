@@ -2612,9 +2612,10 @@ input:focus-visible,
 .taxon-card.species-card {
     display: grid;
     grid-template-columns: 390px minmax(300px, 1.35fr) minmax(260px, 1fr);
-    grid-template-rows: auto auto auto auto auto;
+    grid-template-rows: auto auto auto auto auto auto;
     grid-template-areas:
         "title . ."
+        "thai . ."
         "scientific . ."
         "rank . ."
         "photo description taxonomy"
@@ -2638,6 +2639,13 @@ input:focus-visible,
     grid-area: title;
     margin: 0;
     line-height: 1.15;
+}
+
+.taxon-card.species-card > .taxon-card-thai-name {
+    grid-area: thai;
+    margin: 0;
+    line-height: 1.2;
+    font-size: 1.02rem;
 }
 
 .taxon-card.species-card > .taxon-card-scientific {
