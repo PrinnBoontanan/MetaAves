@@ -57,8 +57,10 @@ SELECT ?speciesName ?ancestorName ?rankLabel WHERE {
   ?ancestor wdt:P225 ?ancestorName ;
             wdt:P105 ?rank .
 
-  ?rank rdfs:label ?rankLabel .
-  FILTER(LANG(?rankLabel) = "en")
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en".
+    ?rank rdfs:label ?rankLabel.
+  }
   VALUES ?rankLabel {
     "subclass"
     "infraclass"
