@@ -2726,19 +2726,8 @@ input:focus-visible,
     box-sizing: border-box;
 }
 
-.taxon-card:not(.species-card) > .taxon-card-image {
-    grid-area: image;
-    width: 100%;
-    max-width: 280px;
-    height: auto;
-    max-height: none;
-    margin: 8px 0 0;
-    object-fit: contain;
-    object-position: center;
-    border-radius: 10px;
-    box-sizing: border-box;
-    box-shadow: 0 3px 10px rgba(80, 68, 45, 0.12);
-}
+/* Ordinary taxon photos are wrapped in .taxon-card-photo so the divider
+   can track the image's real rendered height. */
 
 .taxon-card:not(.species-card) > .taxon-card-description {
     grid-area: description;
@@ -2750,16 +2739,49 @@ input:focus-visible,
     line-height: 1.7;
 }
 
-/* A full-height divider separates the image from the text column instead
-   of stopping when the paragraph happens to end. */
-.taxon-card:not(.species-card) > .taxon-card-description::before {
+/* The divider is anchored to the photo wrapper, so its height always
+   follows the actual rendered Wikipedia image instead of a fixed pixel
+   value. It sits in the grid gap immediately before the description. */
+.taxon-card-photo {
+    position: relative;
+    grid-area: image;
+    width: 100%;
+    max-width: 280px;
+    align-self: start;
+}
+
+.taxon-card-photo::after {
     content: "";
     position: absolute;
-    left: 0;
     top: 0;
+    right: -32px;
     width: 1px;
-    height: 280px;
-    background: #d9cdb5;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        #d9cdb5 14%,
+        #d9cdb5 86%,
+        transparent 100%
+    );
+}
+
+.taxon-card-photo > .taxon-card-image {
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    margin: 8px 0 0;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 10px;
+    box-sizing: border-box;
+    box-shadow: 0 3px 10px rgba(80, 68, 45, 0.12);
+}
+
+/* Keep the description from growing a second, independent divider. */
+.taxon-card:not(.species-card) > .taxon-card-description::before {
+    display: none;
 }
 
 .taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
@@ -2779,8 +2801,12 @@ input:focus-visible,
             "description";
     }
 
-    .taxon-card:not(.species-card) > .taxon-card-image {
+    .taxon-card:not(.species-card) > .taxon-card-photo {
         max-width: 320px;
+    }
+
+    .taxon-card-photo::after {
+        display: none;
     }
 }
 
@@ -4113,4 +4139,23 @@ a:focus-visible,
             "description"
             "wikipedia" !important;
     }
+}
+
+
+/* ========================================
+   Final tree connector treatment
+======================================== */
+
+/* Taxon-to-taxon connectors are gradients. The gradient is supplied
+   inline by the renderer from the parent's proximity color to the
+   child's proximity color, with a soft fade at the parent end.
+   Species-leaf connectors intentionally remain solid. */
+.meta-tree-connection.meta-connection-taxon {
+    stroke-width: 2.4px;
+    stroke-linecap: round;
+}
+
+.meta-tree-connection.meta-connection-species {
+    stroke-width: 1.8px;
+    stroke-linecap: round;
 }
