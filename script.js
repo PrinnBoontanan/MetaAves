@@ -101,7 +101,7 @@ async function loadGameData() {
         const passerineFamilyCladePaths =
             gameState.clades?._meta?.passerineFamilyCladePaths || {};
 
-        gameState.birds.forEach(bird => {
+        gameState.allBirds.forEach(bird => {
             bird.cladePath = membershipBySpecies[bird.scientificName] || [];
 
             const generatedPostOrder =
@@ -3965,16 +3965,21 @@ async function showBirdInTaxonCard(bird) {
     const requestId = ++gameState.taxonCardRequestId;
 
     card.innerHTML = "<p>Loading bird information from Wikipedia...</p>";
+    card.classList.remove("clade-card");
+    card.classList.add("species-card");
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    const [wiki, thaiName] = await Promise.all([
+    const [wiki, thaiName, wikidataDetailed] = await Promise.all([
         fetchWikipediaPageData(
             wikiTitle,
             true,
             "bird",
             bird.scientificName
         ),
-        fetchOnlineThaiName(bird)
+        gameState.mode === "thailand"
+            ? fetchOnlineThaiName(bird)
+            : Promise.resolve(""),
+        fetchWikidataDetailedTaxonomy(bird)
     ]);
 
     // Do not let a slower old request overwrite a newer selection.
