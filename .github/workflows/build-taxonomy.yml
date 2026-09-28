@@ -91,7 +91,7 @@ jobs:
   # One-time maintenance job used to consolidate the noisy development history.
   # It runs only when a commit message explicitly contains the marker below.
   consolidate-history:
-    if: contains(github.event.head_commit.message, '[consolidate-history]')
+    if: ${{ always() && contains(github.event.head_commit.message, '[consolidate-history]') }}
     needs: build-taxonomy
     runs-on: ubuntu-latest
     permissions:
