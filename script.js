@@ -4379,19 +4379,6 @@ function renderTaxonomyTree() {
 
     place(model, 0, leftOffset);
 
-    // Record the rendered parent position so the Aves trunk can be forced
-    // perfectly vertical without changing the biological tree layout.
-    positions.forEach(position => {
-        position.node.__parentPosition = null;
-    });
-    positions.forEach(position => {
-        if (!position.node.children) return;
-        position.node.children.forEach(child => {
-            const childPosition = positions.find(candidate => candidate.node === child);
-            if (childPosition) childPosition.node.__parentPosition = position;
-        });
-    });
-
     const maxDepth = Math.max(
         ...positions.map(position => position.depth),
         0
@@ -4419,18 +4406,7 @@ function renderTaxonomyTree() {
         const nodeHeight = element.offsetHeight || 34;
         const actualWidth = element.offsetWidth || position.width;
 
-        // Keep the first revealed taxon directly below Aves. This avoids
-        // the tiny/slanted trunk caused by measuring different node widths.
-        let renderedCenterX = position.x;
-        const parentPosition = position.node.__parentPosition;
-        if (
-            parentPosition &&
-            parentPosition.node?.taxonId === "class:Aves"
-        ) {
-            renderedCenterX = parentPosition.x;
-        }
-
-        const x = renderedCenterX - actualWidth / 2;
+        const x = position.x - actualWidth / 2;
         const y =
             28 +
             position.depth * levelGap -
@@ -4454,6 +4430,35 @@ function renderTaxonomyTree() {
             element
         });
     });
+
+    // The Aves trunk is a visual spine: every direct child of Aves should
+    // sit exactly on the Aves center. Shift the complete child subtree by
+    // the measured difference so its own branches remain internally aligned.
+    const avesPosition = positioned.get(model);
+    if (avesPosition && model.type === "taxon") {
+        const shiftSubtree = (node, deltaX) => {
+            const pos = positioned.get(node);
+            if (!pos) return;
+
+            pos.x += deltaX;
+            pos.element.style.left =
+                (parseFloat(pos.element.style.left) || 0) + deltaX + "px";
+
+            (node.children || []).forEach(child => {
+                shiftSubtree(child, deltaX);
+            });
+        };
+
+        (model.children || []).forEach(child => {
+            const childPosition = positioned.get(child);
+            if (!childPosition) return;
+
+            const deltaX = avesPosition.x - childPosition.x;
+            if (Math.abs(deltaX) > 0.01) {
+                shiftSubtree(child, deltaX);
+            }
+        });
+    }
 
     function drawConnections(node) {
         if (node.type !== "taxon") return;
