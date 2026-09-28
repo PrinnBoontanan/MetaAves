@@ -3995,7 +3995,6 @@ async function showBirdInTaxonCard(bird) {
             : "";
     if (displayThaiName) bird.thaiName = displayThaiName;
 
-    const wikidataDetailed = await fetchWikidataDetailedTaxonomy(bird);
     renderBirdCard(bird, wiki, wikidataDetailed, displayThaiName);
 }
 
