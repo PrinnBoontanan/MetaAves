@@ -3968,6 +3968,13 @@ a:focus-visible,
 
 .taxon-card.species-card > .taxon-card-wikipedia-link {
     grid-area: wikipedia !important;
+    align-self: start !important;
+    justify-self: start !important;
+    display: inline-flex !important;
+    width: fit-content;
+    height: fit-content;
+    margin: 8px 0 0 !important;
+    line-height: 1.35;
 }
 
 @media (max-width: 850px) {
@@ -4078,6 +4085,13 @@ a:focus-visible,
 
 .taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
     grid-area: wikipedia !important;
+    align-self: start !important;
+    justify-self: start !important;
+    display: inline-flex !important;
+    width: fit-content;
+    height: fit-content;
+    margin: 8px 0 0 !important;
+    line-height: 1.35;
 }
 
 /* Do not let legacy HSL rules wash the feedback colors out. */
@@ -4151,11 +4165,11 @@ a:focus-visible,
    child's proximity color, with a soft fade at the parent end.
    Species-leaf connectors intentionally remain solid. */
 .meta-tree-connection.meta-connection-taxon {
-    stroke-width: 2.4px;
+    stroke-width: 3.6px !important;
     stroke-linecap: round;
 }
 
 .meta-tree-connection.meta-connection-species {
-    stroke-width: 1.8px;
+    stroke-width: 3px !important;
     stroke-linecap: round;
 }
