@@ -4454,7 +4454,7 @@ function renderTaxonomyTree() {
                 "path"
             );
 
-            if (Math.abs(startX - endX) < 1) {
+            if (node.taxonId === "class:Aves" || Math.abs(startX - endX) < 1) {
                 path.setAttribute(
                     "d",
                     `M ${startX} ${startY} L ${endX} ${endY}`
@@ -5002,20 +5002,63 @@ function buildSpeciesHint(
 ) {
     const relationship = getHintRelationship(guessedBird);
     const isSameGenus = relationship?.rank === "Genus";
-    const hintTarget = isSameGenus ? "species" : "genus";
     const clues = [];
-
-    const targetIntro = isSameGenus
-        ? "Use this clue to distinguish the mystery species from its close relatives: "
-        : "Use this clue to narrow down the mystery genus: ";
 
     const mysteryGenus = gameState.mysteryBird?.genus;
 
-    // We deliberately do not expose family/genus sizes. The clue engine uses
-    // them internally to decide how much specificity is useful.
+    // Never expose family/genus sizes to the player. They are used only to
+    // control how selective the diagnostic-trait engine should be.
     const genusMembersAll = mysteryGenus
         ? gameState.birds.filter(bird => bird.genus === mysteryGenus)
         : [];
+
+    // Several diagnostic traits can belong to the same ID category. Keep
+    // those traits together so the player gets one coherent clue instead of
+    // several nearly identical cards.
+    function addGroupedDiagnosticClues(diagnostic, stage, options = {}) {
+        const groups = new Map();
+
+        diagnostic.forEach(item => {
+            if (!item?.label || !item?.token) return;
+            if (!groups.has(item.label)) groups.set(item.label, []);
+            const tokens = groups.get(item.label);
+            if (!tokens.includes(item.token)) tokens.push(item.token);
+        });
+
+        const categoryOrder = options.categoryOrder || [];
+        const orderedGroups = [...groups.entries()].sort((a, b) => {
+            const ai = categoryOrder.indexOf(a[0]);
+            const bi = categoryOrder.indexOf(b[0]);
+            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        });
+
+        orderedGroups.slice(0, 3).forEach(([label, tokens]) => {
+            const selected = tokens.slice(0, 3);
+            let text;
+
+            if (stage === "genus") {
+                text =
+                    selected.length === 1
+                        ? "The mystery branch is especially associated with " + selected[0] + "."
+                        : "The mystery branch is especially associated with " +
+                          selected.slice(0, -1).join(", ") +
+                          " and " + selected[selected.length - 1] + ".";
+            } else {
+                text =
+                    selected.length === 1
+                        ? "This is a useful distinguishing " + label.toLowerCase() +
+                          " trait: " + selected[0] + "."
+                        : "These are useful distinguishing " + label.toLowerCase() +
+                          " traits: " + selected.slice(0, -1).join(", ") +
+                          " and " + selected[selected.length - 1] + ".";
+            }
+
+            clues.push({
+                heading: label + " — " + stage + " clue",
+                text
+            });
+        });
+    }
 
     if (!isSameGenus) {
         const targetGenusStudies = [
@@ -5027,8 +5070,6 @@ function buildSpeciesHint(
             .filter(entry => entry?.study)
             .map(entry => entry.study);
 
-        // The larger the family search space, the more aggressively we look
-        // for traits that separate the mystery genus from other genera.
         const familyGeneraCount = new Set(
             gameState.birds
                 .filter(bird => bird.family === gameState.mysteryBird?.family)
@@ -5047,23 +5088,16 @@ function buildSpeciesHint(
             minimumSupport
         );
 
-        diagnostic.slice(0, 3).forEach(item => {
-            const strength =
-                familyGeneraCount >= 20 ? "distinctive" :
-                familyGeneraCount >= 10 ? "useful" :
-                "characteristic";
+        addGroupedDiagnosticClues(
+            diagnostic,
+            "genus",
+            {
+                categoryOrder: ["Appearance", "Behavior", "Habitat", "Breeding", "Diet"]
+            }
+        );
 
-            clues.push({
-                heading: item.label + " — genus clue",
-                text: targetIntro +
-                    "look for a " + strength + " association with " + item.token +
-                    ". This trait is more characteristic of the mystery genus than of the other genera on this branch."
-            });
-        });
-
-        // If the family profile is sparse, fall back to a useful trait that
-        // occurs repeatedly inside the mystery genus rather than inventing a
-        // false distinction.
+        // If the family profile is sparse, fall back to repeated traits from
+        // the mystery genus rather than inventing a distinction.
         if (!clues.length) {
             const repeated = getDiagnosticHintTraits(
                 targetGenusStudies,
@@ -5071,18 +5105,17 @@ function buildSpeciesHint(
                 targetGenusStudies.length > 2 ? 0.5 : 0.34
             );
 
-            repeated.slice(0, 2).forEach(item => {
-                clues.push({
-                    heading: item.label + " — genus clue",
-                    text: targetIntro +
-                        "the mystery genus is repeatedly associated with " +
-                        item.token + "."
-                });
-            });
+            addGroupedDiagnosticClues(
+                repeated,
+                "genus",
+                {
+                    categoryOrder: ["Appearance", "Behavior", "Habitat", "Breeding", "Diet"]
+                }
+            );
         }
 
-        // A shared meaningful name word is kept only as a late fallback.
-        if (clues.length < 2) {
+        // Keep the common-name clue only as a final fallback.
+        if (clues.length < 1) {
             const guessedNameWords = getMeaningfulNameWords(guessedBird?.commonName);
             const mysteryNameWords = getMeaningfulNameWords(gameState.mysteryBird?.commonName);
             const sharedNameWord = guessedNameWords.find(word =>
@@ -5092,8 +5125,7 @@ function buildSpeciesHint(
             if (sharedNameWord) {
                 clues.push({
                     heading: "Name clue",
-                    text: targetIntro +
-                        "the mystery bird's common name also contains the word “" +
+                    text: "The mystery bird's common name also contains the word “" +
                         sharedNameWord + "”."
                 });
             }
@@ -5106,42 +5138,21 @@ function buildSpeciesHint(
 
         const genusSize = genusMembersAll.length;
 
-        // Large genera need a genuinely fine-grained field mark. Small genera
-        // can use a broader distinguishing trait without becoming too vague.
-        const speciesMinimum =
-            genusSize >= 30 ? 0.05 :
-            genusSize >= 15 ? 0.08 :
-            0.12;
-
         const diagnostic = getSpecificSpeciesTraits(
             mysteryStudy,
             comparisonStudies,
             guessedStudy
         );
 
-        const preferredLabels = genusSize >= 15
-            ? ["Appearance", "Behavior", "Habitat", "Breeding", "Diet"]
-            : ["Behavior", "Habitat", "Appearance", "Diet", "Breeding"];
-
-        diagnostic.sort((a, b) => {
-            const ai = preferredLabels.indexOf(a.label);
-            const bi = preferredLabels.indexOf(b.label);
-            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi) || b.score - a.score;
-        });
-
-        diagnostic.slice(0, 3).forEach(item => {
-            const wording =
-                genusSize >= 30 ? "a particularly distinctive " :
-                genusSize >= 15 ? "a specific " :
-                "a useful ";
-
-            clues.push({
-                heading: item.label + " — species clue",
-                text: targetIntro +
-                    wording + item.token +
-                    " trait that is not commonly described for the other species in this genus."
-            });
-        });
+        addGroupedDiagnosticClues(
+            diagnostic,
+            "species",
+            {
+                categoryOrder: genusSize >= 15
+                    ? ["Appearance", "Behavior", "Habitat", "Breeding", "Diet"]
+                    : ["Behavior", "Habitat", "Appearance", "Diet", "Breeding"]
+            }
+        );
 
         // If the fine-grained comparison is sparse, use a direct comparison
         // between the guessed and mystery birds rather than a generic fact.
@@ -5173,8 +5184,7 @@ function buildSpeciesHint(
 
                 clues.push({
                     heading: label + " — species clue",
-                    text: targetIntro +
-                        "the mystery bird is associated with " +
+                    text: "The mystery bird is associated with " +
                         mysteryOnly.slice(0, 2).join(" and ") +
                         ", unlike the bird you guessed."
                 });
