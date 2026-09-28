@@ -1,0 +1,116 @@
+name: Build MetaAves taxonomy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "build_metaves_local.py"
+      - "requirements.txt"
+      - "data/data_sources.json"
+      - "data/clades.json"
+      - "script.js"
+      - ".github/workflows/build-taxonomy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-taxonomy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download AviList v2025b extended
+        run: |
+          curl -L -o AviList-v2025b-extended.xlsx             https://www.avilist.org/wp-content/uploads/2026/06/AviList-v2025b-10Jun2026-extended.xlsx
+
+      - name: Download eBird Thai common names
+        run: |
+          curl -L -o eBird-common-names.xlsx             https://cornell.box.com/shared/static/zjci66divvqnz00k98r7pmmb6kpc69zs.xlsx
+
+      - name: Build AviList base dataset + Thai bird names
+        run: python scripts/import_avilist.py AviList-v2025b-extended.xlsx eBird-common-names.xlsx
+
+      - name: Validate generated data
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          taxonomy = json.loads(Path("data/taxonomy.generated.json").read_text())
+          birds = json.loads(Path("data/birds.generated.json").read_text())
+          clade_membership = json.loads(Path("data/clade_membership.generated.json").read_text())
+
+          assert taxonomy["class:Aves"]["name"] == "Aves"
+          assert taxonomy["_meta"]["rankOrder"]
+          assert len(birds) >= 10000
+
+          ranks = {node.get("rank") for node in taxonomy.values() if isinstance(node, dict)}
+          required = {"class", "order", "family", "genus", "species"}
+          missing = required - ranks
+          assert not missing, f"Missing required ranks: {sorted(missing)}"
+
+          assert clade_membership.get("_meta", {}).get("version") == 2
+          assert clade_membership.get("species")
+          assert clade_membership.get("postOrderSpecies") is not None
+
+          for scientific_name, path in clade_membership["postOrderSpecies"].items():
+              assert scientific_name
+              assert isinstance(path, list) and path
+              assert path[0] in {"Acanthisitti", "Eupasseres"}
+
+          print(
+              f"Validated {len(birds):,} birds, {len(taxonomy)-1:,} taxonomy nodes, "
+              f"{len(clade_membership['species']):,} backbone clade memberships, and "
+              f"{len(clade_membership['postOrderSpecies']):,} post-order clade memberships."
+          )
+          PY
+
+      - name: Commit generated taxonomy
+        run: |
+          rm -f data/ncbi_aves.jsonl AviList-v2025b-extended.xlsx eBird-common-names.xlsx
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/birds.generated.json data/taxonomy.generated.json data/clade_membership.generated.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Rebuild classic MetaAves taxonomy from AviList"
+          git push
+
+
+  # One-time maintenance job used to consolidate the noisy development history.
+  # It runs only when a commit message explicitly contains the marker below.
+  consolidate-history:
+    if: ${{ always() && contains(github.event.head_commit.message, '[consolidate-history]') }}
+    needs: build-taxonomy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout the latest main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Squash development history
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Keep the complete current working tree and collapse its history
+          # into one clean release commit. No source/data files are removed.
+          ROOT="$(git rev-list --max-parents=0 HEAD)"
+          git reset --soft "$ROOT"
+          git commit -m "MetaAves public release"
+          git push --force origin HEAD:main

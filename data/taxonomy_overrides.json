@@ -1,0 +1,37 @@
+{
+  "_meta": {
+    "version": 1,
+    "source": "Wikipedia avian taxonomy pages",
+    "accessed": "2026-09-25",
+    "description": "Detailed paths for taxa where Wikipedia provides intermediate phylogenetic/ranked groups that are more informative than the generated checklist hierarchy."
+  },
+  "Buceros bicornis": [
+    {"id":"class:Aves","rank":"class","name":"Aves"},
+    {"id":"order:Bucerotiformes","rank":"order","name":"Bucerotiformes"},
+    {"id":"family:Bucerotidae","rank":"family","name":"Bucerotidae"},
+    {"id":"subfamily:Bucerotinae","rank":"subfamily","name":"Bucerotinae"},
+    {"id":"genus:Buceros","rank":"genus","name":"Buceros"},
+    {"id":"species:Buceros_bicornis","rank":"species","name":"Buceros bicornis"}
+  ],
+  "Anthracoceros albirostris": [
+    {"id":"class:Aves","rank":"class","name":"Aves"},
+    {"id":"order:Bucerotiformes","rank":"order","name":"Bucerotiformes"},
+    {"id":"family:Bucerotidae","rank":"family","name":"Bucerotidae"},
+    {"id":"subfamily:Bucerotinae","rank":"subfamily","name":"Bucerotinae"},
+    {"id":"genus:Anthracoceros","rank":"genus","name":"Anthracoceros"},
+    {"id":"species:Anthracoceros_albirostris","rank":"species","name":"Anthracoceros albirostris"}
+  ],
+  "Passer domesticus": [
+    {"id":"class:Aves","rank":"class","name":"Aves","clade":false},
+    {"id":"order:Passeriformes","rank":"order","name":"Passeriformes"},
+    {"id":"clade:Eupasseres","rank":"clade","name":"Eupasseres"},
+    {"id":"suborder:Passeri","rank":"suborder","name":"Passeri"},
+    {"id":"clade:Euoscines","rank":"clade","name":"Euoscines"},
+    {"id":"infraorder:Passerides","rank":"infraorder","name":"Passerides"},
+    {"id":"parvorder:Passerida","rank":"parvorder","name":"Passerida"},
+    {"id":"superfamily:Passeroidea","rank":"superfamily","name":"Passeroidea"},
+    {"id":"family:Passeridae","rank":"family","name":"Passeridae"},
+    {"id":"genus:Passer","rank":"genus","name":"Passer"},
+    {"id":"species:Passer_domesticus","rank":"species","name":"Passer domesticus"}
+  ]
+}
