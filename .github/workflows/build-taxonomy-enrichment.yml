@@ -23,6 +23,9 @@ jobs:
       - name: Build Wikidata taxonomy enrichment
         run: python scripts/enrich_taxonomy_wikidata.py
 
+      - name: Validate generated taxonomy
+        run: python scripts/validate_taxonomy_enrichment.py
+
       - name: Commit generated taxonomy
         run: |
           git config user.name "github-actions[bot]"
