@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+
 /* ========================================
    MetaAves - Base
 ======================================== */
@@ -6,132 +8,176 @@
     box-sizing: border-box;
 }
 
-
 body {
     margin: 0;
-
     font-family: Arial, sans-serif;
-
     background: #f4f6f8;
-
     color: #222;
 }
 
-
 .game-container {
-    width: min(1000px, 92%);
-
+    width: min(1650px, 96%);
     margin: 0 auto;
-
     padding: 40px 0;
 }
 
-
 .game-header {
     text-align: center;
-
     margin-bottom: 35px;
 }
 
-
 .game-header h1 {
     margin: 0;
-
     font-size: 42px;
 }
 
-
 .game-header p {
     margin-top: 8px;
-
     color: #666;
 }
 
-
 .game-info {
     display: flex;
-
     justify-content: space-between;
-
     margin-bottom: 25px;
 }
-
 
 .mode-display,
 .guess-counter {
     background: white;
-
     padding: 12px 18px;
-
     border-radius: 10px;
 }
 
+.mode-display {
+    border: 1px solid transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mode-display:hover {
+    border-color: #d5c7aa;
+    box-shadow: 0 2px 8px rgba(74, 62, 37, 0.08);
+}
+.mode-display strong { color: #587331; }
+
+.mode-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(40, 35, 25, 0.55);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+.mode-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+.mode-card {
+    position: relative;
+    width: min(620px, 100%);
+    padding: 32px;
+    background: #fffdf8;
+    border: 1px solid #d5c7aa;
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+.mode-card h2 { margin: 0 0 7px; color: #4f472f; }
+.mode-description { margin: 0 0 22px; color: #6b6658; line-height: 1.55; }
+.mode-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    color: #6b634f;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+}
+.mode-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+.mode-option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 150px;
+    padding: 20px;
+    text-align: left;
+    background: #f7f0e2;
+    border: 1px solid #d5c7aa;
+    border-radius: 12px;
+    color: #4f4a3e;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mode-option:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: #9d8d67;
+    box-shadow: 0 7px 18px rgba(74, 62, 37, 0.12);
+}
+.mode-option:disabled { opacity: 0.58; cursor: wait; }
+.mode-option-title { font-size: 19px; font-weight: 800; color: #587331; }
+.mode-option-description { margin-top: 8px; line-height: 1.5; color: #666052; }
+.mode-option-status { margin-top: auto; padding-top: 12px; font-size: 12px; color: #8a816f; }
+@media (max-width: 700px) {
+    .mode-options { grid-template-columns: 1fr; }
+}
 
 .guess-section {
     background: white;
-
     padding: 25px;
-
     border-radius: 14px;
-
     margin-bottom: 25px;
 }
 
-
 .search-container {
     display: flex;
-
     gap: 10px;
 }
 
-
 #bird-search {
     flex: 1;
-
     padding: 14px;
-
     font-size: 16px;
-
     border: 1px solid #ccc;
-
     border-radius: 8px;
 }
-
 
 #guess-button {
     padding: 14px 24px;
-
     border: none;
-
     border-radius: 8px;
-
     cursor: pointer;
-
     font-size: 16px;
 }
 
-
 .suggestions {
     margin-top: 5px;
-
     background: white;
-
     border: 1px solid #ddd;
-
     border-radius: 8px;
-
     overflow: hidden;
 }
 
-
 .suggestion {
     padding: 12px 15px;
-
     cursor: pointer;
-
     border-bottom: 1px solid #eee;
 }
-
 
 .suggestion:hover {
     background: #f1f1f1;
@@ -139,181 +185,193 @@ body {
 
 
 /* ========================================
-   Taxonomy Section
+   Taxonomy + Taxon Information Layout
 ======================================== */
 
+/* On desktop the tree gets the large left column while the Taxon
+   Information card stays visible beside it, like the earlier layout. */
+.taxonomy-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(600px, 680px);
+    gap: 22px;
+    align-items: start;
+}
+
 .taxonomy-section {
+    min-width: 0;
     background: white;
-
     padding: 25px;
-
     border-radius: 14px;
-
     margin-bottom: 25px;
 }
 
 
+/* ========================================
+   Metazooa-style taxonomy tree
+======================================== */
+
 .taxonomy-tree {
-    min-height: 260px;
-
-    padding: 35px;
-
-    border: 1px solid #ddd;
-
-    border-radius: 12px;
-
-    background: #fafafa;
-
+    position: relative;
+    min-height: 420px;
+    padding: 10px 0;
     overflow-x: auto;
+    overflow-y: hidden;
+    background: #f8ead5;
+    border-radius: 4px;
+}
+
+.meta-tree-canvas {
+    position: relative;
+    min-width: 100%;
+    min-height: 400px;
+}
+
+.meta-tree-lines,
+.meta-tree-nodes {
+    position: absolute;
+    inset: 0;
+}
+
+.meta-tree-lines {
+    overflow: visible;
+    pointer-events: none;
+}
+
+.meta-tree-nodes {
+    pointer-events: none;
 }
 
 
 /* ========================================
-   Taxonomy Nodes
+   Tree nodes
 ======================================== */
 
-.taxon-node {
-    position: relative;
-
-    display: inline-block;
-
-    padding: 7px 14px;
-
-    background: white;
-
-    border: 1.5px solid #aaa;
-
-    border-radius: 7px;
-
-    font-weight: bold;
-
-    white-space: nowrap;
-}
-
-
-.tree-root-node {
-    border: 2px solid #333;
-}
-
-
-/* ========================================
-   Branch Container
-======================================== */
-
-.tree-branch {
-    position: relative;
-
-    margin-left: 28px;
-
-    padding-left: 30px;
-
+.meta-tree-node {
+    position: absolute;
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+    animation: reveal-tree-node 0.32s ease-out forwards;
+    animation-delay: var(--node-delay, 0s);
     display: flex;
+    align-items: center;
+    justify-content: center;
 
-    flex-direction: column;
+    min-height: 31px;
+    padding: 5px 12px;
 
-    align-items: flex-start;
-}
-
-
-/* Vertical branch line */
-
-.tree-branch::before {
-    content: "";
-
-    position: absolute;
-
-    left: 0;
-
-    top: 0;
-
-    bottom: 0;
-
-    width: 2px;
-
-    background: #aaa;
-}
-
-
-/* ========================================
-   Horizontal branch connectors
-======================================== */
-
-.tree-branch > .taxon-node,
-.tree-branch > .species-node {
-    position: relative;
-}
-
-
-.tree-branch > .taxon-node::before,
-.tree-branch > .species-node::before {
-
-    content: "";
-
-    position: absolute;
-
-    left: -30px;
-
-    top: 50%;
-
-    width: 30px;
-
-    height: 2px;
-
-    background: #aaa;
-}
-
-
-/* ========================================
-   Species
-======================================== */
-
-.species-node {
-    position: relative;
-
-    display: inline-block;
-
-    margin: 5px 0;
-
-    padding: 7px 14px;
-
-    background: white;
-
-    border: 1px solid #bbb;
-
-    border-radius: 7px;
-
+    border-radius: 5px;
     white-space: nowrap;
+
+    font-size: 14px;
+    line-height: 20px;
+
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.16);
+    z-index: 2;
+}
+
+
+/* Taxonomic levels */
+
+.meta-tree-node[data-level="class"] {
+    background: #b43b28;
+    color: #fff;
+    border: 1px solid #8d281b;
+    font-weight: 700;
+}
+
+.meta-tree-node[data-level="order"] {
+    background: #c97817;
+    color: #fff;
+    border: 1px solid #a65e0e;
+    font-weight: 700;
+}
+
+.meta-tree-node[data-level="family"] {
+    background: #70852e;
+    color: #fff;
+    border: 1px solid #596c21;
+    font-weight: 700;
+}
+
+.meta-tree-node[data-level="genus"] {
+    background: #4f8b3b;
+    color: #fff;
+    border: 1px solid #3b6e2c;
+    font-weight: 700;
+}
+
+
+/* Species leaves */
+
+.meta-species-node {
+    background: #fffdf8;
+    color: #555;
+    border: 1px solid #c9b98f;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.12);
+}
+
+.meta-species-guess {
+    color: #587331;
+}
+
+.meta-species-mystery {
+    color: #777;
+    border-color: #d5c7aa;
+    border-style: dashed;
+    font-weight: 700;
+}
+
+.meta-species-correct {
+    background: #4d8d39;
+    color: #fff;
+    border-color: #3b6d2c;
+    font-weight: 700;
 }
 
 
 /* ========================================
-   Guessed species
+   Curved tree connections
 ======================================== */
 
-.guessed-species {
-    font-weight: bold;
+.meta-tree-connection {
+    fill: none;
+    stroke-linecap: round;
 }
 
-
-/* ========================================
-   Hidden mystery
-======================================== */
-
-.mystery-species {
-    color: #888;
-
-    font-weight: bold;
+.meta-tree-connection.active {
+    animation: grow-tree-branch 0.65s ease-out forwards;
 }
 
+@keyframes grow-tree-branch {
+    from {
+        stroke-dashoffset: var(--branch-length, 1000);
+    }
 
-/* ========================================
-   Correct answer
-======================================== */
+    to {
+        stroke-dashoffset: 0;
+    }
+}
 
-.correct-species {
-    font-weight: bold;
+@keyframes reveal-tree-node {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.96);
+    }
 
-    border: 2px solid #333;
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.meta-connection-taxon {
+    stroke: #7d641f;
+    stroke-width: 5;
+}
+
+.meta-connection-species {
+    stroke: #7b8c4b;
+    stroke-width: 3.5;
 }
 
 
@@ -322,10 +380,9 @@ body {
 ======================================== */
 
 .tree-placeholder {
-    padding: 60px 20px;
-
+    margin: 0;
+    padding: 170px 20px;
     text-align: center;
-
     color: #888;
 }
 
@@ -336,17 +393,3245 @@ body {
 
 .taxon-section {
     background: white;
-
     padding: 25px;
-
     border-radius: 14px;
+    min-width: 0;
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
 }
-
 
 .taxon-card {
     padding: 20px;
-
     border: 1px solid #ddd;
-
     border-radius: 10px;
+}
+
+
+/* ========================================
+   Interactive taxon card
+======================================== */
+
+.meta-taxon-node {
+    cursor: pointer;
+}
+
+.meta-taxon-node:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+.taxon-card-rank {
+    margin: 0 0 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #8a7650;
+}
+
+.taxon-card a {
+    display: inline-block;
+    margin-top: 8px;
+    color: #587331;
+}
+
+.taxon-card h4 {
+    margin: 18px 0 8px;
+    color: #5d563f;
+}
+
+.taxon-card ul {
+    margin: 0 0 12px;
+    padding-left: 22px;
+}
+
+.taxon-card li {
+    margin: 4px 0;
+}
+
+.taxon-card > p {
+    line-height: 1.65;
+}
+
+
+/* ========================================
+   Game Over / Bird Study Card
+======================================== */
+
+.game-over-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(40, 35, 25, 0.55);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.game-over-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.game-over-card {
+    position: relative;
+    width: min(560px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 32px;
+    background: #fffdf8;
+    border: 1px solid #d5c7aa;
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.game-over-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    color: #6b634f;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.study-card-label {
+    margin: 0 0 8px;
+    color: #8a7650;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.game-over-card h2 {
+    margin: 0 0 6px;
+    color: #4f472f;
+}
+
+.game-over-card > p {
+    line-height: 1.55;
+}
+
+.study-card-bird {
+    margin-top: 24px;
+    padding: 18px;
+    background: #f4e8d4;
+    border-radius: 10px;
+}
+
+.study-card-bird h3 {
+    margin: 0 0 6px;
+    color: #5d563f;
+    font-size: 24px;
+}
+
+.study-card-bird .scientific-name {
+    margin: 0;
+    font-style: italic;
+    color: #746c5a;
+}
+
+.study-card-details {
+    display: grid;
+    gap: 16px;
+    margin-top: 18px;
+}
+
+.study-card-details strong {
+    color: #5d563f;
+}
+
+.study-card-details p {
+    margin: 5px 0 0;
+    line-height: 1.55;
+    color: #555;
+}
+
+.game-over-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 26px;
+}
+
+.game-over-actions button {
+    padding: 11px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #587331;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.game-over-actions button.secondary {
+    background: #e8dfcf;
+    color: #5d563f;
+}
+
+
+/* ========================================
+   Persistent New Game button
+======================================== */
+
+.new-game-button {
+    display: none;
+    padding: 11px 18px;
+    border: none;
+    border-radius: 8px;
+    background: #587331;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.new-game-button.visible {
+    display: inline-block;
+}
+
+.new-game-button:hover {
+    filter: brightness(1.05);
+}
+
+.meta-species-clickable {
+    cursor: pointer;
+}
+
+.meta-species-clickable:hover {
+    filter: brightness(0.97);
+    transform: translateY(-1px);
+}
+
+.taxon-card-image,
+.study-card-image {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+    background: #f4e8d4;
+    padding: 10px;
+    border: 1px solid #c9b98f;
+    border-radius: 14px;
+    box-shadow:
+        0 3px 0 #e8dfcf,
+        0 7px 18px rgba(0, 0, 0, 0.12);
+}
+
+.taxon-card-image {
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+.study-card-image {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#study-bird-description {
+    margin: 18px 0 0;
+    line-height: 1.65;
+}
+
+
+.study-card-section {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #e4d9c4;
+}
+
+.study-card-section h4 {
+    margin: 0 0 7px;
+    color: #5d563f;
+    font-size: 16px;
+}
+
+.study-card-section p {
+    margin: 0;
+    line-height: 1.65;
+    color: #555;
+}
+
+.study-card-section ul {
+    margin: 0;
+    padding-left: 22px;
+    color: #555;
+}
+
+.study-card-section li {
+    margin: 6px 0;
+    line-height: 1.55;
+}
+
+.study-card-section a {
+    display: inline-block;
+    margin-top: 2px;
+    color: #587331;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.study-card-section a:hover {
+    text-decoration: underline;
+}
+
+
+/* ========================================
+   MetaAves visual refresh
+======================================== */
+
+:root {
+    --paper: #fffdf8;
+    --paper-soft: #f7f0e2;
+    --ink: #3f4638;
+    --muted: #777565;
+    --olive: #587331;
+    --olive-dark: #405a25;
+    --gold: #b78a3d;
+    --line: #d9c8a5;
+    --shadow: 0 10px 30px rgba(74, 62, 37, 0.10);
+}
+
+body {
+    min-height: 100vh;
+    font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+    background:
+        radial-gradient(circle at 8% 8%, rgba(190, 169, 113, 0.14), transparent 24%),
+        radial-gradient(circle at 92% 18%, rgba(88, 115, 49, 0.08), transparent 22%),
+        linear-gradient(135deg, #f3f0e8 0%, #e9eee7 100%);
+    color: var(--ink);
+}
+
+.game-container {
+    width: min(1500px, 96vw);
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 28px 0 42px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(330px, 0.85fr);
+    grid-template-areas:
+        "header header"
+        "info info"
+        "guess guess"
+        "taxonomy taxonomy";
+    gap: 18px 20px;
+}
+
+.game-header {
+    grid-area: header;
+    position: relative;
+    margin: 0;
+    padding: 8px 0 14px;
+    text-align: center;
+}
+
+.game-header h1 {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(40px, 5vw, 62px);
+    line-height: 1;
+    letter-spacing: -0.035em;
+    color: #4b583e;
+    text-shadow: 0 2px 0 rgba(255,255,255,0.8);
+}
+
+.title-bird {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 0.7em;
+    transform: rotate(-12deg);
+    filter: saturate(0.75);
+}
+
+.game-header p {
+    margin: 10px 0 0;
+    color: #787866;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.game-info {
+    grid-area: info;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0;
+}
+
+.mode-display,
+.guess-counter {
+    background: rgba(255, 253, 248, 0.92);
+    border: 1px solid rgba(201, 185, 143, 0.75);
+    padding: 11px 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(74, 62, 37, 0.07);
+}
+
+.mode-display::before {
+    content: "🌍 ";
+}
+
+.guess-counter::before {
+    content: "🎯 ";
+}
+
+.guess-section,
+.taxonomy-section,
+.taxon-section {
+    background: rgba(255, 253, 248, 0.94);
+    border: 1px solid rgba(201, 185, 143, 0.65);
+    box-shadow: var(--shadow);
+    border-radius: 18px;
+}
+
+.guess-section {
+    grid-area: guess;
+    padding: 20px 24px;
+    margin: 0;
+}
+
+.guess-section h2,
+.taxonomy-section h2,
+.taxon-section h2 {
+    margin: 0 0 14px;
+    font-family: Georgia, "Times New Roman", serif;
+    color: #4f5d42;
+    font-size: 21px;
+}
+
+.search-container {
+    gap: 10px;
+}
+
+#bird-search {
+    padding: 14px 17px;
+    font-size: 16px;
+    color: #41463b;
+    background: #fffefa;
+    border: 1px solid #cfc3a7;
+    border-radius: 11px;
+    outline: none;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+#bird-search:focus {
+    border-color: #789052;
+    box-shadow: 0 0 0 4px rgba(120, 144, 82, 0.13);
+}
+
+#guess-button,
+.new-game-button,
+.game-over-actions button {
+    border: 0;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #668542, #4e6c2e);
+    color: #fff;
+    font-family: inherit;
+    font-weight: 700;
+    box-shadow: 0 4px 0 #3f5926, 0 7px 16px rgba(63, 89, 38, 0.16);
+    transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+}
+
+#guess-button {
+    padding: 14px 23px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+#guess-button:hover,
+.new-game-button:hover,
+.game-over-actions button:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
+#guess-button:active,
+.new-game-button:active,
+.game-over-actions button:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #3f5926;
+}
+
+.suggestions {
+    border-color: #d8cdb6;
+    border-radius: 11px;
+    box-shadow: 0 8px 18px rgba(74, 62, 37, 0.09);
+}
+
+.suggestion:hover {
+    background: #eef2e8;
+}
+
+.taxonomy-section {
+    grid-area: tree;
+    padding: 22px;
+    margin: 0;
+    min-width: 0;
+}
+
+.taxon-section {
+    grid-area: taxon;
+    padding: 22px;
+    margin: 0;
+    min-width: 0;
+}
+
+.taxonomy-tree {
+    min-height: 520px;
+    height: calc(100vh - 355px);
+    max-height: 760px;
+    padding: 10px 0;
+    border: 1px solid #e3d4b7;
+    border-radius: 14px;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,.48), transparent 40%),
+        #f6ead7;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+}
+
+.meta-tree-canvas {
+    position: relative;
+    min-height: 100%;
+}
+
+.meta-tree-node {
+    min-height: 34px;
+    padding: 6px 13px;
+    border-radius: 9px;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    font-size: 14px;
+    box-shadow:
+        0 3px 0 rgba(67, 57, 35, 0.10),
+        0 7px 15px rgba(67, 57, 35, 0.08);
+}
+
+.meta-tree-node[data-level="class"] {
+    background: linear-gradient(135deg, #bd4b36, #a93827);
+}
+
+.meta-tree-node[data-level="order"] {
+    background: linear-gradient(135deg, #d58a2c, #bd6b17);
+}
+
+.meta-tree-node[data-level="family"] {
+    background: linear-gradient(135deg, #81983a, #667d29);
+}
+
+.meta-tree-node[data-level="genus"] {
+    background: linear-gradient(135deg, #5c9947, #477d37);
+}
+
+.meta-tree-node[data-level="species"] {
+    background: rgba(255, 253, 248, 0.98);
+}
+
+.meta-tree-nodes {
+    position: absolute;
+    inset: 0;
+}
+
+.meta-tree-lines {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.meta-tree-connection {
+    fill: none;
+    stroke: #8b7a5d;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: var(--branch-length, 1000);
+    stroke-dashoffset: var(--branch-length, 1000);
+    opacity: 1;
+}
+
+.meta-connection-taxon {
+    stroke-width: 2.4;
+}
+
+.meta-connection-species {
+    stroke-width: 1.8;
+}
+
+.meta-tree-connection.active {
+    animation: meta-branch-draw 0.42s ease-out both;
+}
+
+@keyframes meta-branch-draw {
+    from {
+        stroke-dashoffset: var(--branch-length, 1000);
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .meta-tree-connection {
+        animation: none;
+        stroke-dashoffset: 0;
+    }
+}
+
+/* Clades use the same visual treatment as taxonomic tree nodes. */
+.meta-tree-node[data-level="clade"] {
+    background: linear-gradient(135deg, #70852e, #596c21);
+    color: #fff;
+    border: 1px solid #596c21;
+    font-weight: 700;
+}
+
+.meta-species-node {
+    background: rgba(255, 253, 248, 0.98);
+    border-radius: 9px;
+    box-shadow: 0 3px 0 rgba(67,57,35,.08), 0 6px 13px rgba(67,57,35,.07);
+}
+
+.meta-tree-connection {
+    stroke-linecap: round;
+}
+
+.taxon-card {
+    min-height: 520px;
+    padding: 22px;
+    border: 1px solid #ded2bb;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #fffdf8, #faf5e9);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.taxon-card h3 {
+    font-family: Georgia, "Times New Roman", serif;
+    color: #4f5d42;
+}
+
+.new-game-button {
+    padding: 11px 18px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.game-over-card {
+    border-radius: 20px;
+    border-color: #d5c7aa;
+    box-shadow: 0 24px 70px rgba(38, 34, 24, 0.28);
+}
+
+.game-over-card h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 30px;
+}
+
+.study-card-bird {
+    border: 1px solid #e3d5b9;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+}
+
+@media (max-width: 900px) {
+    .game-container {
+        width: min(96vw, 720px);
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "header"
+            "info"
+            "guess"
+            "tree"
+            "taxon";
+    }
+
+    .taxonomy-tree {
+        height: 520px;
+    }
+
+    .taxon-card {
+        min-height: 0;
+    }
+}
+
+@media (max-width: 560px) {
+    .game-container {
+        width: 94vw;
+        padding-top: 18px;
+    }
+
+    .game-info {
+        flex-wrap: wrap;
+    }
+
+    .mode-display,
+    .guess-counter {
+        flex: 1;
+    }
+
+    .new-game-button.visible {
+        width: 100%;
+    }
+
+    .search-container {
+        flex-direction: column;
+    }
+
+    #guess-button {
+        width: 100%;
+    }
+
+    .taxonomy-section,
+    .taxon-section,
+    .guess-section {
+        padding: 16px;
+    }
+
+    .taxonomy-tree {
+        min-height: 430px;
+        height: 430px;
+    }
+}
+
+
+/* ========================================
+   Typography + monochrome icon refinement
+======================================== */
+
+body {
+    font-family: "Nunito", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+}
+
+.game-header h1,
+.guess-section h2,
+.taxonomy-section h2,
+.taxon-section h2,
+.game-over-card h2,
+.taxon-card h3 {
+    font-family: "Nunito", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+}
+
+.game-header h1 {
+    font-weight: 800;
+    letter-spacing: -0.025em;
+}
+
+.title-bird {
+    width: 48px;
+    height: 30px;
+    display: inline-flex;
+    vertical-align: middle;
+    color: #587331;
+    transform: translateY(2px);
+}
+
+.title-bird svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+.mono-heading-icon {
+    display: inline-block;
+    width: 24px;
+    margin-right: 4px;
+    color: #587331;
+    font-size: 17px;
+    text-align: center;
+}
+
+.button-icon {
+    display: inline-block;
+    margin-right: 5px;
+    font-size: 19px;
+    line-height: 0;
+    vertical-align: -1px;
+    color: currentColor;
+}
+
+.mode-display::before,
+.guess-counter::before {
+    color: #587331;
+    filter: none;
+}
+
+.study-card-label {
+    color: #587331;
+}
+
+.game-over-card .study-card-label::first-letter {
+    color: #587331;
+}
+
+.game-over-card .study-card-label {
+    font-family: "Nunito", "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+
+/* ========================================
+   Final layout polish
+======================================== */
+
+.game-over-card {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.game-over-card::-webkit-scrollbar {
+    display: none;
+}
+
+.taxon-card h3 {
+    margin: 0 0 10px;
+    font-size: 27px;
+    line-height: 1.2;
+    font-weight: 800;
+    color: #4f5d42;
+}
+
+.taxon-card-rank {
+    margin: 0 0 12px;
+    font-size: 14px;
+    letter-spacing: 0.11em;
+    font-weight: 800;
+}
+
+.taxon-card h4 {
+    margin: 24px 0 9px;
+    font-size: 18px;
+    line-height: 1.3;
+    font-weight: 800;
+    color: #4f5d42;
+}
+
+.taxon-card > p {
+    font-size: 16px;
+    line-height: 1.7;
+}
+
+.taxon-card li {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* One open taxonomy canvas instead of a frame inside a frame. */
+.taxonomy-section {
+    padding: 0;
+    overflow: hidden;
+    background: #f6ead7;
+    border-color: #d9c8a5;
+}
+
+.taxonomy-section h2 {
+    padding: 22px 24px 14px;
+    margin: 0;
+    background: rgba(255, 253, 248, 0.72);
+    border-bottom: 1px solid #dfcfb0;
+}
+
+.taxonomy-tree {
+    height: calc(100vh - 355px);
+    min-height: 520px;
+    max-height: 760px;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.meta-tree-canvas {
+    min-height: 100%;
+}
+
+
+/* Solved mystery species must remain clearly visible after the
+   study card is closed. */
+.meta-species-correct {
+    background: #4d8d39 !important;
+    color: #ffffff !important;
+    border: 1px solid #3b6d2c !important;
+    font-weight: 700;
+    opacity: 1;
+}
+
+
+.meta-tree-canvas {
+    position: relative;
+    min-height: 100%;
+}
+
+.meta-tree-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.meta-tree-nodes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+
+/* ========================================
+   Taxonomy view toggle + table
+======================================== */
+
+.taxonomy-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.taxonomy-heading-row h2 {
+    margin: 0;
+}
+
+.taxonomy-view-toggle {
+    display: inline-flex;
+    padding: 3px;
+    gap: 3px;
+    background: #eee5d4;
+    border: 1px solid #d7c7a8;
+    border-radius: 9px;
+}
+
+.taxonomy-view-button {
+    border: 0;
+    padding: 6px 12px;
+    border-radius: 7px;
+    background: transparent;
+    color: #6c6657;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.taxonomy-view-button.active {
+    background: #fffdf8;
+    color: #4f5d42;
+    box-shadow: 0 1px 3px rgba(74, 62, 37, 0.12);
+}
+
+.taxonomy-table-wrap {
+    min-height: 520px;
+    height: calc(100vh - 355px);
+    max-height: 760px;
+    overflow: auto;
+    border: 1px solid #e3d4b7;
+    border-radius: 14px;
+    background: #f6ead7;
+}
+
+.taxonomy-table {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: #4b4d43;
+    font-size: 13px;
+}
+
+.taxonomy-table th,
+.taxonomy-table td {
+    padding: 11px 12px;
+    border-right: 1px solid #e0d4bd;
+    border-bottom: 1px solid #e0d4bd;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.taxonomy-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #eee1ca;
+    color: #5d563f;
+    font-weight: 800;
+}
+
+.taxonomy-table th:last-child,
+.taxonomy-table td:last-child {
+    border-right: 0;
+}
+
+.taxonomy-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.taxonomy-table .table-bird {
+    font-weight: 700;
+    color: #4f5d42;
+}
+
+.taxonomy-table .table-mystery {
+    color: #777;
+    font-style: italic;
+}
+
+.taxonomy-table .shared-cell {
+    background: #e7efd9;
+    color: #4d6830;
+    font-weight: 700;
+}
+
+.taxonomy-table .not-shared-cell {
+    color: #aaa493;
+}
+
+.taxonomy-table .clade-cell {
+    white-space: normal;
+    min-width: 220px;
+    max-width: 340px;
+}
+
+.taxonomy-table .table-placeholder {
+    text-align: center;
+    padding: 80px 20px;
+    color: #888;
+}
+
+@media (max-width: 700px) {
+    .taxonomy-heading-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .taxonomy-table-wrap {
+        min-height: 420px;
+        height: auto;
+        max-height: 65vh;
+    }
+}
+
+
+/* ========================================
+   Usable scrolling
+======================================== */
+
+/*
+   The taxonomy canvas can be wider and taller than its viewport.
+   Keep both scroll directions available so large taxonomy trees can
+   be explored without losing the scrollbar controls.
+*/
+.taxonomy-tree {
+    overflow: auto;
+    overflow-x: auto;
+    overflow-y: auto;
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
+    scrollbar-gutter: stable;
+}
+
+.taxonomy-table-wrap {
+    overflow: auto;
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
+    scrollbar-gutter: stable;
+}
+
+.game-over-card {
+    overflow-y: auto;
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
+    scrollbar-gutter: stable;
+}
+
+/* Keep the browser-native scrollbar visible and usable. */
+.taxonomy-tree::-webkit-scrollbar,
+.taxonomy-table-wrap::-webkit-scrollbar,
+.game-over-card::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.taxonomy-tree::-webkit-scrollbar-thumb,
+.taxonomy-table-wrap::-webkit-scrollbar-thumb,
+.game-over-card::-webkit-scrollbar-thumb {
+    background: #b8aa8c;
+    border: 3px solid #eee5d4;
+    border-radius: 999px;
+}
+
+.taxonomy-tree::-webkit-scrollbar-thumb:hover,
+.taxonomy-table-wrap::-webkit-scrollbar-thumb:hover,
+.game-over-card::-webkit-scrollbar-thumb:hover {
+    background: #968663;
+}
+
+.taxonomy-tree::-webkit-scrollbar-track,
+.taxonomy-table-wrap::-webkit-scrollbar-track,
+.game-over-card::-webkit-scrollbar-track {
+    background: #eee5d4;
+    border-radius: 999px;
+}
+
+.meta-species-revealed-lost {
+    background: #4d8d39 !important;
+    color: #ffffff !important;
+    border: 1px solid #3b6d2c !important;
+    font-weight: 700;
+}
+
+.meta-species-node {
+    max-width: 230px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
+}
+
+
+/* ========================================
+   Final Study Card
+======================================== */
+
+/* Scrolling is intentionally preserved for large trees, tables, and cards. */
+.taxonomy-tree,
+.taxonomy-table-wrap,
+.game-over-card {
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
+}
+
+.study-taxonomy {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.study-taxonomy-row {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 8px 0;
+    border-bottom: 1px solid #e7dcc7;
+}
+
+.study-taxonomy-row:last-child {
+    border-bottom: 0;
+}
+
+.study-taxonomy-label {
+    color: #7b725f;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+}
+
+.study-taxonomy-value {
+    color: #4b4d43;
+    line-height: 1.55;
+}
+
+.study-card-hero-image {
+    display: block;
+    width: auto;
+    max-width: min(100%, 560px);
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+    margin: 18px auto 4px;
+    border-radius: 14px;
+    border: 1px solid #e1d3b8;
+    box-shadow: 0 8px 24px rgba(67, 57, 35, .12);
+}
+
+.study-card-bird {
+    padding: 18px 20px;
+    border-radius: 14px;
+    background: #fbf7ed;
+}
+
+.study-card-bird h3 {
+    margin-bottom: 5px;
+}
+
+.study-card-details {
+    margin-top: 8px;
+}
+
+.study-card-section {
+    padding: 18px 0;
+    border-bottom: 1px solid #e3d6bd;
+}
+
+.study-card-section:last-child {
+    border-bottom: 0;
+}
+
+.study-card-section h4 {
+    margin: 0 0 8px;
+    color: #4f5d42;
+}
+
+.study-card-section p,
+.study-card-section li {
+    line-height: 1.65;
+}
+
+.game-over-card {
+    max-height: min(88vh, 900px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+@media (max-width: 560px) {
+    .study-taxonomy-row {
+        grid-template-columns: 1fr;
+        gap: 3px;
+    }
+
+    .study-card-hero-image {
+        max-height: 220px;
+    }
+}
+
+
+/* ========================================
+   MetaAves tree — restored visual treatment
+   ======================================== */
+
+.meta-tree-node {
+    min-height: 34px;
+    padding: 6px 13px;
+    border-radius: 9px;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    font-size: 14px;
+    box-shadow:
+        0 3px 0 rgba(67, 57, 35, 0.10),
+        0 7px 15px rgba(67, 57, 35, 0.08);
+}
+
+/* Metazooa-style depth gradient.
+   The rendered tree controls the color: shallow nodes are red,
+   middle nodes pass through orange/yellow, and deep nodes are green. */
+.meta-tree-node[data-level="class"],
+.meta-tree-node[data-level="order"],
+.meta-tree-node[data-level="family"],
+.meta-tree-node[data-level="genus"],
+.meta-tree-node[data-level="clade"] {
+    /* Keep the depth color consistent across the whole node instead of
+       mixing two different shades with a gradient. */
+    background: hsl(
+        var(--tree-proximity-hue, 0),
+        52%,
+        72%
+    );
+    color: #3f4938;
+    border: 1px solid hsl(
+        var(--tree-proximity-hue, 0),
+        48%,
+        58%
+    );
+    font-weight: 700;
+}
+
+.meta-tree-connection.meta-connection-taxon {
+    stroke: hsl(
+        var(--tree-proximity-hue, 0),
+        58%,
+        40%
+    );
+    stroke-width: 5;
+}
+
+.meta-tree-connection.meta-connection-species {
+    stroke: hsl(
+        var(--tree-proximity-hue, 0),
+        58%,
+        40%
+    );
+    stroke-width: 3.5;
+}
+
+/* Curved branches + sequential growing animation. */
+.meta-tree-connection {
+    fill: none;
+    stroke-linecap: round;
+}
+
+.meta-tree-connection.active {
+    animation: grow-tree-branch 0.65s ease-out forwards;
+}
+
+@keyframes grow-tree-branch {
+    from {
+        stroke-dashoffset: var(--branch-length, 1000);
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.meta-connection-taxon {
+    stroke: #7d641f;
+    stroke-width: 5;
+}
+
+.meta-connection-species {
+    stroke: #7b8c4b;
+    stroke-width: 3.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .meta-tree-connection.active {
+        animation: none;
+        stroke-dashoffset: 0;
+    }
+}
+
+
+/* ========================================
+   Bird search — compact floating suggestions
+======================================== */
+
+.search-container {
+    position: relative;
+}
+
+.suggestions {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 112px;
+    z-index: 50;
+
+    display: none;
+    margin: 0;
+    padding: 5px;
+
+    max-height: 320px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    background: rgba(255, 253, 248, 0.98);
+    border: 1px solid #d8cdb6;
+    border-radius: 13px;
+    box-shadow:
+        0 14px 30px rgba(74, 62, 37, 0.15),
+        0 2px 7px rgba(74, 62, 37, 0.08);
+
+    scrollbar-width: thin;
+    scrollbar-color: #b9ab8f transparent;
+}
+
+.suggestions.visible {
+    display: block;
+}
+
+.suggestions::-webkit-scrollbar {
+    width: 7px;
+}
+
+.suggestions::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 7px 0;
+}
+
+.suggestions::-webkit-scrollbar-thumb {
+    background: #b9ab8f;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    border-radius: 999px;
+}
+
+.suggestions::-webkit-scrollbar-thumb:hover {
+    background: #968663;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.suggestion {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 10px 13px;
+
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+
+    color: #4b4d43;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: left;
+
+    cursor: pointer;
+    transition: background .12s ease, color .12s ease, transform .12s ease;
+}
+
+.suggestion + .suggestion {
+    margin-top: 2px;
+}
+
+.suggestion:hover,
+.suggestion.keyboard-selected {
+    background: #edf2e6;
+    color: #4f6b30;
+}
+
+.suggestion:active {
+    transform: scale(.995);
+}
+
+@media (max-width: 560px) {
+    .suggestions {
+        left: 0;
+        right: 0;
+        max-height: 270px;
+    }
+}
+
+
+/* ========================================
+   2026 UI polish — spacing, hierarchy,
+   taxonomy framing, and clean scrolling
+======================================== */
+
+:root {
+    --ui-cream: #fffdf8;
+    --ui-cream-2: #f8f1e4;
+    --ui-sand: #eadfc9;
+    --ui-border: #ddcfb4;
+    --ui-border-strong: #d0bea0;
+    --ui-ink: #3f4638;
+    --ui-muted: #817a69;
+    --ui-green: #587331;
+    --ui-green-dark: #435c28;
+    --ui-shadow: 0 12px 32px rgba(69, 57, 33, 0.09);
+}
+
+html {
+    background: #ecefe8;
+}
+
+body {
+    min-width: 320px;
+    color: var(--ui-ink);
+    background:
+        radial-gradient(circle at 12% 0%, rgba(190, 169, 113, 0.13), transparent 27%),
+        radial-gradient(circle at 92% 10%, rgba(88, 115, 49, 0.09), transparent 25%),
+        linear-gradient(145deg, #f3f1ea 0%, #e8ede6 100%);
+}
+
+.game-container {
+    width: min(1500px, calc(100vw - 48px));
+    padding: 32px 0 48px;
+    gap: 20px;
+}
+
+/* Header */
+.game-header {
+    padding: 10px 0 8px;
+}
+
+.game-header h1 {
+    font-size: clamp(42px, 5vw, 62px);
+    line-height: .95;
+    color: #4b583e;
+}
+
+.game-header p {
+    margin-top: 12px;
+    color: #817d6f;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .14em;
+}
+
+/* Top information pills */
+.game-info {
+    gap: 10px;
+}
+
+.mode-display,
+.guess-counter {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 15px;
+    border: 1px solid var(--ui-border);
+    border-radius: 12px;
+    background: rgba(255, 253, 248, .86);
+    box-shadow: 0 4px 14px rgba(69, 57, 33, .055);
+    color: #686253;
+    font-size: 13px;
+}
+
+.mode-display strong,
+.guess-counter strong {
+    color: #4d5f3b;
+}
+
+/* Main cards */
+.guess-section,
+.taxonomy-section,
+.taxon-section {
+    border: 1px solid rgba(207, 190, 158, .78);
+    border-radius: 18px;
+    box-shadow: var(--ui-shadow);
+}
+
+.guess-section {
+    padding: 21px 24px 23px;
+    background: rgba(255, 253, 248, .93);
+}
+
+.guess-section h2 {
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 19px;
+    letter-spacing: -.01em;
+}
+
+.mono-heading-icon {
+    width: 22px;
+    margin: 0;
+    color: var(--ui-green);
+    font-size: 15px;
+}
+
+#bird-search {
+    min-height: 48px;
+    padding: 12px 16px;
+    border-color: #d2c5aa;
+    border-radius: 12px;
+    background: #fffefa;
+}
+
+#guess-button {
+    min-height: 48px;
+    padding-inline: 22px;
+    border-radius: 12px;
+}
+
+/* ========================================
+   Taxonomy panel
+======================================== */
+
+.taxonomy-section {
+    padding: 0;
+    overflow: hidden;
+    background: rgba(255, 253, 248, .95);
+}
+
+.taxonomy-heading-row {
+    min-height: 78px;
+    margin: 0;
+    padding: 16px 20px 16px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    background:
+        linear-gradient(180deg, rgba(255, 253, 248, .98), rgba(248, 241, 228, .92));
+    border-bottom: 1px solid #e1d3b9;
+}
+
+.taxonomy-title {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.taxonomy-title-mark {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #d3c09e;
+    border-radius: 10px;
+    background: #f1e8d7;
+    color: #66833f;
+    font-size: 13px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+    transform: rotate(0deg);
+}
+
+.taxonomy-title h2 {
+    margin: 0;
+    color: #4c5941;
+    font-size: 21px;
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: -.015em;
+}
+
+.taxonomy-title p {
+    margin: 4px 0 0;
+    color: #8a8374;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.taxonomy-view-toggle {
+    flex: 0 0 auto;
+    padding: 3px;
+    gap: 2px;
+    border: 1px solid #d4c5a8;
+    border-radius: 11px;
+    background: #eee6d7;
+    box-shadow: inset 0 1px 1px rgba(80, 65, 36, .05);
+}
+
+.taxonomy-view-button {
+    min-width: 54px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    color: #817968;
+    font-size: 12px;
+    font-weight: 800;
+    transition: background .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.taxonomy-view-button:hover {
+    color: #52633e;
+}
+
+.taxonomy-view-button.active {
+    color: #4e5f3c;
+    background: #fffdf8;
+    box-shadow:
+        0 2px 6px rgba(74, 62, 37, .10),
+        0 1px 0 rgba(255,255,255,.9) inset;
+}
+
+.taxonomy-content {
+    padding: 16px 18px 18px;
+    background: #f7efdf;
+}
+
+/* Tree/table viewport */
+.taxonomy-tree,
+.taxonomy-table-wrap {
+    min-height: 520px;
+    height: calc(100vh - 355px);
+    max-height: 760px;
+    border: 1px solid #dfd0b3;
+    border-radius: 14px;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,.52), transparent 42%),
+        #f4e8d5;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.75),
+        0 2px 7px rgba(74, 62, 37, .035);
+}
+
+.taxonomy-tree {
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+/* The browser's horizontal scrollbar is replaced by a small,
+   deliberately placed control beneath the tree viewport. */
+.taxonomy-tree::-webkit-scrollbar {
+    width: 10px;
+    height: 0;
+}
+
+.taxonomy-tree {
+    scrollbar-width: auto;
+    scrollbar-color: #b9ab8f transparent;
+}
+
+.taxonomy-tree::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.taxonomy-tree::-webkit-scrollbar-thumb {
+    background: #b9ab8f;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 999px;
+}
+
+.taxonomy-tree::-webkit-scrollbar-thumb:hover {
+    background: #968663;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+}
+
+.taxonomy-horizontal-scroll {
+    display: none;
+    height: 18px;
+    margin-top: 8px;
+    padding: 1px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: 1px solid #dfd1b7;
+    border-radius: 999px;
+    background: #eee5d5;
+    box-shadow: inset 0 1px 2px rgba(76, 61, 33, .07);
+    scrollbar-width: auto;
+    scrollbar-color: #aa9a7c transparent;
+    cursor: grab;
+}
+
+.taxonomy-horizontal-scroll.visible {
+    display: block;
+}
+
+.taxonomy-horizontal-scroll:active {
+    cursor: grabbing;
+}
+
+.taxonomy-horizontal-scroll-content {
+    width: 1px;
+    height: 1px;
+}
+
+.taxonomy-horizontal-scroll::-webkit-scrollbar {
+    height: 14px;
+}
+
+.taxonomy-horizontal-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.taxonomy-horizontal-scroll::-webkit-scrollbar-thumb {
+    background: #aa9a7c;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    border-radius: 999px;
+    min-height: 14px;
+}
+
+.taxonomy-horizontal-scroll::-webkit-scrollbar-thumb:hover {
+    background: #8f8064;
+}
+
+/* Table has its own internal scrolling, with matching spacing. */
+.taxonomy-table-wrap {
+    overflow: auto;
+    scrollbar-gutter: stable;
+    scrollbar-color: #b9ab8f #eee5d5;
+}
+
+.taxonomy-table-wrap::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.taxonomy-table-wrap::-webkit-scrollbar-track {
+    background: #eee5d5;
+}
+
+.taxonomy-table-wrap::-webkit-scrollbar-thumb {
+    background: #b9ab8f;
+    border: 2px solid #eee5d5;
+    border-radius: 999px;
+}
+
+.taxonomy-table-wrap::-webkit-scrollbar-thumb:hover {
+    background: #968663;
+}
+
+/* Give the empty state breathing room. */
+.tree-placeholder {
+    min-height: 100%;
+    margin: 0;
+    padding: 0 24px;
+    display: grid;
+    place-items: center;
+    color: #9a927f;
+    font-size: 13px;
+    letter-spacing: .01em;
+}
+
+/* Tree canvas */
+.meta-tree-canvas {
+    min-height: 100%;
+}
+
+.meta-tree-node {
+    border-radius: 9px;
+}
+
+/* Taxon information */
+.taxon-section {
+    padding: 20px;
+    background: rgba(255, 253, 248, .95);
+}
+
+.taxon-section h2 {
+    margin: 0 0 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 19px;
+}
+
+.taxon-card {
+    min-height: 520px;
+    padding: 21px;
+    border-radius: 14px;
+    border-color: #dfd2bb;
+    background: linear-gradient(180deg, #fffdf8 0%, #faf5e9 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.85),
+        0 2px 8px rgba(74, 62, 37, .035);
+}
+
+/* Keep the table header and rows visually separated from the frame. */
+.taxonomy-table {
+    min-width: 760px;
+    background: rgba(255, 253, 248, .45);
+}
+
+.taxonomy-table th {
+    background: #eee2cc;
+    box-shadow: 0 1px 0 rgba(255,255,255,.65) inset;
+}
+
+.taxonomy-table th,
+.taxonomy-table td {
+    padding: 12px 13px;
+}
+
+.taxonomy-table tbody tr:hover td {
+    background: rgba(237, 242, 230, .52);
+}
+
+/* New game button fits the top status row better. */
+.new-game-button {
+    min-height: 44px;
+    padding: 10px 17px;
+}
+
+/* Better focus visibility for keyboard users. */
+button:focus-visible,
+input:focus-visible,
+.taxonomy-horizontal-scroll:focus-visible {
+    outline: 3px solid rgba(111, 140, 72, .28);
+    outline-offset: 2px;
+}
+
+/* Mobile spacing */
+@media (max-width: 900px) {
+    .game-container {
+        width: min(96vw, 720px);
+        padding-top: 22px;
+    }
+
+    .taxonomy-heading-row {
+        min-height: 72px;
+        padding: 15px 17px;
+    }
+
+    .taxonomy-content {
+        padding: 13px;
+    }
+}
+
+@media (max-width: 560px) {
+    .game-container {
+        width: 94vw;
+        padding-top: 18px;
+        gap: 14px;
+    }
+
+    .guess-section {
+        padding: 18px;
+    }
+
+    .taxonomy-heading-row {
+        align-items: flex-start;
+        padding: 15px;
+    }
+
+    .taxonomy-title {
+        gap: 9px;
+    }
+
+    .taxonomy-title-mark {
+        width: 31px;
+        height: 31px;
+        flex-basis: 31px;
+    }
+
+    .taxonomy-title h2 {
+        font-size: 19px;
+    }
+
+    .taxonomy-title p {
+        font-size: 11px;
+    }
+
+    .taxonomy-content {
+        padding: 10px;
+    }
+
+    .taxonomy-tree,
+    .taxonomy-table-wrap {
+        min-height: 430px;
+        height: 430px;
+    }
+
+    .taxon-section {
+        padding: 16px;
+    }
+
+    .taxon-card {
+        min-height: 0;
+        padding: 17px;
+    }
+}
+
+
+/* ========================================
+   Final taxonomy layout corrections
+======================================== */
+
+/* The title bar belongs to the taxonomy card itself; it should not look
+   like a separate white strip behind the word "Taxonomy". */
+.taxonomy-heading-row {
+    background: transparent;
+}
+
+/* Let the taxonomy card size itself instead of stretching to the
+   height of the grid row. This removes the dead space below a short tree. */
+.taxonomy-section,
+.taxon-section {
+    align-self: start;
+}
+
+/* Tree mode owns the framed viewport. */
+.taxonomy-tree:not(.table-mode) {
+    overflow-y: hidden;
+    overflow-x: auto;
+}
+
+/* Table mode uses the table wrapper as the ONLY scroll container.
+   Previously the wrapper was placed inside another fixed-height
+   taxonomy-tree viewport, producing a nested scrollbar and a large
+   empty region. */
+.taxonomy-tree.table-mode {
+    min-height: 0;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap {
+    width: 100%;
+    min-height: 0;
+    height: min(520px, 62vh);
+    max-height: 620px;
+    margin: 0;
+    border-radius: 14px;
+}
+
+/* Give the table a proper breathing room from its frame and keep the
+   header visually attached to the table, not the outer card. */
+.taxonomy-table {
+    width: 100%;
+    min-width: 760px;
+    background: transparent;
+}
+
+.taxonomy-table th:first-child {
+    border-top-left-radius: 0;
+}
+
+.taxonomy-table th:last-child {
+    border-top-right-radius: 0;
+}
+
+.taxonomy-table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 0;
+}
+
+.taxonomy-table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 0;
+}
+
+/* Empty table state should occupy the actual table viewport cleanly. */
+.taxonomy-table .table-placeholder {
+    height: 420px;
+    padding: 20px;
+    vertical-align: middle;
+}
+
+/* The tree viewport should not leave a large artificial gap in the
+   taxonomy card when its content is short. */
+.taxonomy-tree:not(.table-mode) .meta-tree-canvas {
+    min-height: 0;
+}
+
+@media (max-width: 900px) {
+    .taxonomy-tree.table-mode .taxonomy-table-wrap {
+        height: min(520px, 62vh);
+    }
+}
+
+@media (max-width: 560px) {
+    .taxonomy-tree.table-mode .taxonomy-table-wrap {
+        height: 430px;
+    }
+}
+
+
+/* Keep the table's scrollbar track visible even when the table
+   does not currently need vertical scrolling. This makes the reserved
+   scrollbar gutter intentional rather than looking like empty space. */
+.taxonomy-tree.table-mode .taxonomy-table-wrap {
+    scrollbar-gutter: stable;
+    overflow-y: scroll;
+    scrollbar-color: #b9ab8f #eee5d5;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-track {
+    background: #eee5d5;
+    border-radius: 999px;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-thumb {
+    background: #b9ab8f;
+    border: 2px solid #eee5d5;
+    border-radius: 999px;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-thumb:hover {
+    background: #968663;
+}
+
+
+/* Refine the always-visible table scrollbar so it stays inside the
+   rounded viewport and has no browser arrow buttons. */
+.taxonomy-tree.table-mode .taxonomy-table-wrap {
+    overflow-y: scroll;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #b9ab8f #eee5d5;
+    border-radius: 14px;
+    clip-path: inset(0 round 14px);
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-track {
+    margin: 1px;
+    background: #eee5d5;
+    border-radius: 999px;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-thumb {
+    background: #b9ab8f;
+    border: 2px solid #eee5d5;
+    border-radius: 999px;
+}
+
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-thumb:hover {
+    background: #968663;
+}
+
+
+/* Chromium/WebKit exposes scrollbar arrow pieces through several
+   button pseudo-elements. Explicitly suppress every button variant. */
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:single-button,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:start:decrement,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:end:increment,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:vertical:start:decrement,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:vertical:end:increment,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:horizontal:start:decrement,
+.taxonomy-tree.table-mode .taxonomy-table-wrap::-webkit-scrollbar-button:horizontal:end:increment {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+}
+
+
+/* Keep the original table styling; only close the bottom edge of the final row. */
+.taxonomy-table tbody tr:last-child td {
+    border-bottom: 1px solid #dfd4c1;
+}
+
+
+/* Wikipedia-backed taxon card sections */
+.taxon-card-wiki-section {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #e4d9c4;
+}
+
+.taxon-card-wiki-section h4 {
+    margin: 0 0 7px;
+    color: #5d563f;
+    font-size: 16px;
+}
+
+.taxon-card-wiki-section p {
+    margin: 0 0 6px;
+    line-height: 1.65;
+    color: #555;
+}
+
+.taxon-card-taxonomy-row {
+    margin: 5px 0 !important;
+}
+
+.taxon-card-taxonomy-row strong {
+    color: #5d563f;
+}
+
+.taxon-card-wikipedia-link {
+    display: inline-block;
+    margin-top: 18px;
+    color: #587331;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.taxon-card-wikipedia-link:hover {
+    text-decoration: underline;
+}
+
+
+/* Keep the taxonomy tree and Taxon Information card together as one
+   grid item in the main page layout. The two panels are then laid out
+   side-by-side inside this wrapper. */
+.taxonomy-layout {
+    grid-area: taxonomy;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 22px;
+    align-items: start;
+    min-width: 0;
+}
+
+.taxonomy-layout > .taxonomy-section,
+.taxonomy-layout > .taxon-section {
+    grid-area: auto;
+}
+
+.taxonomy-layout > .taxonomy-section {
+    min-width: 0;
+}
+
+.taxonomy-layout > .taxon-section {
+    min-width: 0;
+}
+
+/* Keep the information card beside the tree on desktop, but stack it
+   below the tree when there is not enough horizontal room. */
+@media (max-width: 1050px) {
+    .taxonomy-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .taxon-section {
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+
+/* ========================================
+   Taxon Information below the taxonomy tree
+======================================== */
+
+.taxonomy-layout > .taxon-section {
+    width: 100%;
+    box-sizing: border-box;
+    position: static;
+    max-height: none;
+    overflow: visible;
+}
+
+.taxonomy-layout > .taxon-section > h2 {
+    margin-bottom: 16px;
+}
+
+.taxonomy-layout > .taxon-section .taxon-card {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Species cards use the wide screen horizontally. Higher-taxon cards
+   keep their normal compact flow and must never inherit this layout merely
+   because Wikipedia supplied an image. */
+.taxon-card.species-card {
+    display: grid;
+    grid-template-columns: 390px minmax(300px, 1.35fr) minmax(260px, 1fr);
+    grid-template-rows: auto auto auto auto auto auto;
+    grid-template-areas:
+        "title . ."
+        "thai . ."
+        "scientific . ."
+        "rank . ."
+        "photo description taxonomy"
+        "photo wikipedia taxonomy";
+    column-gap: 26px;
+    row-gap: 3px;
+    align-items: start;
+}
+
+.taxon-card.species-card > .taxon-card-image {
+    grid-area: photo;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+    border-radius: 10px;
+    margin-top: 6px;
+}
+
+.taxon-card.species-card > h3 {
+    grid-area: title;
+    margin: 0;
+    line-height: 1.15;
+}
+
+.taxon-card.species-card > .taxon-card-thai-name {
+    grid-area: thai;
+    margin: 0;
+    line-height: 1.2;
+    font-size: 1.02rem;
+}
+
+.taxon-card.species-card > .taxon-card-scientific {
+    grid-area: scientific;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.taxon-card.species-card > .taxon-card-species-rank {
+    grid-area: rank;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.taxon-card.species-card > .taxon-card-wiki-section:not(.taxon-card-species-taxonomy) {
+    grid-area: description;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+.taxon-card.species-card > .taxon-card-species-taxonomy {
+    grid-area: taxonomy;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    border-left: 1px solid #e3d8bf;
+    padding-left: 22px;
+}
+
+.taxon-card.species-card > .taxon-card-wikipedia-link {
+    grid-area: wikipedia;
+    align-self: start;
+    margin-top: 4px;
+}
+
+.taxon-card.species-card .taxon-card-taxonomy-row {
+    margin: 5px 0;
+}
+
+/* Ordinary rank/clade cards stay compact even when they have a Wikipedia
+   image. Their content is allowed to flow naturally instead of being forced
+   into the species four-column grid. */
+.taxon-card:not(.species-card) {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-rows: auto auto 280px auto;
+    grid-template-areas:
+        "title title"
+        "rank rank"
+        "image description"
+        "image wikipedia";
+    column-gap: 32px;
+    align-items: start;
+}
+
+.taxon-card:not(.species-card) > h3 {
+    grid-area: title;
+    margin: 0 0 8px;
+    line-height: 1.15;
+}
+
+.taxon-card:not(.species-card) > .taxon-card-rank {
+    grid-area: rank;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.taxon-card:not(.species-card) > .taxon-card-common {
+    grid-area: image;
+    align-self: end;
+    justify-self: start;
+    z-index: 2;
+    margin: 0 0 14px 12px;
+    padding: 0;
+    color: #4f5d42;
+    font-weight: 700;
+    line-height: 1.2;
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
+    box-sizing: border-box;
+}
+
+.taxon-card:not(.species-card) > .taxon-card-image {
+    grid-area: image;
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    max-height: none;
+    margin: 8px 0 0;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 10px;
+    box-sizing: border-box;
+    box-shadow: 0 3px 10px rgba(80, 68, 45, 0.12);
+}
+
+.taxon-card:not(.species-card) > .taxon-card-description {
+    grid-area: description;
+    position: relative;
+    max-width: none;
+    margin: 12px 0 0;
+    padding-left: 30px;
+    border-left: 0;
+    line-height: 1.7;
+}
+
+/* A full-height divider separates the image from the text column instead
+   of stopping when the paragraph happens to end. */
+.taxon-card:not(.species-card) > .taxon-card-description::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 280px;
+    background: #d9cdb5;
+}
+
+.taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
+    grid-area: wikipedia;
+    align-self: start;
+    margin: 10px 0 0 30px;
+    padding-left: 1px;
+}
+
+@media (max-width: 700px) {
+    .taxon-card:not(.species-card) {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "title"
+            "rank"
+            "image"
+            "description";
+    }
+
+    .taxon-card:not(.species-card) > .taxon-card-image {
+        max-width: 320px;
+    }
+}
+
+@media (max-width: 1100px) {
+    .taxon-card.species-card {
+        grid-template-columns: 230px minmax(180px, 0.8fr) minmax(280px, 1.4fr);
+        grid-template-areas:
+            "photo identity description"
+            "photo taxonomy wikipedia";
+    }
+
+    .taxon-card.species-card > .taxon-card-species-taxonomy {
+        border-left: none;
+        border-top: 1px solid #e3d8bf;
+        padding-left: 0;
+        padding-top: 14px;
+    }
+}
+
+@media (max-width: 850px) {
+    .taxon-card:has(.taxon-card-image) {
+        grid-template-columns: 1fr;
+    }
+
+    .taxon-card:has(.taxon-card-image) > h3,
+    .taxon-card:has(.taxon-card-image) > .taxon-card-rank,
+    .taxon-card:has(.taxon-card-image) > .taxon-card-wiki-section,
+    .taxon-card:has(.taxon-card-image) > .taxon-card-wikipedia-link,
+    .taxon-card:has(.taxon-card-image) > .taxon-card-image {
+        grid-column: 1;
+    }
+
+    .taxon-card:has(.taxon-card-image) > .taxon-card-image {
+        grid-row: auto;
+        max-width: 420px;
+        justify-self: center;
+    }
+}
+
+
+/* Final taxonomy color refinement:
+   keep the red → yellow → green proximity mechanic, but make the
+   node colors muted and pastel like the site's text palette. */
+.meta-tree-node[data-level="class"],
+.meta-tree-node[data-level="order"],
+.meta-tree-node[data-level="family"],
+.meta-tree-node[data-level="genus"],
+.meta-tree-node[data-level="clade"] {
+    background: hsl(
+        var(--tree-proximity-hue, 0),
+        22%,
+        68%
+    );
+    color: #3f4638;
+    border: 1px solid hsl(
+        var(--tree-proximity-hue, 0),
+        24%,
+        56%
+    );
+    font-weight: 700;
+}
+
+.meta-connection-taxon {
+    stroke-width: 2.4;
+}
+
+.meta-connection-species {
+    stroke-width: 1.8;
+}
+
+
+/* Taxonomy colors
+   Match the original Metazooa-style feedback:
+   distant = red, then orange/yellow, then green as the shared
+   taxonomy gets deeper. The node and its branch use the same color. */
+.meta-tree-node[data-level="class"],
+.meta-tree-node[data-level="order"],
+.meta-tree-node[data-level="family"],
+.meta-tree-node[data-level="genus"],
+.meta-tree-node[data-level="clade"] {
+    background: var(--tree-proximity-color, #a53b1f);
+    color: #fffdf8;
+    border: 1px solid rgba(74, 48, 28, 0.28);
+    font-weight: 700;
+}
+
+.meta-tree-node.meta-species-node {
+    /* Species leaves stay neutral in the Metazooa-style tree.
+       Proximity is communicated by the taxon nodes and branches. */
+    background: #fffdf8;
+    color: #3f4938;
+    border: 1px solid rgba(92, 78, 54, 0.30);
+}
+
+.meta-connection-taxon,
+.meta-connection-species {
+    stroke: var(--tree-proximity-color, #a53b1f);
+}
+
+
+/* ========================================
+   Final taxonomy tree scrolling
+======================================== */
+
+/* Keep a single native scrollbar inside the taxonomy tree viewport.
+   The separate horizontal helper below the box is no longer used. */
+.taxonomy-tree:not(.table-mode) {
+    overflow-x: auto;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    scrollbar-width: auto;
+    scrollbar-color: #b9ab8f #eee5d5;
+}
+
+.taxonomy-tree:not(.table-mode)::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.taxonomy-tree:not(.table-mode)::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.taxonomy-tree:not(.table-mode)::-webkit-scrollbar-track {
+    background: #eee5d5;
+    border-radius: 999px;
+}
+
+.taxonomy-tree:not(.table-mode)::-webkit-scrollbar-thumb {
+    background: #b9ab8f;
+    border: 2px solid #eee5d5;
+    border-radius: 999px;
+}
+
+.taxonomy-tree:not(.table-mode)::-webkit-scrollbar-thumb:hover {
+    background: #968663;
+}
+
+/* Remove the extra scrollbar sitting underneath the tree box. */
+.taxonomy-horizontal-scroll {
+    display: none !important;
+}
+
+
+/* ========================================
+   Compact detailed taxonomy — two columns
+======================================== */
+
+/* Keep every real taxonomy rank visible, but use the available card width
+   instead of making the taxonomy section one very tall list. */
+.taxon-card.species-card > .taxon-card-species-taxonomy {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 0;
+    align-content: start;
+}
+
+.taxon-card-taxonomy-column {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.taxon-card-taxonomy-column .taxon-card-taxonomy-row {
+    flex: 0 0 auto;
+}
+
+.taxon-card.species-card > .taxon-card-species-taxonomy > h4 {
+    grid-column: 1 / -1;
+    margin-bottom: 10px;
+}
+
+.taxon-card.species-card .taxon-card-taxonomy-row {
+    min-width: 0;
+    margin: 0 !important;
+    padding: 5px 0;
+    line-height: 1.45;
+    border-bottom: 1px solid #eee5d5;
+}
+
+.taxon-card.species-card .taxon-card-taxonomy-row:nth-last-child(-n + 2) {
+    border-bottom: 0;
+}
+
+/* The study/game-over taxonomy uses the same compact two-column treatment. */
+.study-taxonomy {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 0;
+}
+
+.study-taxonomy-row {
+    min-width: 0;
+    margin: 0;
+}
+
+@media (max-width: 700px) {
+    .taxon-card.species-card > .taxon-card-species-taxonomy,
+    .study-taxonomy {
+        grid-template-columns: 1fr;
+    }
+
+    .taxon-card-taxonomy-column {
+        width: 100%;
+    }
+
+    .taxon-card.species-card > .taxon-card-species-taxonomy > h4 {
+        grid-column: 1;
+    }
+
+    .taxon-card.species-card .taxon-card-taxonomy-row:nth-last-child(-n + 2) {
+        border-bottom: 1px solid #eee5d5;
+    }
+
+    .taxon-card.species-card .taxon-card-taxonomy-row:last-child {
+        border-bottom: 0;
+    }
+}
+
+
+/* ========================================
+   Family / Genus species hover hint
+======================================== */
+
+.species-hover-hint {
+    position: fixed;
+    z-index: 2500;
+    width: min(390px, calc(100vw - 24px));
+    max-height: min(360px, calc(100vh - 24px));
+    overflow-y: auto;
+    padding: 15px 17px;
+    background: #fffdf8;
+    color: #4f4a3e;
+    border: 1px solid #c9b98f;
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(45, 38, 25, 0.22);
+    font-size: 13px;
+    line-height: 1.5;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-3px);
+    transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s ease;
+}
+
+.species-hover-hint.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.species-hover-hint-title {
+    margin-bottom: 10px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #5d563f;
+}
+
+.species-hover-hint-section + .species-hover-hint-section {
+    margin-top: 11px;
+    padding-top: 10px;
+    border-top: 1px solid #e3dac7;
+}
+
+.species-hover-hint-heading {
+    margin-bottom: 3px;
+    font-weight: 800;
+    color: #70852e;
+}
+
+.species-hover-hint-text {
+    color: #5c574c;
+}
+
+.species-hover-hint-loading {
+    color: #8a816f;
+    font-style: italic;
+}
+
+
+/* ========================================
+   Thai ↔ English Bird Name Helper
+======================================== */
+
+.thai-translator-button {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1500;
+    padding: 10px 15px;
+    border: 1px solid #d5c7aa;
+    border-radius: 10px;
+    background: #fffdf8;
+    color: #587331;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(74, 62, 37, 0.12);
+}
+.thai-translator-button:hover {
+    filter: brightness(1.03);
+    transform: translateY(-1px);
+}
+.thai-translator-panel {
+    position: fixed;
+    right: 24px;
+    bottom: 74px;
+    z-index: 1501;
+    width: min(390px, calc(100vw - 32px));
+    max-height: min(560px, calc(100vh - 110px));
+    padding: 20px;
+    overflow: hidden;
+    background: #fffdf8;
+    border: 1px solid #d5c7aa;
+    border-radius: 14px;
+    box-shadow: 0 14px 40px rgba(54, 47, 31, 0.20);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+}
+.thai-translator-panel.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+.thai-translator-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+.thai-translator-header h2 {
+    margin: 0;
+    color: #4f472f;
+}
+.thai-translator-close {
+    border: 0;
+    background: transparent;
+    color: #6b634f;
+    font-size: 27px;
+    line-height: 1;
+    cursor: pointer;
+}
+.thai-translator-description {
+    margin: 8px 0 14px;
+    color: #6b6658;
+    line-height: 1.45;
+}
+#thai-translator-search {
+    width: 100%;
+    padding: 12px 13px;
+    border: 1px solid #d8cdb6;
+    border-radius: 9px;
+    background: #fff;
+    font: inherit;
+}
+.thai-translator-results {
+    max-height: 350px;
+    margin-top: 10px;
+    overflow-y: auto;
+}
+.thai-translator-result {
+    padding: 11px 12px;
+    border-bottom: 1px solid #e8dfcf;
+}
+.thai-translator-result:last-child {
+    border-bottom: 0;
+}
+.thai-translator-english {
+    font-weight: 800;
+    color: #4f5f34;
+}
+.thai-translator-thai {
+    margin-top: 3px;
+    color: #5f5b50;
+}
+.thai-translator-scientific {
+    margin-top: 2px;
+    color: #8a8374;
+    font-size: 12px;
+    font-style: italic;
+}
+.thai-translator-empty {
+    padding: 14px 4px;
+    color: #8a8374;
+    text-align: center;
+}
+@media (max-width: 600px) {
+    .thai-translator-button {
+        right: 14px;
+        bottom: 14px;
+    }
+    .thai-translator-panel {
+        right: 14px;
+        bottom: 64px;
+    }
+}
+
+
+/* Search clear buttons */
+.main-search-input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+#bird-search {
+    width: 100%;
+    padding-right: 42px;
+}
+.search-clear-button {
+    position: absolute;
+    top: 50%;
+    right: 9px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #8a8374;
+    font-size: 21px;
+    line-height: 28px;
+    cursor: pointer;
+}
+.search-clear-button:hover {
+    background: #eee8dc;
+    color: #4f4a3e;
+}
+.search-clear-button[hidden] {
+    display: none;
+}
+.translator-search-wrap {
+    position: relative;
+}
+#thai-translator-search {
+    width: 100%;
+    padding-right: 42px;
+}
+
+
+/* ========================================
+   Final release polish
+======================================== */
+
+:root {
+    --release-paper: #fffdf8;
+    --release-paper-soft: #f4f1e7;
+    --release-ink: #3f4638;
+    --release-muted: #777565;
+    --release-olive: #587331;
+    --release-olive-dark: #405a25;
+    --release-gold: #b78a3d;
+    --release-line: #d8ccb3;
+    --release-shadow: 0 16px 38px rgba(64, 72, 48, 0.10);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+button,
+input {
+    font-family: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible,
+.meta-taxon-node:focus-visible,
+.meta-species-node:focus-visible {
+    outline: 3px solid rgba(183, 138, 61, 0.45);
+    outline-offset: 3px;
+}
+
+.game-container {
+    width: min(1600px, calc(100vw - 40px));
+    padding-top: 30px;
+    padding-bottom: 56px;
+}
+
+.game-header h1 {
+    font-weight: 800;
+}
+
+.game-header p {
+    max-width: 620px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.game-info {
+    padding: 2px 2px 0;
+}
+
+.mode-display,
+.guess-counter {
+    backdrop-filter: blur(8px);
+}
+
+.mode-display:hover,
+.new-game-button:hover,
+.thai-translator-button:hover {
+    box-shadow: 0 7px 20px rgba(74, 62, 37, 0.12);
+}
+
+.guess-section,
+.taxonomy-section,
+.taxon-section {
+    box-shadow: var(--release-shadow);
+    backdrop-filter: blur(7px);
+}
+
+.guess-section h2,
+.taxonomy-section h2,
+.taxon-section h2 {
+    letter-spacing: -0.01em;
+}
+
+.search-container {
+    position: relative;
+}
+
+.main-search-input-wrap {
+    min-width: 0;
+}
+
+#bird-search {
+    height: 48px;
+}
+
+#guess-button {
+    min-width: 112px;
+    height: 48px;
+}
+
+#guess-button:disabled,
+.new-game-button:disabled,
+.game-over-actions button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.suggestions {
+    position: absolute;
+    top: calc(100% + 7px);
+    left: 0;
+    width: min(620px, calc(100% - 122px));
+    max-height: min(360px, 52vh);
+    margin: 0;
+    overflow-y: auto;
+    z-index: 1200;
+    background: rgba(255, 253, 248, 0.98);
+    backdrop-filter: blur(14px);
+    border: 1px solid #d6cab2;
+    box-shadow: 0 16px 34px rgba(58, 52, 37, 0.16);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity .14s ease, transform .14s ease, visibility .14s ease;
+}
+
+.suggestions.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.suggestion {
+    border-bottom: 1px solid #ece4d5;
+    background: transparent;
+    text-align: left;
+}
+
+.suggestion:last-child {
+    border-bottom: 0;
+}
+
+.suggestion.keyboard-selected {
+    background: #eaf0e4;
+    color: var(--release-olive-dark);
+}
+
+.suggestion:hover {
+    background: #edf2e8;
+}
+
+.taxonomy-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
+    gap: 22px;
+}
+
+.taxonomy-layout > .taxonomy-section {
+    min-width: 0;
+}
+
+.taxonomy-layout > .taxon-section {
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    align-self: start;
+}
+
+.taxonomy-section,
+.taxon-section {
+    border-radius: 20px;
+}
+
+.taxonomy-tree {
+    min-height: 560px;
+    height: clamp(560px, calc(100vh - 350px), 820px);
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,.62), transparent 42%),
+        linear-gradient(180deg, #f7eddd 0%, #f2e5d0 100%);
+}
+
+.meta-tree-node {
+    transition: filter .14s ease, transform .14s ease, box-shadow .14s ease;
+}
+
+.meta-tree-node:hover {
+    box-shadow:
+        0 4px 0 rgba(67, 57, 35, 0.10),
+        0 10px 20px rgba(67, 57, 35, 0.12);
+}
+
+.meta-species-node {
+    box-shadow: 0 3px 10px rgba(67, 57, 35, 0.08);
+}
+
+.taxon-section::-webkit-scrollbar,
+.game-over-card::-webkit-scrollbar,
+.thai-translator-results::-webkit-scrollbar,
+.suggestions::-webkit-scrollbar {
+    width: 9px;
+}
+
+.taxon-section::-webkit-scrollbar-track,
+.game-over-card::-webkit-scrollbar-track,
+.thai-translator-results::-webkit-scrollbar-track,
+.suggestions::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.taxon-section::-webkit-scrollbar-thumb,
+.game-over-card::-webkit-scrollbar-thumb,
+.thai-translator-results::-webkit-scrollbar-thumb,
+.suggestions::-webkit-scrollbar-thumb {
+    background: #c8bda6;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.taxon-card {
+    border-color: #ded3bd;
+    background: rgba(255, 253, 248, 0.72);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.65);
+}
+
+.taxon-card-image,
+.study-card-image {
+    border-color: #d1c19e;
+    border-radius: 16px;
+}
+
+.thai-translator-button {
+    border-radius: 999px;
+    padding: 11px 17px;
+    background: rgba(255, 253, 248, 0.96);
+    backdrop-filter: blur(12px);
+}
+
+.thai-translator-panel {
+    border-radius: 18px;
+    backdrop-filter: blur(16px);
+}
+
+.search-clear-button {
+    opacity: 0.65;
+    transition: opacity .15s ease, background .15s ease, color .15s ease;
+}
+
+.search-clear-button:hover {
+    opacity: 1;
+}
+
+.mode-card,
+.game-over-card {
+    border-radius: 20px;
+    box-shadow: 0 24px 70px rgba(40, 35, 25, 0.22);
+}
+
+.mode-overlay,
+.game-over-overlay {
+    backdrop-filter: blur(5px);
+}
+
+@media (max-width: 1050px) {
+    .taxonomy-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .taxonomy-layout > .taxon-section {
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 700px) {
+    .game-container {
+        width: min(100% - 22px, 700px);
+        padding-top: 18px;
+    }
+
+    .game-info {
+        flex-wrap: wrap;
+    }
+
+    .guess-section,
+    .taxonomy-section,
+    .taxon-section {
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .search-container {
+        flex-wrap: wrap;
+    }
+
+    .main-search-input-wrap {
+        flex-basis: 100%;
+    }
+
+    #guess-button {
+        width: 100%;
+    }
+
+    .suggestions {
+        width: 100%;
+    }
+
+    .taxonomy-tree {
+        min-height: 480px;
+        height: 68vh;
+    }
+
+    .thai-translator-panel {
+        max-height: min(600px, calc(100vh - 92px));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+
+
+#data-load-error {
+    width: min(720px, calc(100vw - 32px));
+    margin: 24px auto;
+    padding: 20px 22px;
+    color: #5b3b32;
+    background: #fff6f2;
+    border: 1px solid #e1b9aa;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(75, 49, 40, 0.10);
+    text-align: center;
+}
+
+#data-load-error strong {
+    display: block;
+    font-size: 18px;
+}
+
+#data-load-error p {
+    margin: 7px 0 0;
+    color: #765d55;
+}
+
+
+/* ========================================
+   Final layout lock — taxon information stays below the tree
+======================================== */
+
+.taxonomy-layout {
+    display: block;
+}
+
+.taxonomy-layout > .taxonomy-section {
+    width: 100%;
+    margin-bottom: 22px;
+}
+
+.taxonomy-layout > .taxon-section {
+    position: static;
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    margin-top: 0;
+}
+
+.taxonomy-layout > .taxon-section .taxon-card {
+    min-height: 220px;
+}
+
+@media (max-width: 1050px) {
+    .taxonomy-layout {
+        display: block;
+    }
+
+    .taxonomy-layout > .taxon-section {
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .meta-tree-node {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
 }
