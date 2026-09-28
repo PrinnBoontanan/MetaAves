@@ -288,11 +288,12 @@ function openModeSelector(initial = false) {
     }
 }
 
-function closeModeSelector() {
-    if (!modeOverlay || modeOverlay.dataset.initial === "true") return;
+function closeModeSelector(force = false) {
+    if (!modeOverlay || (!force && modeOverlay.dataset.initial === "true")) return;
 
     modeOverlay.classList.remove("visible");
     modeOverlay.setAttribute("aria-hidden", "true");
+    modeOverlay.dataset.initial = "false";
 }
 
 function startNewRoundForMode(mode) {
@@ -329,7 +330,48 @@ function startNewRoundForMode(mode) {
     updateGuessCounter();
     renderTaxonomyView();
     updateAutomaticTaxonCard();
-    closeModeSelector();
+    closeModeSelector(true);
+
+    if (mode === "thailand") {
+        warmThailandThaiNames(gameState.birds);
+    }
+}
+
+async function warmThailandThaiNames(birds) {
+    if (!Array.isArray(birds) || !birds.length) return;
+
+    const queue = birds.filter(bird =>
+        bird?.scientificName &&
+        !bird.thaiName
+    );
+    const concurrency = 4;
+    let nextIndex = 0;
+
+    async function worker() {
+        while (nextIndex < queue.length) {
+            const bird = queue[nextIndex++];
+            try {
+                const thaiName = await fetchOnlineThaiName(bird);
+                if (thaiName) bird.thaiName = thaiName;
+            } catch (error) {
+                console.warn("Thai-name warmup failed:", bird.scientificName, error);
+            }
+        }
+    }
+
+    await Promise.all(
+        Array.from(
+            { length: Math.min(concurrency, queue.length) },
+            () => worker()
+        )
+    );
+
+    console.log(
+        "Thailand Thai-name warmup complete:",
+        queue.filter(bird => bird.thaiName).length,
+        "/",
+        queue.length
+    );
 }
 
 function chooseGameMode(mode) {
@@ -1452,7 +1494,98 @@ async function fetchOnlineThaiName(bird) {
     }
 
     const cacheValue = async () => {
-        // 1. GBIF ChecklistBank / Taxonomic Backbone.
+        // 1. BirdNET+ Taxonomy. Its current taxonomy dataset
+        // stores localized common names and is based on AviList for birds.
+        // Thai is available under the "th" locale for a large number of
+        // Thailand species and is a better first source than guessing a
+        // translation from the English name.
+        try {
+            const birdnetUrl =
+                "https://birdnet.cornell.edu/taxonomy/api/species/" +
+                encodeURIComponent(scientificName);
+
+            const birdnetResponse = await fetch(birdnetUrl);
+            if (birdnetResponse.ok) {
+                const birdnetData = await birdnetResponse.json();
+
+                const findThaiName = value => {
+                    if (!value) return null;
+
+                    if (Array.isArray(value)) {
+                        const match = value.find(entry => {
+                            const locale = String(
+                                entry?.locale ||
+                                entry?.language ||
+                                entry?.lang ||
+                                entry?.code ||
+                                ""
+                            ).toLowerCase();
+                            return locale === "th" || locale === "tha" || locale.startsWith("th-");
+                        });
+
+                        if (match) {
+                            return (
+                                match.name ||
+                                match.value ||
+                                match.label ||
+                                match.vernacularName ||
+                                null
+                            );
+                        }
+
+                        for (const entry of value) {
+                            const nested = findThaiName(entry);
+                            if (nested) return nested;
+                        }
+
+                        return null;
+                    }
+
+                    if (typeof value === "object") {
+                        const direct =
+                            value.th ||
+                            value.tha ||
+                            value["th-th"] ||
+                            value["th-TH"];
+
+                        if (typeof direct === "string" && direct.trim()) {
+                            return direct.trim();
+                        }
+
+                        for (const key of [
+                            "commonNames",
+                            "common_names",
+                            "names",
+                            "translations",
+                            "vernacularNames",
+                            "vernacular_names"
+                        ]) {
+                            const nested = findThaiName(value[key]);
+                            if (nested) return nested;
+                        }
+
+                        return null;
+                    }
+
+                    return null;
+                };
+
+                const thai = findThaiName(
+                    birdnetData?.commonNames ||
+                    birdnetData?.common_names ||
+                    birdnetData?.names ||
+                    birdnetData?.translations ||
+                    birdnetData?.vernacularNames ||
+                    birdnetData?.vernacular_names
+                );
+
+                if (thai) return String(thai).trim();
+            }
+        } catch (error) {
+            console.warn("BirdNET Thai-name lookup failed:", scientificName, error);
+        }
+
+        // 2. GBIF ChecklistBank / Taxonomic Backbone.
         // GBIF exposes vernacular names from many checklist datasets and
         // supports Thai names without requiring an API key.
         try {
@@ -1491,7 +1624,7 @@ async function fetchOnlineThaiName(bird) {
             console.warn("GBIF Thai-name lookup failed:", scientificName, error);
         }
 
-        // 2. Wikidata fallback.
+        // 3. Wikidata fallback.
         // Wikidata is broader than GBIF, but its Thai labels are not
         // available for every bird.
         try {
@@ -3834,12 +3967,15 @@ async function showBirdInTaxonCard(bird) {
     card.innerHTML = "<p>Loading bird information from Wikipedia...</p>";
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    const wiki = await fetchWikipediaPageData(
-        wikiTitle,
-        true,
-        "bird",
-        bird.scientificName
-    );
+    const [wiki, thaiName] = await Promise.all([
+        fetchWikipediaPageData(
+            wikiTitle,
+            true,
+            "bird",
+            bird.scientificName
+        ),
+        fetchOnlineThaiName(bird)
+    ]);
 
     // Do not let a slower old request overwrite a newer selection.
     if (
@@ -3848,11 +3984,17 @@ async function showBirdInTaxonCard(bird) {
     ) return;
 
     attachDetailedTaxonomyToBird(bird, wiki);
+    if (thaiName) bird.thaiName = thaiName;
     const wikidataDetailed = await fetchWikidataDetailedTaxonomy(bird);
-    renderBirdCard(bird, wiki, wikidataDetailed);
+    renderBirdCard(bird, wiki, wikidataDetailed, thaiName || bird.thaiName);
 }
 
-function renderBirdCard(bird, wiki, wikidataDetailed = {}) {
+function renderBirdCard(
+    bird,
+    wiki,
+    wikidataDetailed = {},
+    thaiName = bird?.thaiName || ""
+) {
     const card = document.getElementById("taxon-card");
     if (!card) return;
 
@@ -3863,6 +4005,11 @@ function renderBirdCard(bird, wiki, wikidataDetailed = {}) {
     const title = document.createElement("h3");
     title.textContent = bird.commonName;
     card.appendChild(title);
+
+    const thai = document.createElement("p");
+    thai.classList.add("taxon-card-thai-name");
+    thai.textContent = thaiName || "Thai name unavailable";
+    card.appendChild(thai);
 
     const scientific = document.createElement("p");
     scientific.classList.add("taxon-card-rank", "taxon-card-scientific");
@@ -3990,7 +4137,11 @@ async function showTaxonInTaxonCard(taxon) {
     ) return;
 
     if (taxon.rank === "species") {
-        const wikidataDetailed = await fetchWikidataDetailedTaxonomy(taxon);
+        const [wikidataDetailed, thaiName] = await Promise.all([
+            fetchWikidataDetailedTaxonomy(taxon),
+            fetchOnlineThaiName(taxon)
+        ]);
+        if (thaiName) taxon.thaiName = thaiName;
         attachDetailedTaxonomyToBird(taxon, wiki);
 
         const description = card.querySelector(".taxon-card-description");
