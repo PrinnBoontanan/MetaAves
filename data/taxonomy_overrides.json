@@ -25,7 +25,7 @@
     {"id":"class:Aves","rank":"class","name":"Aves","clade":false},
     {"id":"order:Passeriformes","rank":"order","name":"Passeriformes"},
     {"id":"clade:Eupasseres","rank":"clade","name":"Eupasseres"},
-    {"id":"suborder:Passeri","rank":"suborder","name":"Passeri"},
+    {"id":"clade:Passeri","rank":"suborder","name":"Passeri"},
     {"id":"clade:Euoscines","rank":"clade","name":"Euoscines"},
     {"id":"infraorder:Passerides","rank":"infraorder","name":"Passerides"},
     {"id":"parvorder:Passerida","rank":"parvorder","name":"Passerida"},
