@@ -3229,3 +3229,340 @@ input:focus-visible,
     width: 100%;
     padding-right: 42px;
 }
+
+
+/* ========================================
+   Final release polish
+======================================== */
+
+:root {
+    --release-paper: #fffdf8;
+    --release-paper-soft: #f4f1e7;
+    --release-ink: #3f4638;
+    --release-muted: #777565;
+    --release-olive: #587331;
+    --release-olive-dark: #405a25;
+    --release-gold: #b78a3d;
+    --release-line: #d8ccb3;
+    --release-shadow: 0 16px 38px rgba(64, 72, 48, 0.10);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+button,
+input {
+    font-family: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible,
+.meta-taxon-node:focus-visible,
+.meta-species-node:focus-visible {
+    outline: 3px solid rgba(183, 138, 61, 0.45);
+    outline-offset: 3px;
+}
+
+.game-container {
+    width: min(1600px, calc(100vw - 40px));
+    padding-top: 30px;
+    padding-bottom: 56px;
+}
+
+.game-header h1 {
+    font-weight: 800;
+}
+
+.game-header p {
+    max-width: 620px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.game-info {
+    padding: 2px 2px 0;
+}
+
+.mode-display,
+.guess-counter {
+    backdrop-filter: blur(8px);
+}
+
+.mode-display:hover,
+.new-game-button:hover,
+.thai-translator-button:hover {
+    box-shadow: 0 7px 20px rgba(74, 62, 37, 0.12);
+}
+
+.guess-section,
+.taxonomy-section,
+.taxon-section {
+    box-shadow: var(--release-shadow);
+    backdrop-filter: blur(7px);
+}
+
+.guess-section h2,
+.taxonomy-section h2,
+.taxon-section h2 {
+    letter-spacing: -0.01em;
+}
+
+.search-container {
+    position: relative;
+}
+
+.main-search-input-wrap {
+    min-width: 0;
+}
+
+#bird-search {
+    height: 48px;
+}
+
+#guess-button {
+    min-width: 112px;
+    height: 48px;
+}
+
+#guess-button:disabled,
+.new-game-button:disabled,
+.game-over-actions button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.suggestions {
+    position: absolute;
+    top: calc(100% + 7px);
+    left: 0;
+    width: min(620px, calc(100% - 122px));
+    max-height: min(360px, 52vh);
+    margin: 0;
+    overflow-y: auto;
+    z-index: 1200;
+    background: rgba(255, 253, 248, 0.98);
+    backdrop-filter: blur(14px);
+    border: 1px solid #d6cab2;
+    box-shadow: 0 16px 34px rgba(58, 52, 37, 0.16);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity .14s ease, transform .14s ease, visibility .14s ease;
+}
+
+.suggestions.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.suggestion {
+    border-bottom: 1px solid #ece4d5;
+    background: transparent;
+    text-align: left;
+}
+
+.suggestion:last-child {
+    border-bottom: 0;
+}
+
+.suggestion.keyboard-selected {
+    background: #eaf0e4;
+    color: var(--release-olive-dark);
+}
+
+.suggestion:hover {
+    background: #edf2e8;
+}
+
+.taxonomy-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
+    gap: 22px;
+}
+
+.taxonomy-layout > .taxonomy-section {
+    min-width: 0;
+}
+
+.taxonomy-layout > .taxon-section {
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    align-self: start;
+}
+
+.taxonomy-section,
+.taxon-section {
+    border-radius: 20px;
+}
+
+.taxonomy-tree {
+    min-height: 560px;
+    height: clamp(560px, calc(100vh - 350px), 820px);
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,.62), transparent 42%),
+        linear-gradient(180deg, #f7eddd 0%, #f2e5d0 100%);
+}
+
+.meta-tree-node {
+    transition: filter .14s ease, transform .14s ease, box-shadow .14s ease;
+}
+
+.meta-tree-node:hover {
+    box-shadow:
+        0 4px 0 rgba(67, 57, 35, 0.10),
+        0 10px 20px rgba(67, 57, 35, 0.12);
+}
+
+.meta-species-node {
+    box-shadow: 0 3px 10px rgba(67, 57, 35, 0.08);
+}
+
+.taxon-section::-webkit-scrollbar,
+.game-over-card::-webkit-scrollbar,
+.thai-translator-results::-webkit-scrollbar,
+.suggestions::-webkit-scrollbar {
+    width: 9px;
+}
+
+.taxon-section::-webkit-scrollbar-track,
+.game-over-card::-webkit-scrollbar-track,
+.thai-translator-results::-webkit-scrollbar-track,
+.suggestions::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.taxon-section::-webkit-scrollbar-thumb,
+.game-over-card::-webkit-scrollbar-thumb,
+.thai-translator-results::-webkit-scrollbar-thumb,
+.suggestions::-webkit-scrollbar-thumb {
+    background: #c8bda6;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.taxon-card {
+    border-color: #ded3bd;
+    background: rgba(255, 253, 248, 0.72);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.65);
+}
+
+.taxon-card-image,
+.study-card-image {
+    border-color: #d1c19e;
+    border-radius: 16px;
+}
+
+.thai-translator-button {
+    border-radius: 999px;
+    padding: 11px 17px;
+    background: rgba(255, 253, 248, 0.96);
+    backdrop-filter: blur(12px);
+}
+
+.thai-translator-panel {
+    border-radius: 18px;
+    backdrop-filter: blur(16px);
+}
+
+.search-clear-button {
+    opacity: 0.65;
+    transition: opacity .15s ease, background .15s ease, color .15s ease;
+}
+
+.search-clear-button:hover {
+    opacity: 1;
+}
+
+.mode-card,
+.game-over-card {
+    border-radius: 20px;
+    box-shadow: 0 24px 70px rgba(40, 35, 25, 0.22);
+}
+
+.mode-overlay,
+.game-over-overlay {
+    backdrop-filter: blur(5px);
+}
+
+@media (max-width: 1050px) {
+    .taxonomy-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .taxonomy-layout > .taxon-section {
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 700px) {
+    .game-container {
+        width: min(100% - 22px, 700px);
+        padding-top: 18px;
+    }
+
+    .game-info {
+        flex-wrap: wrap;
+    }
+
+    .guess-section,
+    .taxonomy-section,
+    .taxon-section {
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .search-container {
+        flex-wrap: wrap;
+    }
+
+    .main-search-input-wrap {
+        flex-basis: 100%;
+    }
+
+    #guess-button {
+        width: 100%;
+    }
+
+    .suggestions {
+        width: 100%;
+    }
+
+    .taxonomy-tree {
+        min-height: 480px;
+        height: 68vh;
+    }
+
+    .thai-translator-panel {
+        max-height: min(600px, calc(100vh - 92px));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
