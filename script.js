@@ -4011,10 +4011,12 @@ function renderBirdCard(
     title.textContent = bird.commonName;
     card.appendChild(title);
 
-    const thai = document.createElement("p");
-    thai.classList.add("taxon-card-thai-name");
-    thai.textContent = thaiName || "Thai name unavailable";
-    card.appendChild(thai);
+    if (gameState.mode === "thailand") {
+        const thai = document.createElement("p");
+        thai.classList.add("taxon-card-thai-name");
+        thai.textContent = thaiName || "Thai name unavailable";
+        card.appendChild(thai);
+    }
 
     const scientific = document.createElement("p");
     scientific.classList.add("taxon-card-rank", "taxon-card-scientific");
