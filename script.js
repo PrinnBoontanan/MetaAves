@@ -3,10 +3,12 @@
 // ========================================
 
 const gameState = {
-    mode: "world",
+    mode: null,
     maxGuesses: 12,
     guessesRemaining: 12,
     birds: [],
+    allBirds: [],
+    thailandBirdKeys: null,
     mysteryBird: null,
     guesses: [],
     taxonomy: null,
@@ -29,6 +31,13 @@ const taxonomyTree = document.getElementById("taxonomy-tree");
 const suggestions = document.getElementById("suggestions");
 const treeViewButton = document.getElementById("tree-view-button");
 const tableViewButton = document.getElementById("table-view-button");
+const modeDisplay = document.getElementById("mode-display");
+const gameModeElement = document.getElementById("game-mode");
+const modeOverlay = document.getElementById("mode-overlay");
+const modeClose = document.getElementById("mode-close");
+const worldModeButton = document.getElementById("world-mode-button");
+const thailandModeButton = document.getElementById("thailand-mode-button");
+const thailandModeStatus = document.getElementById("thailand-mode-status");
 
 // MetaAves uses a deliberately simple ranked taxonomy:
 // Class → Order → Family → Genus → Species.
@@ -74,7 +83,8 @@ async function loadGameData() {
             throw new Error("Could not load MetaAves data.");
         }
 
-        gameState.birds = await birdResponse.json();
+        gameState.allBirds = await birdResponse.json();
+        gameState.birds = [];
         gameState.taxonomy = await taxonomyResponse.json();
         gameState.taxonomyOverrides = await taxonomyOverrideResponse.json();
         gameState.taxonInfo = await infoResponse.json();
@@ -113,23 +123,234 @@ async function loadGameData() {
             );
         });
 
-        // Select a random species from the full imported dataset.
-        // The mystery remains hidden from the player until it is guessed.
-        gameState.mysteryBird =
-            gameState.birds[Math.floor(Math.random() * gameState.birds.length)];
+        try {
+            await loadThailandBirdList();
 
+            if (thailandModeButton) thailandModeButton.disabled = false;
+            if (thailandModeStatus) thailandModeStatus.textContent = "Thailand bird list ready";
+        } catch (error) {
+            console.warn("Thailand bird list unavailable:", error);
+            if (thailandModeButton) thailandModeButton.disabled = true;
+            if (thailandModeStatus) thailandModeStatus.textContent = "Thailand bird list unavailable";
+        }
+
+        gameState.mode = null;
+        gameState.mysteryBird = null;
+        gameState.birds = [];
+        updateModeDisplay();
         updateGuessCounter();
         renderTaxonomyView();
         updateAutomaticTaxonCard();
 
-        console.log("Bird database loaded:", gameState.birds);
+        console.log("Bird database loaded:", gameState.allBirds);
         console.log("Taxonomy loaded:", gameState.taxonomy);
         console.log("Taxon information loaded:", gameState.taxonInfo);
-        console.log("Mystery bird:", gameState.mysteryBird);
+        openModeSelector(true);
     } catch (error) {
         console.error("Error loading bird database:", error);
     }
 }
+
+
+// ========================================
+// Game modes
+// ========================================
+
+function normalizeBirdIdentity(value) {
+    return String(value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/grey/g, "gray")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+}
+
+function normalizeScientificSpecies(value) {
+    const words = String(value || "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    return words.length >= 2
+        ? `${words[0].toLowerCase()} ${words[1].toLowerCase()}`
+        : "";
+}
+
+function parseThailandBirdList(htmlText) {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = htmlText;
+
+    const scientificNames = new Set();
+    const commonNames = new Set();
+
+    wrapper.querySelectorAll("table tr").forEach(row => {
+        const cells = [...row.querySelectorAll("td")];
+        if (cells.length < 2) return;
+
+        const commonName = cells[0].textContent
+            .replace(/\[[^\]]+\]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        const scientificCell = cells[1].textContent
+            .replace(/\[[^\]]+\]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        const scientific = normalizeScientificSpecies(scientificCell);
+        if (!scientific) return;
+
+        scientificNames.add(scientific);
+        if (commonName) commonNames.add(normalizeBirdIdentity(commonName));
+    });
+
+    if (scientificNames.size < 100) {
+        throw new Error("Thailand bird list could not be parsed reliably.");
+    }
+
+    return { scientificNames, commonNames };
+}
+
+async function loadThailandBirdList() {
+    const endpoints = [
+        "https://en.wikipedia.org/api/rest_v1/page/html/List_of_birds_of_Thailand",
+        "https://en.wikipedia.org/w/api.php?action=parse&page=List_of_birds_of_Thailand&prop=text&format=json&origin=*"
+    ];
+
+    let lastError = null;
+
+    for (const endpoint of endpoints) {
+        try {
+            const response = await fetch(endpoint);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const contentType = response.headers.get("content-type") || "";
+            let htmlText = "";
+
+            if (contentType.includes("application/json")) {
+                const payload = await response.json();
+                htmlText =
+                    payload?.parse?.text?.["*"] ||
+                    payload?.parse?.text ||
+                    "";
+            } else {
+                htmlText = await response.text();
+            }
+
+            gameState.thailandBirdKeys = parseThailandBirdList(htmlText);
+            return gameState.thailandBirdKeys;
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    throw lastError || new Error("Could not load Thailand bird list.");
+}
+
+function getBirdPoolForMode(mode) {
+    if (mode === "world") return gameState.allBirds;
+
+    if (mode === "thailand" && gameState.thailandBirdKeys) {
+        const { scientificNames, commonNames } = gameState.thailandBirdKeys;
+
+        return gameState.allBirds.filter(bird =>
+            scientificNames.has(normalizeScientificSpecies(bird.scientificName)) ||
+            commonNames.has(normalizeBirdIdentity(bird.commonName))
+        );
+    }
+
+    return [];
+}
+
+function updateModeDisplay() {
+    if (!gameModeElement) return;
+
+    gameModeElement.textContent =
+        gameState.mode === "thailand"
+            ? "Thailand Birds"
+            : gameState.mode === "world"
+                ? "World Birds"
+                : "Choose mode";
+}
+
+function openModeSelector(initial = false) {
+    if (!modeOverlay) return;
+
+    modeOverlay.classList.add("visible");
+    modeOverlay.setAttribute("aria-hidden", "false");
+    modeOverlay.dataset.initial = initial ? "true" : "false";
+
+    if (initial) {
+        modeClose?.setAttribute("disabled", "true");
+    } else {
+        modeClose?.removeAttribute("disabled");
+    }
+}
+
+function closeModeSelector() {
+    if (!modeOverlay || modeOverlay.dataset.initial === "true") return;
+
+    modeOverlay.classList.remove("visible");
+    modeOverlay.setAttribute("aria-hidden", "true");
+}
+
+function startNewRoundForMode(mode) {
+    const pool = getBirdPoolForMode(mode);
+
+    if (!pool.length) {
+        console.error("No birds available for mode:", mode);
+        return;
+    }
+
+    gameState.mode = mode;
+    gameState.birds = pool;
+    gameState.guessesRemaining = gameState.maxGuesses;
+    gameState.guesses = [];
+    gameState.selectedTaxonId = null;
+    gameState.gameStatus = "playing";
+    gameState.mysteryBird = pool[Math.floor(Math.random() * pool.length)];
+
+    gameState.hintCache.clear();
+    gameState.hintRequestId++;
+    gameState.taxonCardRequestId++;
+
+    searchInput.value = "";
+    suggestions.innerHTML = "";
+    suggestions.classList.remove("visible");
+    searchInput.setAttribute("aria-expanded", "false");
+
+    closeGameOverCard();
+
+    const newGameButton = document.getElementById("new-game-button");
+    newGameButton?.classList.remove("visible");
+
+    updateModeDisplay();
+    updateGuessCounter();
+    renderTaxonomyView();
+    updateAutomaticTaxonCard();
+    closeModeSelector();
+}
+
+function chooseGameMode(mode) {
+    if (mode === "thailand" && !gameState.thailandBirdKeys) return;
+    startNewRoundForMode(mode);
+}
+
+function initializeModeSelector() {
+    worldModeButton?.addEventListener("click", () => chooseGameMode("world"));
+    thailandModeButton?.addEventListener("click", () => chooseGameMode("thailand"));
+    modeDisplay?.addEventListener("click", () => openModeSelector(false));
+    modeClose?.addEventListener("click", closeModeSelector);
+
+    modeOverlay?.addEventListener("click", event => {
+        if (event.target === modeOverlay && modeOverlay.dataset.initial !== "true") {
+            closeModeSelector();
+        }
+    });
+}
+
+initializeModeSelector();
 
 
 // ========================================
@@ -5672,27 +5893,14 @@ function closeGameOverCard() {
 function replayGame() {
     const newGameButton = document.getElementById("new-game-button");
 
-    if (newGameButton) {
-        newGameButton.classList.remove("visible");
-    }
+    if (newGameButton) newGameButton.classList.remove("visible");
     closeGameOverCard();
 
-    gameState.guessesRemaining = gameState.maxGuesses;
-    gameState.guesses = [];
-    gameState.selectedTaxonId = null;
-    gameState.gameStatus = "playing";
-
-    // Start a fresh round with a new mystery species from the
-    // currently loaded full dataset.
-    gameState.mysteryBird =
-        gameState.birds[Math.floor(Math.random() * gameState.birds.length)];
-
-    searchInput.value = "";
-    suggestions.innerHTML = "";
-
-    updateGuessCounter();
-    renderTaxonomyView();
-    updateAutomaticTaxonCard();
+    if (gameState.mode) {
+        startNewRoundForMode(gameState.mode);
+    } else {
+        openModeSelector(true);
+    }
 }
 
 document.getElementById("game-over-close").addEventListener(
