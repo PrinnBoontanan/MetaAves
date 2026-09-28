@@ -5967,17 +5967,23 @@ async function showGameOverCard(result) {
                 "bird",
                 bird.scientificName
             ),
-            fetchOnlineThaiName(bird),
+            gameState.mode === "thailand"
+                ? fetchOnlineThaiName(bird)
+                : Promise.resolve(""),
             fetchWikidataConservationStatus(bird),
             fetchWikidataDetailedTaxonomy(bird)
         ]);
 
     if (gameState.mysteryBird !== bird) return;
 
-    thaiName.textContent =
-        onlineThaiName ||
-        bird.thaiName ||
-        "No information available online.";
+    if (gameState.mode === "thailand") {
+        thaiName.textContent =
+            onlineThaiName ||
+            bird.thaiName ||
+            "No information available online.";
+    } else {
+        thaiName.textContent = "";
+    }
 
     attachDetailedTaxonomyToBird(bird, wiki);
     taxonomy.innerHTML = "";
