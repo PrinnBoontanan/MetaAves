@@ -1,0 +1,22 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Node / local tooling
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local editors / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local test / generated scratch files
+*.log
+*.tmp
