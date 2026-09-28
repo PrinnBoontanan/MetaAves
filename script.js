@@ -4467,7 +4467,15 @@ function renderTaxonomyTree() {
 
             const startX = parent.x;
             const startY = parent.y + parent.height / 2;
-            const endX = childPosition.x;
+
+            // The Aves trunk must be perfectly vertical. Use the actual
+            // rendered Aves center for both ends rather than relying on the
+            // independently measured child center.
+            const endX =
+                node.taxonId === "class:Aves"
+                    ? startX
+                    : childPosition.x;
+
             const endY = childPosition.y - childPosition.height / 2;
 
             const verticalDistance = Math.max(1, endY - startY);
