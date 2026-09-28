@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://prinnboontanan.github.io/MetaAves/sitemap.xml
