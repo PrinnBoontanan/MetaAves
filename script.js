@@ -590,8 +590,19 @@ function closeThaiTranslator() {
 function initializeSearchClearButtons() {
     birdSearchClear?.addEventListener("click", clearBirdSearch);
     thaiTranslatorClear?.addEventListener("click", clearThaiTranslatorSearch);
+
+    // Keep both clear controls synchronized from the first paint onward.
+    // They should be hidden only when their corresponding field is empty.
     updateClearButtonVisibility(birdSearchClear, searchInput);
     updateClearButtonVisibility(thaiTranslatorClear, thaiTranslatorSearch);
+
+    searchInput?.addEventListener("input", () => {
+        updateClearButtonVisibility(birdSearchClear, searchInput);
+    });
+
+    thaiTranslatorSearch?.addEventListener("input", () => {
+        updateClearButtonVisibility(thaiTranslatorClear, thaiTranslatorSearch);
+    });
 }
 
 initializeSearchClearButtons();
