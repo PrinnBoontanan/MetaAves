@@ -38,6 +38,12 @@ const modeClose = document.getElementById("mode-close");
 const worldModeButton = document.getElementById("world-mode-button");
 const thailandModeButton = document.getElementById("thailand-mode-button");
 const thailandModeStatus = document.getElementById("thailand-mode-status");
+const thaiTranslatorButton = document.getElementById("thai-translator-button");
+const thaiTranslatorPanel = document.getElementById("thai-translator-panel");
+const thaiTranslatorClose = document.getElementById("thai-translator-close");
+const thaiTranslatorSearch = document.getElementById("thai-translator-search");
+const thaiTranslatorResults = document.getElementById("thai-translator-results");
+
 
 // MetaAves uses a deliberately simple ranked taxonomy:
 // Class → Order → Family → Genus → Species.
@@ -376,8 +382,178 @@ async function warmThailandThaiNames(birds) {
 
 function chooseGameMode(mode) {
     if (mode === "thailand" && !gameState.thailandBirdKeys) return;
+    if (mode === gameState.mode) {
+        closeModeSelector();
+        return;
+    }
+
+    const activeGame =
+        gameState.mode &&
+        gameState.gameStatus === "playing" &&
+        gameState.guesses.length > 0;
+
+    if (activeGame) {
+        const confirmed = window.confirm(
+            "Do you really want to forfeit this game and start a new one?"
+        );
+        if (!confirmed) return;
+    }
+
     startNewRoundForMode(mode);
 }
+
+
+function normalizeThaiSearchText(value) {
+    return String(value || "")
+        .toLowerCase()
+        .normalize("NFC")
+        .replace(/\\s+/g, " ")
+        .trim();
+}
+
+function getThaiTranslatorMatches(query) {
+    const normalized = normalizeThaiSearchText(query);
+    if (!normalized) return [];
+
+    return gameState.allBirds
+        .map(bird => {
+            const english = normalizeSearchText(bird.commonName);
+            const thai = normalizeThaiSearchText(bird.thaiName || "");
+            const englishMatch = english.includes(normalized);
+            const thaiMatch = thai.includes(normalized);
+            return {
+                bird,
+                score: english === normalized || thai === normalized
+                    ? 100
+                    : englishMatch || thaiMatch
+                        ? 50
+                        : -1
+            };
+        })
+        .filter(result => result.score >= 0 && result.bird.thaiName)
+        .sort((a, b) =>
+            b.score - a.score ||
+            a.bird.commonName.localeCompare(b.bird.commonName)
+        )
+        .slice(0, 30);
+}
+
+function renderThaiTranslatorResults(query) {
+    if (!thaiTranslatorResults) return;
+
+    const results = getThaiTranslatorMatches(query);
+    thaiTranslatorResults.innerHTML = "";
+
+    if (!query.trim()) {
+        thaiTranslatorResults.innerHTML =
+            '<div class="thai-translator-empty">Start typing a Thai or English bird name.</div>';
+        return;
+    }
+
+    if (!results.length) {
+        thaiTranslatorResults.innerHTML =
+            '<div class="thai-translator-empty">No matching Thai bird names found yet.</div>';
+        return;
+    }
+
+    results.forEach(({ bird }) => {
+        const item = document.createElement("div");
+        item.className = "thai-translator-result";
+
+        const english = document.createElement("div");
+        english.className = "thai-translator-english";
+        english.textContent = bird.commonName;
+
+        const thai = document.createElement("div");
+        thai.className = "thai-translator-thai";
+        thai.textContent = bird.thaiName;
+
+        item.append(english, thai);
+
+        if (bird.scientificName) {
+            const scientific = document.createElement("div");
+            scientific.className = "thai-translator-scientific";
+            scientific.textContent = bird.scientificName;
+            item.appendChild(scientific);
+        }
+
+        thaiTranslatorResults.appendChild(item);
+    });
+}
+
+async function ensureThaiNamesForTranslator() {
+    const birds = gameState.allBirds;
+    if (!Array.isArray(birds)) return;
+
+    // Populate lazily so opening the helper does not trigger thousands of
+    // network requests. Search results fetch their Thai name on demand.
+    const query = normalizeThaiSearchText(thaiTranslatorSearch?.value);
+    if (!query) return;
+
+    const candidates = birds.filter(bird => {
+        const english = normalizeSearchText(bird.commonName);
+        const thai = normalizeThaiSearchText(bird.thaiName || "");
+        return english.includes(query) || thai.includes(query);
+    }).slice(0, 12);
+
+    await Promise.all(candidates.map(async bird => {
+        if (!bird.thaiName) {
+            try {
+                const thaiName = await fetchOnlineThaiName(bird);
+                if (thaiName) bird.thaiName = thaiName;
+            } catch (error) {
+                console.warn("Translator Thai-name lookup failed:", bird.scientificName, error);
+            }
+        }
+    }));
+
+    renderThaiTranslatorResults(query);
+}
+
+function openThaiTranslator() {
+    if (!thaiTranslatorPanel) return;
+    thaiTranslatorPanel.classList.add("visible");
+    thaiTranslatorPanel.setAttribute("aria-hidden", "false");
+    thaiTranslatorButton?.setAttribute("aria-expanded", "true");
+    thaiTranslatorSearch?.focus();
+    renderThaiTranslatorResults("");
+}
+
+function closeThaiTranslator() {
+    if (!thaiTranslatorPanel) return;
+    thaiTranslatorPanel.classList.remove("visible");
+    thaiTranslatorPanel.setAttribute("aria-hidden", "true");
+    thaiTranslatorButton?.setAttribute("aria-expanded", "false");
+}
+
+function initializeThaiTranslator() {
+    thaiTranslatorButton?.addEventListener("click", () => {
+        if (thaiTranslatorPanel?.classList.contains("visible")) {
+            closeThaiTranslator();
+        } else {
+            openThaiTranslator();
+        }
+    });
+
+    thaiTranslatorClose?.addEventListener("click", closeThaiTranslator);
+
+    thaiTranslatorSearch?.addEventListener("input", () => {
+        renderThaiTranslatorResults(thaiTranslatorSearch.value);
+        ensureThaiNamesForTranslator();
+    });
+
+    document.addEventListener("click", event => {
+        if (
+            thaiTranslatorPanel?.classList.contains("visible") &&
+            !thaiTranslatorPanel.contains(event.target) &&
+            !thaiTranslatorButton?.contains(event.target)
+        ) {
+            closeThaiTranslator();
+        }
+    });
+}
+
+initializeThaiTranslator();
 
 function initializeModeSelector() {
     worldModeButton?.addEventListener("click", () => chooseGameMode("world"));
