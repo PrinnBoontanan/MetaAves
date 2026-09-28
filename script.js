@@ -1736,12 +1736,13 @@ function assignTreeNodeProximity(root) {
 function getProximityColor(proximity) {
     const t = Math.max(0, Math.min(1, Number(proximity) || 0));
 
-    // Match the recognizable Metazooa feedback palette:
-    // distant = red, then orange, yellow, and closest = green.
-    if (t < 0.25) return "#d64b3f";
-    if (t < 0.50) return "#e58a2f";
-    if (t < 0.75) return "#d4b83f";
-    return "#67a64b";
+    // Restore MetaAves' earlier, earthier palette. These were the
+    // original colors before the brighter recent revision:
+    // distant = deep red, then burnt orange, olive, and forest green.
+    if (t < 0.25) return "rgb(158, 48, 24)";
+    if (t < 0.50) return "rgb(190, 99, 24)";
+    if (t < 0.75) return "rgb(145, 139, 25)";
+    return "rgb(76, 125, 48)";
 }
 
 function createTreeNodeElement(node) {
