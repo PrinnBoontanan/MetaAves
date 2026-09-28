@@ -3187,3 +3187,45 @@ input:focus-visible,
         bottom: 64px;
     }
 }
+
+
+/* Search clear buttons */
+.main-search-input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+#bird-search {
+    width: 100%;
+    padding-right: 42px;
+}
+.search-clear-button {
+    position: absolute;
+    top: 50%;
+    right: 9px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #8a8374;
+    font-size: 21px;
+    line-height: 28px;
+    cursor: pointer;
+}
+.search-clear-button:hover {
+    background: #eee8dc;
+    color: #4f4a3e;
+}
+.search-clear-button[hidden] {
+    display: none;
+}
+.translator-search-wrap {
+    position: relative;
+}
+#thai-translator-search {
+    width: 100%;
+    padding-right: 42px;
+}
