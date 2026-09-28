@@ -4236,38 +4236,67 @@ async function showBirdInTaxonCard(bird) {
     const selectionId = gameState.selectedTaxonId;
     const requestId = ++gameState.taxonCardRequestId;
 
-    card.innerHTML = "<p>Loading bird information from Wikipedia...</p>";
+    card.innerHTML = "<p>Loading bird information…</p>";
     card.classList.remove("clade-card");
     card.classList.add("species-card");
 
-    const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    const [wiki, thaiName, wikidataDetailed] = await Promise.all([
-        fetchWikipediaPageData(
-            wikiTitle,
-            true,
-            "bird",
-            bird.scientificName
-        ),
-        gameState.mode === "thailand"
-            ? fetchOnlineThaiName(bird)
-            : Promise.resolve(""),
-        fetchWikidataDetailedTaxonomy(bird)
-    ]);
+    // Render from local data + the lightweight Wikipedia summary first.
+    // Full article parsing and Wikidata enrichment happen after the card is
+    // already usable.
+    const wikiSummary = await fetchWikipediaPageData(
+        bird.wikipediaTitle || bird.commonName,
+        false,
+        "bird",
+        bird.scientificName
+    );
 
-    // Do not let a slower old request overwrite a newer selection.
     if (
         gameState.selectedTaxonId !== selectionId ||
         gameState.taxonCardRequestId !== requestId
     ) return;
 
-    attachDetailedTaxonomyToBird(bird, wiki);
-    const displayThaiName =
-        gameState.mode === "thailand"
-            ? (thaiName || bird.thaiName || "")
-            : "";
-    if (displayThaiName) bird.thaiName = displayThaiName;
+    renderBirdCard(
+        bird,
+        wikiSummary,
+        {},
+        gameState.mode === "thailand" ? (bird.thaiName || "") : ""
+    );
 
-    renderBirdCard(bird, wiki, wikidataDetailed, displayThaiName);
+    // Enrich the already-visible card in the background.
+    Promise.all([
+        fetchWikipediaPageData(
+            bird.wikipediaTitle || bird.commonName,
+            true,
+            "bird",
+            bird.scientificName
+        ),
+        fetchWikidataDetailedTaxonomy(bird),
+        gameState.mode === "thailand"
+            ? fetchOnlineThaiName(bird)
+            : Promise.resolve("")
+    ]).then(([wiki, wikidataDetailed, thaiName]) => {
+        if (
+            gameState.selectedTaxonId !== selectionId ||
+            gameState.taxonCardRequestId !== requestId
+        ) return;
+
+        const displayThaiName =
+            gameState.mode === "thailand"
+                ? (thaiName || bird.thaiName || "")
+                : "";
+
+        if (displayThaiName) bird.thaiName = displayThaiName;
+        attachDetailedTaxonomyToBird(bird, wiki);
+
+        renderBirdCard(
+            bird,
+            wiki || wikiSummary,
+            wikidataDetailed || {},
+            displayThaiName
+        );
+    }).catch(error => {
+        console.warn("Bird taxon enrichment failed:", error);
+    });
 }
 
 function renderBirdCard(
