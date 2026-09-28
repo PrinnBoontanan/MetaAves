@@ -3566,3 +3566,26 @@ a:focus-visible,
         animation-iteration-count: 1 !important;
     }
 }
+
+
+#data-load-error {
+    width: min(720px, calc(100vw - 32px));
+    margin: 24px auto;
+    padding: 20px 22px;
+    color: #5b3b32;
+    background: #fff6f2;
+    border: 1px solid #e1b9aa;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(75, 49, 40, 0.10);
+    text-align: center;
+}
+
+#data-load-error strong {
+    display: block;
+    font-size: 18px;
+}
+
+#data-load-error p {
+    margin: 7px 0 0;
+    color: #765d55;
+}
