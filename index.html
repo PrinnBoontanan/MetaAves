@@ -71,18 +71,18 @@
                         aria-expanded="false"
                     >
                     <button id="bird-search-clear" class="search-clear-button" type="button" aria-label="Clear bird search" title="Clear">×</button>
+
+                    <div
+                        id="suggestions"
+                        class="suggestions"
+                        role="listbox"
+                        aria-label="Bird suggestions"
+                    ></div>
                 </div>
 
                 <button id="guess-button">
                     <span class="button-icon">⌕</span> Guess
                 </button>
-
-                <div
-                    id="suggestions"
-                    class="suggestions"
-                    role="listbox"
-                    aria-label="Bird suggestions"
-                ></div>
 
             </div>
 
@@ -199,6 +199,20 @@
 
 
 
+
+    <!-- In-game forfeit confirmation -->
+    <div id="forfeit-overlay" class="forfeit-overlay" aria-hidden="true">
+        <div class="forfeit-card" role="dialog" aria-modal="true" aria-labelledby="forfeit-title">
+            <button id="forfeit-close" class="forfeit-close" type="button" aria-label="Cancel">×</button>
+            <p class="study-card-label">Current Game</p>
+            <h2 id="forfeit-title">Forfeit this game?</h2>
+            <p id="forfeit-message">Your current progress and guesses will be lost if you start a new game mode.</p>
+            <div class="forfeit-actions">
+                <button id="forfeit-cancel" class="secondary" type="button">Keep Playing</button>
+                <button id="forfeit-confirm" type="button">Forfeit &amp; Continue</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Game mode selector -->
     <div id="mode-overlay" class="mode-overlay" aria-hidden="true">
