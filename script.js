@@ -4418,9 +4418,11 @@ async function showTaxonInTaxonCard(taxon) {
         card.classList.add("clade-card");
         card.innerHTML = "<p>Loading clade information from Wikipedia...</p>";
 
+        // Clade cards only use Wikipedia's top section, image, and link.
+        // Avoid downloading the full article HTML.
         const wiki = await fetchWikipediaPageData(
             getWikipediaTitleFromTaxon(taxon, {}),
-            true,
+            false,
             "bird"
         );
 
