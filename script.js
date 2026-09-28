@@ -1736,12 +1736,12 @@ function assignTreeNodeProximity(root) {
 function getProximityColor(proximity) {
     const t = Math.max(0, Math.min(1, Number(proximity) || 0));
 
-    // Metazooa-style red → orange → yellow/olive → green feedback.
-    // The proximity value above is based on the complete mystery lineage.
-    if (t < 0.25) return "rgb(158, 48, 24)";
-    if (t < 0.50) return "rgb(190, 99, 24)";
-    if (t < 0.75) return "rgb(145, 139, 25)";
-    return "rgb(76, 125, 48)";
+    // Match the recognizable Metazooa feedback palette:
+    // distant = red, then orange, yellow, and closest = green.
+    if (t < 0.25) return "#d64b3f";
+    if (t < 0.50) return "#e58a2f";
+    if (t < 0.75) return "#d4b83f";
+    return "#67a64b";
 }
 
 function createTreeNodeElement(node) {
@@ -4491,7 +4491,9 @@ async function showTaxonInTaxonCard(taxon) {
         const wiki = await fetchWikipediaPageData(
             getWikipediaTitleFromTaxon(taxon, {}),
             false,
-            "taxon"
+            "taxon",
+            "",
+            true
         );
 
         if (
@@ -4693,7 +4695,14 @@ function renderCladeCard(clade, wiki) {
     rank.classList.add("taxon-card-rank");
     rank.textContent = "CLADE";
     card.appendChild(rank);
-    // Clade cards intentionally stay text-only: Wikipedia description + link.
+    // Higher-taxon cards use the same Wikipedia image treatment as
+    // species cards when Wikipedia provides one.
+    if (wiki?.summary?.thumbnail?.source) {
+        appendWikipediaImage(card, wiki, "taxon-card-image");
+    } else {
+        appendCardSection(card, "Photo", "No photo available on Wikipedia.");
+    }
+
     const description = document.createElement("p");
     description.classList.add("taxon-card-description");
     description.textContent =
