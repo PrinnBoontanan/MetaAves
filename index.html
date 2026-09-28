@@ -28,9 +28,9 @@
         <!-- Game information -->
         <section class="game-info">
 
-            <div class="mode-display">
-                Mode: <strong id="game-mode">World Birds</strong>
-            </div>
+            <button id="mode-display" class="mode-display" type="button" aria-haspopup="dialog">
+                Mode: <strong id="game-mode">Choose mode</strong>
+            </button>
 
             <div class="guess-counter">
                 Guesses: <strong id="guess-count">12</strong>
@@ -161,6 +161,30 @@
 
             <div class="game-over-actions">
                 <button id="game-over-replay" type="button">New Game</button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- Game mode selector -->
+    <div id="mode-overlay" class="mode-overlay" aria-hidden="true">
+        <div class="mode-card" role="dialog" aria-modal="true" aria-labelledby="mode-title">
+            <button id="mode-close" class="mode-close" type="button" aria-label="Close">×</button>
+            <p class="study-card-label">MetaAves</p>
+            <h2 id="mode-title">Choose your game mode</h2>
+            <p id="mode-description" class="mode-description">Choose the bird pool for this round.</p>
+            <div class="mode-options">
+                <button id="world-mode-button" class="mode-option" type="button">
+                    <span class="mode-option-title">World Birds</span>
+                    <span class="mode-option-description">All bird species in the MetaAves world database.</span>
+                </button>
+                <button id="thailand-mode-button" class="mode-option" type="button" disabled>
+                    <span class="mode-option-title">Thailand Birds</span>
+                    <span class="mode-option-description">Birds recorded on the Thailand bird list.</span>
+                    <span id="thailand-mode-status" class="mode-option-status">Loading Thailand bird list…</span>
+                </button>
             </div>
         </div>
     </div>
