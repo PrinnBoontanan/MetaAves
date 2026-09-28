@@ -389,8 +389,7 @@ function chooseGameMode(mode) {
 
     const activeGame =
         gameState.mode &&
-        gameState.gameStatus === "playing" &&
-        gameState.guesses.length > 0;
+        gameState.gameStatus === "playing";
 
     if (activeGame) {
         const confirmed = window.confirm(
@@ -411,37 +410,105 @@ function normalizeThaiSearchText(value) {
         .trim();
 }
 
-function getThaiTranslatorMatches(query) {
+async function searchThaiTranslator(query) {
     const normalized = normalizeThaiSearchText(query);
     if (!normalized) return [];
 
-    return gameState.allBirds
-        .map(bird => {
-            const english = normalizeSearchText(bird.commonName);
-            const thai = normalizeThaiSearchText(bird.thaiName || "");
-            const englishMatch = english.includes(normalized);
-            const thaiMatch = thai.includes(normalized);
-            return {
-                bird,
-                score: english === normalized || thai === normalized
-                    ? 100
-                    : englishMatch || thaiMatch
-                        ? 50
-                        : -1
-            };
-        })
-        .filter(result => result.score >= 0 && result.bird.thaiName)
-        .sort((a, b) =>
-            b.score - a.score ||
-            a.bird.commonName.localeCompare(b.bird.commonName)
+    const englishMatches = gameState.allBirds
+        .filter(bird =>
+            normalizeSearchText(bird.commonName).includes(normalized) ||
+            normalizeThaiSearchText(bird.thaiName || "").includes(normalized)
         )
-        .slice(0, 30);
+        .slice(0, 12);
+
+    await Promise.all(englishMatches.map(async bird => {
+        if (!bird.thaiName) {
+            try {
+                const thaiName = await fetchOnlineThaiName(bird);
+                if (thaiName) bird.thaiName = thaiName;
+            } catch (error) {
+                console.warn("Translator Thai-name lookup failed:", bird.scientificName, error);
+            }
+        }
+    }));
+
+    let matches = englishMatches.filter(bird =>
+        normalizeSearchText(bird.commonName).includes(normalized) ||
+        normalizeThaiSearchText(bird.thaiName || "").includes(normalized)
+    );
+
+    // For a Thai-only query, ask Wikidata directly for Thai labels. This
+    // allows the helper to discover the English/scientific bird even when
+    // the local bird record has not been given a Thai name yet.
+    if (!matches.length) {
+        try {
+            const url =
+                "https://www.wikidata.org/w/api.php?action=wbsearchentities" +
+                "&search=" + encodeURIComponent(query) +
+                "&language=th&uselang=th&limit=20&format=json&origin=*";
+
+            const response = await fetch(url);
+            if (response.ok) {
+                const payload = await response.json();
+                const ids = (payload.search || [])
+                    .map(item => item.id)
+                    .filter(Boolean);
+
+                if (ids.length) {
+                    const entityUrl =
+                        "https://www.wikidata.org/w/api.php?action=wbgetentities" +
+                        "&ids=" + encodeURIComponent(ids.join("|")) +
+                        "&props=labels|claims&languages=th|en&format=json&origin=*";
+
+                    const entityResponse = await fetch(entityUrl);
+                    if (entityResponse.ok) {
+                        const entityData = await entityResponse.json();
+
+                        for (const entity of Object.values(entityData.entities || {})) {
+                            const thaiLabel = entity.labels?.th?.value;
+                            const englishLabel = entity.labels?.en?.value;
+                            const scientificClaim =
+                                entity.claims?.P225?.[0]?.mainsnak?.datavalue?.value;
+
+                            if (!thaiLabel || !scientificClaim) continue;
+
+                            const scientific = normalizeScientificSpecies(scientificClaim);
+                            const localBird = gameState.allBirds.find(bird =>
+                                normalizeScientificSpecies(bird.scientificName) === scientific
+                            );
+
+                            if (localBird) {
+                                localBird.thaiName = thaiLabel;
+                                matches.push(localBird);
+                                continue;
+                            }
+
+                            if (englishLabel) {
+                                const englishBird = gameState.allBirds.find(bird =>
+                                    normalizeSearchText(bird.commonName) === normalizeSearchText(englishLabel)
+                                );
+                                if (englishBird) {
+                                    englishBird.thaiName = thaiLabel;
+                                    matches.push(englishBird);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn("Wikidata Thai translator search failed:", error);
+        }
+    }
+
+    return [...new Map(
+        matches.map(bird => [bird.scientificName, bird])
+    ).values()].slice(0, 30);
 }
 
-function renderThaiTranslatorResults(query) {
+function renderThaiTranslatorResults(query, results = null) {
     if (!thaiTranslatorResults) return;
 
-    const results = getThaiTranslatorMatches(query);
     thaiTranslatorResults.innerHTML = "";
 
     if (!query.trim()) {
@@ -450,13 +517,13 @@ function renderThaiTranslatorResults(query) {
         return;
     }
 
-    if (!results.length) {
+    if (!results?.length) {
         thaiTranslatorResults.innerHTML =
-            '<div class="thai-translator-empty">No matching Thai bird names found yet.</div>';
+            '<div class="thai-translator-empty">No matching bird names found.</div>';
         return;
     }
 
-    results.forEach(({ bird }) => {
+    results.forEach(bird => {
         const item = document.createElement("div");
         item.className = "thai-translator-result";
 
@@ -466,7 +533,7 @@ function renderThaiTranslatorResults(query) {
 
         const thai = document.createElement("div");
         thai.className = "thai-translator-thai";
-        thai.textContent = bird.thaiName;
+        thai.textContent = bird.thaiName || "Thai name not available";
 
         item.append(english, thai);
 
@@ -481,33 +548,20 @@ function renderThaiTranslatorResults(query) {
     });
 }
 
-async function ensureThaiNamesForTranslator() {
-    const birds = gameState.allBirds;
-    if (!Array.isArray(birds)) return;
+async function updateThaiTranslatorResults(query) {
+    if (!query.trim()) {
+        renderThaiTranslatorResults("");
+        return;
+    }
 
-    // Populate lazily so opening the helper does not trigger thousands of
-    // network requests. Search results fetch their Thai name on demand.
-    const query = normalizeThaiSearchText(thaiTranslatorSearch?.value);
-    if (!query) return;
+    thaiTranslatorResults.innerHTML =
+        '<div class="thai-translator-empty">Looking up bird names…</div>';
 
-    const candidates = birds.filter(bird => {
-        const english = normalizeSearchText(bird.commonName);
-        const thai = normalizeThaiSearchText(bird.thaiName || "");
-        return english.includes(query) || thai.includes(query);
-    }).slice(0, 12);
+    const results = await searchThaiTranslator(query);
+    // Ignore stale searches when the user has already typed something else.
+    if (thaiTranslatorSearch?.value !== query) return;
 
-    await Promise.all(candidates.map(async bird => {
-        if (!bird.thaiName) {
-            try {
-                const thaiName = await fetchOnlineThaiName(bird);
-                if (thaiName) bird.thaiName = thaiName;
-            } catch (error) {
-                console.warn("Translator Thai-name lookup failed:", bird.scientificName, error);
-            }
-        }
-    }));
-
-    renderThaiTranslatorResults(query);
+    renderThaiTranslatorResults(query, results);
 }
 
 function openThaiTranslator() {
@@ -538,8 +592,7 @@ function initializeThaiTranslator() {
     thaiTranslatorClose?.addEventListener("click", closeThaiTranslator);
 
     thaiTranslatorSearch?.addEventListener("input", () => {
-        renderThaiTranslatorResults(thaiTranslatorSearch.value);
-        ensureThaiNamesForTranslator();
+        updateThaiTranslatorResults(thaiTranslatorSearch.value);
     });
 
     document.addEventListener("click", event => {
