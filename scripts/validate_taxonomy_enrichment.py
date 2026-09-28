@@ -38,6 +38,10 @@ def main() -> None:
     enriched = output.get("species", {})
     if not isinstance(enriched, dict):
         raise SystemExit("Invalid enrichment: species must be an object.")
+    if not enriched:
+        raise SystemExit(
+            "Invalid enrichment: zero species were enriched. Refusing to treat an empty build as valid."
+        )
 
     unknown_species = sorted(set(enriched) - species_names)
     if unknown_species:
