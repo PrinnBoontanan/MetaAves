@@ -356,9 +356,8 @@ function startNewRoundForMode(mode) {
     updateAutomaticTaxonCard();
     closeModeSelector(true);
 
-    if (mode === "thailand") {
-        warmThailandThaiNames(gameState.birds);
-    }
+    // Thai names are fetched on demand for the study card/helper.
+    // Do not fire thousands of external requests when a Thailand round starts.
 }
 
 async function warmThailandThaiNames(birds) {
@@ -441,7 +440,7 @@ function normalizeThaiSearchText(value) {
     return String(value || "")
         .toLowerCase()
         .normalize("NFC")
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
 }
 
@@ -710,8 +709,8 @@ function normalizeSearchText(value) {
     return String(value || "")
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[\\u0300-\\u036f]/g, "")
-        .replace(/[^a-z0-9\\s-]/g, " ")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s-]/g, " ")
         .replace(/\s+/g, " ")
         .trim();
 }
@@ -5445,7 +5444,7 @@ function getHintRelationship(guessedBird) {
 }
 
 function normalizeHintText(value) {
-    return normalizeWikipediaText(value).toLowerCase().replace(/[^a-z0-9\\s-]/g, " ").replace(/\\s+/g, " ").trim();
+    return normalizeWikipediaText(value).toLowerCase().replace(/[^a-z0-9\s-]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function getHintEvidenceTokens(text) {
