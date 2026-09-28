@@ -2692,10 +2692,11 @@ input:focus-visible,
 .taxon-card:not(.species-card) {
     display: grid;
     grid-template-columns: 280px minmax(0, 1fr);
-    grid-template-rows: auto auto 280px auto;
+    grid-template-rows: auto auto auto auto auto;
     grid-template-areas:
         "title title"
         "rank rank"
+        "common common"
         "image description"
         "image wikipedia";
     column-gap: 32px;
@@ -2755,13 +2756,7 @@ input:focus-visible,
 /* A full-height divider separates the image from the text column instead
    of stopping when the paragraph happens to end. */
 .taxon-card:not(.species-card) > .taxon-card-description::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 1px;
-    height: 280px;
-    background: #d9cdb5;
+    display: none;
 }
 
 .taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
