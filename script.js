@@ -4390,7 +4390,7 @@ async function showTaxonInTaxonCard(taxon) {
         const wiki = await fetchWikipediaPageData(
             getWikipediaTitleFromTaxon(taxon, {}),
             false,
-            "bird"
+            "taxon"
         );
 
         if (
@@ -4408,7 +4408,7 @@ async function showTaxonInTaxonCard(taxon) {
     const wiki = await fetchWikipediaPageData(
         wikiTitle,
         true,
-        taxon.rank === "species" ? "bird" : "bird",
+        taxon.rank === "species" ? "bird" : "taxon",
         taxon.rank === "species" ? taxon.scientificName : ""
     );
 
@@ -4591,18 +4591,7 @@ function renderCladeCard(clade, wiki) {
     rank.classList.add("taxon-card-rank");
     rank.textContent = "CLADE";
     card.appendChild(rank);
-
-    if (wiki?.summary?.thumbnail?.source) {
-        const image = document.createElement("img");
-        image.className = "taxon-card-image";
-        image.src = wiki.summary.thumbnail.source;
-        image.alt = wiki.summary.title || clade.name;
-        image.loading = "lazy";
-        card.appendChild(image);
-    } else {
-        appendCardSection(card, "Photo", "No photo available on Wikipedia.");
-    }
-
+    // Clade cards intentionally stay text-only: Wikipedia description + link.
     const description = document.createElement("p");
     description.classList.add("taxon-card-description");
     description.textContent =
