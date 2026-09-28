@@ -360,6 +360,37 @@ function startNewRoundForMode(mode) {
     // Do not fire thousands of external requests when a Thailand round starts.
 }
 
+let pendingGameMode = null;
+
+function openForfeitConfirmation(mode) {
+    const overlay = document.getElementById("forfeit-overlay");
+    if (!overlay) {
+        // Defensive fallback: never use the browser's confirm dialog.
+        return;
+    }
+
+    pendingGameMode = mode;
+    overlay.classList.add("visible");
+    overlay.setAttribute("aria-hidden", "false");
+}
+
+function closeForfeitConfirmation() {
+    const overlay = document.getElementById("forfeit-overlay");
+    if (!overlay) return;
+
+    pendingGameMode = null;
+    overlay.classList.remove("visible");
+    overlay.setAttribute("aria-hidden", "true");
+}
+
+function confirmForfeitAndChangeMode() {
+    const mode = pendingGameMode;
+    if (!mode) return;
+
+    closeForfeitConfirmation();
+    startNewRoundForMode(mode);
+}
+
 function chooseGameMode(mode) {
     if (mode === "thailand" && !gameState.thailandBirdKeys) return;
     if (mode === gameState.mode) {
@@ -372,10 +403,9 @@ function chooseGameMode(mode) {
         gameState.gameStatus === "playing";
 
     if (activeGame) {
-        const confirmed = window.confirm(
-            "Do you really want to forfeit this game and start a new one?"
-        );
-        if (!confirmed) return;
+        closeModeSelector();
+        openForfeitConfirmation(mode);
+        return;
     }
 
     startNewRoundForMode(mode);
@@ -649,6 +679,31 @@ function initializeModeSelector() {
 }
 
 initializeModeSelector();
+
+function initializeForfeitConfirmation() {
+    const overlay = document.getElementById("forfeit-overlay");
+    const close = document.getElementById("forfeit-close");
+    const cancel = document.getElementById("forfeit-cancel");
+    const confirm = document.getElementById("forfeit-confirm");
+
+    close?.addEventListener("click", closeForfeitConfirmation);
+    cancel?.addEventListener("click", closeForfeitConfirmation);
+    confirm?.addEventListener("click", confirmForfeitAndChangeMode);
+
+    overlay?.addEventListener("click", event => {
+        if (event.target === overlay) {
+            closeForfeitConfirmation();
+        }
+    });
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && overlay?.classList.contains("visible")) {
+            closeForfeitConfirmation();
+        }
+    });
+}
+
+initializeForfeitConfirmation();
 
 
 // ========================================
