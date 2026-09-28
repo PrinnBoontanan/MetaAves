@@ -1,0 +1,38 @@
+name: Build global taxonomy enrichment
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  enrich-taxonomy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build Wikidata taxonomy enrichment
+        run: python scripts/enrich_taxonomy_wikidata.py
+
+      - name: Commit generated taxonomy
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- data/taxonomy_enrichment.generated.json; then
+            echo "No taxonomy enrichment changes."
+            exit 0
+          fi
+
+          git add data/taxonomy_enrichment.generated.json
+          git commit -m "Build global taxonomy enrichment"
+          git push
