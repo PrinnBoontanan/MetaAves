@@ -360,38 +360,6 @@ function startNewRoundForMode(mode) {
     // Do not fire thousands of external requests when a Thailand round starts.
 }
 
-async function warmThailandThaiNames(birds) {
-    if (!Array.isArray(birds) || !birds.length) return;
-
-    const queue = birds.filter(bird =>
-        bird?.scientificName &&
-        !bird.thaiName
-    );
-    const concurrency = 4;
-    let nextIndex = 0;
-
-    async function worker() {
-        while (nextIndex < queue.length) {
-            const bird = queue[nextIndex++];
-            try {
-                const thaiName = await fetchOnlineThaiName(bird);
-                if (thaiName) bird.thaiName = thaiName;
-            } catch (error) {
-                console.warn("Thai-name warmup failed:", bird.scientificName, error);
-            }
-        }
-    }
-
-    await Promise.all(
-        Array.from(
-            { length: Math.min(concurrency, queue.length) },
-            () => worker()
-        )
-    );
-
-
-}
-
 function chooseGameMode(mode) {
     if (mode === "thailand" && !gameState.thailandBirdKeys) return;
     if (mode === gameState.mode) {
