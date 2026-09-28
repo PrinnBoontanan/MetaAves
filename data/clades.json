@@ -1,0 +1,1199 @@
+{
+  "_meta": {
+    "version": 2,
+    "status": "enriched_backbone",
+    "description": "Named phylogenetic clades used by MetaAves. Clades are not forced into Linnaean rank fields.",
+    "sources": [
+      {
+        "name": "AviList v2025b",
+        "url": "https://www.avilist.org/checklist/v2025b/"
+      },
+      {
+        "name": "Wikipedia bird phylogeny pages",
+        "note": "Current Wikipedia pages for Neoaves, Telluraves, Passerine/Passerida and related clades; Telluraves page explicitly follows Stiller et al. 2024."
+      },
+      {
+        "name": "Stiller et al. 2024",
+        "note": "Complexity of avian evolution revealed by family-level genomes, Nature 629:851–860."
+      }
+    ],
+    "uncertaintyPolicy": "The ranked AviList taxonomy remains authoritative. Named phylogenetic clades are an enrichment layer. Where alternative deep Neoaves topologies are documented, MetaAves uses one explicitly sourced backbone rather than mixing incompatible trees.",
+    "orderCladePaths": {
+      "Struthioniformes": [
+        "Neornithes",
+        "Palaeognathae"
+      ],
+      "Casuariiformes": [
+        "Neornithes",
+        "Palaeognathae"
+      ],
+      "Apterygiformes": [
+        "Neornithes",
+        "Palaeognathae"
+      ],
+      "Rheiformes": [
+        "Neornithes",
+        "Palaeognathae"
+      ],
+      "Tinamiformes": [
+        "Neornithes",
+        "Palaeognathae"
+      ],
+      "Anseriformes": [
+        "Neornithes",
+        "Neognathae",
+        "Galloanserae"
+      ],
+      "Galliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Galloanserae"
+      ],
+      "Phoenicopteriformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Mirandornithes"
+      ],
+      "Podicipediformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Mirandornithes"
+      ],
+      "Mesitornithiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbaves",
+        "Columbimorphae"
+      ],
+      "Pterocliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbaves",
+        "Columbimorphae"
+      ],
+      "Columbiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbaves",
+        "Columbimorphae"
+      ],
+      "Musophagiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbaves",
+        "Otidimorphae"
+      ],
+      "Otidiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbaves",
+        "Otidimorphae"
+      ],
+      "Cuculiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Columbaves",
+        "Otidimorphae"
+      ],
+      "Gaviiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Aequornithes"
+      ],
+      "Sphenisciformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Aequornithes"
+      ],
+      "Procellariiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Aequornithes"
+      ],
+      "Ciconiiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Aequornithes",
+        "Feraequornithes",
+        "Pelecanimorphae"
+      ],
+      "Suliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Aequornithes",
+        "Feraequornithes",
+        "Pelecanimorphae",
+        "Pelecanes"
+      ],
+      "Pelecaniformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Aequornithes",
+        "Feraequornithes",
+        "Pelecanimorphae",
+        "Pelecanes"
+      ],
+      "Phaethontiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Eurypygimorphae"
+      ],
+      "Eurypygiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Phaethoquornithes",
+        "Eurypygimorphae"
+      ],
+      "Caprimulgiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Strisores"
+      ],
+      "Steatornithiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Strisores"
+      ],
+      "Nyctibiiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Strisores"
+      ],
+      "Podargiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Strisores"
+      ],
+      "Aegotheliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Strisores"
+      ],
+      "Apodiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Strisores"
+      ],
+      "Opisthocomiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Opisthocomiformes"
+      ],
+      "Gruiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Cursorimorphae"
+      ],
+      "Charadriiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Elementaves",
+        "Cursorimorphae"
+      ],
+      "Accipitriformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Hieraves"
+      ],
+      "Cathartiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Hieraves"
+      ],
+      "Strigiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Hieraves"
+      ],
+      "Coliiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae"
+      ],
+      "Leptosomiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves"
+      ],
+      "Trogoniformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves",
+        "Eucavitaves"
+      ],
+      "Bucerotiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves",
+        "Eucavitaves",
+        "Picocoraciae"
+      ],
+      "Coraciiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves",
+        "Eucavitaves",
+        "Picocoraciae",
+        "Picodynastornithes"
+      ],
+      "Piciformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves",
+        "Eucavitaves",
+        "Picocoraciae",
+        "Picodynastornithes"
+      ],
+      "Cariamiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Australaves"
+      ],
+      "Falconiformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Australaves",
+        "Eufalconimorphae"
+      ],
+      "Psittaciformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Australaves",
+        "Eufalconimorphae",
+        "Psittacopasserae"
+      ],
+      "Passeriformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Australaves",
+        "Eufalconimorphae",
+        "Psittacopasserae"
+      ],
+      "Galbuliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves",
+        "Eucavitaves",
+        "Picocoraciae",
+        "Picodynastornithes"
+      ]
+    },
+    "passerineFamilyCladePaths": {
+      "Philepittidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+      ],
+      "Eurylaimidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+      ],
+      "Calyptomenidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+      ],
+      "Sapayoidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+      ],
+      "Pittidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Eurylaimides"
+      ],
+      "Melanopareiidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Conopophagidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Thamnophilidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Grallariidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Rhinocryptidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Formicariidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Furnariidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Furnariida"
+      ],
+      "Pipridae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+      ],
+      "Cotingidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+      ],
+      "Tityridae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+      ],
+      "Oxyruncidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+      ],
+      "Onychorhynchidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+      ],
+      "Tyrannidae": [
+        "Eupasseres",
+        "Tyranni",
+        "Tyrannides",
+        "Tyrannida"
+      ],
+      "Atrichornithidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Menuridae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Climacteridae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Ptilonorhynchidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Pomatostomidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Orthonychidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Acanthizidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Meliphagidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Maluridae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Dasyornithidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Pardalotidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Cinclosomatidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Campephagidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Mohouidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Neosittidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Psophodidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Eulacestomatidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Falcunculidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Oreoicidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Paramythiidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Vireonidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Pachycephalidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Oriolidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Machaerirhynchidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Artamidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Rhipiduridae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Dicruridae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Laniidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Corvidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Paridae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Remizidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Regulidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Bombycillidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Certhiidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Sittidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Troglodytidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Muscicapidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Turdidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Sturnidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Buphagidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Cinclidae": [
+        "Eupasseres",
+        "Passeri"
+      ],
+      "Motacillidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Prunellidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Passeridae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Nectariniidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Dicaeidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Chloropseidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Irenidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Urocynchramidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Estrildidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Ploceidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Viduidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Fringillidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Peucedramidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Icteridae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Parulidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Icteriidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Phaenicophilidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Zeledoniidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Teretistridae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Thraupidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Mitrospingidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Rhodinocichlidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Calyptophilidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Nesospingidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Spindalidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Cardinalidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Emberizidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Passerellidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Calcariidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Passerida"
+      ],
+      "Acanthisittidae": [
+        "Acanthisitti"
+      ]
+    }
+  },
+  "clade:Neornithes": {
+    "id": "clade:Neornithes",
+    "name": "Neornithes",
+    "rank": "clade",
+    "parent": null,
+    "children": [
+      "clade:Palaeognathae",
+      "clade:Neognathae"
+    ]
+  },
+  "clade:Palaeognathae": {
+    "id": "clade:Palaeognathae",
+    "name": "Palaeognathae",
+    "rank": "clade",
+    "parent": "clade:Neornithes",
+    "children": [],
+    "description": "Living birds traditionally comprising ratites and tinamous."
+  },
+  "clade:Neognathae": {
+    "id": "clade:Neognathae",
+    "name": "Neognathae",
+    "rank": "infraclass",
+    "parent": "clade:Neornithes",
+    "children": [
+      "clade:Galloanserae",
+      "clade:Neoaves"
+    ]
+  },
+  "clade:Galloanserae": {
+    "id": "clade:Galloanserae",
+    "name": "Galloanserae",
+    "rank": "clade",
+    "parent": "clade:Neognathae",
+    "children": [],
+    "description": "Major clade containing Anseriformes and Galliformes."
+  },
+  "clade:Neoaves": {
+    "id": "clade:Neoaves",
+    "name": "Neoaves",
+    "rank": "clade",
+    "parent": "clade:Neognathae",
+    "children": [
+      "clade:Telluraves",
+      "clade:Columbaves",
+      "clade:Elementaves"
+    ],
+    "description": "Large clade containing most living bird species."
+  },
+  "clade:Telluraves": {
+    "id": "clade:Telluraves",
+    "name": "Telluraves",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [
+      "clade:Afroaves",
+      "clade:Australaves"
+    ],
+    "description": "Core landbird clade containing Afroaves and Australaves."
+  },
+  "clade:Afroaves": {
+    "id": "clade:Afroaves",
+    "name": "Afroaves",
+    "rank": "clade",
+    "parent": "clade:Telluraves",
+    "children": [
+      "clade:Hieraves",
+      "clade:Coraciimorphae"
+    ],
+    "description": "A major Telluraves lineage including groups such as Accipitriformes, Strigiformes, Coliiformes and several cavity-nesting bird lineages. Deep relationships within Afroaves remain an active phylogenetic research topic."
+  },
+  "clade:Australaves": {
+    "id": "clade:Australaves",
+    "name": "Australaves",
+    "rank": "clade",
+    "parent": "clade:Telluraves",
+    "children": [
+      "clade:Psittacopasserae",
+      "clade:Eufalconimorphae"
+    ],
+    "description": "A major Telluraves lineage containing Cariamiformes, Falconiformes, Psittaciformes and Passeriformes."
+  },
+  "clade:Psittacopasserae": {
+    "id": "clade:Psittacopasserae",
+    "name": "Psittacopasserae",
+    "rank": "clade",
+    "parent": "clade:Australaves",
+    "children": [],
+    "description": "Clade containing parrots and passerines."
+  },
+  "clade:Aequornithes": {
+    "id": "clade:Aequornithes",
+    "name": "Aequornithes",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [
+      "clade:Feraequornithes"
+    ],
+    "status": "backbone_external",
+    "note": "Included as a named Neoaves clade, but its exact placement relative to other major Neoaves lineages is not hard-coded here."
+  },
+  "clade:Mirandornithes": {
+    "id": "clade:Mirandornithes",
+    "name": "Mirandornithes",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [],
+    "status": "backbone_external",
+    "note": "Flamingos and grebes; placement among major Neoaves lineages is kept separate from the simplified backbone."
+  },
+  "clade:Columbimorphae": {
+    "id": "clade:Columbimorphae",
+    "name": "Columbimorphae",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [],
+    "status": "backbone_external",
+    "note": "Named clade associated with Columbiformes, Pterocliformes and Mesitornithiformes in major phylogenomic treatments."
+  },
+  "clade:Otidimorphae": {
+    "id": "clade:Otidimorphae",
+    "name": "Otidimorphae",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [],
+    "status": "backbone_external",
+    "note": "Named clade containing Cuculiformes, Musophagiformes and Otidiformes in major phylogenomic treatments."
+  },
+  "clade:Strisores": {
+    "id": "clade:Strisores",
+    "name": "Strisores",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [],
+    "status": "backbone_external",
+    "note": "Named clade containing hummingbirds, swifts and several nocturnal bird lineages."
+  },
+  "clade:Phaethontimorphae": {
+    "id": "clade:Phaethontimorphae",
+    "name": "Phaethontimorphae",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [],
+    "status": "backbone_external",
+    "note": "Named clade involving tropicbirds and several other lineages in some phylogenomic treatments; deep Neoaves placement is not hard-coded."
+  },
+  "clade:Eurypygimorphae": {
+    "id": "clade:Eurypygimorphae",
+    "name": "Eurypygimorphae",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [],
+    "status": "backbone",
+    "description": "Named Neoaves clade containing tropicbirds (Phaethontiformes) and sunbitterns/kagu (Eurypygiformes) in phylogenomic classifications."
+  },
+  "clade:Columbaves": {
+    "id": "clade:Columbaves",
+    "name": "Columbaves",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [
+      "clade:Columbimorphae",
+      "clade:Otidimorphae"
+    ],
+    "description": "Clade containing Columbimorphae and Otidimorphae."
+  },
+  "clade:Elementaves": {
+    "id": "clade:Elementaves",
+    "name": "Elementaves",
+    "rank": "clade",
+    "parent": "clade:Neoaves",
+    "children": [
+      "clade:Phaethoquornithes",
+      "clade:Strisores",
+      "clade:Opisthocomiformes",
+      "clade:Cursorimorphae"
+    ],
+    "description": "Major Neoaves clade in the Stiller et al. 2024 topology."
+  },
+  "clade:Phaethoquornithes": {
+    "id": "clade:Phaethoquornithes",
+    "name": "Phaethoquornithes",
+    "rank": "clade",
+    "parent": "clade:Elementaves",
+    "children": [
+      "clade:Aequornithes",
+      "clade:Eurypygimorphae"
+    ],
+    "description": "Clade containing Aequornithes and Eurypygimorphae."
+  },
+  "clade:Cursorimorphae": {
+    "id": "clade:Cursorimorphae",
+    "name": "Cursorimorphae",
+    "rank": "clade",
+    "parent": "clade:Elementaves",
+    "children": [],
+    "description": "Clade containing the crane/rail and shorebird lineages in the Stiller et al. 2024 topology."
+  },
+  "clade:Opisthocomiformes": {
+    "id": "clade:Opisthocomiformes",
+    "name": "Opisthocomiformes",
+    "rank": "clade",
+    "parent": "clade:Elementaves",
+    "children": [],
+    "description": "Named clade/order containing the hoatzin lineage."
+  },
+  "clade:Hieraves": {
+    "id": "clade:Hieraves",
+    "name": "Hieraves",
+    "rank": "clade",
+    "parent": "clade:Afroaves",
+    "children": [],
+    "description": "Clade of owls and accipitriform birds in the Stiller et al. 2024 Telluraves topology."
+  },
+  "clade:Coraciimorphae": {
+    "id": "clade:Coraciimorphae",
+    "name": "Coraciimorphae",
+    "rank": "clade",
+    "parent": "clade:Afroaves",
+    "children": [
+      "clade:Cavitaves"
+    ],
+    "description": "Clade containing Coliiformes and Cavitaves."
+  },
+  "clade:Cavitaves": {
+    "id": "clade:Cavitaves",
+    "name": "Cavitaves",
+    "rank": "clade",
+    "parent": "clade:Coraciimorphae",
+    "children": [
+      "clade:Eucavitaves"
+    ],
+    "description": "Clade containing Leptosomiformes and Eucavitaves."
+  },
+  "clade:Eucavitaves": {
+    "id": "clade:Eucavitaves",
+    "name": "Eucavitaves",
+    "rank": "clade",
+    "parent": "clade:Cavitaves",
+    "children": [
+      "clade:Picocoraciae"
+    ],
+    "description": "Clade containing Trogoniformes and Picocoraciae."
+  },
+  "clade:Picocoraciae": {
+    "id": "clade:Picocoraciae",
+    "name": "Picocoraciae",
+    "rank": "clade",
+    "parent": "clade:Eucavitaves",
+    "children": [
+      "clade:Picodynastornithes"
+    ],
+    "description": "Clade containing Bucerotiformes and Picodynastornithes."
+  },
+  "clade:Picodynastornithes": {
+    "id": "clade:Picodynastornithes",
+    "name": "Picodynastornithes",
+    "rank": "clade",
+    "parent": "clade:Picocoraciae",
+    "children": [],
+    "description": "Clade containing Coraciiformes and Piciformes."
+  },
+  "clade:Eufalconimorphae": {
+    "id": "clade:Eufalconimorphae",
+    "name": "Eufalconimorphae",
+    "rank": "clade",
+    "parent": "clade:Australaves",
+    "children": [
+      "clade:Psittacopasserae"
+    ],
+    "description": "Clade containing falcons, parrots and passerines."
+  },
+  "clade:Acanthisitti": {
+    "id": "clade:Acanthisitti",
+    "name": "Acanthisitti",
+    "rank": "clade",
+    "parent": "clade:Passeriformes",
+    "children": [],
+    "description": "Ancient passerine lineage containing the New Zealand wrens."
+  },
+  "clade:Eupasseres": {
+    "id": "clade:Eupasseres",
+    "name": "Eupasseres",
+    "rank": "clade",
+    "parent": "clade:Passeriformes",
+    "children": [],
+    "description": "Clade containing all passerines except Acanthisittidae."
+  },
+  "clade:Tyranni": {
+    "id": "clade:Tyranni",
+    "name": "Tyranni",
+    "rank": "clade",
+    "parent": "clade:Eupasseres",
+    "children": [],
+    "description": "Suborder containing the passerine suboscines."
+  },
+  "clade:Eurylaimides": {
+    "id": "clade:Eurylaimides",
+    "name": "Eurylaimides",
+    "rank": "clade",
+    "parent": "clade:Tyranni",
+    "children": [],
+    "description": "Infraorder containing Old World suboscines and the sapayoa."
+  },
+  "clade:Tyrannides": {
+    "id": "clade:Tyrannides",
+    "name": "Tyrannides",
+    "rank": "clade",
+    "parent": "clade:Tyranni",
+    "children": [],
+    "description": "Infraorder containing the New World suboscines."
+  },
+  "clade:Furnariida": {
+    "id": "clade:Furnariida",
+    "name": "Furnariida",
+    "rank": "clade",
+    "parent": "clade:Tyrannides",
+    "children": [],
+    "description": "Parvorder containing the furnariid radiation of New World suboscines."
+  },
+  "clade:Tyrannida": {
+    "id": "clade:Tyrannida",
+    "name": "Tyrannida",
+    "rank": "clade",
+    "parent": "clade:Tyrannides",
+    "children": [],
+    "description": "Parvorder containing manakins, cotingas, tityras and tyrant flycatchers."
+  },
+  "clade:Passeri": {
+    "id": "clade:Passeri",
+    "name": "Passeri",
+    "rank": "suborder",
+    "parent": "clade:Eupasseres",
+    "children": [],
+    "description": "Suborder containing the passerine songbirds (oscines)."
+  },
+  "clade:Passerides": {
+    "id": "clade:Passerides",
+    "name": "Passerides",
+    "rank": "infraorder",
+    "parent": "clade:Passeri",
+    "children": [],
+    "description": "Infraorder containing major songbird radiations including Passerida."
+  },
+  "clade:Passerida": {
+    "id": "clade:Passerida",
+    "name": "Passerida",
+    "rank": "parvorder",
+    "parent": "clade:Passerides",
+    "children": [],
+    "description": "Parvorder containing many of the familiar sparrows, finches, tanagers and related songbirds."
+  },
+  "clade:Feraequornithes": {
+    "id": "clade:Feraequornithes",
+    "name": "Feraequornithes",
+    "rank": "clade",
+    "parent": "clade:Aequornithes",
+    "children": [
+      "clade:Pelecanimorphae"
+    ],
+    "description": "Aequornithes clade comprising Procellariiformes, Sphenisciformes, Ciconiiformes, Suliformes and Pelecaniformes."
+  },
+  "clade:Pelecanimorphae": {
+    "id": "clade:Pelecanimorphae",
+    "name": "Pelecanimorphae",
+    "rank": "clade",
+    "parent": "clade:Feraequornithes",
+    "children": [
+      "clade:Pelecanes"
+    ],
+    "description": "Clade containing Ciconiiformes and the Pelecanes lineage."
+  },
+  "clade:Pelecanes": {
+    "id": "clade:Pelecanes",
+    "name": "Pelecanes",
+    "rank": "clade",
+    "parent": "clade:Pelecanimorphae",
+    "children": [],
+    "description": "Clade uniting Pelecaniformes and Suliformes."
+  }
+}

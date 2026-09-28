@@ -4,10 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MetaAves is a bird-only taxonomy guessing game inspired by Metazooa, featuring world birds, Thailand birds, and an interactive taxonomy tree.">
+    <meta name="theme-color" content="#eef1e8">
+    <meta property="og:title" content="MetaAves — The Taxonomic Bird Game">
+    <meta property="og:description" content="Guess the mystery bird and explore its taxonomy through an interactive tree.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary">
 
-    <title>MetaAves</title>
+    <title>MetaAves — The Taxonomic Bird Game</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=release-20260928">
 </head>
 
 <body>
@@ -15,7 +21,12 @@
     <main class="game-container">
 
         <header class="game-header">
-            <h1>MetaAves</h1>
+            <h1>MetaAves <span class="title-bird" aria-hidden="true">
+    <svg viewBox="0 0 64 40" role="img">
+        <path d="M4 28c9-1 16-6 22-14 5-7 12-11 21-10-3 3-5 6-6 10 5 1 10 4 15 9-8-2-14-2-19 1-7 4-14 7-24 6l-9-2z"/>
+        <circle cx="48" cy="8" r="1.8"/>
+    </svg>
+</span></h1>
             <p>The Taxonomic Bird Game</p>
         </header>
 
@@ -23,13 +34,17 @@
         <!-- Game information -->
         <section class="game-info">
 
-            <div class="mode-display">
-                Mode: <strong id="game-mode">World Birds</strong>
-            </div>
+            <button id="mode-display" class="mode-display" type="button" aria-haspopup="dialog">
+                Mode: <strong id="game-mode">Choose mode</strong>
+            </button>
 
             <div class="guess-counter">
                 Guesses: <strong id="guess-count">12</strong>
             </div>
+
+            <button id="new-game-button" class="new-game-button" type="button" >
+                New Game
+            </button>
 
         </section>
 
@@ -37,48 +52,79 @@
         <!-- Guessing area -->
         <section class="guess-section">
 
-            <h2>Guess the mystery bird</h2>
+            <h2><span class="mono-heading-icon">⌕</span> Guess the mystery bird</h2>
 
             <div class="search-container">
 
-                <input
-                    type="text"
-                    id="bird-search"
-                    placeholder="Enter an English bird name..."
-                    autocomplete="off"
-                >
+                <div class="main-search-input-wrap">
+                    <input
+                        type="text"
+                        id="bird-search"
+                        placeholder="Enter an English bird name..."
+                        autocomplete="off"
+                        role="combobox"
+                        aria-autocomplete="list"
+                        aria-controls="suggestions"
+                        aria-expanded="false"
+                    >
+                    <button id="bird-search-clear" class="search-clear-button" type="button" aria-label="Clear bird search" title="Clear">×</button>
+                </div>
 
                 <button id="guess-button">
-                    Guess
+                    <span class="button-icon">⌕</span> Guess
                 </button>
+
+                <div
+                    id="suggestions"
+                    class="suggestions"
+                    role="listbox"
+                    aria-label="Bird suggestions"
+                ></div>
 
             </div>
 
-            <div id="suggestions" class="suggestions"></div>
-
         </section>
 
+
+        <!-- Taxonomy + Taxon Information -->
+        <div class="taxonomy-layout">
 
         <!-- Taxonomy tree -->
         <section class="taxonomy-section">
 
-            <h2>Taxonomy</h2>
+            <div class="taxonomy-heading-row">
+                <div class="taxonomy-title">
+                    <span class="taxonomy-title-mark" aria-hidden="true">◆</span>
+                    <div>
+                        <h2>Taxonomy</h2>
+                        <p>Explore how your guesses connect.</p>
+                    </div>
+                </div>
 
-            <div id="taxonomy-tree" class="taxonomy-tree">
+                <div class="taxonomy-view-toggle" role="group" aria-label="Taxonomy view">
+                    <button id="tree-view-button" class="taxonomy-view-button active" type="button">Tree</button>
+                    <button id="table-view-button" class="taxonomy-view-button" type="button">Table</button>
+                </div>
+            </div>
 
-                <p class="tree-placeholder">
-                    Your guesses will appear here.
-                </p>
+            <div class="taxonomy-content">
+                <div id="taxonomy-tree" class="taxonomy-tree">
+                    <p class="tree-placeholder">
+                        Your guesses will appear here.
+                    </p>
+                </div>
 
+                <div id="taxonomy-horizontal-scroll" class="taxonomy-horizontal-scroll" aria-label="Scroll taxonomy horizontally" tabindex="0">
+                    <div class="taxonomy-horizontal-scroll-content"></div>
+                </div>
             </div>
 
         </section>
 
-
-        <!-- Taxon information -->
+        <!-- Taxon information: intentionally below the taxonomy tree -->
         <section class="taxon-section">
 
-            <h2>Taxon Information</h2>
+            <h2><span class="mono-heading-icon">◇</span> Taxon Information</h2>
 
             <div id="taxon-card" class="taxon-card">
 
@@ -92,10 +138,87 @@
 
         </section>
 
+        </div>
+
     </main>
 
 
-    <script src="script.js"></script>
+    <button id="thai-translator-button" class="thai-translator-button" type="button" aria-expanded="false" aria-controls="thai-translator-panel">
+        Thai ↔ English
+    </button>
+
+    <div id="thai-translator-panel" class="thai-translator-panel" aria-hidden="true">
+        <div class="thai-translator-header">
+            <div>
+                <p class="study-card-label">Bird Name Helper</p>
+                <h2>Thai ↔ English</h2>
+            </div>
+            <button id="thai-translator-close" class="thai-translator-close" type="button" aria-label="Close translator">×</button>
+        </div>
+        <p class="thai-translator-description">Look up a bird by its Thai or English common name.</p>
+        <div class="translator-search-wrap">
+            <input id="thai-translator-search" type="text" placeholder="พิมพ์ชื่อไทยหรือ English name..." autocomplete="off">
+            <button id="thai-translator-clear" class="search-clear-button" type="button" aria-label="Clear translator search" title="Clear">×</button>
+        </div>
+        <div id="thai-translator-results" class="thai-translator-results" aria-live="polite"></div>
+    </div>
+
+    <div id="game-over-overlay" class="game-over-overlay">
+        <div class="game-over-card" role="dialog" aria-modal="true">
+
+            <button id="game-over-close" class="game-over-close" type="button" aria-label="Close">×</button>
+
+            <p class="study-card-label">🐦 Mystery Bird</p>
+            <h2 id="game-over-title">Game Over</h2>
+            <p id="game-over-message"></p>
+
+            <div class="study-card-bird">
+                <h3 id="study-bird-name"></h3>
+                <p id="study-scientific-name" class="scientific-name"></p>
+            </div>
+
+            <div class="study-card-details">
+                <div>
+                    <strong>Thai name</strong>
+                    <p id="study-thai-name"></p>
+                </div>
+                <div>
+                    <strong>Taxonomy</strong>
+                    <div id="study-taxonomy" class="study-taxonomy"></div>
+                </div>
+            </div>
+
+            <div class="game-over-actions">
+                <button id="game-over-replay" type="button">New Game</button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- Game mode selector -->
+    <div id="mode-overlay" class="mode-overlay" aria-hidden="true">
+        <div class="mode-card" role="dialog" aria-modal="true" aria-labelledby="mode-title">
+            <button id="mode-close" class="mode-close" type="button" aria-label="Close">×</button>
+            <p class="study-card-label">MetaAves</p>
+            <h2 id="mode-title">Choose your game mode</h2>
+            <p id="mode-description" class="mode-description">Choose the bird pool for this round.</p>
+            <div class="mode-options">
+                <button id="world-mode-button" class="mode-option" type="button">
+                    <span class="mode-option-title">World Birds</span>
+                    <span class="mode-option-description">All bird species in the MetaAves world database.</span>
+                </button>
+                <button id="thailand-mode-button" class="mode-option" type="button" disabled>
+                    <span class="mode-option-title">Thailand Birds</span>
+                    <span class="mode-option-description">Birds recorded on the Thailand bird list.</span>
+                    <span id="thailand-mode-status" class="mode-option-status">Loading Thailand bird list…</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=release-20260928"></script>
 
 </body>
 
