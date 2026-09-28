@@ -88,8 +88,7 @@ async function loadGameData() {
             !taxonomyOverrideResponse.ok ||
             !infoResponse.ok ||
             !cladeResponse.ok ||
-            !cladeMembershipResponse.ok ||
-            !taxonomyEnrichmentResponse.ok
+            !cladeMembershipResponse.ok
         ) {
             throw new Error("Could not load MetaAves data.");
         }
@@ -101,7 +100,14 @@ async function loadGameData() {
         gameState.taxonInfo = await infoResponse.json();
         gameState.clades = await cladeResponse.json();
 
-        const taxonomyEnrichment = await taxonomyEnrichmentResponse.json();
+        let taxonomyEnrichment = null;
+        try {
+            if (taxonomyEnrichmentResponse.ok) {
+                taxonomyEnrichment = await taxonomyEnrichmentResponse.json();
+            }
+        } catch (error) {
+            console.warn("Global taxonomy enrichment unavailable:", error);
+        }
         gameState.taxonomyEnrichment = taxonomyEnrichment?.species || {};
 
         const cladeMembership = await cladeMembershipResponse.json();
