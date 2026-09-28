@@ -3635,3 +3635,98 @@ a:focus-visible,
         transform: none;
     }
 }
+
+
+/* ========================================
+   MetaAves UI correction — final layout
+======================================== */
+
+/* Keep the autocomplete layer above every later section. */
+.guess-section {
+    position: relative;
+    z-index: 20;
+}
+
+.taxonomy-layout {
+    position: relative;
+    z-index: 1;
+}
+
+/* The earlier side-by-side layout: large taxonomy tree + persistent
+   taxon information card on the right. */
+.taxonomy-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
+    gap: 22px;
+    align-items: start;
+}
+
+.taxonomy-layout > .taxonomy-section {
+    width: auto;
+    margin-bottom: 0;
+}
+
+.taxonomy-layout > .taxon-section {
+    width: auto;
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    margin-top: 0;
+}
+
+/* Autocomplete must float over the taxonomy card instead of being painted
+   underneath it by the later stacking context. */
+.suggestions {
+    z-index: 9999;
+}
+
+/* Every taxonomy node uses the same red → yellow → green proximity system.
+   This includes intermediate ranks such as suborder, infraorder, parvorder,
+   superfamily, subfamily, tribe, etc., not only class/order/family/genus. */
+.meta-tree-node.meta-taxon-node {
+    background: var(--tree-proximity-color, #9e3018);
+    color: #fffdf8;
+    border: 1px solid rgba(74, 48, 28, 0.30);
+    font-weight: 700;
+}
+
+.meta-tree-node.meta-taxon-node:hover {
+    filter: brightness(1.06);
+}
+
+/* Make the clear controls unmistakable and easy to hit. */
+.search-clear-button {
+    z-index: 5;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    right: 8px;
+    color: #777565;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.search-clear-button[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 1050px) {
+    .taxonomy-layout {
+        display: block;
+    }
+
+    .taxonomy-layout > .taxonomy-section {
+        width: 100%;
+        margin-bottom: 22px;
+    }
+
+    .taxonomy-layout > .taxon-section {
+        width: 100%;
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+}
