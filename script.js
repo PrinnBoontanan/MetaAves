@@ -4400,10 +4400,10 @@ function renderBirdCard(
     title.textContent = bird.commonName;
     card.appendChild(title);
 
-    if (gameState.mode === "thailand") {
+    {
         const thai = document.createElement("p");
         thai.classList.add("taxon-card-thai-name");
-        thai.textContent = thaiName || "Thai name unavailable";
+        thai.textContent = thaiName || "No Thai name available";
         card.appendChild(thai);
     }
 
