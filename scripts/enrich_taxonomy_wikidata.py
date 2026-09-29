@@ -27,8 +27,8 @@ BIRDS = ROOT / "data" / "birds.generated.json"
 OUT = ROOT / "data" / "taxonomy_enrichment.generated.json"
 
 ENDPOINT = "https://query.wikidata.org/sparql"
-BATCH_SIZE = 10
-SLEEP_SECONDS = 0.35
+BATCH_SIZE = 50
+SLEEP_SECONDS = 0.15
 MAX_RETRIES = 5
 REQUEST_TIMEOUT = 180
 
