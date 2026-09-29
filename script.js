@@ -1750,11 +1750,34 @@ function assignTreeNodeProximity(root) {
 function getProximityColor(proximity) {
     const t = Math.max(0, Math.min(1, Number(proximity) || 0));
 
-    // Metazooa-style red → orange → yellow/olive → green feedback.
-    // The proximity value above is based on the complete mystery lineage.
-    if (t < 0.25) return "rgb(158, 48, 24)";
-    if (t < 0.50) return "rgb(190, 99, 24)";
-    if (t < 0.75) return "rgb(145, 139, 25)";
+    // Keep the original MetaAves red → orange → olive → green language,
+    // but interpolate through several carefully chosen shades so nearby
+    // taxonomy nodes do not collapse into only four flat colors.
+    const stops = [
+        [0.00, [158, 48, 24]],   // deep red
+        [0.14, [174, 65, 23]],   // red-orange
+        [0.28, [190, 99, 24]],   // burnt orange
+        [0.42, [181, 119, 24]],  // amber
+        [0.56, [162, 130, 24]],  // ochre
+        [0.70, [145, 139, 25]],  // olive yellow
+        [0.84, [104, 132, 35]],  // yellow-green
+        [1.00, [76, 125, 48]]    // forest green
+    ];
+
+    for (let i = 1; i < stops.length; i += 1) {
+        const [end, endColor] = stops[i];
+        const [start, startColor] = stops[i - 1];
+
+        if (t <= end) {
+            const localT = (t - start) / (end - start);
+            const rgb = startColor.map((channel, index) =>
+                Math.round(channel + (endColor[index] - channel) * localT)
+            );
+
+            return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+        }
+    }
+
     return "rgb(76, 125, 48)";
 }
 
