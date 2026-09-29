@@ -47,14 +47,21 @@ TARGET_RANKS = {
 }
 
 QUERY = r"""
-SELECT ?speciesName ?ancestorName ?rankLabel WHERE {
+SELECT ?species ?speciesName ?sitelinks ?ancestorName ?rankLabel WHERE {
   VALUES ?speciesName {
     %s
   }
 
   ?species wdt:P225 ?speciesName ;
            wdt:P105 wd:Q7432 ;
-           wdt:P171+ ?ancestor .
+           wdt:P171+ ?ancestor ;
+           wikibase:sitelinks ?sitelinks .
+
+  # Prefer Wikidata taxa that have an English Wikipedia article.
+  # This removes many duplicate/historical Wikidata items that share
+  # the same scientific name but represent different taxonomic viewpoints.
+  ?article schema:about ?species ;
+           schema:isPartOf <https://en.wikipedia.org/> .
 
   ?ancestor wdt:P225 ?ancestorName ;
             wdt:P105 ?rank .
@@ -77,14 +84,13 @@ SELECT ?speciesName ?ancestorName ?rankLabel WHERE {
     "subtribe"
     "subgenus"
   }
-
 }
 """
 
 def qliteral(value: str) -> str:
     # SPARQL string literal with escaped quotes/backslashes/newlines.
-    value = value.replace("\\", "\\\\")
-    value = value.replace('"', '\\"')
+    value = value.replace("\", "\\")
+    value = value.replace('"', '\"')
     value = value.replace("\n", " ")
     value = value.replace("\r", " ")
     return '"' + value + '"'
@@ -166,13 +172,50 @@ def main():
 
         rows = data.get("results", {}).get("bindings", [])
 
+        # A scientific name can correspond to multiple Wikidata items
+        # (accepted taxa, historical taxa, or taxonomic alternatives).
+        # Pick the English-Wikipedia-linked item with the highest sitelink
+        # count before evaluating its parent taxonomy.
+        species_items = {}
+        for row in rows:
+            species = row.get("speciesName", {}).get("value", "")
+            species_uri = row.get("species", {}).get("value", "")
+            sitelinks_raw = row.get("sitelinks", {}).get("value", "0")
+
+            if not species or not species_uri:
+                continue
+
+            species_qid = species_uri.rsplit("/", 1)[-1]
+
+            try:
+                sitelinks = int(sitelinks_raw)
+            except ValueError:
+                sitelinks = 0
+
+            species_items.setdefault(species, {})[species_qid] = sitelinks
+
+        selected_species = {}
+        for species, items in species_items.items():
+            selected_species[species] = max(
+                items,
+                key=lambda qid: (items[qid], qid),
+            )
+
         candidates = {}
         for row in rows:
             species = row.get("speciesName", {}).get("value", "")
+            species_uri = row.get("species", {}).get("value", "")
             ancestor = row.get("ancestorName", {}).get("value", "")
             rank = row.get("rankLabel", {}).get("value", "")
 
-            if not species or not ancestor or rank not in TARGET_RANKS:
+            if not species or not species_uri or not ancestor:
+                continue
+
+            if rank not in TARGET_RANKS:
+                continue
+
+            species_qid = species_uri.rsplit("/", 1)[-1]
+            if selected_species.get(species) != species_qid:
                 continue
 
             candidates.setdefault(species, {}).setdefault(rank, set()).add(ancestor)
@@ -188,8 +231,6 @@ def main():
                     # exposes genuinely different parent-taxonomy viewpoints.
                     ambiguous.setdefault(species, {})[rank] = values_for_rank
 
-            # If Wikidata still exposes multiple nearest candidates at the
-            # same rank, retain them for review rather than guessing.
             if clean:
                 enriched[species] = clean
 
@@ -208,8 +249,11 @@ def main():
             "property": "P171 parent taxon + P105 taxon rank",
             "policy": (
                 "Supplemental only. AviList remains authoritative for the "
-                "core ranked taxonomy. Ambiguous Wikidata ranks are retained "
-                "in the ambiguity report and are not automatically applied."
+                "core ranked taxonomy. When multiple Wikidata items share "
+                "a scientific name, the English-Wikipedia-linked item with "
+                "the highest sitelink count is selected. Ambiguous ranks "
+                "within that selected hierarchy are retained in the "
+                "ambiguity report and are not automatically applied."
             ),
             "species_total": len(names),
             "species_with_enrichment": len(enriched),
