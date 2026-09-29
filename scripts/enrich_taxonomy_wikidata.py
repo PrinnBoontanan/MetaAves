@@ -61,6 +61,7 @@ SELECT ?speciesName ?ancestorName ?rankLabel WHERE {
     bd:serviceParam wikibase:language "en".
     ?rank rdfs:label ?rankLabel.
   }
+
   VALUES ?rankLabel {
     "subclass"
     "infraclass"
@@ -73,6 +74,16 @@ SELECT ?speciesName ?ancestorName ?rankLabel WHERE {
     "tribe"
     "subtribe"
     "subgenus"
+  }
+
+  # Keep only the closest ancestor at a given rank. If another
+  # ancestor with the same rank lies between the species and this
+  # candidate, this candidate is not the useful intermediate rank.
+  FILTER NOT EXISTS {
+    ?species wdt:P171+ ?closer .
+    ?closer wdt:P105 ?closerRank .
+    FILTER(?closerRank = ?rank)
+    ?closer wdt:P171+ ?ancestor .
   }
 }
 """
@@ -162,14 +173,8 @@ def main():
                     # exposes genuinely different parent-taxonomy viewpoints.
                     ambiguous.setdefault(species, {})[rank] = values_for_rank
 
-            # Multiple values can occur because Wikidata may contain
-            # parallel parent-taxonomy statements. Keep all alternatives for
-            # review, but select a deterministic value so enrichment remains
-            # usable by the game.
-            for rank, values_for_rank in rank_map.items():
-                if values_for_rank and rank not in clean:
-                    clean[rank] = sorted(values_for_rank)[0]
-
+            # If Wikidata still exposes multiple nearest candidates at the
+            # same rank, retain them for review rather than guessing.
             if clean:
                 enriched[species] = clean
 
