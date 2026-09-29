@@ -2853,11 +2853,10 @@ input:focus-visible,
    Match the original Metazooa-style feedback:
    distant = red, then orange/yellow, then green as the shared
    taxonomy gets deeper. The node and its branch use the same color. */
-.meta-tree-node[data-level="class"],
-.meta-tree-node[data-level="order"],
-.meta-tree-node[data-level="family"],
-.meta-tree-node[data-level="genus"],
-.meta-tree-node[data-level="clade"] {
+/* Every taxonomy node uses the same proximity color treatment.
+   This intentionally includes intermediate ranks such as suborder,
+   infraorder, parvorder, superfamily, subfamily, and tribe. */
+.meta-tree-node.meta-taxon-node {
     background: var(--tree-proximity-color, #a53b1f);
     color: #fffdf8;
     border: 1px solid rgba(74, 48, 28, 0.28);
