@@ -864,6 +864,78 @@ def taxon_id(rank, name):
     return f"{rank}:{safe_name}"
 
 
+def load_clade_parent_map(path):
+    """Load the authoritative clade -> parent relationships from clades.json."""
+    if not path.exists():
+        return {}
+
+    data = json.loads(path.read_text(encoding="utf-8"))
+    parents = {}
+
+    for entry in data.values():
+        if not isinstance(entry, dict):
+            continue
+
+        name = clean(entry.get("name"))
+        parent = clean(entry.get("parent"))
+        if not name or not parent:
+            continue
+
+        if parent.startswith("clade:"):
+            parent = parent.split(":", 1)[1]
+
+        parents[name] = parent
+
+    return parents
+
+
+def normalize_clade_path(path, parent_by_name):
+    """Restore every known parent and return a broad-to-specific path."""
+    result = []
+    visiting = set()
+
+    def add(name):
+        name = clean(name)
+        if not name or name in result:
+            return
+
+        if name in visiting:
+            return
+
+        visiting.add(name)
+        parent = parent_by_name.get(name)
+        if parent:
+            add(parent)
+        visiting.discard(name)
+
+        if name not in result:
+            result.append(name)
+
+    for name in path or []:
+        add(name)
+
+    return result
+
+
+def merge_clade_paths(order_path, family_path, parent_by_name):
+    """Merge broad order placement with finer family placement.
+
+    For example, a passerine path containing Passeri is automatically
+    completed with its known parent Eupasseres before being written.
+    """
+    combined = []
+
+    for name in order_path or []:
+        if name not in combined:
+            combined.append(name)
+
+    for name in family_path or []:
+        if name not in combined:
+            combined.append(name)
+
+    return normalize_clade_path(combined, parent_by_name)
+
+
 def load_thai_names(path):
     """Load Thai names from the eBird workbook.
 
@@ -1134,6 +1206,10 @@ def main():
     post_order_clade_membership = {}
     unmapped_orders = set()
 
+    clade_parent_by_name = load_clade_parent_map(
+        Path("data") / "clades.json"
+    )
+
     taxa = {
         "class:Aves": {
             "id": "class:Aves",
@@ -1204,14 +1280,32 @@ def main():
         birds.append(bird)
 
         order_name = bird.get("order")
-        clade_path = list(CLADE_PATHS_BY_ORDER.get(order_name, []))
+        order_clade_path = list(CLADE_PATHS_BY_ORDER.get(order_name, []))
+
+        family_name = bird.get("family")
+        family_clade_path = (
+            PASSERINE_FAMILY_CLADE_PATHS.get(family_name)
+            if order_name == "Passeriformes"
+            else None
+        )
+
+        # Build one broad-to-specific lineage.  The family path supplies the
+        # finer passerine split, while clades.json restores any missing
+        # ancestors such as Eupasseres.
+        clade_path = merge_clade_paths(
+            order_clade_path,
+            family_clade_path,
+            clade_parent_by_name,
+        )
+
         if clade_path:
             clade_membership[scientific] = clade_path
 
-        family_name = bird.get("family")
-        family_clade_path = PASSERINE_FAMILY_CLADE_PATHS.get(family_name)
-        if order_name == "Passeriformes" and family_clade_path:
-            post_order_clade_membership[scientific] = family_clade_path
+        if family_clade_path:
+            post_order_clade_membership[scientific] = normalize_clade_path(
+                family_clade_path,
+                clade_parent_by_name,
+            )
         elif order_name:
             unmapped_orders.add(order_name)
 
