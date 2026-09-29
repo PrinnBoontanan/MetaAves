@@ -26,7 +26,7 @@ BIRDS = ROOT / "data" / "birds.generated.json"
 OUT = ROOT / "data" / "taxonomy_enrichment.generated.json"
 
 ENDPOINT = "https://query.wikidata.org/sparql"
-BATCH_SIZE = 40
+BATCH_SIZE = 10
 SLEEP_SECONDS = 0.35
 MAX_RETRIES = 5
 
@@ -76,15 +76,6 @@ SELECT ?speciesName ?ancestorName ?rankLabel WHERE {
     "subgenus"
   }
 
-  # Keep only the closest ancestor at a given rank. If another
-  # ancestor with the same rank lies between the species and this
-  # candidate, this candidate is not the useful intermediate rank.
-  FILTER NOT EXISTS {
-    ?species wdt:P171+ ?closer .
-    ?closer wdt:P105 ?closerRank .
-    FILTER(?closerRank = ?rank)
-    ?closer wdt:P171+ ?ancestor .
-  }
 }
 """
 
