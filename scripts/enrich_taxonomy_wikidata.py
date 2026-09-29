@@ -13,6 +13,7 @@ Output:
 
 from __future__ import annotations
 
+import http.client
 import json
 import sys
 import time
@@ -29,6 +30,7 @@ ENDPOINT = "https://query.wikidata.org/sparql"
 BATCH_SIZE = 10
 SLEEP_SECONDS = 0.35
 MAX_RETRIES = 5
+REQUEST_TIMEOUT = 180
 
 TARGET_RANKS = {
     "subclass",
@@ -89,26 +91,48 @@ def qliteral(value: str) -> str:
 
 def request_json(params: dict) -> dict:
     url = ENDPOINT + "?" + urlencode(params)
-    req = Request(
-        url,
-        headers={
-            "Accept": "application/sparql-results+json",
-            "User-Agent": "MetaAves taxonomy enrichment/1.0 (GitHub Actions)",
-        },
-    )
 
     last_error = None
-    for attempt in range(MAX_RETRIES):
-        try:
-            with urlopen(req, timeout=90) as response:
-                return json.load(response)
-        except (HTTPError, URLError, TimeoutError) as exc:
-            last_error = exc
-            if attempt == MAX_RETRIES - 1:
-                break
-            time.sleep((2 ** attempt) + 0.5)
 
-    raise RuntimeError(f"Wikidata request failed: {last_error}")
+    for attempt in range(1, MAX_RETRIES + 1):
+        req = Request(
+            url,
+            headers={
+                "Accept": "application/sparql-results+json",
+                "User-Agent": "MetaAves taxonomy enrichment/1.0 (GitHub Actions)",
+                "Connection": "close",
+            },
+        )
+
+        try:
+            with urlopen(req, timeout=REQUEST_TIMEOUT) as response:
+                return json.load(response)
+
+        except (
+            HTTPError,
+            URLError,
+            TimeoutError,
+            http.client.IncompleteRead,
+            http.client.RemoteDisconnected,
+            ConnectionResetError,
+            BrokenPipeError,
+        ) as exc:
+            last_error = exc
+
+            if attempt == MAX_RETRIES:
+                break
+
+            delay = min(30, (2 ** (attempt - 1)) + 1.5)
+            print(
+                f"Wikidata request interrupted "
+                f"(attempt {attempt}/{MAX_RETRIES}): {exc}"
+            )
+            print(f"Retrying in {delay:.1f}s...")
+            time.sleep(delay)
+
+    raise RuntimeError(
+        f"Wikidata request failed after {MAX_RETRIES} attempts: {last_error}"
+    )
 
 def chunks(items, size):
     for i in range(0, len(items), size):
