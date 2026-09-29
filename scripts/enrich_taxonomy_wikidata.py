@@ -89,7 +89,7 @@ SELECT ?species ?speciesName ?sitelinks ?ancestorName ?rankLabel WHERE {
 
 def qliteral(value: str) -> str:
     # SPARQL string literal with escaped quotes/backslashes/newlines.
-    value = value.replace("\", "\\")
+    value = value.replace("\\", "\\\\")
     value = value.replace('"', '\"')
     value = value.replace("\n", " ")
     value = value.replace("\r", " ")
