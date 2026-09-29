@@ -162,6 +162,14 @@ def main():
                     # exposes genuinely different parent-taxonomy viewpoints.
                     ambiguous.setdefault(species, {})[rank] = values_for_rank
 
+            # Multiple values can occur because Wikidata may contain
+            # parallel parent-taxonomy statements. Keep all alternatives for
+            # review, but select a deterministic value so enrichment remains
+            # usable by the game.
+            for rank, values_for_rank in rank_map.items():
+                if values_for_rank and rank not in clean:
+                    clean[rank] = sorted(values_for_rank)[0]
+
             if clean:
                 enriched[species] = clean
 
