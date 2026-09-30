@@ -2955,12 +2955,12 @@ input:focus-visible,
 .taxon-card.species-card .taxon-card-taxonomy-row {
     min-width: 0;
     margin: 0 !important;
-    padding: 5px 0;
+    padding: 7px 0;
     line-height: 1.45;
-    border-bottom: 1px solid #eee5d5;
+    border-bottom: 1px solid #e2d8c6;
 }
 
-.taxon-card.species-card .taxon-card-taxonomy-row:nth-last-child(-n + 2) {
+.taxon-card.species-card .taxon-card-taxonomy-row:last-child {
     border-bottom: 0;
 }
 
