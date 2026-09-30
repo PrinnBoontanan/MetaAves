@@ -468,42 +468,63 @@ function normalizeThaiSearchText(value) {
         .trim();
 }
 
+function scoreThaiNameMatch(name, query) {
+    const value = normalizeThaiSearchText(name);
+    const search = normalizeThaiSearchText(query);
+
+    if (!value || !search) return -Infinity;
+    if (value === search) return 10000;
+    if (value.startsWith(search)) return 9000 - value.length;
+
+    const index = value.indexOf(search);
+    if (index >= 0) return 6000 - index * 12 - value.length;
+
+    return -Infinity;
+}
+
+function scoreThaiTranslatorBird(bird, query) {
+    const isThaiQuery = /[\u0E00-\u0E7F]/.test(query);
+    const englishScore = scoreBirdSearchMatch(bird.commonName, query);
+    const thaiScore = scoreThaiNameMatch(bird.thaiName || "", query);
+
+    if (isThaiQuery) {
+        return Number.isFinite(thaiScore) ? thaiScore : -Infinity;
+    }
+
+    return Math.max(
+        Number.isFinite(englishScore) ? englishScore : -Infinity,
+        Number.isFinite(thaiScore) ? thaiScore : -Infinity
+    );
+}
+
 async function searchThaiTranslator(query) {
     const normalized = normalizeThaiSearchText(query);
     if (!normalized) return [];
 
-    const englishMatches = gameState.allBirds
-        .filter(bird =>
-            normalizeSearchText(bird.commonName).includes(normalized) ||
+    const isThaiQuery = /[\u0E00-\u0E7F]/.test(query);
+    let matches = [];
+
+    if (!isThaiQuery) {
+        // English searches use the same complete bird universe as the game
+        // search bar. Nothing is truncated before ranking.
+        matches = gameState.allBirds.filter(bird =>
+            Number.isFinite(scoreBirdSearchMatch(bird.commonName, query)) ||
             normalizeThaiSearchText(bird.thaiName || "").includes(normalized)
-        )
-        .slice(0, 12);
+        );
+    } else {
+        // Include every Thai name already known locally first.
+        matches = gameState.allBirds.filter(bird =>
+            Number.isFinite(scoreThaiNameMatch(bird.thaiName || "", query))
+        );
 
-    await Promise.all(englishMatches.map(async bird => {
-        if (!bird.thaiName) {
-            try {
-                const thaiName = await fetchOnlineThaiName(bird);
-                if (thaiName) bird.thaiName = thaiName;
-            } catch (error) {
-                console.warn("Translator Thai-name lookup failed:", bird.scientificName, error);
-            }
-        }
-    }));
-
-    let matches = englishMatches.filter(bird =>
-        normalizeSearchText(bird.commonName).includes(normalized) ||
-        normalizeThaiSearchText(bird.thaiName || "").includes(normalized)
-    );
-
-    // For a Thai-only query, ask Wikidata directly for Thai labels. This
-    // allows the helper to discover the English/scientific bird even when
-    // the local bird record has not been given a Thai name yet.
-    if (!matches.length) {
+        // Add Wikidata's Thai-label matches so a Thai query can discover
+        // birds whose Thai name has not been cached yet.
         try {
             const url =
                 "https://www.wikidata.org/w/api.php?action=wbsearchentities" +
                 "&search=" + encodeURIComponent(query) +
-                "&language=th&uselang=th&limit=20&format=json&origin=*";
+                "&language=th&uselang=th&strictlanguage=1&limit=50" +
+                "&format=json&origin=*";
 
             const response = await fetch(url);
             if (response.ok) {
@@ -524,11 +545,11 @@ async function searchThaiTranslator(query) {
 
                         for (const entity of Object.values(entityData.entities || {})) {
                             const thaiLabel = entity.labels?.th?.value;
-                            const englishLabel = entity.labels?.en?.value;
                             const scientificClaim =
                                 entity.claims?.P225?.[0]?.mainsnak?.datavalue?.value;
 
                             if (!thaiLabel || !scientificClaim) continue;
+                            if (!normalizeThaiSearchText(thaiLabel).includes(normalized)) continue;
 
                             const scientific = normalizeScientificSpecies(scientificClaim);
                             const localBird = gameState.allBirds.find(bird =>
@@ -538,17 +559,6 @@ async function searchThaiTranslator(query) {
                             if (localBird) {
                                 localBird.thaiName = thaiLabel;
                                 matches.push(localBird);
-                                continue;
-                            }
-
-                            if (englishLabel) {
-                                const englishBird = gameState.allBirds.find(bird =>
-                                    normalizeSearchText(bird.commonName) === normalizeSearchText(englishLabel)
-                                );
-                                if (englishBird) {
-                                    englishBird.thaiName = thaiLabel;
-                                    matches.push(englishBird);
-                                }
                             }
                         }
                     }
@@ -559,9 +569,35 @@ async function searchThaiTranslator(query) {
         }
     }
 
-    return [...new Map(
+    // Enrich only birds that are actually in the result set.
+    await Promise.all(matches.map(async bird => {
+        if (bird.thaiName) return;
+
+        try {
+            const thaiName = await fetchOnlineThaiName(bird);
+            if (thaiName) bird.thaiName = thaiName;
+        } catch (error) {
+            console.warn("Translator Thai-name lookup failed:", bird.scientificName, error);
+        }
+    }));
+
+    const unique = [...new Map(
         matches.map(bird => [bird.scientificName, bird])
-    ).values()].slice(0, 30);
+    ).values()];
+
+    return unique
+        .map((bird, index) => ({
+            bird,
+            index,
+            score: scoreThaiTranslatorBird(bird, query)
+        }))
+        .filter(result => Number.isFinite(result.score))
+        .sort((a, b) =>
+            b.score - a.score ||
+            a.bird.commonName.localeCompare(b.bird.commonName) ||
+            a.index - b.index
+        )
+        .map(result => result.bird);
 }
 
 function renderThaiTranslatorResults(query, results = null) {
