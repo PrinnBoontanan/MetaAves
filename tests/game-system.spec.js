@@ -618,3 +618,30 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
     `MetaAves audit found ${databaseErrors.length} database error(s), ${failures.length} failed game(s), ${consoleErrors.length} browser error(s), and ${browser404s.length} HTTP 404(s). See the complete summary above.`
   );
 });
+
+test("MetaAves phone layout stays vertical even with a desktop-sized mobile viewport", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window.screen, "width", { configurable: true, get: () => 390 });
+    Object.defineProperty(window.screen, "height", { configurable: true, get: () => 844 });
+  });
+
+  await page.setViewportSize({ width: 980, height: 844 });
+  await page.goto("/?e2e=1");
+  await page.waitForFunction(() => !!window.__METAAVES_E2E__);
+
+  const layout = await page.evaluate(() => {
+    const layout = document.querySelector(".taxonomy-layout");
+    const card = document.querySelector(".taxon-card");
+    return {
+      phoneClass: document.body.classList.contains("phone-device"),
+      layoutDisplay: getComputedStyle(layout).display,
+      cardDisplay: getComputedStyle(card).display,
+      cardFlexDirection: getComputedStyle(card).flexDirection
+    };
+  });
+
+  assert(layout.phoneClass, "Phone detection did not activate from physical screen dimensions");
+  assert(layout.layoutDisplay === "block", "Phone taxonomy layout is not vertical: " + layout.layoutDisplay);
+  assert(layout.cardDisplay === "flex", "Phone taxon card is not using vertical flex flow: " + layout.cardDisplay);
+  assert(layout.cardFlexDirection === "column", "Phone taxon card is not column-oriented: " + layout.cardFlexDirection);
+});
