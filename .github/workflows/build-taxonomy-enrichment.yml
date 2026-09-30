@@ -2,6 +2,13 @@ name: Build global taxonomy enrichment
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/enrich_taxonomy_wikidata.py"
+      - "scripts/validate_taxonomy_enrichment.py"
+      - "data/birds.generated.json"
+      - ".github/workflows/build-taxonomy-enrichment.yml":
 
 permissions:
   contents: write
