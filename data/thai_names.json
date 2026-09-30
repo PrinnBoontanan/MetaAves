@@ -2,8 +2,8 @@
   "_meta": {
     "source": "OpenFauna Thai locale, supplemented with existing verified MetaAves names and verified Thai-name entries",
     "sourceRevision": "3511422761fb0b36368ae58383c7db13ff21ece4",
-    "thaiEntries": 1451,
-    "note": "Static Thai-name database. World mode hides Thai names; Thailand mode uses these names.",
+    "thaiEntries": 1448,
+    "note": "Static Thai-name database. World mode hides Thai names; Thailand mode uses these names. Obscure global species are left blank rather than assigning an unverified Thai name.",
     "updatedAt": "2026-09-30"
   },
   "names": {
@@ -1302,14 +1302,11 @@
     "Tachybaptus ruficollis": "นกเป็ดผีเล็ก",
     "Tachymarptis melba": "นกแอ่นแอลไพน์",
     "Tachyspiza badia": "เหยี่ยวนกเขาชิครา",
-    "Tachyspiza cirrocephala": "เหยี่ยวนกกระจอกเล็ก",
-    "Tachyspiza fasciata": "เหยี่ยวนกกระจอกเล็ก",
+    "Tachyspiza cirrocephala": "เหยี่ยวคอปก",
+    "Tachyspiza fasciata": "เหยี่ยวสีน้ำตาล",
     "Tachyspiza gularis": "เหยี่ยวนกเขาพันธุ์ญี่ปุ่น",
-    "Tachyspiza hiogaster": "เหยี่ยวนกกระจอกเล็ก",
-    "Tachyspiza minulla": "เหยี่ยวนกกระจอกเล็ก",
-    "Tachyspiza novaehollandiae": "เหยี่ยวนกกระจอกเล็ก",
+    "Tachyspiza novaehollandiae": "เหยี่ยวเทา",
     "Tachyspiza soloensis": "เหยี่ยวนกเขาพันธุ์จีน",
-    "Tachyspiza trinotata": "เหยี่ยวนกกระจอกเล็ก",
     "Tachyspiza virgata": "เหยี่ยวนกกระจอกเล็ก",
     "Tadorna ferruginea": "เป็ดพม่า",
     "Tadorna tadorna": "เป็ดเชลดัก",
