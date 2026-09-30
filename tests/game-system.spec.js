@@ -36,23 +36,46 @@ function buildRankedPath(taxonomy, speciesName) {
   return path;
 }
 
-function checkCladePath(clades, names, label) {
+function checkCladePath(clades, taxonomy, names, label) {
   if (!Array.isArray(names)) return;
-  const byName = new Map(
+
+  const cladesByName = new Map(
     Object.values(clades)
       .filter(x => x && x.id && x.name)
       .map(x => [x.name, x])
   );
+  const parents = new Map();
+
+  for (const taxon of Object.values(taxonomy || {})) {
+    if (taxon && taxon.id) parents.set(taxon.id, taxon.parent || null);
+  }
+  for (const clade of Object.values(clades || {})) {
+    if (clade && clade.id) parents.set(clade.id, clade.parent || "class:Aves");
+  }
+
+  function isDescendantOf(childId, ancestorId) {
+    const seen = new Set();
+    let current = childId;
+
+    while (current) {
+      if (current === ancestorId) return true;
+      assert(!seen.has(current), label + ": cycle while checking " + childId);
+      seen.add(current);
+      current = parents.get(current) || null;
+    }
+
+    return false;
+  }
 
   let previous = "class:Aves";
   for (const name of names) {
-    const clade = byName.get(name);
-    assert(clade, `${label}: missing clade ${name}`);
+    const clade = cladesByName.get(name);
+    assert(clade, label + ": missing clade " + name);
 
-    const parent = clade.parent || "class:Aves";
     assert(
-      parent === previous,
-      `${label}: invalid transition ${previous} -> ${name} (parent is ${parent})`
+      isDescendantOf(clade.id, previous),
+      label + ": invalid clade path transition " + previous + " -> " + name +
+        " (the clade is not a descendant of the previous node)"
     );
     previous = clade.id;
   }
@@ -125,7 +148,7 @@ async function auditDatabase(data) {
 
   for (const [order, path] of Object.entries(orderPaths)) {
     try {
-      checkCladePath(clades, path, `order ${order}`);
+      checkCladePath(clades, taxonomy, path, `order ${order}`);
     } catch (error) {
       errors.push(error.message);
     }
@@ -133,7 +156,7 @@ async function auditDatabase(data) {
 
   for (const [family, path] of Object.entries(familyPaths)) {
     try {
-      checkCladePath(clades, path, `family ${family}`);
+      checkCladePath(clades, taxonomy, path, `family ${family}`);
     } catch (error) {
       errors.push(error.message);
     }
