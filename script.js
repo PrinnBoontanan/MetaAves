@@ -1226,7 +1226,7 @@ function getBirdPhylogenyPath(bird) {
                 postOrderPath.forEach(cladeName => {
                     const clade = cladeByName.get(cladeName);
                     if (!clade || seen.has(clade.id)) return;
-                    addNode(clade.id, "clade", clade.name);
+                    addNode(clade.id, clade.rank || "clade", clade.name);
                 });
             }
         });
@@ -6764,20 +6764,39 @@ async function showGameOverCard(result) {
     if (newGameButton) newGameButton.classList.add("visible");
 
     const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    const [wiki, onlineThaiName, onlineConservationStatus, wikidataDetailed] =
-        await Promise.all([
-            fetchWikipediaPageData(
-                wikiTitle,
-                true,
-                "bird",
-                bird.scientificName
-            ),
-            gameState.mode === "thailand"
-                ? fetchOnlineThaiName(bird)
-                : Promise.resolve(""),
-            fetchWikidataConservationStatus(bird),
-            fetchWikidataDetailedTaxonomy(bird)
-        ]);
+    // Online enrichment is best-effort. A temporary 404/429 or a
+    // single failed provider must never erase the locally available
+    // taxonomy from the study card.
+    const enrichmentResults = await Promise.allSettled([
+        fetchWikipediaPageData(
+            wikiTitle,
+            true,
+            "bird",
+            bird.scientificName
+        ),
+        gameState.mode === "thailand"
+            ? fetchOnlineThaiName(bird)
+            : Promise.resolve(""),
+        fetchWikidataConservationStatus(bird),
+        fetchWikidataDetailedTaxonomy(bird)
+    ]);
+
+    const wiki =
+        enrichmentResults[0]?.status === "fulfilled"
+            ? enrichmentResults[0].value
+            : null;
+    const onlineThaiName =
+        enrichmentResults[1]?.status === "fulfilled"
+            ? enrichmentResults[1].value
+            : "";
+    const onlineConservationStatus =
+        enrichmentResults[2]?.status === "fulfilled"
+            ? enrichmentResults[2].value
+            : "";
+    const wikidataDetailed =
+        enrichmentResults[3]?.status === "fulfilled"
+            ? enrichmentResults[3].value
+            : {};
 
     if (gameState.mysteryBird !== bird) return;
 
@@ -6790,9 +6809,33 @@ async function showGameOverCard(result) {
         thaiName.textContent = "";
     }
 
-    attachDetailedTaxonomyToBird(bird, wiki);
+    try {
+        attachDetailedTaxonomyToBird(bird, wiki);
+    } catch (error) {
+        console.warn("Wikipedia taxonomy enrichment failed:", error);
+    }
+
+    const finalTaxonomyRows = (() => {
+        try {
+            return mergeDetailedTaxonomyRows(
+                bird,
+                wiki,
+                wikidataDetailed
+            );
+        } catch (error) {
+            console.warn("Detailed taxonomy rendering failed:", error);
+            return [
+                ["Class", bird.class || "Aves"],
+                ["Order", bird.order],
+                ["Family", bird.family],
+                ["Genus", bird.genus],
+                ["Species", bird.species || bird.scientificName]
+            ].filter(([, value]) => value);
+        }
+    })();
+
     taxonomy.innerHTML = "";
-    mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed).forEach(([label, value]) => {
+    finalTaxonomyRows.forEach(([label, value]) => {
         const row = document.createElement("div");
         row.className = "study-taxonomy-row";
 
