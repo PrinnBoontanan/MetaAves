@@ -44,14 +44,12 @@ TARGET_RANKS = {
     "tribe",
     "subtribe",
     "subgenus",
-    "clade",
 }
 
 RANK_ORDER = [
     "class", "subclass", "infraclass", "superorder", "order",
     "suborder", "infraorder", "parvorder", "superfamily", "family",
     "subfamily", "tribe", "subtribe", "genus", "subgenus", "species",
-    "clade",
 ]
 
 QUERY = r"""
