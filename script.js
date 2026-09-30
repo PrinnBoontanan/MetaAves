@@ -73,7 +73,6 @@ async function loadGameData() {
             infoResponse,
             cladeResponse,
             cladeMembershipResponse,
-            taxonomyEnrichmentResponse,
             thaiNameDatabaseResponse
         ] = await Promise.all([
             fetch("data/birds.generated.json?v=20260927-taxonomy"),
@@ -82,7 +81,6 @@ async function loadGameData() {
             fetch("data/taxon_info.json?v=20260927-taxonomy"),
             fetch("data/clades.json?v=20260930-intermediate-ranks-v4"),
             fetch("data/clade_membership.generated.json?v=20260930-taxonomy-audit-v2"),
-            fetch("data/taxonomy_enrichment.generated.json?v=global-taxonomy-20260930"),
             fetch("data/thai_names.json?v=thai-names-20260930b")
         ]);
 
@@ -119,15 +117,10 @@ async function loadGameData() {
             if (databaseName) bird.thaiName = databaseName;
         });
 
-        let taxonomyEnrichment = null;
-        try {
-            if (taxonomyEnrichmentResponse.ok) {
-                taxonomyEnrichment = await taxonomyEnrichmentResponse.json();
-            }
-        } catch (error) {
-            console.warn("Global taxonomy enrichment unavailable:", error);
-        }
-        gameState.taxonomyEnrichment = taxonomyEnrichment?.species || {};
+        // Global taxonomy enrichment is optional. Its former generated
+        // artifact and automatic build workflow were removed, so the core
+        // AviList/clade data remains the source of truth here.
+        gameState.taxonomyEnrichment = {};
 
         const cladeMembership = await cladeMembershipResponse.json();
         const membershipBySpecies = cladeMembership.species || {};
