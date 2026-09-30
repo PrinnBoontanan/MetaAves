@@ -66,8 +66,10 @@ SELECT ?species ?speciesName ?sitelinks ?ancestorName ?rankLabel WHERE {
   # Prefer Wikidata taxa that have an English Wikipedia article.
   # This removes many duplicate/historical Wikidata items that share
   # the same scientific name but represent different taxonomic viewpoints.
-  ?article schema:about ?species ;
-           schema:isPartOf <https://en.wikipedia.org/> .
+  OPTIONAL {
+    ?article schema:about ?species ;
+             schema:isPartOf <https://en.wikipedia.org/> .
+  }
 
   ?ancestor wdt:P225 ?ancestorName ;
             wdt:P105 ?rank .
@@ -96,7 +98,7 @@ SELECT ?species ?speciesName ?sitelinks ?ancestorName ?rankLabel WHERE {
 def qliteral(value: str) -> str:
     # SPARQL string literal with escaped quotes/backslashes/newlines.
     value = value.replace("\\", "\\\\")
-    value = value.replace('"', '\"')
+    value = value.replace('"', '\\\"')
     value = value.replace("\n", " ")
     value = value.replace("\r", " ")
     return '"' + value + '"'
