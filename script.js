@@ -175,7 +175,16 @@ async function loadGameData() {
             const visiting = new Set();
 
             const add = name => {
-                if (!name || result.includes(name) || visiting.has(name)) {
+                // The generated membership file can contain ranked taxonomy
+                // names such as Passeriformes for lineage context. Those are
+                // already represented by the ranked taxonomy layer and must
+                // never be promoted into the named-clade layer.
+                if (
+                    !name ||
+                    !cladeNames.has(name) ||
+                    result.includes(name) ||
+                    visiting.has(name)
+                ) {
                     return;
                 }
 
