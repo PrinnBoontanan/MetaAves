@@ -169,7 +169,7 @@
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Eurypygimorphae"
+        "Phaethontimorphae"
       ],
       "Eurypygiformes": [
         "Neornithes",
@@ -177,7 +177,7 @@
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Eurypygimorphae"
+        "Phaethontimorphae"
       ],
       "Caprimulgiformes": [
         "Neornithes",
@@ -626,11 +626,13 @@
       "Paridae": [
         "Eupasseres",
         "Passeri",
+        "Passerides",
         "Sylviida"
       ],
       "Remizidae": [
         "Eupasseres",
         "Passeri",
+        "Passerides",
         "Sylviida"
       ],
       "Regulidae": [
@@ -766,8 +768,7 @@
       "Icteriidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
       ],
       "Phaenicophilidae": [
         "Eupasseres",
@@ -940,36 +941,43 @@
       "Hyliotidae": [
         "Eupasseres",
         "Passeri",
+        "Passerides",
         "Sylviida"
       ],
       "Stenostiridae": [
         "Eupasseres",
         "Passeri",
+        "Passerides",
         "Sylviida"
       ],
       "Panuridae": [
         "Eupasseres",
         "Passeri",
+        "Passerides",
         "Sylviida"
       ],
       "Alaudidae": [
         "Eupasseres",
         "Passeri",
+        "Passerides",
         "Sylviida"
       ],
       "Nicatoridae": [
         "Eupasseres",
         "Passeri",
+        "Passerides",
         "Sylviida"
       ],
       "Macrosphenidae": [
         "Eupasseres",
         "Passeri",
+        "Passerides",
         "Sylviida"
       ],
       "Cisticolidae": [
         "Eupasseres",
         "Passeri",
+        "Passerides",
         "Sylviida"
       ],
       "Acrocephalidae": [
