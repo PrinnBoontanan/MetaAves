@@ -66,6 +66,25 @@ def main() -> None:
     if not isinstance(family_paths, dict):
         fail("clades._meta.passerineFamilyCladePaths is missing or invalid")
 
+    bird_orders = {str(bird.get("order") or "").strip() for bird in birds}
+    bird_passerine_families = {
+        str(bird.get("family") or "").strip()
+        for bird in birds
+        if bird.get("order") == "Passeriformes"
+    }
+    missing_order_backbones = sorted(bird_orders - set(order_paths))
+    extra_order_backbones = sorted(set(order_paths) - bird_orders)
+    if missing_order_backbones:
+        fail("missing clade backbone for orders: " + ", ".join(missing_order_backbones))
+    if extra_order_backbones:
+        fail("stale clade backbone for orders: " + ", ".join(extra_order_backbones))
+    missing_passerine_families = sorted(bird_passerine_families - set(family_paths))
+    extra_passerine_families = sorted(set(family_paths) - bird_passerine_families)
+    if missing_passerine_families:
+        fail("missing passerine clade mapping for families: " + ", ".join(missing_passerine_families))
+    if extra_passerine_families:
+        fail("stale passerine clade mapping for families: " + ", ".join(extra_passerine_families))
+
     known_clades = set()
 
     def collect_paths(value):
