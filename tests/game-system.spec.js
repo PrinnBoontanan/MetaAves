@@ -582,6 +582,7 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
   console.log(`Failed games: ${failures.length}`);
   console.log(`Database errors: ${databaseErrors.length}`);
   console.log(`Browser errors: ${consoleErrors.length}`);
+  console.log(`HTTP 404s: ${browser404s.length}`);
 
   if (databaseErrors.length) {
     console.log("\n=== DATABASE ERRORS ===");
@@ -601,9 +602,19 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
     consoleErrors.forEach(error => console.log(`Game ${error.game} [${error.type}] ${error.message}`));
   }
 
+  if (browser404s.length) {
+    console.log("\n=== HTTP 404s ===");
+    browser404s.forEach(error =>
+      console.log(`Game ${error.game} [${error.resourceType}] ${error.url}`)
+    );
+  }
+
   assert(report.length + failures.length === GAME_COUNT, "Not all requested games were accounted for");
   assert(
-    databaseErrors.length === 0 && failures.length === 0 && consoleErrors.length === 0,
-    `MetaAves audit found ${databaseErrors.length} database error(s), ${failures.length} failed game(s), and ${consoleErrors.length} browser error(s). See the complete summary above.`
+    databaseErrors.length === 0 &&
+    failures.length === 0 &&
+    consoleErrors.length === 0 &&
+    browser404s.length === 0,
+    `MetaAves audit found ${databaseErrors.length} database error(s), ${failures.length} failed game(s), ${consoleErrors.length} browser error(s), and ${browser404s.length} HTTP 404(s). See the complete summary above.`
   );
 });
