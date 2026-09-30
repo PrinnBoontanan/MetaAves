@@ -379,29 +379,24 @@ CLADE_PATHS_BY_ORDER = {
 # phylogeny, which follows Oliveros et al. (2019) for these subdivisions.
 PASSERINE_FAMILY_CLADE_PATHS = {
     "Philepittidae": [
-        "Eupasseres",
-        "Tyranni",
-        "Eurylaimides"
+        "Eurylaimides",
+        "Pittoidea"
     ],
     "Eurylaimidae": [
-        "Eupasseres",
-        "Tyranni",
-        "Eurylaimides"
+        "Eurylaimides",
+        "Eurylaimoidea"
     ],
     "Calyptomenidae": [
-        "Eupasseres",
-        "Tyranni",
-        "Eurylaimides"
+        "Eurylaimides",
+        "Eurylaimoidea"
     ],
     "Sapayoidae": [
-        "Eupasseres",
-        "Tyranni",
-        "Eurylaimides"
+        "Eurylaimides",
+        "Sapayooidea"
     ],
     "Pittidae": [
-        "Eupasseres",
-        "Tyranni",
-        "Eurylaimides"
+        "Eurylaimides",
+        "Pittoidea"
     ],
     "Melanopareiidae": [
         "Eupasseres",
@@ -542,24 +537,20 @@ PASSERINE_FAMILY_CLADE_PATHS = {
         "Meliphagoidea"
     ],
     "Cinclosomatidae": [
-        "Eupasseres",
-        "Passeri",
-        "Corvides"
+        "Corvides",
+        "Cinclosomatoidea"
     ],
     "Campephagidae": [
-        "Eupasseres",
-        "Passeri",
-        "Corvides"
+        "Corvides",
+        "Campephagoidea"
     ],
     "Mohouidae": [
-        "Eupasseres",
-        "Passeri",
-        "Corvides"
+        "Corvides",
+        "Mohouoidea"
     ],
     "Neosittidae": [
-        "Eupasseres",
-        "Passeri",
-        "Corvides"
+        "Corvides",
+        "Neosittoidea"
     ],
     "Psophodidae": [
         "Eupasseres",
@@ -632,16 +623,12 @@ PASSERINE_FAMILY_CLADE_PATHS = {
         "Corvoidea"
     ],
     "Paridae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Paroidea"
     ],
     "Remizidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Paroidea"
     ],
     "Regulidae": [
         "Eupasseres",
@@ -775,11 +762,6 @@ PASSERINE_FAMILY_CLADE_PATHS = {
         "Passeri",
         "Emberizoidea"
     ],
-    "Icteriidae": [
-        "Eupasseres",
-        "Passeri",
-        "Emberizoidea"
-    ],
     "Phaenicophilidae": [
         "Eupasseres",
         "Passeri",
@@ -909,74 +891,48 @@ PASSERINE_FAMILY_CLADE_PATHS = {
         "Corvoidea"
     ],
     "Cnemophilidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Cnemophilida"
     ],
     "Melanocharitidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Melanocharitida"
     ],
     "Callaeidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Petroicida"
     ],
     "Notiomystidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Petroicida"
     ],
     "Petroicidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Petroicida"
     ],
     "Eupetidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Eupetida"
     ],
     "Picathartidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Eupetida"
     ],
     "Chaetopidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Eupetida"
     ],
     "Hyliotidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Paroidea"
     ],
     "Stenostiridae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Paroidea"
     ],
     "Panuridae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Alaudoidea"
     ],
     "Alaudidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Alaudoidea"
     ],
     "Nicatoridae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Alaudoidea"
     ],
     "Macrosphenidae": [
         "Eupasseres",
@@ -1134,6 +1090,223 @@ PASSERINE_FAMILY_CLADE_PATHS = {
         "Eupasseres",
         "Passeri",
         "Passerida"
+    ]
+}
+
+NONPASSERINE_FAMILY_CLADE_PATHS = {
+    "Megapodiidae": [
+        "Megapodii"
+    ],
+    "Cracidae": [
+        "Craci"
+    ],
+    "Numididae": [
+        "Phasiani",
+        "Numidioidea"
+    ],
+    "Odontophoridae": [
+        "Phasiani",
+        "Phasianoidea"
+    ],
+    "Phasianidae": [
+        "Phasiani",
+        "Phasianoidea"
+    ],
+    "Gruidae": [
+        "Grui"
+    ],
+    "Aramidae": [
+        "Grui"
+    ],
+    "Psophiidae": [
+        "Grui"
+    ],
+    "Heliornithidae": [
+        "Ralli"
+    ],
+    "Sarothruridae": [
+        "Ralli"
+    ],
+    "Rallidae": [
+        "Ralli"
+    ],
+    "Burhinidae": [
+        "Charadrii",
+        "Chionida"
+    ],
+    "Chionidae": [
+        "Charadrii",
+        "Chionida"
+    ],
+    "Pluvianellidae": [
+        "Charadrii",
+        "Chionida"
+    ],
+    "Charadriidae": [
+        "Charadrii",
+        "Charadriida"
+    ],
+    "Pluvianidae": [
+        "Charadrii",
+        "Charadriida"
+    ],
+    "Ibidorhynchidae": [
+        "Charadrii",
+        "Charadriida"
+    ],
+    "Haematopodidae": [
+        "Charadrii",
+        "Charadriida"
+    ],
+    "Recurvirostridae": [
+        "Charadrii",
+        "Charadriida"
+    ],
+    "Rostratulidae": [
+        "Scolopaci",
+        "Jacanida"
+    ],
+    "Jacanidae": [
+        "Scolopaci",
+        "Jacanida"
+    ],
+    "Thinocoridae": [
+        "Scolopaci",
+        "Jacanida"
+    ],
+    "Pedionomidae": [
+        "Scolopaci",
+        "Jacanida"
+    ],
+    "Scolopacidae": [
+        "Scolopaci",
+        "Scolopacida"
+    ],
+    "Turnicidae": [
+        "Lari",
+        "Turnicida"
+    ],
+    "Glareolidae": [
+        "Lari",
+        "Larida"
+    ],
+    "Dromadidae": [
+        "Lari",
+        "Larida"
+    ],
+    "Stercorariidae": [
+        "Lari",
+        "Larida"
+    ],
+    "Alcidae": [
+        "Lari",
+        "Larida"
+    ],
+    "Laridae": [
+        "Lari",
+        "Larida"
+    ],
+    "Fregatidae": [
+        "Fregatae"
+    ],
+    "Sulidae": [
+        "Sulae"
+    ],
+    "Anhingidae": [
+        "Sulae"
+    ],
+    "Phalacrocoracidae": [
+        "Sulae"
+    ],
+    "Threskiornithidae": [
+        "Threskiornithes"
+    ],
+    "Scopidae": [
+        "Pelecani"
+    ],
+    "Balaenicipitidae": [
+        "Pelecani"
+    ],
+    "Pelecanidae": [
+        "Pelecani"
+    ],
+    "Ardeidae": [
+        "Ardeae"
+    ],
+    "Sagittariidae": [
+        "Accipitres"
+    ],
+    "Pandionidae": [
+        "Accipitres"
+    ],
+    "Accipitridae": [
+        "Accipitres"
+    ],
+    "Bucerotidae": [
+        "Buceroidea"
+    ],
+    "Upupidae": [
+        "Upupoidea"
+    ],
+    "Phoeniculidae": [
+        "Upupoidea"
+    ],
+    "Meropidae": [
+        "Meropi"
+    ],
+    "Coraciidae": [
+        "Coracii"
+    ],
+    "Brachypteraciidae": [
+        "Coracii"
+    ],
+    "Todidae": [
+        "Alcedines"
+    ],
+    "Momotidae": [
+        "Alcedines"
+    ],
+    "Alcedinidae": [
+        "Alcedines"
+    ],
+    "Galbulidae": [
+        "Galbuli"
+    ],
+    "Bucconidae": [
+        "Galbuli"
+    ],
+    "Lybiidae": [
+        "Pici"
+    ],
+    "Megalaimidae": [
+        "Pici"
+    ],
+    "Ramphastidae": [
+        "Pici"
+    ],
+    "Semnornithidae": [
+        "Pici"
+    ],
+    "Capitonidae": [
+        "Pici"
+    ],
+    "Indicatoridae": [
+        "Pici"
+    ],
+    "Picidae": [
+        "Pici"
+    ],
+    "Strigopidae": [
+        "Strigopoidea"
+    ],
+    "Cacatuidae": [
+        "Cacatuoidea"
+    ],
+    "Psittacidae": [
+        "Psittacoidea"
+    ],
+    "Psittaculidae": [
+        "Psittacoidea"
     ]
 }
 
@@ -1599,7 +1772,7 @@ def main():
         family_clade_path = (
             PASSERINE_FAMILY_CLADE_PATHS.get(family_name)
             if order_name == "Passeriformes"
-            else None
+            else NONPASSERINE_FAMILY_CLADE_PATHS.get(family_name)
         )
 
         # Build one broad-to-specific lineage.  The family path supplies the
