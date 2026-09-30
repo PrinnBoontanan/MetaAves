@@ -2,9 +2,9 @@
   "_meta": {
     "source": "OpenFauna Thai locale (scientific-name → Thai bird names), supplemented by existing verified MetaAves entries",
     "sourceRevision": "3511422761fb0b36368ae58383c7db13ff21ece4",
-    "generatedAt": "2026-09-30",
     "thaiEntries": 1450,
-    "note": "World mode hides Thai names; Thailand mode uses these names."
+    "note": "World mode hides Thai names; Thailand mode uses these names.",
+    "updatedAt": "2026-09-30"
   },
   "names": {
     "Abroscopus albogularis": "นกกระจ้อยคอดำ",
