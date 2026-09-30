@@ -24,6 +24,12 @@ TARGET_RANKS = (
     "subgenus",
 )
 
+EXPECTED_RANK_ORDER = (
+    "class", "subclass", "infraclass", "superorder", "order",
+    "suborder", "infraorder", "parvorder", "superfamily", "family",
+    "subfamily", "tribe", "subtribe", "genus", "subgenus", "species",
+)
+
 
 def main() -> None:
     birds = json.loads(BIRDS.read_text(encoding="utf-8"))
@@ -34,6 +40,10 @@ def main() -> None:
         for b in birds
         if str(b.get("scientificName") or "").strip()
     }
+
+    meta = output.get("_meta", {})
+    if tuple(meta.get("rankOrder", ())) != EXPECTED_RANK_ORDER:
+        raise SystemExit("Invalid enrichment: rankOrder metadata is missing or out of date.")
 
     enriched = output.get("species", {})
     if not isinstance(enriched, dict):
