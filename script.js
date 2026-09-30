@@ -2,6 +2,19 @@
 // MetaAves - Game State
 // ========================================
 
+// Phones get a dedicated compact layout. Width alone misses landscape phones,
+// so combine a narrow viewport with coarse touch input.
+const phoneLayoutQuery = window.matchMedia(
+    "(max-width: 700px), (pointer: coarse) and (max-height: 500px)"
+);
+
+function updatePhoneLayoutClass() {
+    document.body.classList.toggle("phone-device", phoneLayoutQuery.matches);
+}
+
+updatePhoneLayoutClass();
+phoneLayoutQuery.addEventListener("change", updatePhoneLayoutClass);
+
 const gameState = {
     mode: null,
     maxGuesses: 12,
