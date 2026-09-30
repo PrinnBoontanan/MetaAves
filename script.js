@@ -5964,212 +5964,136 @@ function buildSpeciesHint(
     genusSpeciesStudies = []
 ) {
     const relationship = getHintRelationship(guessedBird);
-    const isSameGenus = relationship?.rank === "Genus";
+    if (!relationship || !mysteryStudy) return [];
+
+    const fields = [
+        ["Appearance", "appearance", study => study?.description],
+        ["Habitat", "habitat", study => study?.habitatDistribution],
+        ["Behavior", "behavior", study => study?.behavior],
+        ["Diet", "diet", study => study?.diet],
+        ["Breeding", "breeding", study => study?.breeding]
+    ];
+
+    const guessedTraits = new Set(
+        getHintStudyTraits(guessedStudy)
+            .map(item => item.label + "|" + item.token)
+    );
+
+    const mysteryTraits = getHintStudyTraits(mysteryStudy);
+    const shared = [];
+    const mysteryOnly = [];
+
+    fields.forEach(([label, category, getter]) => {
+        const mysteryTokens = getHintFactTokens(getter(mysteryStudy), category);
+        const guessedTokens = new Set(
+            getHintFactTokens(getter(guessedStudy), category)
+        );
+
+        mysteryTokens.forEach(token => {
+            const key = label + "|" + token;
+
+            if (guessedTokens.has(token) && !guessedTraits.has(key)) {
+                shared.push({ label, token, score: 1 });
+            }
+
+            if (!guessedTokens.has(token) && !guessedTraits.has(key)) {
+                mysteryOnly.push({ label, token, score: 1 });
+            }
+        });
+    });
+
+    // Prefer facts the hovered bird and mystery bird visibly/biologically
+    // share. This makes each hovered bird produce a clue tied to that bird,
+    // e.g. "The mystery bird also has black plumage."
+    const dedupe = items => {
+        const seen = new Set();
+        return items.filter(item => {
+            const key = item.label + "|" + item.token;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+    };
+
+    const selectedShared = dedupe(shared);
+    const selectedMysteryOnly = dedupe(mysteryOnly);
+
     const clues = [];
+    const categoryOrder = ["Appearance", "Habitat", "Behavior", "Diet", "Breeding"];
 
-    const mysteryGenus = gameState.mysteryBird?.genus;
-
-    // Never expose family/genus sizes to the player. They are used only to
-    // control how selective the diagnostic-trait engine should be.
-    const genusMembersAll = mysteryGenus
-        ? gameState.birds.filter(bird => bird.genus === mysteryGenus)
-        : [];
-
-    // Several diagnostic traits can belong to the same ID category. Keep
-    // those traits together so the player gets one coherent clue instead of
-    // several nearly identical cards.
-    function addGroupedDiagnosticClues(diagnostic, stage, options = {}) {
+    const addClues = (items, mode) => {
         const groups = new Map();
 
-        diagnostic.forEach(item => {
-            if (!item?.label || !item?.token) return;
+        items.forEach(item => {
             if (!groups.has(item.label)) groups.set(item.label, []);
-            const tokens = groups.get(item.label);
-            if (!tokens.includes(item.token)) tokens.push(item.token);
+            const values = groups.get(item.label);
+            if (!values.includes(item.token)) values.push(item.token);
         });
 
-        const categoryOrder = options.categoryOrder || [];
-        const orderedGroups = [...groups.entries()].sort((a, b) => {
-            const ai = categoryOrder.indexOf(a[0]);
-            const bi = categoryOrder.indexOf(b[0]);
-            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-        });
+        [...groups.entries()]
+            .sort((a, b) =>
+                categoryOrder.indexOf(a[0]) - categoryOrder.indexOf(b[0])
+            )
+            .slice(0, 3)
+            .forEach(([label, tokens]) => {
+                const selected = tokens.slice(0, 2);
 
-        orderedGroups.slice(0, 3).forEach(([label, tokens]) => {
-            const selected = tokens.slice(0, 3);
-            let text;
+                let text;
+                if (mode === "shared") {
+                    text = selected.length === 1
+                        ? "The mystery bird also has " + selected[0] + "."
+                        : "The mystery bird also has " +
+                          selected[0] + " and " + selected[1] + ".";
+                } else {
+                    text = selected.length === 1
+                        ? "The mystery bird has " + selected[0] + "."
+                        : "The mystery bird has " +
+                          selected[0] + " and " + selected[1] + ".";
+                }
 
-            if (stage === "genus") {
-                text =
-                    selected.length === 1
-                        ? "The mystery branch is especially associated with " + selected[0] + "."
-                        : "The mystery branch is especially associated with " +
-                          selected.slice(0, -1).join(", ") +
-                          " and " + selected[selected.length - 1] + ".";
-            } else {
-                text =
-                    selected.length === 1
-                        ? "This is a useful distinguishing " + label.toLowerCase() +
-                          " trait: " + selected[0] + "."
-                        : "These are useful distinguishing " + label.toLowerCase() +
-                          " traits: " + selected.slice(0, -1).join(", ") +
-                          " and " + selected[selected.length - 1] + ".";
-            }
-
-            clues.push({
-                heading: label + " — " + stage + " clue",
-                text
+                clues.push({ heading: label, text });
             });
-        });
-    }
+    };
 
-    if (!isSameGenus) {
-        const targetGenusStudies = [
-            mysteryStudy,
-            ...mysteryGenusStudies.map(entry => entry?.study)
-        ].filter(Boolean);
+    addClues(selectedShared, "shared");
 
-        const comparisonGenusStudies = familyGenusStudies
-            .filter(entry => entry?.study)
-            .map(entry => entry.study);
-
-        const familyGeneraCount = new Set(
-            gameState.birds
-                .filter(bird => bird.family === gameState.mysteryBird?.family)
-                .map(bird => bird.genus)
-                .filter(Boolean)
-        ).size;
-
-        const minimumSupport =
-            familyGeneraCount >= 20 ? 0.34 :
-            familyGeneraCount >= 10 ? 0.40 :
-            0.50;
+    // If the hovered bird and mystery have few explicit facts in common,
+    // fall back to a mystery-specific fact that is uncommon among the
+    // mystery's close relatives.
+    if (!clues.length) {
+        const comparisonStudies = relationship.rank === "Genus"
+            ? genusSpeciesStudies.map(entry => entry?.study).filter(Boolean)
+            : familyGenusStudies.map(entry => entry?.study).filter(Boolean);
 
         const diagnostic = getDiagnosticHintTraits(
-            targetGenusStudies,
-            comparisonGenusStudies,
-            minimumSupport
-        );
-
-        addGroupedDiagnosticClues(
-            diagnostic,
-            "genus",
-            {
-                categoryOrder: ["Appearance", "Behavior", "Habitat", "Breeding", "Diet"]
-            }
-        );
-
-        // If the family profile is sparse, fall back to repeated traits from
-        // the mystery genus rather than inventing a distinction.
-        if (!clues.length) {
-            const repeated = getDiagnosticHintTraits(
-                targetGenusStudies,
-                [],
-                targetGenusStudies.length > 2 ? 0.5 : 0.34
-            );
-
-            addGroupedDiagnosticClues(
-                repeated,
-                "genus",
-                {
-                    categoryOrder: ["Appearance", "Behavior", "Habitat", "Breeding", "Diet"]
-                }
-            );
-        }
-
-        // Keep the common-name clue only as a final fallback.
-        if (clues.length < 1) {
-            const guessedNameWords = getMeaningfulNameWords(guessedBird?.commonName);
-            const mysteryNameWords = getMeaningfulNameWords(gameState.mysteryBird?.commonName);
-            const sharedNameWord = guessedNameWords.find(word =>
-                mysteryNameWords.includes(word)
-            );
-
-            if (sharedNameWord) {
-                clues.push({
-                    heading: "Name clue",
-                    text: "The mystery bird's common name also contains the word “" +
-                        sharedNameWord + "”."
-                });
-            }
-        }
-    } else {
-        const comparisonStudies = [
-            ...genusSpeciesStudies,
-            ...mysteryGenusStudies.map(entry => entry?.study)
-        ].filter(Boolean);
-
-        const genusSize = genusMembersAll.length;
-
-        const diagnostic = getSpecificSpeciesTraits(
-            mysteryStudy,
+            [mysteryStudy, ...mysteryGenusStudies.map(entry => entry?.study)],
             comparisonStudies,
-            guessedStudy
+            relationship.rank === "Genus" ? 0.25 : 0.4
         );
 
-        addGroupedDiagnosticClues(
-            diagnostic,
-            "species",
-            {
-                categoryOrder: genusSize >= 15
-                    ? ["Appearance", "Behavior", "Habitat", "Breeding", "Diet"]
-                    : ["Behavior", "Habitat", "Appearance", "Diet", "Breeding"]
-            }
-        );
-
-        // If the fine-grained comparison is sparse, use a direct comparison
-        // between the guessed and mystery birds rather than a generic fact.
-        if (!clues.length && guessedStudy && mysteryStudy) {
-            const categories = [
-                ["Behavior", "behavior"],
-                ["Habitat", "habitat"],
-                ["Appearance", "appearance"],
-                ["Diet", "diet"],
-                ["Breeding", "breeding"]
-            ];
-
-            for (const [label, category] of categories) {
-                const left = getHintFactTokens(
-                    category === "appearance" ? guessedStudy.description :
-                    category === "habitat" ? guessedStudy.habitatDistribution :
-                    guessedStudy[category],
-                    category
-                );
-                const right = getHintFactTokens(
-                    category === "appearance" ? mysteryStudy.description :
-                    category === "habitat" ? mysteryStudy.habitatDistribution :
-                    mysteryStudy[category],
-                    category
-                );
-
-                const mysteryOnly = right.filter(token => !left.includes(token));
-                if (!mysteryOnly.length) continue;
-
-                clues.push({
-                    heading: label + " — species clue",
-                    text: "The mystery bird is associated with " +
-                        mysteryOnly.slice(0, 2).join(" and ") +
-                        ", unlike the bird you guessed."
-                });
-                if (clues.length >= 2) break;
-            }
-        }
-
-        if (!clues.length) {
-            clues.push({
-                heading: "Hint",
-                text: "There is not enough reliable information online to make a meaningful species-level distinction from this guess."
-            });
-        }
+        addClues(diagnostic, "mystery");
     }
 
     if (!clues.length) {
-        return [{
-            heading: isSameGenus ? "Species clue" : "Genus clue",
-            text: isSameGenus
-                ? "There is not enough reliable information online to make a useful distinction between the mystery species and its close relatives."
-                : "There is not enough reliable information online to make a useful distinction between the mystery genus and the other genera on this branch."
-        }];
+        addClues(selectedMysteryOnly, "mystery");
+    }
+
+    if (!clues.length) {
+        const nameWords = getMeaningfulNameWords(guessedBird?.commonName);
+        const mysteryNameWords = getMeaningfulNameWords(
+            gameState.mysteryBird?.commonName
+        );
+        const sharedNameWord = nameWords.find(word =>
+            mysteryNameWords.includes(word)
+        );
+
+        if (sharedNameWord) {
+            clues.push({
+                heading: "Name",
+                text: "The mystery bird's common name also contains “" +
+                    sharedNameWord + "”."
+            });
+        }
     }
 
     return clues.slice(0, 3);
