@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 
-const GAME_COUNT = Number(process.env.METAAVES_GAMES || 10);
+const GAME_COUNT = Number(process.env.METAAVES_GAMES || 20);
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -133,8 +133,24 @@ async function auditDatabase(data) {
       scientificNames.set(scientific, common);
     }
 
+    const requiredFields = [["order", "order"], ["family", "family"], ["genus", "genus"]];
+
+    for (const [field, label] of requiredFields) {
+      if (!String(bird[field] || "").trim()) {
+        errors.push(`Missing ${label} field: ${common || scientific}`);
+      }
+    }
+
     try {
-      buildRankedPath(taxonomy, bird.scientificName);
+      const rankedPath = buildRankedPath(taxonomy, bird.scientificName);
+      const pathByRank = new Map(rankedPath.map(t => [t.rank, t.name]));
+      for (const [field, rank] of requiredFields) {
+        const actual = String(bird[field] || "").trim();
+        const expected = String(pathByRank.get(rank) || "").trim();
+        if (actual && expected && actual !== expected) {
+          errors.push(`Taxonomy mismatch for ${common} (${scientific}): bird.${field}="${actual}" but taxonomy says "${expected}"`);
+        }
+      }
     } catch (error) {
       errors.push(error.message);
     }
@@ -299,11 +315,18 @@ async function verifyStudyCard(page, mystery) {
 
 test("MetaAves full game-system audit — 10 games", async ({ page }) => {
   const report = [];
+  const failures = [];
+  const databaseErrors = [];
   const consoleErrors = [];
+  let activeGame = 0;
 
-  page.on("pageerror", error => consoleErrors.push(error.message));
+  page.on("pageerror", error => {
+    consoleErrors.push({ game: activeGame || "startup", type: "pageerror", message: error.message });
+  });
   page.on("console", message => {
-    if (message.type() === "error") consoleErrors.push(message.text());
+    if (message.type() === "error") {
+      consoleErrors.push({ game: activeGame || "startup", type: "console", message: message.text() });
+    }
   });
 
   await page.goto("/?e2e=1");
@@ -312,10 +335,10 @@ test("MetaAves full game-system audit — 10 games", async ({ page }) => {
   const data = await loadData(page);
   const audit = await auditDatabase(data);
 
-  assert(
-    audit.errors.length === 0,
-    `DATABASE AUDIT FAILED (showing up to 25):\\n${audit.errors.slice(0, 25).join("\\n")}`
-  );
+  if (audit.errors.length) {
+    databaseErrors.push(...audit.errors);
+    console.log(`Database audit found ${audit.errors.length} issue(s); game audit will continue so all runtime failures can be collected.`);
+  }
 
   const api = await getApi(page);
   assert(api.birdCount === audit.birdCount, "Browser and database bird counts differ");
@@ -327,9 +350,11 @@ test("MetaAves full game-system audit — 10 games", async ({ page }) => {
   for (let game = 0; game < GAME_COUNT; game++) {
     const mode = modes[game];
     const shouldWin = game % 2 === 0;
+    activeGame = game + 1;
 
-    await startMode(page, mode);
-    let state = await getState(page);
+    try {
+      await startMode(page, mode);
+      let state = await getState(page);
 
     assert(state.mystery.commonName, `Game ${game + 1}: no mystery bird`);
     assert(state.remaining === 12, `Game ${game + 1}: game did not start at 12 guesses`);
@@ -443,27 +468,60 @@ test("MetaAves full game-system audit — 10 games", async ({ page }) => {
       await verifyTree(page, `Game ${game + 1}, lost`);
     }
 
-    report.push({
-      game: game + 1,
-      mode,
-      result: state.status,
-      mystery: state.mystery.commonName,
-      scientific: state.mystery.scientificName,
-      order: state.mystery.order,
-      family: state.mystery.family,
-      genus: state.mystery.genus,
-      clades: state.mystery.clades.join(" → "),
-      guessesUsed: 12 - state.remaining
-    });
+      report.push({
+        game: game + 1,
+        mode,
+        result: state.status,
+        mystery: state.mystery.commonName,
+        scientific: state.mystery.scientificName,
+        order: state.mystery.order,
+        family: state.mystery.family,
+        genus: state.mystery.genus,
+        clades: state.mystery.clades.join(" → "),
+        guessesUsed: 12 - state.remaining
+      });
+    } catch (error) {
+      const failedState = await getState(page).catch(() => ({ mystery: {} }));
+      failures.push({
+        game: game + 1,
+        mode,
+        mystery: failedState.mystery?.commonName || "unknown",
+        error: error?.message || String(error)
+      });
+      console.log(`GAME ${game + 1} FAILED: ${error?.message || error}`);
+    }
   }
 
   console.log("\\n=== MetaAves 10-game system audit ===");
   console.table(report);
   console.log(`Database: ${audit.birdCount} birds, ${audit.taxonomyCount} taxonomy nodes`);
   console.log(`Expected games: ${GAME_COUNT}; completed: ${report.length}`);
-  console.log(`Page errors: ${consoleErrors.length}`);
-  if (consoleErrors.length) console.log(consoleErrors);
+  console.log(`Completed games: ${report.length}/${GAME_COUNT}`);
+  console.log(`Failed games: ${failures.length}`);
+  console.log(`Database errors: ${databaseErrors.length}`);
+  console.log(`Browser errors: ${consoleErrors.length}`);
 
-  assert(report.length === GAME_COUNT, "Not all requested games completed");
-  assert(consoleErrors.length === 0, `Browser reported ${consoleErrors.length} error(s)`);
+  if (databaseErrors.length) {
+    console.log("\n=== DATABASE ERRORS ===");
+    databaseErrors.forEach((error, index) => console.log(`${index + 1}. ${error}`));
+  }
+
+  if (failures.length) {
+    console.log("\n=== GAME FAILURES ===");
+    failures.forEach(failure => {
+      console.log(`Game ${failure.game} [${failure.mode}] — ${failure.mystery}`);
+      console.log(`  ${failure.error}`);
+    });
+  }
+
+  if (consoleErrors.length) {
+    console.log("\n=== BROWSER ERRORS ===");
+    consoleErrors.forEach(error => console.log(`Game ${error.game} [${error.type}] ${error.message}`));
+  }
+
+  assert(report.length + failures.length === GAME_COUNT, "Not all requested games were accounted for");
+  assert(
+    databaseErrors.length === 0 && failures.length === 0 && consoleErrors.length === 0,
+    `MetaAves audit found ${databaseErrors.length} database error(s), ${failures.length} failed game(s), and ${consoleErrors.length} browser error(s). See the complete summary above.`
+  );
 });
