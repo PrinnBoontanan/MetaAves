@@ -2086,7 +2086,7 @@ async function fetchOnlineThaiName(bird) {
                 "&language=en&format=json&origin=*";
 
             const searchResponse = await fetch(searchUrl);
-            if (!searchResponse.ok) return null;
+            if (!searchResponse.ok) throw new Error("Wikidata search failed");
 
             const searchData = await searchResponse.json();
             const exactMatch = (searchData.search || []).find(result =>
@@ -2095,7 +2095,7 @@ async function fetchOnlineThaiName(bird) {
             );
             const result = exactMatch || searchData.search?.[0];
             const entityId = result?.id;
-            if (!entityId) return null;
+            if (!entityId) throw new Error("Wikidata entity not found");
 
             const entityUrl =
                 "https://www.wikidata.org/w/api.php?action=wbgetentities" +
@@ -2103,7 +2103,7 @@ async function fetchOnlineThaiName(bird) {
                 "&props=labels&languages=th&format=json&origin=*";
 
             const entityResponse = await fetch(entityUrl);
-            if (!entityResponse.ok) return null;
+            if (!entityResponse.ok) throw new Error("Wikidata entity request failed");
 
             const entityData = await entityResponse.json();
             const label = entityData.entities?.[entityId]?.labels?.th?.value;
@@ -2128,7 +2128,7 @@ async function fetchOnlineThaiName(bird) {
                 for (const href of links.slice(0, 5)) {
                     const pageUrl = href.startsWith("http")
                         ? href
-                        : "https://avibase.bsc-eoc.org/" + href.replace(/^\\//, "");
+                        : "https://avibase.bsc-eoc.org/" + href.replace(/^\//, "");
                     const pageResponse = await fetch(pageUrl);
                     if (!pageResponse.ok) continue;
                     const pageHtml = await pageResponse.text();
