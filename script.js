@@ -80,10 +80,10 @@ async function loadGameData() {
             fetch("data/taxonomy.generated.json?v=20260927-taxonomy"),
             fetch("data/taxonomy_overrides.json?v=20260927-taxonomy"),
             fetch("data/taxon_info.json?v=20260927-taxonomy"),
-            fetch("data/clades.json?v=20260930-intermediate-ranks"),
-            fetch("data/clade_membership.generated.json?v=20260930-thai-names"),
+            fetch("data/clades.json?v=20260930-intermediate-ranks-v4"),
+            fetch("data/clade_membership.generated.json?v=20260930-taxonomy-audit"),
             fetch("data/taxonomy_enrichment.generated.json?v=global-taxonomy-20260930"),
-            fetch("data/thai_names.json?v=thai-names-20260930")
+            fetch("data/thai_names.json?v=thai-names-20260930b")
         ]);
 
         if (
