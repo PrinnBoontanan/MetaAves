@@ -125,9 +125,9 @@ async function loadGameData() {
         }
 
         gameState.allBirds.forEach(bird => {
-            const generated = gameState.thaiNamesDatabase?.[bird.scientificName];
+            const databaseName = gameState.thaiNamesDatabase?.[bird.scientificName];
             const override = gameState.thaiNameOverrides?.[bird.scientificName];
-            if (generated) bird.thaiName = generated;
+            if (databaseName) bird.thaiName = databaseName;
             if (override) bird.thaiName = override;
         });
 
@@ -1939,7 +1939,7 @@ async function fetchOnlineThaiName(bird) {
         return verifiedOverride;
     }
 
-    const generatedName = gameState.thaiNamesDatabase?.[scientificName];
+    const databaseName = gameState.thaiNamesDatabase?.[scientificName];
     if (generatedName) {
         gameState.thaiNameCache.set(scientificName, generatedName);
         return generatedName;
