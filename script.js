@@ -4369,18 +4369,22 @@ function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
         if (entry?.name) add(entry.label, entry.name);
     }
 
-    // The generated clade backbone contains the complete phylogenetic path.
-    // If Wikidata says a member is actually an infraclass/suborder/etc.,
-    // addTaxon() uses that real rank instead of calling it "Clade".
-    [
-        ...(bird?.cladePath || []),
-    ].forEach(name => addTaxon(name));
+    // The generated clade data contains the complete lineage, but the
+    // taxonomy card must place the ranked Order between the broad backbone
+    // and the post-order passerine ranks. Do not let Eupasseres/Passeri/etc.
+    // render before Passeriformes simply because they are stored in the same
+    // clade path.
+    const postOrderNames = new Set(bird?.postOrderCladePath || []);
 
+    (bird?.cladePath || [])
+        .filter(name => !postOrderNames.has(name))
+        .forEach(name => addTaxon(name));
+
+    // Passeriformes is a ranked Order, not a clade. It belongs here before
+    // Eupasseres, Passeri, Passerides, Passerida, and Passeroidea.
     add("Order", bird?.order || detailed.order?.name);
 
-    [
-        ...(bird?.postOrderCladePath || [])
-    ].forEach(name => addTaxon(name));
+    (bird?.postOrderCladePath || []).forEach(name => addTaxon(name));
 
     for (const rank of [
         "suborder",
