@@ -1112,7 +1112,9 @@ function getBirdPhylogenyPath(bird) {
             continue;
         }
 
-        addNode(clade.id, "clade", clade.name);
+        // Preserve formal ranks from clades.json. For example, Neognathae is
+        // explicitly an Infraclass, not merely an unnamed clade.
+        addNode(clade.id, clade.rank || "clade", clade.name);
         previousCladeId = clade.id;
     }
 
@@ -4988,7 +4990,8 @@ function selectTaxon(node) {
 
     let taxon = null;
 
-    if (node.level === "clade") {
+    if (node.taxonId?.startsWith("clade:")) {
+        // Backbone entries can have formal ranks (e.g. Neognathae = Infraclass).
         taxon = gameState.clades?.[node.taxonId] || null;
     } else if (gameState.taxonomy) {
         taxon = Object.values(gameState.taxonomy).find(
@@ -5027,7 +5030,7 @@ function renderCladeCard(clade, wiki) {
 
     const rank = document.createElement("p");
     rank.classList.add("taxon-card-rank");
-    rank.textContent = "CLADE";
+    rank.textContent = String(clade.rank || "clade").toUpperCase();
     card.appendChild(rank);
     // Higher-taxon cards use the same Wikipedia image treatment as
     // species cards when Wikipedia provides one.
@@ -5102,7 +5105,7 @@ function getMostUsefulTaxon() {
 
     const reveal = getMysteryRevealTaxon();
 
-    if (reveal.level === "clade") {
+    if (reveal.id?.startsWith("clade:")) {
         return gameState.clades?.[reveal.id] || null;
     }
 
@@ -5200,7 +5203,7 @@ function renderTaxonomyTable() {
         const cladeCell = document.createElement("td");
         cladeCell.className = "clade-cell";
         cladeCell.textContent = getCladeText(bird) || "—";
-        if (shared.level === "clade") cladeCell.classList.add("shared-cell");
+        if (shared.id?.startsWith("clade:")) cladeCell.classList.add("shared-cell");
         row.appendChild(cladeCell);
 
         levels.forEach(level => {
