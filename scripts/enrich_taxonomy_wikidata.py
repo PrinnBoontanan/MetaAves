@@ -44,7 +44,15 @@ TARGET_RANKS = {
     "tribe",
     "subtribe",
     "subgenus",
+    "clade",
 }
+
+RANK_ORDER = [
+    "class", "subclass", "infraclass", "superorder", "order",
+    "suborder", "infraorder", "parvorder", "superfamily", "family",
+    "subfamily", "tribe", "subtribe", "genus", "subgenus", "species",
+    "clade",
+]
 
 QUERY = r"""
 SELECT ?species ?speciesName ?sitelinks ?ancestorName ?rankLabel WHERE {
@@ -258,6 +266,7 @@ def main():
             "species_total": len(names),
             "species_with_enrichment": len(enriched),
             "ambiguous_species": len(ambiguous),
+            "rankOrder": RANK_ORDER,
             "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         },
         "species": enriched,
