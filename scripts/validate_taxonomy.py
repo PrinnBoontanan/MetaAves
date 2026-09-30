@@ -100,6 +100,48 @@ def main() -> None:
                         f"membership.{section}[{scientific}] references unknown clade: {clade}"
                     )
 
+    # Every clade membership path must agree with the parent links declared in clades.json.
+    clade_parent_by_name = {}
+    for clade_id, entry in clades.items():
+        if not isinstance(clade_id, str) or not clade_id.startswith("clade:") or not isinstance(entry, dict):
+            continue
+        name = str(entry.get("name") or "").strip()
+        if not name:
+            continue
+        parent = str(entry.get("parent") or "").strip()
+        clade_parent_by_name[name] = parent.split(":", 1)[1] if parent.startswith("clade:") else parent or None
+
+    def check_clade_path(path, label):
+        for index in range(1, len(path)):
+            child = path[index]
+            expected_parent = path[index - 1]
+            declared_parent = clade_parent_by_name.get(child)
+            if declared_parent and declared_parent != expected_parent:
+                fail(
+                    f"{label} has inconsistent clade parent: "
+                    f"{child} declares {declared_parent}, path says {expected_parent}"
+                )
+
+    for section in MEMBERSHIP_SECTIONS:
+        for scientific, path in membership.get(section, {}).items():
+            check_clade_path(path, f"membership.{section}[{scientific}]")
+
+    # Parent/children links in clades.json must agree in both directions.
+    for clade_id, entry in clades.items():
+        if not isinstance(clade_id, str) or not clade_id.startswith("clade:") or not isinstance(entry, dict):
+            continue
+        parent = entry.get("parent")
+        if parent:
+            if parent not in clades:
+                fail(f"{clade_id} references missing parent {parent}")
+            if clade_id not in (clades[parent].get("children") or []):
+                fail(f"{clade_id} is missing from its parent's children list")
+        for child in entry.get("children") or []:
+            if child not in clades:
+                fail(f"{clade_id} references missing child {child}")
+            if clades[child].get("parent") != clade_id:
+                fail(f"{child} declares {clades[child].get('parent')} but is listed under {clade_id}")
+
     # Every order with a configured clade backbone must use only that backbone.
     checked_order_paths = 0
     for scientific, bird in bird_by_scientific.items():
