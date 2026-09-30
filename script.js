@@ -1616,6 +1616,52 @@ function buildTreeModel() {
         const endpointIndex = path.findIndex(node => node.id === throughId);
         if (endpointIndex < 0) return;
 
+        const endpoint = path[endpointIndex];
+
+        // Passerine intermediate clades are especially important because
+        // Passeri/Tyranni are subdivisions of Passeriformes, not direct
+        // children of the broad Australaves/Eufalconimorphae backbone.
+        //
+        // Keep the compact Metazooa-style projection for other branches
+        // (e.g. Telluraves → Bucerotidae), but when a revealed endpoint is a
+        // passerine clade, preserve the complete local passerine scaffold:
+        //
+        //   Passeriformes → Eupasseres → Passeri
+        //
+        // or, for deeper endpoints:
+        //
+        //   Passeriformes → Eupasseres → Passeri → ...
+        //
+        // This prevents Passeri from visually appearing to sit directly
+        // underneath Eufalconimorphae merely because hidden intermediate
+        // nodes were collapsed.
+        const isPasserineClade =
+            endpoint.level === "clade" &&
+            path.some(node => node.id === "order:Passeriformes") &&
+            path.some(node => node.id === "clade:Eupasseres");
+
+        if (isPasserineClade) {
+            const orderIndex = path.findIndex(
+                node => node.id === "order:Passeriformes"
+            );
+
+            for (let index = orderIndex; index <= endpointIndex; index += 1) {
+                const node = path[index];
+                if (
+                    node &&
+                    (
+                        node.id === "order:Passeriformes" ||
+                        node.id === "clade:Eupasseres" ||
+                        index === endpointIndex ||
+                        node.level === "clade"
+                    )
+                ) {
+                    visibleIds.add(node.id);
+                }
+            }
+            return;
+        }
+
         // The underlying lineage is needed to find the real relationship,
         // but only the revealed endpoint itself becomes visible. The renderer
         // skips unrevealed intermediate taxa when connecting visible nodes.
@@ -1630,7 +1676,7 @@ function buildTreeModel() {
         //   └─ Afroaves
         //      └─ Bucerotiformes
         //         └─ Bucerotidae
-        visibleIds.add(path[endpointIndex].id);
+        visibleIds.add(endpoint.id);
     }
 
     // 1. Each wrong guess reveals only its MRCA with the mystery.
@@ -1975,9 +2021,9 @@ async function fetchOnlineThaiName(bird) {
     }
 
     const databaseName = gameState.thaiNamesDatabase?.[scientificName];
-    if (generatedName) {
-        gameState.thaiNameCache.set(scientificName, generatedName);
-        return generatedName;
+    if (databaseName) {
+        gameState.thaiNameCache.set(scientificName, databaseName);
+        return databaseName;
     }
 
     const cacheValue = async () => {
@@ -4522,7 +4568,10 @@ async function showBirdInTaxonCard(bird) {
 
     // Render from local data + the lightweight Wikipedia summary first.
     // Full article parsing happens after the card is already usable.
-    const [wikiSummary, initialThaiName] = await Promise.all([
+    // Neither remote lookup is allowed to strand the card in a
+    // permanent loading state. A missing Wikipedia page or a temporary Thai
+    // lookup failure should still leave the local species card usable.
+    const [wikiSummaryResult, thaiNameResult] = await Promise.allSettled([
         fetchWikipediaPageData(
             bird.wikipediaTitle || bird.commonName,
             false,
@@ -4532,6 +4581,15 @@ async function showBirdInTaxonCard(bird) {
         ),
         thaiNamePromise
     ]);
+
+    const wikiSummary =
+        wikiSummaryResult.status === "fulfilled"
+            ? wikiSummaryResult.value
+            : null;
+    const initialThaiName =
+        thaiNameResult.status === "fulfilled"
+            ? thaiNameResult.value
+            : "";
 
     if (
         gameState.selectedTaxonId !== selectionId ||
@@ -4697,6 +4755,24 @@ function renderBirdCard(
 async function showTaxonInTaxonCard(taxon) {
     const card = document.getElementById("taxon-card");
     if (!card || !taxon) return;
+
+    // Species nodes use the same reliable bird-card pipeline as clickable
+    // species leaves. The ranked taxonomy JSON stores the scientific name in
+    // taxon.name (not taxon.scientificName), so sending a species node through
+    // the generic higher-taxon renderer can lose the bird identity and make
+    // Wikipedia lookup fail. Resolve the real bird record first.
+    if (taxon.rank === "species") {
+        const scientificName = taxon.scientificName || taxon.name || "";
+        const bird = gameState.allBirds.find(candidate =>
+            candidate.scientificName === scientificName ||
+            candidate.commonName === taxon.commonName
+        );
+
+        if (bird) {
+            await showBirdInTaxonCard(bird);
+            return;
+        }
+    }
 
     card.classList.remove("species-card", "clade-card");
 
