@@ -6767,19 +6767,28 @@ async function showGameOverCard(result) {
     // Online enrichment is best-effort. A temporary 404/429 or a
     // single failed provider must never erase the locally available
     // taxonomy from the study card.
-    const enrichmentResults = await Promise.allSettled([
-        fetchWikipediaPageData(
-            wikiTitle,
-            true,
-            "bird",
-            bird.scientificName
-        ),
-        gameState.mode === "thailand"
-            ? fetchOnlineThaiName(bird)
-            : Promise.resolve(""),
-        fetchWikidataConservationStatus(bird),
-        fetchWikidataDetailedTaxonomy(bird)
-    ]);
+    const isE2E = new URLSearchParams(window.location.search).get("e2e") === "1";
+
+    const enrichmentResults = isE2E
+        ? [
+            { status: "fulfilled", value: null },
+            { status: "fulfilled", value: "" },
+            { status: "fulfilled", value: "" },
+            { status: "fulfilled", value: {} }
+        ]
+        : await Promise.allSettled([
+            fetchWikipediaPageData(
+                wikiTitle,
+                true,
+                "bird",
+                bird.scientificName
+            ),
+            gameState.mode === "thailand"
+                ? fetchOnlineThaiName(bird)
+                : Promise.resolve(""),
+            fetchWikidataConservationStatus(bird),
+            fetchWikidataDetailedTaxonomy(bird)
+        ]);
 
     const wiki =
         enrichmentResults[0]?.status === "fulfilled"
