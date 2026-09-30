@@ -5966,45 +5966,8 @@ function buildSpeciesHint(
     const relationship = getHintRelationship(guessedBird);
     if (!relationship || !mysteryStudy) return [];
 
-    const fields = [
-        ["Appearance", "appearance", study => study?.description],
-        ["Habitat", "habitat", study => study?.habitatDistribution],
-        ["Behavior", "behavior", study => study?.behavior],
-        ["Diet", "diet", study => study?.diet],
-        ["Breeding", "breeding", study => study?.breeding]
-    ];
+    const categoryOrder = ["Appearance", "Habitat", "Behavior", "Diet", "Breeding"];
 
-    const guessedTraits = new Set(
-        getHintStudyTraits(guessedStudy)
-            .map(item => item.label + "|" + item.token)
-    );
-
-    const mysteryTraits = getHintStudyTraits(mysteryStudy);
-    const shared = [];
-    const mysteryOnly = [];
-
-    fields.forEach(([label, category, getter]) => {
-        const mysteryTokens = getHintFactTokens(getter(mysteryStudy), category);
-        const guessedTokens = new Set(
-            getHintFactTokens(getter(guessedStudy), category)
-        );
-
-        mysteryTokens.forEach(token => {
-            const key = label + "|" + token;
-
-            if (guessedTokens.has(token)) {
-                shared.push({ label, token, score: 1 });
-            }
-
-            if (!guessedTokens.has(token) && !guessedTraits.has(key)) {
-                mysteryOnly.push({ label, token, score: 1 });
-            }
-        });
-    });
-
-    // Prefer facts the hovered bird and mystery bird visibly/biologically
-    // share. This makes each hovered bird produce a clue tied to that bird,
-    // e.g. "The mystery bird also has black plumage."
     const dedupe = items => {
         const seen = new Set();
         return items.filter(item => {
@@ -6015,69 +5978,254 @@ function buildSpeciesHint(
         });
     };
 
-    const selectedShared = dedupe(shared);
-    const selectedMysteryOnly = dedupe(mysteryOnly);
+    const sortTraits = items => [...items].sort((a, b) => {
+        const categoryDifference =
+            categoryOrder.indexOf(a.label) - categoryOrder.indexOf(b.label);
+        if (categoryDifference !== 0) return categoryDifference;
+        return (b.score || 0) - (a.score || 0);
+    });
 
-    const clues = [];
-    const categoryOrder = ["Appearance", "Habitat", "Behavior", "Diet", "Breeding"];
+    /*
+     * Hint design:
+     *
+     * 1. Genus clue:
+     *    A trait supported by several species in the mystery genus. When
+     *    possible, compare it against other genera in the same family so the
+     *    clue actually describes the mystery genus rather than a generic
+     *    family trait.
+     *
+     * 2. Species clue:
+     *    A concrete fact shared by the hovered bird and the mystery species.
+     *    This is deliberately tied to the bird being hovered, so changing
+     *    the hovered bird can change the clue.
+     *
+     * 3. Main trait:
+     *    A mystery-specific trait that is relatively uncommon among the
+     *    mystery's congeners. This gives the player a useful field mark even
+     *    when the hovered bird has little explicit information in common.
+     */
 
-    const addClues = (items, mode) => {
-        const groups = new Map();
+    const mysteryGenusPool = [
+        mysteryStudy,
+        ...mysteryGenusStudies.map(entry => entry?.study)
+    ].filter(Boolean);
 
-        items.forEach(item => {
-            if (!groups.has(item.label)) groups.set(item.label, []);
-            const values = groups.get(item.label);
-            if (!values.includes(item.token)) values.push(item.token);
+    const familyComparison = familyGenusStudies
+        .map(entry => entry?.study)
+        .filter(Boolean);
+
+    // --- Genus clue -------------------------------------------------------
+    // Prefer traits shared by the mystery genus and uncommon in neighboring
+    // genera. If neighboring-genus data is unavailable, target support alone
+    // still lets us describe a recurring genus trait.
+    let genusTraits = getDiagnosticHintTraits(
+        mysteryGenusPool,
+        familyComparison,
+        mysteryGenusPool.length > 1 ? 0.5 : 1
+    );
+
+    // Avoid very generic traits when a more strongly supported trait exists.
+    genusTraits = genusTraits
+        .filter(item => item.token)
+        .sort((a, b) => {
+            const supportDifference = (b.targetSupport || 0) - (a.targetSupport || 0);
+            if (supportDifference !== 0) return supportDifference;
+            return (b.score || 0) - (a.score || 0);
         });
 
-        [...groups.entries()]
-            .sort((a, b) =>
-                categoryOrder.indexOf(a[0]) - categoryOrder.indexOf(b[0])
+    // --- Species clue: direct commonality with the hovered bird ----------
+    const sharedTraits = [];
+    const fields = [
+        ["Appearance", "appearance", mysteryStudy?.description],
+        ["Habitat", "habitat", mysteryStudy?.habitatDistribution],
+        ["Behavior", "behavior", mysteryStudy?.behavior],
+        ["Diet", "diet", mysteryStudy?.diet],
+        ["Breeding", "breeding", mysteryStudy?.breeding]
+    ];
+
+    fields.forEach(([label, category, mysteryText]) => {
+        const mysteryTokens = getHintFactTokens(mysteryText, category);
+        const guessedTokens = new Set(
+            getHintFactTokens(
+                category === "appearance"
+                    ? guessedStudy?.description
+                    : category === "habitat"
+                        ? guessedStudy?.habitatDistribution
+                        : category === "behavior"
+                            ? guessedStudy?.behavior
+                            : category === "diet"
+                                ? guessedStudy?.diet
+                                : guessedStudy?.breeding,
+                category
             )
-            .slice(0, 3)
-            .forEach(([label, tokens]) => {
-                const selected = tokens.slice(0, 2);
-
-                let text;
-                if (mode === "shared") {
-                    text = selected.length === 1
-                        ? "The mystery bird also has " + selected[0] + "."
-                        : "The mystery bird also has " +
-                          selected[0] + " and " + selected[1] + ".";
-                } else {
-                    text = selected.length === 1
-                        ? "The mystery bird has " + selected[0] + "."
-                        : "The mystery bird has " +
-                          selected[0] + " and " + selected[1] + ".";
-                }
-
-                clues.push({ heading: label, text });
-            });
-    };
-
-    addClues(selectedShared, "shared");
-
-    // If the hovered bird and mystery have few explicit facts in common,
-    // fall back to a mystery-specific fact that is uncommon among the
-    // mystery's close relatives.
-    if (!clues.length) {
-        const comparisonStudies = relationship.rank === "Genus"
-            ? genusSpeciesStudies.map(entry => entry?.study).filter(Boolean)
-            : familyGenusStudies.map(entry => entry?.study).filter(Boolean);
-
-        const diagnostic = getDiagnosticHintTraits(
-            [mysteryStudy, ...mysteryGenusStudies.map(entry => entry?.study)],
-            comparisonStudies,
-            relationship.rank === "Genus" ? 0.25 : 0.4
         );
 
-        addClues(diagnostic, "mystery");
+        mysteryTokens.forEach(token => {
+            if (guessedTokens.has(token)) {
+                sharedTraits.push({
+                    label,
+                    token,
+                    score: 1
+                });
+            }
+        });
+    });
+
+    // Prefer appearance/behavior/habitat commonality over very broad diet
+    // overlap, while still allowing diet to appear when it is the useful fact.
+    const sharedPriority = {
+        Appearance: 5,
+        Behavior: 4,
+        Habitat: 3,
+        Breeding: 2,
+        Diet: 1
+    };
+
+    const selectedShared = dedupe(sharedTraits)
+        .sort((a, b) => {
+            const priorityDifference =
+                (sharedPriority[b.label] || 0) - (sharedPriority[a.label] || 0);
+            if (priorityDifference !== 0) return priorityDifference;
+            return (b.score || 0) - (a.score || 0);
+        });
+
+    // --- Main trait: mystery-specific field mark -------------------------
+    const genusSpeciesStudiesFiltered = genusSpeciesStudies
+        .map(entry => entry?.study)
+        .filter(Boolean);
+
+    const closeSpeciesStudies = genusSpeciesStudiesFiltered.length
+        ? genusSpeciesStudiesFiltered
+        : mysteryGenusStudies.map(entry => entry?.study).filter(Boolean);
+
+    let mainTraits = getSpecificSpeciesTraits(
+        mysteryStudy,
+        closeSpeciesStudies,
+        guessedStudy
+    );
+
+    // If the strict species comparison produces nothing, use a slightly
+    // broader diagnostic comparison. This keeps the hint useful for birds
+    // whose Wikipedia page has sparse field-mark text.
+    if (!mainTraits.length) {
+        mainTraits = getDiagnosticHintTraits(
+            [mysteryStudy],
+            closeSpeciesStudies,
+            0
+        ).filter(item => !getHintStudyTraits(guessedStudy).some(
+            guessedTrait =>
+                guessedTrait.label === item.label &&
+                guessedTrait.token === item.token
+        ));
     }
 
-    if (!clues.length) {
-        addClues(selectedMysteryOnly, "mystery");
+    mainTraits = sortTraits(dedupe(mainTraits));
+
+    const clues = [];
+    const usedKeys = new Set();
+
+    const addClue = (type, label, token, text) => {
+        if (!token) return false;
+        const key = label + "|" + token;
+        if (usedKeys.has(key)) return false;
+        usedKeys.add(key);
+        clues.push({
+            heading: type + " · " + label,
+            text
+        });
+        return true;
+    };
+
+    // Keep the three hint roles distinct. Do not let one category consume
+    // all three slots just because its Wikipedia text contains many tokens.
+    const bestGenus = sortTraits(dedupe(genusTraits))[0];
+    const bestShared = selectedShared[0];
+    const bestMain = mainTraits[0];
+
+    if (bestGenus) {
+        addClue(
+            "Genus clue",
+            bestGenus.label,
+            bestGenus.token,
+            "The mystery genus is associated with " + bestGenus.token + "."
+        );
     }
 
+    if (bestShared) {
+        addClue(
+            "Species clue",
+            bestShared.label,
+            bestShared.token,
+            "The mystery species also has " + bestShared.token + "."
+        );
+    }
+
+    if (bestMain) {
+        addClue(
+            "Main trait",
+            bestMain.label,
+            bestMain.token,
+            "The mystery species has " + bestMain.token + "."
+        );
+    }
+
+    // Fill missing roles with the next-best useful trait, while preserving
+    // the role labels and avoiding duplicate facts.
+    const remainingGenus = sortTraits(dedupe(genusTraits)).slice(1);
+    const remainingShared = selectedShared.slice(1);
+    const remainingMain = mainTraits.slice(1);
+
+    const fallbackPools = [
+        ["Genus clue", remainingGenus, item =>
+            "The mystery genus is associated with " + item.token + "."],
+        ["Species clue", remainingShared, item =>
+            "The mystery species also has " + item.token + "."],
+        ["Main trait", remainingMain, item =>
+            "The mystery species has " + item.token + "."]
+    ];
+
+    for (const [type, pool, makeText] of fallbackPools) {
+        if (clues.length >= 3) break;
+        const item = pool.find(candidate =>
+            !usedKeys.has(candidate.label + "|" + candidate.token)
+        );
+        if (item) {
+            addClue(type, item.label, item.token, makeText(item));
+        }
+    }
+
+    // If one of the three roles is unavailable, fill the remaining space
+    // with the strongest available mystery-specific clue rather than showing
+    // a blank/irrelevant section.
+    if (clues.length < 3) {
+        const fallback = sortTraits(dedupe([
+            ...mainTraits,
+            ...selectedShared,
+            ...genusTraits
+        ]));
+
+        for (const item of fallback) {
+            if (clues.length >= 3) break;
+            if (usedKeys.has(item.label + "|" + item.token)) continue;
+
+            const type = mainTraits.includes(item)
+                ? "Main trait"
+                : selectedShared.includes(item)
+                    ? "Species clue"
+                    : "Genus clue";
+
+            const text = type === "Genus clue"
+                ? "The mystery genus is associated with " + item.token + "."
+                : type === "Species clue"
+                    ? "The mystery species also has " + item.token + "."
+                    : "The mystery species has " + item.token + ".";
+
+            addClue(type, item.label, item.token, text);
+        }
+    }
+
+    // Final fallback: use a shared meaningful name word only if no biological
+    // clue could be extracted at all.
     if (!clues.length) {
         const nameWords = getMeaningfulNameWords(guessedBird?.commonName);
         const mysteryNameWords = getMeaningfulNameWords(
@@ -6089,8 +6237,8 @@ function buildSpeciesHint(
 
         if (sharedNameWord) {
             clues.push({
-                heading: "Name",
-                text: "The mystery bird's common name also contains “" +
+                heading: "Species clue · Name",
+                text: "The mystery species' common name also contains “" +
                     sharedNameWord + "”."
             });
         }
