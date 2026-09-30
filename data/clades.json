@@ -1271,18 +1271,9 @@
     "rank": "clade",
     "parent": "clade:Phaethoquornithes",
     "children": [],
-    "status": "backbone_external",
-    "note": "Named clade involving tropicbirds and several other lineages in some phylogenomic treatments; deep Neoaves placement is not hard-coded."
-  },
-  "clade:Eurypygimorphae": {
-    "id": "clade:Eurypygimorphae",
-    "name": "Eurypygimorphae",
-    "rank": "clade",
-    "parent": "clade:Phaethoquornithes",
-    "children": [],
-    "status": "synonym",
-    "description": "Named Neoaves clade containing tropicbirds (Phaethontiformes) and sunbitterns/kagu (Eurypygiformes) in phylogenomic classifications.",
-    "synonymOf": "clade:Phaethontimorphae"
+    "status": "backbone",
+    "note": "Also historically called Eurypygimorphae; MetaAves uses Phaethontimorphae as the current backbone name.",
+    "description": "Clade containing Phaethontiformes (tropicbirds) and Eurypygiformes (sunbittern and kagu), supported by modern phylogenomic studies."
   },
   "clade:Columbaves": {
     "id": "clade:Columbaves",
@@ -1315,10 +1306,9 @@
     "parent": "clade:Elementaves",
     "children": [
       "clade:Aequornithes",
-      "clade:Phaethontimorphae",
-      "clade:Eurypygimorphae"
+      "clade:Phaethontimorphae"
     ],
-    "description": "Clade containing Aequornithes and Eurypygimorphae."
+    "description": "Clade containing Aequornithes and Phaethontimorphae."
   },
   "clade:Cursorimorphae": {
     "id": "clade:Cursorimorphae",
