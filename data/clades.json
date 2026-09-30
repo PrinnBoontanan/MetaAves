@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "version": 2,
-    "status": "enriched_backbone",
+    "version": 3,
+    "status": "enriched_backbone_with_intermediate_ranks",
     "description": "Named phylogenetic clades used by MetaAves. Clades are not forced into Linnaean rank fields.",
     "sources": [
       {
@@ -9,16 +9,13 @@
         "url": "https://www.avilist.org/checklist/v2025b/"
       },
       {
-        "name": "Wikipedia bird phylogeny pages",
-        "note": "Current Wikipedia pages for Neoaves, Telluraves, Passerine/Passerida and related clades; Telluraves page explicitly follows Stiller et al. 2024."
+        "name": "Wikipedia — List of birds",
+        "url": "https://en.wikipedia.org/wiki/List_of_birds",
+        "note": "Audited current intermediate-rank groupings; the page cites IOC material and Stiller et al. 2024."
       },
       {
         "name": "Stiller et al. 2024",
-        "note": "Complexity of avian evolution revealed by family-level genomes, Nature 629:851–860."
-      },
-      {
-        "name": "Oliveros et al. 2019",
-        "note": "Passeriformes family-level infraorders, parvorders and superfamily structure; used conservatively where documented."
+        "note": "Selected deep Neoaves backbone."
       }
     ],
     "uncertaintyPolicy": "Ranked AviList taxonomy remains authoritative. Named phylogenetic clades are an enrichment layer. Passerine intermediate groups are included where family-level placement is documented; uncertain deep relationships are not invented.",
@@ -376,29 +373,24 @@
     },
     "passerineFamilyCladePaths": {
       "Philepittidae": [
-        "Eupasseres",
-        "Tyranni",
-        "Eurylaimides"
+        "Eurylaimides",
+        "Pittoidea"
       ],
       "Eurylaimidae": [
-        "Eupasseres",
-        "Tyranni",
-        "Eurylaimides"
+        "Eurylaimides",
+        "Eurylaimoidea"
       ],
       "Calyptomenidae": [
-        "Eupasseres",
-        "Tyranni",
-        "Eurylaimides"
+        "Eurylaimides",
+        "Eurylaimoidea"
       ],
       "Sapayoidae": [
-        "Eupasseres",
-        "Tyranni",
-        "Eurylaimides"
+        "Eurylaimides",
+        "Sapayooidea"
       ],
       "Pittidae": [
-        "Eupasseres",
-        "Tyranni",
-        "Eurylaimides"
+        "Eurylaimides",
+        "Pittoidea"
       ],
       "Melanopareiidae": [
         "Eupasseres",
@@ -539,24 +531,20 @@
         "Meliphagoidea"
       ],
       "Cinclosomatidae": [
-        "Eupasseres",
-        "Passeri",
-        "Corvides"
+        "Corvides",
+        "Cinclosomatoidea"
       ],
       "Campephagidae": [
-        "Eupasseres",
-        "Passeri",
-        "Corvides"
+        "Corvides",
+        "Campephagoidea"
       ],
       "Mohouidae": [
-        "Eupasseres",
-        "Passeri",
-        "Corvides"
+        "Corvides",
+        "Mohouoidea"
       ],
       "Neosittidae": [
-        "Eupasseres",
-        "Passeri",
-        "Corvides"
+        "Corvides",
+        "Neosittoidea"
       ],
       "Psophodidae": [
         "Eupasseres",
@@ -629,16 +617,12 @@
         "Corvoidea"
       ],
       "Paridae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Paroidea"
       ],
       "Remizidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Paroidea"
       ],
       "Regulidae": [
         "Eupasseres",
@@ -901,74 +885,48 @@
         "Corvoidea"
       ],
       "Cnemophilidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Cnemophilida"
       ],
       "Melanocharitidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Melanocharitida"
       ],
       "Callaeidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Petroicida"
       ],
       "Notiomystidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Petroicida"
       ],
       "Petroicidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Petroicida"
       ],
       "Eupetidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Eupetida"
       ],
       "Picathartidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Eupetida"
       ],
       "Chaetopidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides"
+        "Eupetida"
       ],
       "Hyliotidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Paroidea"
       ],
       "Stenostiridae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Paroidea"
       ],
       "Panuridae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Alaudoidea"
       ],
       "Alaudidae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Alaudoidea"
       ],
       "Nicatoridae": [
-        "Eupasseres",
-        "Passeri",
-        "Passerides",
-        "Sylviida"
+        "Sylviida",
+        "Alaudoidea"
       ],
       "Macrosphenidae": [
         "Eupasseres",
@@ -1127,7 +1085,224 @@
         "Passeri",
         "Passerida"
       ]
-    }
+    },
+    "nonpasserineFamilyCladePaths": {
+      "Megapodiidae": [
+        "Megapodii"
+      ],
+      "Cracidae": [
+        "Craci"
+      ],
+      "Numididae": [
+        "Phasiani",
+        "Numidioidea"
+      ],
+      "Odontophoridae": [
+        "Phasiani",
+        "Phasianoidea"
+      ],
+      "Phasianidae": [
+        "Phasiani",
+        "Phasianoidea"
+      ],
+      "Gruidae": [
+        "Grui"
+      ],
+      "Aramidae": [
+        "Grui"
+      ],
+      "Psophiidae": [
+        "Grui"
+      ],
+      "Heliornithidae": [
+        "Ralli"
+      ],
+      "Sarothruridae": [
+        "Ralli"
+      ],
+      "Rallidae": [
+        "Ralli"
+      ],
+      "Burhinidae": [
+        "Charadrii",
+        "Chionida"
+      ],
+      "Chionidae": [
+        "Charadrii",
+        "Chionida"
+      ],
+      "Pluvianellidae": [
+        "Charadrii",
+        "Chionida"
+      ],
+      "Charadriidae": [
+        "Charadrii",
+        "Charadriida"
+      ],
+      "Pluvianidae": [
+        "Charadrii",
+        "Charadriida"
+      ],
+      "Ibidorhynchidae": [
+        "Charadrii",
+        "Charadriida"
+      ],
+      "Haematopodidae": [
+        "Charadrii",
+        "Charadriida"
+      ],
+      "Recurvirostridae": [
+        "Charadrii",
+        "Charadriida"
+      ],
+      "Rostratulidae": [
+        "Scolopaci",
+        "Jacanida"
+      ],
+      "Jacanidae": [
+        "Scolopaci",
+        "Jacanida"
+      ],
+      "Thinocoridae": [
+        "Scolopaci",
+        "Jacanida"
+      ],
+      "Pedionomidae": [
+        "Scolopaci",
+        "Jacanida"
+      ],
+      "Scolopacidae": [
+        "Scolopaci",
+        "Scolopacida"
+      ],
+      "Turnicidae": [
+        "Lari",
+        "Turnicida"
+      ],
+      "Glareolidae": [
+        "Lari",
+        "Larida"
+      ],
+      "Dromadidae": [
+        "Lari",
+        "Larida"
+      ],
+      "Stercorariidae": [
+        "Lari",
+        "Larida"
+      ],
+      "Alcidae": [
+        "Lari",
+        "Larida"
+      ],
+      "Laridae": [
+        "Lari",
+        "Larida"
+      ],
+      "Fregatidae": [
+        "Fregatae"
+      ],
+      "Sulidae": [
+        "Sulae"
+      ],
+      "Anhingidae": [
+        "Sulae"
+      ],
+      "Phalacrocoracidae": [
+        "Sulae"
+      ],
+      "Threskiornithidae": [
+        "Threskiornithes"
+      ],
+      "Scopidae": [
+        "Pelecani"
+      ],
+      "Balaenicipitidae": [
+        "Pelecani"
+      ],
+      "Pelecanidae": [
+        "Pelecani"
+      ],
+      "Ardeidae": [
+        "Ardeae"
+      ],
+      "Sagittariidae": [
+        "Accipitres"
+      ],
+      "Pandionidae": [
+        "Accipitres"
+      ],
+      "Accipitridae": [
+        "Accipitres"
+      ],
+      "Bucerotidae": [
+        "Buceroidea"
+      ],
+      "Upupidae": [
+        "Upupoidea"
+      ],
+      "Phoeniculidae": [
+        "Upupoidea"
+      ],
+      "Meropidae": [
+        "Meropi"
+      ],
+      "Coraciidae": [
+        "Coracii"
+      ],
+      "Brachypteraciidae": [
+        "Coracii"
+      ],
+      "Todidae": [
+        "Alcedines"
+      ],
+      "Momotidae": [
+        "Alcedines"
+      ],
+      "Alcedinidae": [
+        "Alcedines"
+      ],
+      "Galbulidae": [
+        "Galbuli"
+      ],
+      "Bucconidae": [
+        "Galbuli"
+      ],
+      "Lybiidae": [
+        "Pici"
+      ],
+      "Megalaimidae": [
+        "Pici"
+      ],
+      "Ramphastidae": [
+        "Pici"
+      ],
+      "Semnornithidae": [
+        "Pici"
+      ],
+      "Capitonidae": [
+        "Pici"
+      ],
+      "Indicatoridae": [
+        "Pici"
+      ],
+      "Picidae": [
+        "Pici"
+      ],
+      "Strigopidae": [
+        "Strigopoidea"
+      ],
+      "Cacatuidae": [
+        "Cacatuoidea"
+      ],
+      "Psittacidae": [
+        "Psittacoidea"
+      ],
+      "Psittaculidae": [
+        "Psittacoidea"
+      ]
+    },
+    "intermediateRankPolicy": "AviList remains authoritative for order/family/genus/species. Intermediate named groups are enrichment data; only groups that can be mapped to current MetaAves families are included."
   },
   "clade:Neornithes": {
     "id": "clade:Neornithes",
@@ -1144,7 +1319,9 @@
     "name": "Palaeognathae",
     "rank": "clade",
     "parent": "clade:Neornithes",
-    "children": [],
+    "children": [
+      "clade:Notopalaeognathae"
+    ],
     "description": "Living birds traditionally comprising ratites and tinamous."
   },
   "clade:Neognathae": {
@@ -1395,7 +1572,7 @@
   "clade:Acanthisitti": {
     "id": "clade:Acanthisitti",
     "name": "Acanthisitti",
-    "rank": "clade",
+    "rank": "suborder",
     "parent": "clade:Passeriformes",
     "children": [],
     "description": "Ancient passerine lineage containing the New Zealand wrens."
@@ -1414,7 +1591,7 @@
   "clade:Tyranni": {
     "id": "clade:Tyranni",
     "name": "Tyranni",
-    "rank": "clade",
+    "rank": "suborder",
     "parent": "clade:Eupasseres",
     "children": [
       "clade:Eurylaimides",
@@ -1425,15 +1602,19 @@
   "clade:Eurylaimides": {
     "id": "clade:Eurylaimides",
     "name": "Eurylaimides",
-    "rank": "clade",
+    "rank": "infraorder",
     "parent": "clade:Tyranni",
-    "children": [],
+    "children": [
+      "clade:Sapayooidea",
+      "clade:Eurylaimoidea",
+      "clade:Pittoidea"
+    ],
     "description": "Infraorder containing Old World suboscines and the sapayoa."
   },
   "clade:Tyrannides": {
     "id": "clade:Tyrannides",
     "name": "Tyrannides",
-    "rank": "clade",
+    "rank": "infraorder",
     "parent": "clade:Tyranni",
     "children": [
       "clade:Furnariida",
@@ -1444,7 +1625,7 @@
   "clade:Furnariida": {
     "id": "clade:Furnariida",
     "name": "Furnariida",
-    "rank": "clade",
+    "rank": "parvorder",
     "parent": "clade:Tyrannides",
     "children": [],
     "description": "Parvorder containing the furnariid radiation of New World suboscines."
@@ -1452,7 +1633,7 @@
   "clade:Tyrannida": {
     "id": "clade:Tyrannida",
     "name": "Tyrannida",
-    "rank": "clade",
+    "rank": "parvorder",
     "parent": "clade:Tyrannides",
     "children": [],
     "description": "Parvorder containing manakins, cotingas, tityras and tyrant flycatchers."
@@ -1480,7 +1661,11 @@
     "children": [
       "clade:Passerida",
       "clade:Sylviida",
-      "clade:Muscicapida"
+      "clade:Muscicapida",
+      "clade:Melanocharitida",
+      "clade:Cnemophilida",
+      "clade:Petroicida",
+      "clade:Eupetida"
     ],
     "description": "Infraorder containing major songbird radiations including Passerida."
   },
@@ -1570,7 +1755,11 @@
     "children": [
       "clade:Orioloidea",
       "clade:Malaconotoidea",
-      "clade:Corvoidea"
+      "clade:Corvoidea",
+      "clade:Cinclosomatoidea",
+      "clade:Campephagoidea",
+      "clade:Mohouoidea",
+      "clade:Neosittoidea"
     ]
   },
   "clade:Orioloidea": {
@@ -1603,7 +1792,9 @@
       "clade:Locustelloidea",
       "clade:Hirundinoidea",
       "clade:Sylvioidea",
-      "clade:Aegithaloidea"
+      "clade:Aegithaloidea",
+      "clade:Paroidea",
+      "clade:Alaudoidea"
     ]
   },
   "clade:Locustelloidea": {
@@ -1701,5 +1892,431 @@
     "rank": "superfamily",
     "parent": "clade:Passerida",
     "children": []
+  },
+  "clade:Notopalaeognathae": {
+    "id": "clade:Notopalaeognathae",
+    "name": "Notopalaeognathae",
+    "rank": "infraclass",
+    "parent": "clade:Palaeognathae",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Non-ostrich paleognath lineages."
+  },
+  "clade:Megapodii": {
+    "id": "clade:Megapodii",
+    "name": "Megapodii",
+    "rank": "suborder",
+    "parent": "clade:Galliformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Galliform suborder containing megapodes."
+  },
+  "clade:Craci": {
+    "id": "clade:Craci",
+    "name": "Craci",
+    "rank": "suborder",
+    "parent": "clade:Galliformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Galliform suborder containing guans, chachalacas and curassows."
+  },
+  "clade:Phasiani": {
+    "id": "clade:Phasiani",
+    "name": "Phasiani",
+    "rank": "suborder",
+    "parent": "clade:Galliformes",
+    "children": [
+      "clade:Numidioidea",
+      "clade:Phasianoidea"
+    ],
+    "status": "intermediate_rank",
+    "description": "Galliform suborder containing guineafowl, New World quail and pheasants."
+  },
+  "clade:Numidioidea": {
+    "id": "clade:Numidioidea",
+    "name": "Numidioidea",
+    "rank": "superfamily",
+    "parent": "clade:Phasiani",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Superfamily containing guineafowl."
+  },
+  "clade:Phasianoidea": {
+    "id": "clade:Phasianoidea",
+    "name": "Phasianoidea",
+    "rank": "superfamily",
+    "parent": "clade:Phasiani",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Superfamily containing New World quail and pheasants."
+  },
+  "clade:Grui": {
+    "id": "clade:Grui",
+    "name": "Grui",
+    "rank": "suborder",
+    "parent": "clade:Gruiformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Gruiform suborder containing cranes and allies."
+  },
+  "clade:Ralli": {
+    "id": "clade:Ralli",
+    "name": "Ralli",
+    "rank": "suborder",
+    "parent": "clade:Gruiformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Gruiform suborder containing rails and allies."
+  },
+  "clade:Charadrii": {
+    "id": "clade:Charadrii",
+    "name": "Charadrii",
+    "rank": "suborder",
+    "parent": "clade:Charadriiformes",
+    "children": [
+      "clade:Chionida",
+      "clade:Charadriida"
+    ],
+    "status": "intermediate_rank",
+    "description": "Charadriiform suborder containing typical shorebirds."
+  },
+  "clade:Chionida": {
+    "id": "clade:Chionida",
+    "name": "Chionida",
+    "rank": "infraorder",
+    "parent": "clade:Charadrii",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Infraorder containing thick-knees, sheathbills and Magellanic plover."
+  },
+  "clade:Charadriida": {
+    "id": "clade:Charadriida",
+    "name": "Charadriida",
+    "rank": "infraorder",
+    "parent": "clade:Charadrii",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Infraorder containing plovers and related shorebirds."
+  },
+  "clade:Scolopaci": {
+    "id": "clade:Scolopaci",
+    "name": "Scolopaci",
+    "rank": "suborder",
+    "parent": "clade:Charadriiformes",
+    "children": [
+      "clade:Jacanida",
+      "clade:Scolopacida"
+    ],
+    "status": "intermediate_rank",
+    "description": "Charadriiform suborder containing sandpipers and related lineages."
+  },
+  "clade:Jacanida": {
+    "id": "clade:Jacanida",
+    "name": "Jacanida",
+    "rank": "infraorder",
+    "parent": "clade:Scolopaci",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Infraorder containing jacanas and related lineages."
+  },
+  "clade:Scolopacida": {
+    "id": "clade:Scolopacida",
+    "name": "Scolopacida",
+    "rank": "infraorder",
+    "parent": "clade:Scolopaci",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Infraorder containing sandpipers and relatives."
+  },
+  "clade:Lari": {
+    "id": "clade:Lari",
+    "name": "Lari",
+    "rank": "suborder",
+    "parent": "clade:Charadriiformes",
+    "children": [
+      "clade:Turnicida",
+      "clade:Larida"
+    ],
+    "status": "intermediate_rank",
+    "description": "Charadriiform suborder containing gulls and allies."
+  },
+  "clade:Turnicida": {
+    "id": "clade:Turnicida",
+    "name": "Turnicida",
+    "rank": "infraorder",
+    "parent": "clade:Lari",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Infraorder containing buttonquail."
+  },
+  "clade:Larida": {
+    "id": "clade:Larida",
+    "name": "Larida",
+    "rank": "infraorder",
+    "parent": "clade:Lari",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Infraorder containing coursers, crab-plover, skuas, auks and gulls."
+  },
+  "clade:Fregatae": {
+    "id": "clade:Fregatae",
+    "name": "Fregatae",
+    "rank": "suborder",
+    "parent": "clade:Suliformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Suliform suborder containing frigatebirds."
+  },
+  "clade:Sulae": {
+    "id": "clade:Sulae",
+    "name": "Sulae",
+    "rank": "suborder",
+    "parent": "clade:Suliformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Suliform suborder containing boobies, darters and cormorants."
+  },
+  "clade:Threskiornithes": {
+    "id": "clade:Threskiornithes",
+    "name": "Threskiornithes",
+    "rank": "suborder",
+    "parent": "clade:Pelecaniformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Pelecaniform suborder containing ibises and spoonbills."
+  },
+  "clade:Pelecani": {
+    "id": "clade:Pelecani",
+    "name": "Pelecani",
+    "rank": "suborder",
+    "parent": "clade:Pelecaniformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Pelecaniform suborder containing hamerkop, shoebill and pelicans."
+  },
+  "clade:Ardeae": {
+    "id": "clade:Ardeae",
+    "name": "Ardeae",
+    "rank": "suborder",
+    "parent": "clade:Pelecaniformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Pelecaniform suborder containing herons and relatives."
+  },
+  "clade:Accipitres": {
+    "id": "clade:Accipitres",
+    "name": "Accipitres",
+    "rank": "suborder",
+    "parent": "clade:Accipitriformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Accipitriform suborder containing the secretarybird, osprey and accipitrids."
+  },
+  "clade:Buceroidea": {
+    "id": "clade:Buceroidea",
+    "name": "Buceroidea",
+    "rank": "superfamily",
+    "parent": "clade:Bucerotiformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Superfamily containing hornbills."
+  },
+  "clade:Upupoidea": {
+    "id": "clade:Upupoidea",
+    "name": "Upupoidea",
+    "rank": "superfamily",
+    "parent": "clade:Bucerotiformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Superfamily containing hoopoes and wood hoopoes."
+  },
+  "clade:Meropi": {
+    "id": "clade:Meropi",
+    "name": "Meropi",
+    "rank": "suborder",
+    "parent": "clade:Coraciiformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Coraciiform suborder containing bee-eaters."
+  },
+  "clade:Coracii": {
+    "id": "clade:Coracii",
+    "name": "Coracii",
+    "rank": "suborder",
+    "parent": "clade:Coraciiformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Coraciiform suborder containing rollers and ground rollers."
+  },
+  "clade:Alcedines": {
+    "id": "clade:Alcedines",
+    "name": "Alcedines",
+    "rank": "suborder",
+    "parent": "clade:Coraciiformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Coraciiform suborder containing todies, motmots and kingfishers."
+  },
+  "clade:Galbuli": {
+    "id": "clade:Galbuli",
+    "name": "Galbuli",
+    "rank": "suborder",
+    "parent": "clade:Piciformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Piciform suborder containing jacamars and puffbirds."
+  },
+  "clade:Pici": {
+    "id": "clade:Pici",
+    "name": "Pici",
+    "rank": "suborder",
+    "parent": "clade:Piciformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Piciform suborder containing barbets, toucans, honeyguides and woodpeckers."
+  },
+  "clade:Strigopoidea": {
+    "id": "clade:Strigopoidea",
+    "name": "Strigopoidea",
+    "rank": "superfamily",
+    "parent": "clade:Psittaciformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Parrot superfamily containing Strigopidae."
+  },
+  "clade:Cacatuoidea": {
+    "id": "clade:Cacatuoidea",
+    "name": "Cacatuoidea",
+    "rank": "superfamily",
+    "parent": "clade:Psittaciformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Parrot superfamily containing cockatoos."
+  },
+  "clade:Psittacoidea": {
+    "id": "clade:Psittacoidea",
+    "name": "Psittacoidea",
+    "rank": "superfamily",
+    "parent": "clade:Psittaciformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Parrot superfamily containing Psittacidae and Psittaculidae."
+  },
+  "clade:Sapayooidea": {
+    "id": "clade:Sapayooidea",
+    "name": "Sapayooidea",
+    "rank": "superfamily",
+    "parent": "clade:Eurylaimides",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Superfamily containing Sapayoidae."
+  },
+  "clade:Eurylaimoidea": {
+    "id": "clade:Eurylaimoidea",
+    "name": "Eurylaimoidea",
+    "rank": "superfamily",
+    "parent": "clade:Eurylaimides",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Superfamily containing broadbills."
+  },
+  "clade:Pittoidea": {
+    "id": "clade:Pittoidea",
+    "name": "Pittoidea",
+    "rank": "superfamily",
+    "parent": "clade:Eurylaimides",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Superfamily containing pittas and asities."
+  },
+  "clade:Cinclosomatoidea": {
+    "id": "clade:Cinclosomatoidea",
+    "name": "Cinclosomatoidea",
+    "rank": "superfamily",
+    "parent": "clade:Corvides",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Corvides superfamily containing jewel-babblers and quail-thrushes."
+  },
+  "clade:Campephagoidea": {
+    "id": "clade:Campephagoidea",
+    "name": "Campephagoidea",
+    "rank": "superfamily",
+    "parent": "clade:Corvides",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Corvides superfamily containing cuckooshrikes and trillers."
+  },
+  "clade:Mohouoidea": {
+    "id": "clade:Mohouoidea",
+    "name": "Mohouoidea",
+    "rank": "superfamily",
+    "parent": "clade:Corvides",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Corvides superfamily containing Mohouidae."
+  },
+  "clade:Neosittoidea": {
+    "id": "clade:Neosittoidea",
+    "name": "Neosittoidea",
+    "rank": "superfamily",
+    "parent": "clade:Corvides",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Corvides superfamily containing sittellas."
+  },
+  "clade:Melanocharitida": {
+    "id": "clade:Melanocharitida",
+    "name": "Melanocharitida",
+    "rank": "parvorder",
+    "parent": "clade:Passerides",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Passerides parvorder containing berrypeckers."
+  },
+  "clade:Cnemophilida": {
+    "id": "clade:Cnemophilida",
+    "name": "Cnemophilida",
+    "rank": "parvorder",
+    "parent": "clade:Passerides",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Passerides parvorder containing satinbirds."
+  },
+  "clade:Petroicida": {
+    "id": "clade:Petroicida",
+    "name": "Petroicida",
+    "rank": "parvorder",
+    "parent": "clade:Passerides",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Passerides parvorder containing Australasian robins and related families."
+  },
+  "clade:Eupetida": {
+    "id": "clade:Eupetida",
+    "name": "Eupetida",
+    "rank": "parvorder",
+    "parent": "clade:Passerides",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Passerides parvorder containing rockfowl, rock-jumpers and rail-babbler."
+  },
+  "clade:Paroidea": {
+    "id": "clade:Paroidea",
+    "name": "Paroidea",
+    "rank": "superfamily",
+    "parent": "clade:Sylviida",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Sylviida superfamily containing fairy warblers, hyliotas, penduline tits and true tits."
+  },
+  "clade:Alaudoidea": {
+    "id": "clade:Alaudoidea",
+    "name": "Alaudoidea",
+    "rank": "superfamily",
+    "parent": "clade:Sylviida",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Sylviida superfamily containing nicators, bearded reedling and larks."
   }
 }
