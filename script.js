@@ -6924,6 +6924,22 @@ tableViewButton?.addEventListener("click", () => {
 async function startGame() {
     updateGuessCounter();
     await loadGameData();
+
+    // Browser-test bridge. It is exposed only when ?e2e=1 is present, so
+    // normal players never receive or interact with this debug API.
+    if (new URLSearchParams(window.location.search).get("e2e") === "1") {
+        window.__METAAVES_E2E__ = {
+            state: gameState,
+            startRound: startNewRoundForMode,
+            makeGuess,
+            findBirdByName,
+            getBirdPhylogenyPath,
+            getDeepestSharedTaxon,
+            buildTreeModel,
+            getBirdPoolForMode,
+            normalizeSearchText
+        };
+    }
 }
 
 startGame();
