@@ -338,6 +338,24 @@ async function verifyTree(page, label) {
 }
 
 async function verifyStudyCard(page, mystery) {
+  // showGameOverCard performs online enrichment asynchronously. Wait until
+  // the final taxonomy rows have replaced the initial loading/local rows
+  // before auditing their contents.
+  await page.waitForFunction(
+    expected => {
+      const container = document.querySelector("#study-taxonomy");
+      const text = container?.innerText || "";
+      return (
+        text.includes(expected.order) &&
+        text.includes(expected.family) &&
+        text.includes(expected.genus) &&
+        text.includes(expected.scientificName)
+      );
+    },
+    mystery,
+    { timeout: 15000 }
+  );
+
   const text = await page.locator("#study-taxonomy").innerText();
   assert(text.includes(mystery.order), `Study card missing order for ${mystery.commonName}`);
   assert(text.includes(mystery.family), `Study card missing family for ${mystery.commonName}`);
