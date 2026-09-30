@@ -26,19 +26,23 @@
       ],
       "Casuariiformes": [
         "Neornithes",
-        "Palaeognathae"
+        "Palaeognathae",
+        "Notopalaeognathae"
       ],
       "Apterygiformes": [
         "Neornithes",
-        "Palaeognathae"
+        "Palaeognathae",
+        "Notopalaeognathae"
       ],
       "Rheiformes": [
         "Neornithes",
-        "Palaeognathae"
+        "Palaeognathae",
+        "Notopalaeognathae"
       ],
       "Tinamiformes": [
         "Neornithes",
-        "Palaeognathae"
+        "Palaeognathae",
+        "Notopalaeognathae"
       ],
       "Anseriformes": [
         "Neornithes",
