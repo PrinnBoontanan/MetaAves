@@ -208,7 +208,10 @@ async function getState(page) {
         scientificName: s.mysteryBird?.scientificName,
         order: s.mysteryBird?.order,
         family: s.mysteryBird?.family,
-        genus: s.mysteryBird?.genus
+        genus: s.mysteryBird?.genus,
+        clades: Array.isArray(s.mysteryBird?.cladePath)
+          ? [...s.mysteryBird.cladePath]
+          : []
       }
     };
   });
@@ -426,6 +429,7 @@ test("MetaAves full game-system audit — 10 games", async ({ page }) => {
       order: state.mystery.order,
       family: state.mystery.family,
       genus: state.mystery.genus,
+      clades: state.mystery.clades.join(" → "),
       guessesUsed: 12 - state.remaining
     });
   }
