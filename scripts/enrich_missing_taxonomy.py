@@ -119,8 +119,8 @@ def enrich_clade_membership(birds, clades, membership):
             existing_post = current_post.get(scientific, [])
             additions_post = [x for x in expected_post if x not in existing_post]
             if additions_post:
-                patch_post[scientific] = unique_append(
-                    existing_post, additions_post
+                patch_post[scientific] = merge_expected_path(
+                    existing_post, expected_post
                 )
 
     return {
