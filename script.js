@@ -4479,27 +4479,42 @@ async function showBirdInTaxonCard(bird) {
     card.classList.remove("clade-card");
     card.classList.add("species-card");
 
+    // In Thailand mode, resolve the Thai name before the first paint so the
+    // card never flashes a missing-name state for a bird whose name is still
+    // being resolved from the local database or online fallback sources.
+    const thaiNamePromise = gameState.mode === "thailand"
+        ? fetchOnlineThaiName(bird)
+        : Promise.resolve("");
+
     // Render from local data + the lightweight Wikipedia summary first.
-    // Full article parsing and Wikidata enrichment happen after the card is
-    // already usable.
-    const wikiSummary = await fetchWikipediaPageData(
-        bird.wikipediaTitle || bird.commonName,
-        false,
-        "bird",
-        bird.scientificName,
-        true
-    );
+    // Full article parsing happens after the card is already usable.
+    const [wikiSummary, initialThaiName] = await Promise.all([
+        fetchWikipediaPageData(
+            bird.wikipediaTitle || bird.commonName,
+            false,
+            "bird",
+            bird.scientificName,
+            true
+        ),
+        thaiNamePromise
+    ]);
 
     if (
         gameState.selectedTaxonId !== selectionId ||
         gameState.taxonCardRequestId !== requestId
     ) return;
 
+    if (gameState.mode === "thailand" && initialThaiName) {
+        bird.thaiName = initialThaiName;
+    }
+
     renderBirdCard(
         bird,
         wikiSummary,
         {},
-        gameState.mode === "thailand" ? (bird.thaiName || "") : ""
+        gameState.mode === "thailand"
+            ? (initialThaiName || bird.thaiName || "")
+            : ""
     );
 
     // Enrich the already-visible card in the background.
