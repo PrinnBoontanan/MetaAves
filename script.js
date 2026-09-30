@@ -85,7 +85,6 @@ async function loadGameData() {
             fetch("data/clade_membership.generated.json?v=20260930-thai-names"),
             fetch("data/taxonomy_enrichment.generated.json?v=global-taxonomy-20260930"),
             fetch("data/thai_name_overrides.json?v=thai-names-20260930"),
-            fetch("data/thai_names.generated.json?v=thai-names-20260930"),
             fetch("data/thai_names.generated.json?v=thai-names-20260930")
         ]);
 
@@ -2123,7 +2122,7 @@ async function fetchOnlineThaiName(bird) {
             const searchResponse = await fetch(searchUrl);
             if (searchResponse.ok) {
                 const searchHtml = await searchResponse.text();
-                const links = [...searchHtml.matchAll(/href=["']([^"']*species\\.jsp[^"']*)["'][^>]*>/gi)]
+                const links = [...searchHtml.matchAll(/href=["']([^"']*species\.jsp[^"']*)["'][^>]*>/gi)]
                     .map(match => match[1]);
 
                 for (const href of links.slice(0, 5)) {
@@ -2133,12 +2132,12 @@ async function fetchOnlineThaiName(bird) {
                     const pageResponse = await fetch(pageUrl);
                     if (!pageResponse.ok) continue;
                     const pageHtml = await pageResponse.text();
-                    const thaiMatch = pageHtml.match(/Thai:\\s*([^<\\r\\n]+)/i);
+                    const thaiMatch = pageHtml.match(/Thai:\s*([^<\r\n]+)/i);
                     const thai = thaiMatch?.[1]
                         ?.replace(/&nbsp;/gi, " ")
                         ?.replace(/&amp;/gi, "&")
                         ?.trim();
-                    if (thai && /[\\u0E00-\\u0E7F]/.test(thai)) return thai;
+                    if (thai && /[\u0E00-\u0E7F]/.test(thai)) return thai;
                 }
             }
         } catch (error) {
