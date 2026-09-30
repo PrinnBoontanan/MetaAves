@@ -21,7 +21,8 @@ const gameState = {
     thaiNameCache: new Map(),
     taxonCardRequestId: 0,
     hintCache: new Map(),
-    hintRequestId: 0
+    hintRequestId: 0,
+    thaiNameOverrides: {}
 };
 
 const guessCountElement = document.getElementById("guess-count");
