@@ -151,6 +151,22 @@ async function auditDatabase(data) {
           errors.push(`Taxonomy mismatch for ${common} (${scientific}): bird.${field}="${actual}" but taxonomy says "${expected}"`);
         }
       }
+      // Formal ranks stored in the clade backbone must remain formal ranks.
+      // This catches regressions where, for example, Neognathae is present
+      // in clades.json as Infraclass but runtime code relabels it as "clade".
+      const backbone = orderPaths[bird.order] || [];
+      for (const name of backbone) {
+        const clade = Object.values(clades || {}).find(
+          entry => entry && entry.name === name
+        );
+        if (!clade) continue;
+        if (clade.rank && clade.rank !== "clade") {
+          const expectedId = clade.id;
+          if (!expectedId) {
+            errors.push(`Formal rank ${clade.rank} has no ID: ${name}`);
+          }
+        }
+      }
     } catch (error) {
       errors.push(error.message);
     }
@@ -287,11 +303,23 @@ async function verifyTree(page, label) {
       .map(node => node.taxonId || node.name)
       .filter((id, index, all) => all.indexOf(id) !== index);
 
+    const formalRankErrors = modelNodes
+      .filter(node => node.type === "taxon" && node.taxonId?.startsWith("clade:"))
+      .map(node => {
+        const clade = api.state.clades?.[node.taxonId];
+        const expectedRank = clade?.rank || "clade";
+        return expectedRank !== node.level
+          ? `${node.name}: runtime rank=${node.level}, data rank=${expectedRank}`
+          : null;
+      })
+      .filter(Boolean);
+
     return {
       modelNodeCount: modelNodes.length,
       domNodeCount: domNodes.length,
       missing,
-      duplicateIds
+      duplicateIds,
+      formalRankErrors
     };
   });
 
@@ -302,6 +330,10 @@ async function verifyTree(page, label) {
   assert(
     result.duplicateIds.length === 0,
     `${label}: duplicate tree node IDs: ${result.duplicateIds.join(", ")}`
+  );
+  assert(
+    result.formalRankErrors.length === 0,
+    `${label}: formal taxonomy ranks lost in tree model: ${result.formalRankErrors.join(", ")}`
   );
 }
 
@@ -384,10 +416,6 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
       assert(
         pool.some(b => b.commonName === name),
         `Game ${game + 1}: suggestion is not in active pool: ${name}`
-      );
-      assert(
-        name !== mysteryName || true,
-        `unreachable`
       );
     }
 
