@@ -139,29 +139,76 @@ async function loadGameData() {
         // AviList.
         const passerineFamilyCladePaths =
             gameState.clades?._meta?.passerineFamilyCladePaths || {};
+        const nonpasserineFamilyCladePaths =
+            gameState.clades?._meta?.nonpasserineFamilyCladePaths || {};
+        const familyCladePaths = {
+            ...passerineFamilyCladePaths,
+            ...nonpasserineFamilyCladePaths
+        };
+        const orderCladePaths =
+            gameState.clades?._meta?.orderCladePaths || {};
+        const cladeParentByName = {};
+        Object.values(gameState.clades || {}).forEach(taxon => {
+            if (
+                taxon &&
+                taxon.name &&
+                typeof taxon.parent === "string"
+            ) {
+                cladeParentByName[taxon.name] =
+                    taxon.parent.replace(/^clade:/, "");
+            }
+        });
+
+        const normalizeCladePath = path => {
+            const result = [];
+            const visiting = new Set();
+
+            const add = name => {
+                if (!name || result.includes(name) || visiting.has(name)) {
+                    return;
+                }
+
+                visiting.add(name);
+                const parent = cladeParentByName[name];
+                if (parent) {
+                    add(parent);
+                }
+                visiting.delete(name);
+
+                if (!result.includes(name)) {
+                    result.push(name);
+                }
+            };
+
+            (path || []).forEach(add);
+            return result;
+        };
 
         gameState.allBirds.forEach(bird => {
             bird.generatedDetailedTaxonomy =
                 gameState.taxonomyEnrichment[bird.scientificName] || {};
-            bird.cladePath = membershipBySpecies[bird.scientificName] || [];
+
+            const generatedPath =
+                membershipBySpecies[bird.scientificName];
+            const fallbackFamilyPath = familyCladePaths[bird.family];
+            const fallbackOrderPath = orderCladePaths[bird.order];
+
+            // clades.json is the source of truth for the audited intermediate
+            // ranks. Merge it with generated data so an older generated
+            // membership file cannot hide a newly verified rank.
+            bird.cladePath = normalizeCladePath([
+                ...(Array.isArray(generatedPath) ? generatedPath : []),
+                ...(Array.isArray(fallbackOrderPath) ? fallbackOrderPath : []),
+                ...(Array.isArray(fallbackFamilyPath) ? fallbackFamilyPath : [])
+            ]);
 
             const generatedPostOrder =
                 postOrderMembershipBySpecies[bird.scientificName];
 
-            const fallbackPostOrder =
-                bird.order === "Passeriformes"
-                    ? passerineFamilyCladePaths[bird.family]
-                    : null;
-
-            // Always merge the family fallback with generated data.
-            // This makes the detailed passerine clade layer resilient when
-            // the generated membership file is older than clades.json.
-            bird.postOrderCladePath = [
+            bird.postOrderCladePath = normalizeCladePath([
                 ...(Array.isArray(generatedPostOrder) ? generatedPostOrder : []),
-                ...(Array.isArray(fallbackPostOrder) ? fallbackPostOrder : [])
-            ].filter(
-                (name, index, values) => values.indexOf(name) === index
-            );
+                ...(Array.isArray(fallbackFamilyPath) ? fallbackFamilyPath : [])
+            ]);
         });
 
         try {
