@@ -72,15 +72,17 @@ async function loadGameData() {
             infoResponse,
             cladeResponse,
             cladeMembershipResponse,
-            taxonomyEnrichmentResponse
+            taxonomyEnrichmentResponse,
+            thaiNameOverrideResponse
         ] = await Promise.all([
             fetch("data/birds.generated.json?v=20260927-taxonomy"),
             fetch("data/taxonomy.generated.json?v=20260927-taxonomy"),
             fetch("data/taxonomy_overrides.json?v=20260927-taxonomy"),
             fetch("data/taxon_info.json?v=20260927-taxonomy"),
             fetch("data/clades.json?v=20260927-taxonomy"),
-            fetch("data/clade_membership.generated.json?v=20260927-taxonomy"),
-            fetch("data/taxonomy_enrichment.generated.json?v=global-taxonomy-20260928")
+            fetch("data/clade_membership.generated.json?v=20260930-thai-names"),
+            fetch("data/taxonomy_enrichment.generated.json?v=global-taxonomy-20260930"),
+            fetch("data/thai_name_overrides.json?v=thai-names-20260930")
         ]);
 
         if (
@@ -100,6 +102,15 @@ async function loadGameData() {
         gameState.taxonomyOverrides = await taxonomyOverrideResponse.json();
         gameState.taxonInfo = await infoResponse.json();
         gameState.clades = await cladeResponse.json();
+
+        try {
+            gameState.thaiNameOverrides = thaiNameOverrideResponse.ok
+                ? ((await thaiNameOverrideResponse.json())?.names || {})
+                : {};
+        } catch (error) {
+            gameState.thaiNameOverrides = {};
+            console.warn("Thai-name overrides unavailable:", error);
+        }
 
         let taxonomyEnrichment = null;
         try {
