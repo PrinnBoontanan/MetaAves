@@ -4361,11 +4361,30 @@ function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
         rows.push([label, cleaned]);
     };
 
+    const rankedTaxonomyNames = new Set(
+        [
+            bird?.class,
+            bird?.order,
+            bird?.family,
+            bird?.genus,
+            bird?.species,
+            bird?.scientificName
+        ]
+            .filter(Boolean)
+            .map(value => String(value).trim().toLowerCase())
+    );
+
     const addTaxon = (value, fallbackLabel = "Clade") => {
         const cleaned = cleanWikipediaTaxonomyValue(value);
         if (!cleaned) return;
 
+        // Ranked taxa have dedicated rows and must never be consumed as
+        // named-clade rows, even when the generated lineage retains them.
+        if (rankedTaxonomyNames.has(cleaned.toLowerCase())) return;
+
         const entry = rankByName.get(cleaned.toLowerCase());
+        if (entry?.rank && entry.rank !== "clade") return;
+
         add(entry?.label || fallbackLabel, cleaned);
     };
 
