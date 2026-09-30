@@ -1364,11 +1364,28 @@ def taxon_id(rank, name):
 
 
 def load_clade_parent_map(path):
-    """Load the authoritative clade -> parent relationships from clades.json."""
+    """Load clade -> clade parent relationships from clades.json.
+
+    Some named clades sit directly inside a ranked taxon such as
+    Passeriformes. That ranked taxon is deliberately not a clade node in
+    MetaAves. It must therefore never be injected into a clade-membership
+    path as though it were a clade. Only parents that are themselves present
+    as named clade nodes are followed here; the ranked AviList taxonomy is
+    added separately by the lineage builder.
+    """
     if not path.exists():
         return {}
 
     data = json.loads(path.read_text(encoding="utf-8"))
+
+    clade_names = {
+        clean(entry.get("name"))
+        for entry in data.values()
+        if isinstance(entry, dict)
+        and str(entry.get("id") or "").startswith("clade:")
+        and clean(entry.get("name"))
+    }
+
     parents = {}
 
     for entry in data.values():
@@ -1383,7 +1400,8 @@ def load_clade_parent_map(path):
         if parent.startswith("clade:"):
             parent = parent.split(":", 1)[1]
 
-        parents[name] = parent
+        if parent in clade_names:
+            parents[name] = parent
 
     return parents
 
