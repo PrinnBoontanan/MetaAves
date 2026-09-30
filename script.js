@@ -147,6 +147,15 @@ async function loadGameData() {
         };
         const orderCladePaths =
             gameState.clades?._meta?.orderCladePaths || {};
+        // Only named clade nodes may participate in the clade-parent
+        // graph. Ranked taxa such as Passeriformes can appear as parents in
+        // source metadata, but they must never be promoted into the clade
+        // layer or rendered as "Clade: Passeriformes".
+        const cladeNames = new Set(
+            Object.values(gameState.clades || {})
+                .filter(taxon => taxon && taxon.name)
+                .map(taxon => taxon.name)
+        );
         const cladeParentByName = {};
         Object.values(gameState.clades || {}).forEach(taxon => {
             if (
@@ -154,8 +163,10 @@ async function loadGameData() {
                 taxon.name &&
                 typeof taxon.parent === "string"
             ) {
-                cladeParentByName[taxon.name] =
-                    taxon.parent.replace(/^clade:/, "");
+                const parentName = taxon.parent.replace(/^clade:/, "");
+                if (cladeNames.has(parentName)) {
+                    cladeParentByName[taxon.name] = parentName;
+                }
             }
         });
 
@@ -1616,52 +1627,6 @@ function buildTreeModel() {
         const endpointIndex = path.findIndex(node => node.id === throughId);
         if (endpointIndex < 0) return;
 
-        const endpoint = path[endpointIndex];
-
-        // Passerine intermediate clades are especially important because
-        // Passeri/Tyranni are subdivisions of Passeriformes, not direct
-        // children of the broad Australaves/Eufalconimorphae backbone.
-        //
-        // Keep the compact Metazooa-style projection for other branches
-        // (e.g. Telluraves → Bucerotidae), but when a revealed endpoint is a
-        // passerine clade, preserve the complete local passerine scaffold:
-        //
-        //   Passeriformes → Eupasseres → Passeri
-        //
-        // or, for deeper endpoints:
-        //
-        //   Passeriformes → Eupasseres → Passeri → ...
-        //
-        // This prevents Passeri from visually appearing to sit directly
-        // underneath Eufalconimorphae merely because hidden intermediate
-        // nodes were collapsed.
-        const isPasserineClade =
-            endpoint.level === "clade" &&
-            path.some(node => node.id === "order:Passeriformes") &&
-            path.some(node => node.id === "clade:Eupasseres");
-
-        if (isPasserineClade) {
-            const orderIndex = path.findIndex(
-                node => node.id === "order:Passeriformes"
-            );
-
-            for (let index = orderIndex; index <= endpointIndex; index += 1) {
-                const node = path[index];
-                if (
-                    node &&
-                    (
-                        node.id === "order:Passeriformes" ||
-                        node.id === "clade:Eupasseres" ||
-                        index === endpointIndex ||
-                        node.level === "clade"
-                    )
-                ) {
-                    visibleIds.add(node.id);
-                }
-            }
-            return;
-        }
-
         // The underlying lineage is needed to find the real relationship,
         // but only the revealed endpoint itself becomes visible. The renderer
         // skips unrevealed intermediate taxa when connecting visible nodes.
@@ -1676,7 +1641,7 @@ function buildTreeModel() {
         //   └─ Afroaves
         //      └─ Bucerotiformes
         //         └─ Bucerotidae
-        visibleIds.add(endpoint.id);
+        visibleIds.add(path[endpointIndex].id);
     }
 
     // 1. Each wrong guess reveals only its MRCA with the mystery.
