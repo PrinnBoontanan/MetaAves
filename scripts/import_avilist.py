@@ -514,27 +514,32 @@ PASSERINE_FAMILY_CLADE_PATHS = {
     "Acanthizidae": [
         "Eupasseres",
         "Passeri",
-        "Meliphagides"
+        "Meliphagides",
+        "Meliphagoidea"
     ],
     "Meliphagidae": [
         "Eupasseres",
         "Passeri",
-        "Meliphagides"
+        "Meliphagides",
+        "Meliphagoidea"
     ],
     "Maluridae": [
         "Eupasseres",
         "Passeri",
-        "Meliphagides"
+        "Meliphagides",
+        "Meliphagoidea"
     ],
     "Dasyornithidae": [
         "Eupasseres",
         "Passeri",
-        "Meliphagides"
+        "Meliphagides",
+        "Meliphagoidea"
     ],
     "Pardalotidae": [
         "Eupasseres",
         "Passeri",
-        "Meliphagides"
+        "Meliphagides",
+        "Meliphagoidea"
     ],
     "Cinclosomatidae": [
         "Eupasseres",
@@ -751,6 +756,8 @@ PASSERINE_FAMILY_CLADE_PATHS = {
     "Fringillidae": [
         "Eupasseres",
         "Passeri",
+        "Passerides",
+        "Passerida",
         "Fringilloidea"
     ],
     "Peucedramidae": [
@@ -761,82 +768,82 @@ PASSERINE_FAMILY_CLADE_PATHS = {
     "Icteridae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Parulidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Icteriidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Phaenicophilidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Zeledoniidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Teretistridae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Thraupidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Mitrospingidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Rhodinocichlidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Calyptophilidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Nesospingidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Spindalidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Cardinalidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Emberizidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Passerellidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Calcariidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
     ],
     "Acanthisittidae": [
         "Acanthisitti"
