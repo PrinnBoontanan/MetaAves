@@ -145,24 +145,26 @@ async function auditDatabase(data) {
       .map(x => [x.name, x])
   );
 
+  // Species membership is a set/list of clades containing the species, not
+  // necessarily a literal parent-to-child path. For example, a passerine can
+  // belong to both Psittacopasserae and Acanthisitti even though those two
+  // clade records have different structural parents. Validate that every
+  // referenced clade exists and that a species does not list the same clade
+  // twice, while the actual structural clade paths are audited separately
+  // above.
   for (const [scientific, path] of Object.entries(membership.species || {})) {
     if (!Array.isArray(path)) continue;
 
-    let previous = "class:Aves";
+    const seen = new Set();
     for (const name of path) {
-      const clade = cladeByName.get(name);
-      if (!clade) {
+      if (!cladeByName.has(name)) {
         errors.push(`Membership ${scientific}: missing clade ${name}`);
-        break;
+        continue;
       }
-      const parent = clade.parent || "class:Aves";
-      if (parent !== previous) {
-        errors.push(
-          `Membership ${scientific}: invalid transition ${previous} -> ${name}; parent is ${parent}`
-        );
-        break;
+      if (seen.has(name)) {
+        errors.push(`Membership ${scientific}: duplicate clade ${name}`);
       }
-      previous = clade.id;
+      seen.add(name);
     }
   }
 
@@ -375,6 +377,15 @@ test("MetaAves full game-system audit — 10 games", async ({ page }) => {
       afterDuplicate.guesses.length === beforeDuplicate.guesses.length,
       `Game ${game + 1}: duplicate guess changed game state`
     );
+
+    // A guessed bird must disappear from autocomplete suggestions.
+    await page.locator("#bird-search").fill(searchPrefix);
+    const postGuessSuggestions = await page.locator(".suggestion").allTextContents();
+    assert(
+      !postGuessSuggestions.includes(wrongBirds[0].commonName),
+      `Game ${game + 1}: already-guessed bird still appears in suggestions`
+    );
+    await page.locator("#bird-search").fill("");
 
     if (shouldWin) {
       for (const bird of wrongBirds.slice(1, 3)) {
