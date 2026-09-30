@@ -4456,9 +4456,22 @@ function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
 
     add("Family", bird?.family || detailed.family?.name);
 
+    // Species-specific taxonomy overrides are authoritative verified data for
+    // exceptions or ranks that the live Wikipedia/Wikidata enrichment may
+    // omit. Keep them as a fallback for detailed ranked rows, while avoiding
+    // duplicate values already supplied by the live sources.
+    const overrideDetailed = Array.isArray(gameState.taxonomyOverrides?.[bird?.scientificName])
+        ? gameState.taxonomyOverrides[bird.scientificName]
+        : [];
+    const overrideByRank = new Map(
+        overrideDetailed
+            .filter(entry => entry?.rank && entry?.name)
+            .map(entry => [String(entry.rank).toLowerCase(), entry])
+    );
+
     for (const rank of ["subfamily", "tribe", "subtribe"]) {
-        const entry = detailed[rank];
-        if (entry?.name) add(entry.label, entry.name);
+        const entry = detailed[rank] || overrideByRank.get(rank);
+        if (entry?.name) add(entry.label || rank.charAt(0).toUpperCase() + rank.slice(1), entry.name);
     }
 
     add("Genus", bird?.genus || detailed.genus?.name);
