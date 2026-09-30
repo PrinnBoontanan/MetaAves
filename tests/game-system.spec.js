@@ -402,6 +402,13 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
       consoleErrors.push({ game: activeGame || "startup", type: "console", message: message.text() });
     }
   });
+  page.on("response", response => {
+    if (response.status() === 404) {
+        browserErrors.push(
+            `HTTP 404 [${response.request().resourceType()}] ${response.url()}`
+        );
+    }
+  });
 
   await page.goto("/?e2e=1");
   await page.waitForFunction(() => !!window.__METAAVES_E2E__);
