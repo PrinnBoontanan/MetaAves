@@ -22,7 +22,8 @@ const gameState = {
     taxonCardRequestId: 0,
     hintCache: new Map(),
     hintRequestId: 0,
-    thaiNameOverrides: {}
+    thaiNameOverrides: {},
+    thaiNamesGenerated: {}
 };
 
 const guessCountElement = document.getElementById("guess-count");
@@ -73,7 +74,8 @@ async function loadGameData() {
             cladeResponse,
             cladeMembershipResponse,
             taxonomyEnrichmentResponse,
-            thaiNameOverrideResponse
+            thaiNameOverrideResponse,
+            thaiNameGeneratedResponse
         ] = await Promise.all([
             fetch("data/birds.generated.json?v=20260927-taxonomy"),
             fetch("data/taxonomy.generated.json?v=20260927-taxonomy"),
@@ -82,7 +84,8 @@ async function loadGameData() {
             fetch("data/clades.json?v=20260927-taxonomy"),
             fetch("data/clade_membership.generated.json?v=20260930-thai-names"),
             fetch("data/taxonomy_enrichment.generated.json?v=global-taxonomy-20260930"),
-            fetch("data/thai_name_overrides.json?v=thai-names-20260930")
+            fetch("data/thai_name_overrides.json?v=thai-names-20260930"),
+            fetch("data/thai_names.generated.json?v=thai-names-20260930")
         ]);
 
         if (
@@ -104,6 +107,15 @@ async function loadGameData() {
         gameState.clades = await cladeResponse.json();
 
         try {
+            gameState.thaiNamesGenerated = thaiNameGeneratedResponse.ok
+                ? ((await thaiNameGeneratedResponse.json())?.names || {})
+                : {};
+        } catch (error) {
+            gameState.thaiNamesGenerated = {};
+            console.warn("Generated Thai-name database unavailable:", error);
+        }
+
+        try {
             gameState.thaiNameOverrides = thaiNameOverrideResponse.ok
                 ? ((await thaiNameOverrideResponse.json())?.names || {})
                 : {};
@@ -111,6 +123,13 @@ async function loadGameData() {
             gameState.thaiNameOverrides = {};
             console.warn("Thai-name overrides unavailable:", error);
         }
+
+        gameState.allBirds.forEach(bird => {
+            const generated = gameState.thaiNamesGenerated?.[bird.scientificName];
+            const override = gameState.thaiNameOverrides?.[bird.scientificName];
+            if (generated) bird.thaiName = generated;
+            if (override) bird.thaiName = override;
+        });
 
         let taxonomyEnrichment = null;
         try {
@@ -1920,6 +1939,12 @@ async function fetchOnlineThaiName(bird) {
         return verifiedOverride;
     }
 
+    const generatedName = gameState.thaiNamesGenerated?.[scientificName];
+    if (generatedName) {
+        gameState.thaiNameCache.set(scientificName, generatedName);
+        return generatedName;
+    }
+
     const cacheValue = async () => {
         // 1. BirdNET+ Taxonomy. Its current taxonomy dataset
         // stores localized common names and is based on AviList for birds.
@@ -2082,11 +2107,44 @@ async function fetchOnlineThaiName(bird) {
 
             const entityData = await entityResponse.json();
             const label = entityData.entities?.[entityId]?.labels?.th?.value;
-            return label ? String(label).trim() : null;
+            if (label) return String(label).trim();
         } catch (error) {
             console.warn("Wikidata Thai-name lookup failed:", scientificName, error);
-            return null;
         }
+
+        // 4. Avibase fallback. Avibase exposes Thai names on its species
+        // pages and covers the Thailand checklist broadly. The generated
+        // local database is preferred, so this is only a last resort.
+        try {
+            const searchUrl =
+                "https://avibase.bsc-eoc.org/search.jsp?qstr=" +
+                encodeURIComponent(scientificName);
+            const searchResponse = await fetch(searchUrl);
+            if (searchResponse.ok) {
+                const searchHtml = await searchResponse.text();
+                const links = [...searchHtml.matchAll(/href=["']([^"']*species\\.jsp[^"']*)["'][^>]*>/gi)]
+                    .map(match => match[1]);
+
+                for (const href of links.slice(0, 5)) {
+                    const pageUrl = href.startsWith("http")
+                        ? href
+                        : "https://avibase.bsc-eoc.org/" + href.replace(/^\\//, "");
+                    const pageResponse = await fetch(pageUrl);
+                    if (!pageResponse.ok) continue;
+                    const pageHtml = await pageResponse.text();
+                    const thaiMatch = pageHtml.match(/Thai:\\s*([^<\\r\\n]+)/i);
+                    const thai = thaiMatch?.[1]
+                        ?.replace(/&nbsp;/gi, " ")
+                        ?.replace(/&amp;/gi, "&")
+                        ?.trim();
+                    if (thai && /[\\u0E00-\\u0E7F]/.test(thai)) return thai;
+                }
+            }
+        } catch (error) {
+            console.warn("Avibase Thai-name lookup failed:", scientificName, error);
+        }
+
+        return null;
     };
 
     const promise = cacheValue();
