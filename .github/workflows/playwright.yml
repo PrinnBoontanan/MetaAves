@@ -1,0 +1,67 @@
+name: MetaAves Game Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: game-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Game-system audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start MetaAves
+        run: |
+          python3 -m http.server 8080 > /tmp/metaaves-server.log 2>&1 &
+          echo $! > /tmp/metaaves-server.pid
+
+      - name: Run release game audit
+        run: npm run test:game
+        env:
+          CI: "true"
+          METAAVES_GAMES: "20"
+          METAAVES_BASE_URL: "http://localhost:8080"
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: metaaves-playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload server log
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: metaaves-server-log
+          path: /tmp/metaaves-server.log
+          if-no-files-found: ignore
+          retention-days: 7
