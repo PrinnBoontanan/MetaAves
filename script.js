@@ -1107,7 +1107,10 @@ function getBirdPhylogenyPath(bird) {
                 // Add only ranks that were actually verified on the species
                 // page. This enriches the lineage without changing the
                 // deepest-shared-node rule.
-                const detailed = bird.wikipediaDetailedTaxonomy || {};
+                const detailed = {
+                    ...(bird.generatedDetailedTaxonomy || {}),
+                    ...(bird.wikipediaDetailedTaxonomy || {})
+                };
                 const intermediateOrder = [
                     "suborder",
                     "infraorder",
@@ -4175,8 +4178,8 @@ function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
     const wikipediaDetailed = parseWikipediaDetailedTaxonomy(wiki?.wikitext);
     const detailed = {
         ...wikipediaDetailed,
-        ...(bird?.wikipediaDetailedTaxonomy || {}),
         ...(bird?.generatedDetailedTaxonomy || {}),
+        ...(bird?.wikipediaDetailedTaxonomy || {}),
         ...wikidataDetailed
     };
 
