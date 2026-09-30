@@ -168,7 +168,7 @@ CLADE_PATHS_BY_ORDER = {
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Eurypygimorphae"
+        "Phaethontimorphae"
     ],
     "Eurypygiformes": [
         "Neornithes",
@@ -176,7 +176,7 @@ CLADE_PATHS_BY_ORDER = {
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Eurypygimorphae"
+        "Phaethontimorphae"
     ],
     "Caprimulgiformes": [
         "Neornithes",
@@ -303,18 +303,6 @@ CLADE_PATHS_BY_ORDER = {
         "Eucavitaves",
         "Picocoraciae"
     ],
-    "Galbuliformes": [
-        "Neornithes",
-        "Neognathae",
-        "Neoaves",
-        "Telluraves",
-        "Afroaves",
-        "Coraciimorphae",
-        "Cavitaves",
-        "Eucavitaves",
-        "Picocoraciae",
-        "Picodynastornithes"
-    ],
     "Coraciiformes": [
         "Neornithes",
         "Neognathae",
@@ -371,6 +359,18 @@ CLADE_PATHS_BY_ORDER = {
         "Australaves",
         "Eufalconimorphae",
         "Psittacopasserae"
+    ],
+    "Galbuliformes": [
+        "Neornithes",
+        "Neognathae",
+        "Neoaves",
+        "Telluraves",
+        "Afroaves",
+        "Coraciimorphae",
+        "Cavitaves",
+        "Eucavitaves",
+        "Picocoraciae",
+        "Picodynastornithes"
     ]
 }
 
@@ -483,344 +483,650 @@ PASSERINE_FAMILY_CLADE_PATHS = {
     ],
     "Atrichornithidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Menurides"
     ],
     "Menuridae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Menurides"
     ],
     "Climacteridae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Climacterides"
     ],
     "Ptilonorhynchidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Climacterides"
     ],
     "Pomatostomidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Orthonynchides"
     ],
     "Orthonychidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Orthonynchides"
     ],
     "Acanthizidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Meliphagides"
     ],
     "Meliphagidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Meliphagides"
     ],
     "Maluridae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Meliphagides"
     ],
     "Dasyornithidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Meliphagides"
     ],
     "Pardalotidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Meliphagides"
     ],
     "Cinclosomatidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Corvides"
     ],
     "Campephagidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Corvides"
     ],
     "Mohouidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Corvides"
     ],
     "Neosittidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Corvides"
     ],
     "Psophodidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Orioloidea"
     ],
     "Eulacestomatidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Orioloidea"
     ],
     "Falcunculidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Orioloidea"
     ],
     "Oreoicidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Orioloidea"
     ],
     "Paramythiidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Orioloidea"
     ],
     "Vireonidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Orioloidea"
     ],
     "Pachycephalidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Orioloidea"
     ],
     "Oriolidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Orioloidea"
     ],
     "Machaerirhynchidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Malaconotoidea"
     ],
     "Artamidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Malaconotoidea"
     ],
     "Rhipiduridae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Corvoidea"
     ],
     "Dicruridae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Corvoidea"
     ],
     "Laniidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Corvoidea"
     ],
     "Corvidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Corvoidea"
     ],
     "Paridae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Passerides",
+        "Sylviida"
     ],
     "Remizidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Passerides",
+        "Sylviida"
     ],
     "Regulidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Reguloidea"
     ],
     "Bombycillidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Bombycilloidea"
     ],
     "Certhiidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Certhioidea"
     ],
     "Sittidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Certhioidea"
     ],
     "Troglodytidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Certhioidea"
     ],
     "Muscicapidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Muscicapoidea"
     ],
     "Turdidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Muscicapoidea"
     ],
     "Sturnidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Muscicapoidea"
     ],
     "Buphagidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Muscicapoidea"
     ],
     "Cinclidae": [
         "Eupasseres",
-        "Passeri"
+        "Passeri",
+        "Muscicapoidea"
+    ],
+    "Polioptilidae": [
+        "Eupasseres",
+        "Passeri",
+        "Certhioidea"
     ],
     "Motacillidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Passeroidea"
     ],
     "Prunellidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Passeroidea"
     ],
     "Passeridae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Passeroidea"
     ],
     "Nectariniidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
         "Passerida"
     ],
     "Dicaeidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
         "Passerida"
     ],
     "Chloropseidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
         "Passerida"
     ],
     "Irenidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
         "Passerida"
     ],
     "Urocynchramidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
         "Passerida"
     ],
     "Estrildidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Ploceoidea"
     ],
     "Ploceidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Ploceoidea"
     ],
     "Viduidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Ploceoidea"
     ],
     "Fringillidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Peucedramidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
         "Passerida"
     ],
     "Icteridae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Parulidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Icteriidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Phaenicophilidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Zeledoniidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Teretistridae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Thraupidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Mitrospingidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Rhodinocichlidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Calyptophilidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Nesospingidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Spindalidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Cardinalidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Emberizidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Passerellidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Calcariidae": [
         "Eupasseres",
         "Passeri",
-        "Passerides",
-        "Passerida"
+        "Fringilloidea"
     ],
     "Acanthisittidae": [
         "Acanthisitti"
+    ],
+    "Rhagologidae": [
+        "Eupasseres",
+        "Passeri",
+        "Malaconotoidea"
+    ],
+    "Malaconotidae": [
+        "Eupasseres",
+        "Passeri",
+        "Malaconotoidea"
+    ],
+    "Pityriasidae": [
+        "Eupasseres",
+        "Passeri",
+        "Malaconotoidea"
+    ],
+    "Aegithinidae": [
+        "Eupasseres",
+        "Passeri",
+        "Malaconotoidea"
+    ],
+    "Platysteiridae": [
+        "Eupasseres",
+        "Passeri",
+        "Malaconotoidea"
+    ],
+    "Vangidae": [
+        "Eupasseres",
+        "Passeri",
+        "Malaconotoidea"
+    ],
+    "Monarchidae": [
+        "Eupasseres",
+        "Passeri",
+        "Corvoidea"
+    ],
+    "Ifritidae": [
+        "Eupasseres",
+        "Passeri",
+        "Corvoidea"
+    ],
+    "Paradisaeidae": [
+        "Eupasseres",
+        "Passeri",
+        "Corvoidea"
+    ],
+    "Corcoracidae": [
+        "Eupasseres",
+        "Passeri",
+        "Corvoidea"
+    ],
+    "Melampittidae": [
+        "Eupasseres",
+        "Passeri",
+        "Corvoidea"
+    ],
+    "Platylophidae": [
+        "Eupasseres",
+        "Passeri",
+        "Corvoidea"
+    ],
+    "Cnemophilidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides"
+    ],
+    "Melanocharitidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides"
+    ],
+    "Callaeidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides"
+    ],
+    "Notiomystidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides"
+    ],
+    "Petroicidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides"
+    ],
+    "Eupetidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides"
+    ],
+    "Picathartidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides"
+    ],
+    "Chaetopidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides"
+    ],
+    "Hyliotidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Sylviida"
+    ],
+    "Stenostiridae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Sylviida"
+    ],
+    "Panuridae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Sylviida"
+    ],
+    "Alaudidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Sylviida"
+    ],
+    "Nicatoridae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Sylviida"
+    ],
+    "Macrosphenidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Sylviida"
+    ],
+    "Cisticolidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerides",
+        "Sylviida"
+    ],
+    "Acrocephalidae": [
+        "Eupasseres",
+        "Passeri",
+        "Locustelloidea"
+    ],
+    "Locustellidae": [
+        "Eupasseres",
+        "Passeri",
+        "Locustelloidea"
+    ],
+    "Donacobiidae": [
+        "Eupasseres",
+        "Passeri",
+        "Locustelloidea"
+    ],
+    "Bernieridae": [
+        "Eupasseres",
+        "Passeri",
+        "Locustelloidea"
+    ],
+    "Pnoepygidae": [
+        "Eupasseres",
+        "Passeri",
+        "Hirundinoidea"
+    ],
+    "Hirundinidae": [
+        "Eupasseres",
+        "Passeri",
+        "Hirundinoidea"
+    ],
+    "Pycnonotidae": [
+        "Eupasseres",
+        "Passeri",
+        "Sylvioidea"
+    ],
+    "Sylviidae": [
+        "Eupasseres",
+        "Passeri",
+        "Sylvioidea"
+    ],
+    "Paradoxornithidae": [
+        "Eupasseres",
+        "Passeri",
+        "Sylvioidea"
+    ],
+    "Zosteropidae": [
+        "Eupasseres",
+        "Passeri",
+        "Sylvioidea"
+    ],
+    "Timaliidae": [
+        "Eupasseres",
+        "Passeri",
+        "Sylvioidea"
+    ],
+    "Leiothrichidae": [
+        "Eupasseres",
+        "Passeri",
+        "Sylvioidea"
+    ],
+    "Pellorneidae": [
+        "Eupasseres",
+        "Passeri",
+        "Sylvioidea"
+    ],
+    "Phylloscopidae": [
+        "Eupasseres",
+        "Passeri",
+        "Aegithaloidea"
+    ],
+    "Hyliidae": [
+        "Eupasseres",
+        "Passeri",
+        "Aegithaloidea"
+    ],
+    "Aegithalidae": [
+        "Eupasseres",
+        "Passeri",
+        "Aegithaloidea"
+    ],
+    "Cettiidae": [
+        "Eupasseres",
+        "Passeri",
+        "Aegithaloidea"
+    ],
+    "Erythrocercidae": [
+        "Eupasseres",
+        "Passeri",
+        "Aegithaloidea"
+    ],
+    "Dulidae": [
+        "Eupasseres",
+        "Passeri",
+        "Bombycilloidea"
+    ],
+    "Ptiliogonatidae": [
+        "Eupasseres",
+        "Passeri",
+        "Bombycilloidea"
+    ],
+    "Hylocitreidae": [
+        "Eupasseres",
+        "Passeri",
+        "Bombycilloidea"
+    ],
+    "Hypocoliidae": [
+        "Eupasseres",
+        "Passeri",
+        "Bombycilloidea"
+    ],
+    "Mohoidae": [
+        "Eupasseres",
+        "Passeri",
+        "Bombycilloidea"
+    ],
+    "Elachuridae": [
+        "Eupasseres",
+        "Passeri",
+        "Muscicapoidea"
+    ],
+    "Mimidae": [
+        "Eupasseres",
+        "Passeri",
+        "Muscicapoidea"
+    ],
+    "Tichodromidae": [
+        "Eupasseres",
+        "Passeri",
+        "Certhioidea"
+    ],
+    "Salpornithidae": [
+        "Eupasseres",
+        "Passeri",
+        "Certhioidea"
+    ],
+    "Promeropidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerida"
+    ],
+    "Modulatricidae": [
+        "Eupasseres",
+        "Passeri",
+        "Passerida"
     ]
 }
 
