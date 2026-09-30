@@ -392,11 +392,23 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
   const failures = [];
   const databaseErrors = [];
   const consoleErrors = [];
+  const browser404s = [];
   let activeGame = 0;
 
   page.on("pageerror", error => {
     consoleErrors.push({ game: activeGame || "startup", type: "pageerror", message: error.message });
   });
+  page.on("response", response => {
+    if (response.status() === 404) {
+      browser404s.push({
+        game: activeGame || "startup",
+        type: "http404",
+        resourceType: response.request().resourceType(),
+        url: response.url()
+      });
+    }
+  });
+
   page.on("console", message => {
     if (message.type() === "error") {
       consoleErrors.push({ game: activeGame || "startup", type: "console", message: message.text() });
