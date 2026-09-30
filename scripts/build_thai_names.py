@@ -47,7 +47,7 @@ WIKIDATA_ENTITY = (
 )
 
 THAI_RE = re.compile(r"[\u0E00-\u0E7F]")
-SCIENTIFIC_RE = re.compile(r"\\b[A-Z][a-z-]+\\s+[a-z-]+\\b")
+SCIENTIFIC_RE = re.compile(r"\b[A-Z][a-z-]+\s+[a-z-]+\b")
 
 
 class TextParser(HTMLParser):
@@ -133,7 +133,7 @@ def extract_avibase_species_links(html: str) -> list[str]:
     # Avibase search results expose species.jsp links. We keep only unique
     # absolute/relative links and inspect a small number of candidates.
     links = re.findall(
-        r'href=["\']([^"\']*species\\.jsp[^"\']*)["\']',
+        r'href=["\']([^"\']*species\.jsp[^"\']*)["\']',
         html,
         flags=re.I,
     )
@@ -152,7 +152,7 @@ def extract_avibase_thai(html: str) -> str | None:
     parser.feed(html)
     text = parser.text
     matches = re.findall(
-        r"(?:^|\\n)Thai:\\s*([^\\n]+)",
+        r"(?:^|\n)Thai:\s*([^\n]+)",
         text,
         flags=re.I,
     )
@@ -221,7 +221,7 @@ def get_thailand_species() -> set[str]:
     # scientific binomials conservatively.
     found = set()
     for match in re.finditer(
-        r"\\b([A-Z][a-z-]+\\s+[a-z-]+)\\b",
+        r"\b([A-Z][a-z-]+\s+[a-z-]+)\b",
         text,
     ):
         found.add(normalize_scientific(match.group(1)))
