@@ -32,7 +32,7 @@ BIRDS = ROOT / "data" / "birds.generated.json"
 CLADES = ROOT / "data" / "clades.json"
 MEMBERSHIP = ROOT / "data" / "clade_membership.generated.json"
 ENRICHMENT = ROOT / "data" / "taxonomy_enrichment.generated.json"
-CLade_PATCH = ROOT / "data" / "clade_membership.enrichment.patch.json"
+CLADE_PATCH = ROOT / "data" / "clade_membership.enrichment.patch.json"
 TAXON_PATCH = ROOT / "data" / "taxonomy_enrichment.patch.json"
 
 TARGET_RANKS = (
@@ -63,14 +63,31 @@ def dump(path, value):
     )
 
 
-def unique_append(existing, additions):
-    result = list(existing or [])
-    seen = set(result)
-    for value in additions:
-        if value and value not in seen:
-            result.append(value)
+def merge_expected_path(existing, expected):
+    """
+    Fill holes in an existing path using the verified expected backbone.
+
+    Existing names are never deleted. Expected names are inserted in their
+    backbone order, while any extra existing names are retained afterward.
+    """
+    existing = list(existing or [])
+    expected = list(expected or [])
+    expected_set = set(expected)
+
+    merged = []
+    seen = set()
+
+    for value in expected:
+        if value not in seen:
+            merged.append(value)
             seen.add(value)
-    return result
+
+    for value in existing:
+        if value not in seen:
+            merged.append(value)
+            seen.add(value)
+
+    return merged
 
 
 def enrich_clade_membership(birds, clades, membership):
@@ -94,7 +111,7 @@ def enrich_clade_membership(birds, clades, membership):
         additions = [x for x in expected if x not in existing]
 
         if additions:
-            merged = unique_append(existing, additions)
+            merged = merge_expected_path(existing, expected)
             patch_species[scientific] = merged
 
         if bird.get("order") == "Passeriformes":
