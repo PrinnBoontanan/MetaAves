@@ -37,6 +37,8 @@ OVERRIDES_FILE = ROOT / "data" / "thai_name_overrides.json"
 OUTPUT_FILE = ROOT / "data" / "thai_names.generated.json"
 TEMP_EBIRD_XLSX = ROOT / ".cache_ebird_thai_names.xlsx"
 
+EBIRD_THAI_NAMES_URL = "https://cornell.box.com/shared/static/zjci66divvqnz00k98r7pmmb6kpc69zs.xlsx"
+
 AVIBASE_SEARCH = "https://avibase.bsc-eoc.org/search.jsp?qstr={}"
 WIKIDATA_SEARCH = (
     "https://www.wikidata.org/w/api.php?action=wbsearchentities"
