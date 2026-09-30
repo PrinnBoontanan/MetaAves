@@ -2,18 +2,36 @@
 // MetaAves - Game State
 // ========================================
 
-// Phones get a dedicated compact layout. Width alone misses landscape phones,
-// so combine a narrow viewport with coarse touch input.
+// Phones get a dedicated compact layout.
+//
+// Do not rely only on the CSS viewport here. Some mobile browsers can expose
+// a desktop-sized layout viewport (especially when "Request Desktop Website"
+// is enabled), which makes a normal max-width media query miss a real phone.
+// The shorter physical screen dimension is a useful phone-only fallback:
+// current iPhones/Android phones are <= 700 CSS px on their short edge,
+// while iPads are wider than that.
 const phoneLayoutQuery = window.matchMedia(
     "(max-width: 700px), (pointer: coarse) and (max-height: 500px)"
 );
 
+function isPhoneScreen() {
+    const screenWidth = Number(window.screen?.width) || 0;
+    const screenHeight = Number(window.screen?.height) || 0;
+    const shortestScreenEdge = screenWidth && screenHeight
+        ? Math.min(screenWidth, screenHeight)
+        : 0;
+
+    return phoneLayoutQuery.matches || shortestScreenEdge > 0 && shortestScreenEdge <= 700;
+}
+
 function updatePhoneLayoutClass() {
-    document.body.classList.toggle("phone-device", phoneLayoutQuery.matches);
+    document.body.classList.toggle("phone-device", isPhoneScreen());
 }
 
 updatePhoneLayoutClass();
 phoneLayoutQuery.addEventListener("change", updatePhoneLayoutClass);
+window.addEventListener("resize", updatePhoneLayoutClass);
+window.addEventListener("orientationchange", updatePhoneLayoutClass);
 
 const gameState = {
     mode: null,
