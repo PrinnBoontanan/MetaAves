@@ -1163,28 +1163,23 @@ NONPASSERINE_FAMILY_CLADE_PATHS = {
         "Charadriida"
     ],
     "Rostratulidae": [
-        "Scolopaci",
-        "Jacanida"
+        "Thinocori"
     ],
     "Jacanidae": [
-        "Scolopaci",
-        "Jacanida"
+        "Thinocori"
     ],
     "Thinocoridae": [
-        "Scolopaci",
-        "Jacanida"
+        "Thinocori"
     ],
     "Pedionomidae": [
-        "Scolopaci",
-        "Jacanida"
+        "Thinocori"
     ],
     "Scolopacidae": [
         "Scolopaci",
         "Scolopacida"
     ],
     "Turnicidae": [
-        "Lari",
-        "Turnicida"
+        "Turnici"
     ],
     "Glareolidae": [
         "Lari",
@@ -1307,6 +1302,24 @@ NONPASSERINE_FAMILY_CLADE_PATHS = {
     ],
     "Psittaculidae": [
         "Psittacoidea"
+    ],
+    "Anhimidae": [
+        "Anhimae"
+    ],
+    "Anseranatidae": [
+        "Anseres"
+    ],
+    "Anatidae": [
+        "Anseres"
+    ],
+    "Hemiprocnidae": [
+        "Apodi"
+    ],
+    "Apodidae": [
+        "Apodi"
+    ],
+    "Trochilidae": [
+        "Trochili"
     ]
 }
 
