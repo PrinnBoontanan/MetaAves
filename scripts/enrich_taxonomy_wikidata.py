@@ -63,9 +63,9 @@ SELECT ?species ?speciesName ?sitelinks ?ancestorName ?rankLabel WHERE {
            wdt:P171+ ?ancestor ;
            wikibase:sitelinks ?sitelinks .
 
-  # Prefer Wikidata taxa that have an English Wikipedia article.
-  # This removes many duplicate/historical Wikidata items that share
-  # the same scientific name but represent different taxonomic viewpoints.
+  # English Wikipedia is an optional signal used through sitelink count;
+  # do not require an article, because that would exclude valid birds
+  # whose Wikidata taxon has no English Wikipedia page.
   OPTIONAL {
     ?article schema:about ?species ;
              schema:isPartOf <https://en.wikipedia.org/> .
@@ -182,8 +182,8 @@ def main():
 
         # A scientific name can correspond to multiple Wikidata items
         # (accepted taxa, historical taxa, or taxonomic alternatives).
-        # Pick the English-Wikipedia-linked item with the highest sitelink
-        # count before evaluating its parent taxonomy.
+        # Pick the item with the highest sitelink count before evaluating its
+        # parent taxonomy. This preserves coverage for taxa without an article.
         species_items = {}
         for row in rows:
             species = row.get("speciesName", {}).get("value", "")
@@ -258,8 +258,8 @@ def main():
             "policy": (
                 "Supplemental only. AviList remains authoritative for the "
                 "core ranked taxonomy. When multiple Wikidata items share "
-                "a scientific name, the English-Wikipedia-linked item with "
-                "the highest sitelink count is selected. Ambiguous ranks "
+                "a scientific name, the item with the highest English-Wikipedia "
+                "sitelink count is selected when multiple items exist. Ambiguous ranks "
                 "within that selected hierarchy are retained in the "
                 "ambiguity report and are not automatically applied."
             ),
