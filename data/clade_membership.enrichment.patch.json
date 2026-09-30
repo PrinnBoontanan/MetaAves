@@ -1,0 +1,8 @@
+{
+  "_meta": {
+    "policy": "Append-only. Existing clade memberships are never overwritten.",
+    "source": "data/clades.json"
+  },
+  "species": {},
+  "postOrderSpecies": {}
+}
