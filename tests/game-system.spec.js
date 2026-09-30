@@ -154,7 +154,7 @@ async function auditDatabase(data) {
       // Formal ranks stored in the clade backbone must remain formal ranks.
       // This catches regressions where, for example, Neognathae is present
       // in clades.json as Infraclass but runtime code relabels it as "clade".
-      const backbone = orderPaths[bird.order] || [];
+      const backbone = clades?._meta?.orderCladePaths?.[bird.order] || [];
       for (const name of backbone) {
         const clade = Object.values(clades || {}).find(
           entry => entry && entry.name === name
@@ -343,6 +343,30 @@ async function verifyStudyCard(page, mystery) {
   assert(text.includes(mystery.family), `Study card missing family for ${mystery.commonName}`);
   assert(text.includes(mystery.genus), `Study card missing genus for ${mystery.commonName}`);
   assert(text.includes(mystery.scientificName), `Study card missing scientific name for ${mystery.commonName}`);
+
+  const formalRanks = await page.evaluate(() => {
+    const api = window.__METAAVES_E2E__;
+    return api.getBirdPhylogenyPath(api.state.mysteryBird)
+      .map(node => {
+        const clade = node.id?.startsWith("clade:")
+          ? api.state.clades?.[node.id]
+          : null;
+        return { rank: clade?.rank || node.level, name: node.value };
+      })
+      .filter(entry => entry.rank && entry.rank !== "clade" && entry.rank !== "species");
+  });
+
+  for (const entry of formalRanks) {
+    const label = entry.rank.charAt(0).toUpperCase() + entry.rank.slice(1);
+    assert(
+      text.includes(entry.name),
+      `Study card missing ${label} value "${entry.name}" for ${mystery.commonName}`
+    );
+    assert(
+      text.toLowerCase().includes(label.toLowerCase()),
+      `Study card missing ${label} label for ${mystery.commonName}`
+    );
+  }
 }
 
 test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page }) => {
