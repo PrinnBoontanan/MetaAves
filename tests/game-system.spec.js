@@ -313,7 +313,7 @@ async function verifyStudyCard(page, mystery) {
   assert(text.includes(mystery.scientificName), `Study card missing scientific name for ${mystery.commonName}`);
 }
 
-test("MetaAves full game-system audit — 10 games", async ({ page }) => {
+test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page }) => {
   const report = [];
   const failures = [];
   const databaseErrors = [];
@@ -492,7 +492,7 @@ test("MetaAves full game-system audit — 10 games", async ({ page }) => {
     }
   }
 
-  console.log("\\n=== MetaAves 10-game system audit ===");
+  console.log(`\\n=== MetaAves ${GAME_COUNT}-game system audit ===`);
   console.table(report);
   console.log(`Database: ${audit.birdCount} birds, ${audit.taxonomyCount} taxonomy nodes`);
   console.log(`Expected games: ${GAME_COUNT}; completed: ${report.length}`);
