@@ -23,7 +23,7 @@ const gameState = {
     hintCache: new Map(),
     hintRequestId: 0,
     thaiNameOverrides: {},
-    thaiNamesGenerated: {}
+    thaiNamesDatabase: {}
 };
 
 const guessCountElement = document.getElementById("guess-count");
@@ -75,7 +75,7 @@ async function loadGameData() {
             cladeMembershipResponse,
             taxonomyEnrichmentResponse,
             thaiNameOverrideResponse,
-            thaiNameGeneratedResponse
+            thaiNameDatabaseResponse
         ] = await Promise.all([
             fetch("data/birds.generated.json?v=20260927-taxonomy"),
             fetch("data/taxonomy.generated.json?v=20260927-taxonomy"),
@@ -85,7 +85,7 @@ async function loadGameData() {
             fetch("data/clade_membership.generated.json?v=20260930-thai-names"),
             fetch("data/taxonomy_enrichment.generated.json?v=global-taxonomy-20260930"),
             fetch("data/thai_name_overrides.json?v=thai-names-20260930"),
-            fetch("data/thai_names.generated.json?v=thai-names-20260930")
+            fetch("data/thai_names.json?v=thai-names-20260930")
         ]);
 
         if (
@@ -107,12 +107,12 @@ async function loadGameData() {
         gameState.clades = await cladeResponse.json();
 
         try {
-            gameState.thaiNamesGenerated = thaiNameGeneratedResponse.ok
-                ? ((await thaiNameGeneratedResponse.json())?.names || {})
+            gameState.thaiNamesDatabase = thaiNameDatabaseResponse.ok
+                ? ((await thaiNameDatabaseResponse.json())?.names || {})
                 : {};
         } catch (error) {
-            gameState.thaiNamesGenerated = {};
-            console.warn("Generated Thai-name database unavailable:", error);
+            gameState.thaiNamesDatabase = {};
+            console.warn("Thai bird-name database unavailable:", error);
         }
 
         try {
@@ -125,7 +125,7 @@ async function loadGameData() {
         }
 
         gameState.allBirds.forEach(bird => {
-            const generated = gameState.thaiNamesGenerated?.[bird.scientificName];
+            const generated = gameState.thaiNamesDatabase?.[bird.scientificName];
             const override = gameState.thaiNameOverrides?.[bird.scientificName];
             if (generated) bird.thaiName = generated;
             if (override) bird.thaiName = override;
@@ -1939,7 +1939,7 @@ async function fetchOnlineThaiName(bird) {
         return verifiedOverride;
     }
 
-    const generatedName = gameState.thaiNamesGenerated?.[scientificName];
+    const generatedName = gameState.thaiNamesDatabase?.[scientificName];
     if (generatedName) {
         gameState.thaiNameCache.set(scientificName, generatedName);
         return generatedName;
