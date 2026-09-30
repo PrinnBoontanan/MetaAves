@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "description": "Verified Thai common-name overrides for MetaAves. These take precedence over broad online fallback sources.",
+    "sources": [
+      "TH-BIF (ONEP)",
+      "Thai National Parks"
+    ],
+    "updated": "2026-09-30"
+  },
+  "names": {
+    "Tachyspiza badia": "เหยี่ยวนกเขาชิครา",
+    "Tachyspiza virgata": "เหยี่ยวนกกระจอกเล็ก",
+    "Tachyspiza gularis": "เหยี่ยวนกเขาพันธุ์ญี่ปุ่น",
+    "Tachyspiza soloensis": "เหยี่ยวนกเขาพันธุ์จีน",
+    "Accipiter nisus": "เหยี่ยวนกกระจอกใหญ่",
+    "Lophospiza trivirgata": "เหยี่ยวนกเขาหงอน",
+    "Astur gentilis": "เหยี่ยวนกเขาท้องขาว"
+  }
+}
