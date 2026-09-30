@@ -4406,16 +4406,38 @@ function mergeDetailedTaxonomyRows(bird, wiki, wikidataDetailed = {}) {
     // clade path.
     const postOrderNames = new Set(bird?.postOrderCladePath || []);
 
+    const addBackboneTaxon = name => {
+        const entry = rankByName.get(String(name || "").trim().toLowerCase());
+        if (!entry) {
+            addTaxon(name);
+            return;
+        }
+
+        // Formal intermediate ranks live in clades.json, not necessarily in
+        // Wikipedia/Wikidata. Therefore the card must take the rank directly
+        // from the authoritative generated clade catalog. This is what keeps
+        // Neognathae visible as "Infraclass" even when Wikipedia parsing does
+        // not provide an infraclass field.
+        if (entry.rank && entry.rank !== "clade") {
+            add(entry.label, entry.name);
+        } else {
+            addTaxon(name);
+        }
+    };
+
     (bird?.cladePath || [])
         .filter(name => !postOrderNames.has(name))
-        .forEach(name => addTaxon(name));
+        .forEach(addBackboneTaxon);
 
     // Passeriformes is a ranked Order, not a clade. It belongs here before
     // Eupasseres, Passeri, Passerides, Passerida, and Passeroidea.
     add("Order", bird?.order || detailed.order?.name);
 
-    (bird?.postOrderCladePath || []).forEach(name => addTaxon(name));
+    (bird?.postOrderCladePath || []).forEach(addBackboneTaxon);
 
+    // Wikipedia/Wikidata may provide formal intermediate ranks that are not
+    // represented in the generated clade path. Add those only if the
+    // authoritative backbone did not already provide them.
     for (const rank of [
         "suborder",
         "infraorder",
