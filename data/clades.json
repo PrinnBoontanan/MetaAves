@@ -1177,6 +1177,7 @@
     "parent": "clade:Neognathae",
     "children": [
       "clade:Telluraves",
+      "clade:Mirandornithes",
       "clade:Columbaves",
       "clade:Elementaves"
     ],
@@ -1305,10 +1306,10 @@
     "rank": "clade",
     "parent": "clade:Neoaves",
     "children": [
+      "clade:Strisores",
       "clade:Phaethoquornithes",
-      "clade:Opisthocomiformes",
       "clade:Cursorimorphae",
-      "clade:Strisores"
+      "clade:Opisthocomiformes"
     ],
     "description": "Major Neoaves clade in the Stiller et al. 2024 topology."
   },
@@ -1318,8 +1319,9 @@
     "rank": "clade",
     "parent": "clade:Elementaves",
     "children": [
-      "clade:Eurypygimorphae",
-      "clade:Aequornithes"
+      "clade:Aequornithes",
+      "clade:Phaethontimorphae",
+      "clade:Eurypygimorphae"
     ],
     "description": "Clade containing Aequornithes and Eurypygimorphae."
   },
@@ -1418,7 +1420,10 @@
     "name": "Eupasseres",
     "rank": "clade",
     "parent": "clade:Passeriformes",
-    "children": [],
+    "children": [
+      "clade:Tyranni",
+      "clade:Passeri"
+    ],
     "description": "Clade containing all passerines except Acanthisittidae."
   },
   "clade:Tyranni": {
@@ -1426,7 +1431,10 @@
     "name": "Tyranni",
     "rank": "clade",
     "parent": "clade:Eupasseres",
-    "children": [],
+    "children": [
+      "clade:Eurylaimides",
+      "clade:Tyrannides"
+    ],
     "description": "Suborder containing the passerine suboscines."
   },
   "clade:Eurylaimides": {
@@ -1442,7 +1450,10 @@
     "name": "Tyrannides",
     "rank": "clade",
     "parent": "clade:Tyranni",
-    "children": [],
+    "children": [
+      "clade:Furnariida",
+      "clade:Tyrannida"
+    ],
     "description": "Infraorder containing the New World suboscines."
   },
   "clade:Furnariida": {
@@ -1466,7 +1477,14 @@
     "name": "Passeri",
     "rank": "suborder",
     "parent": "clade:Eupasseres",
-    "children": [],
+    "children": [
+      "clade:Passerides",
+      "clade:Menurides",
+      "clade:Climacterides",
+      "clade:Orthonynchides",
+      "clade:Meliphagides",
+      "clade:Corvides"
+    ],
     "description": "Suborder containing the passerine songbirds (oscines)."
   },
   "clade:Passerides": {
@@ -1474,7 +1492,11 @@
     "name": "Passerides",
     "rank": "infraorder",
     "parent": "clade:Passeri",
-    "children": [],
+    "children": [
+      "clade:Passerida",
+      "clade:Sylviida",
+      "clade:Muscicapida"
+    ],
     "description": "Infraorder containing major songbird radiations including Passerida."
   },
   "clade:Passerida": {
@@ -1482,7 +1504,12 @@
     "name": "Passerida",
     "rank": "parvorder",
     "parent": "clade:Passerides",
-    "children": [],
+    "children": [
+      "clade:Ploceoidea",
+      "clade:Passeroidea",
+      "clade:Fringilloidea",
+      "clade:Emberizoidea"
+    ],
     "description": "Parvorder containing many of the familiar sparrows, finches, tanagers and related songbirds."
   },
   "clade:Feraequornithes": {
@@ -1539,7 +1566,9 @@
     "name": "Meliphagides",
     "rank": "infraorder",
     "parent": "clade:Passeri",
-    "children": []
+    "children": [
+      "clade:Meliphagoidea"
+    ]
   },
   "clade:Meliphagoidea": {
     "id": "clade:Meliphagoidea",
@@ -1553,7 +1582,11 @@
     "name": "Corvides",
     "rank": "infraorder",
     "parent": "clade:Passeri",
-    "children": []
+    "children": [
+      "clade:Orioloidea",
+      "clade:Malaconotoidea",
+      "clade:Corvoidea"
+    ]
   },
   "clade:Orioloidea": {
     "id": "clade:Orioloidea",
@@ -1581,7 +1614,12 @@
     "name": "Sylviida",
     "rank": "parvorder",
     "parent": "clade:Passerides",
-    "children": []
+    "children": [
+      "clade:Locustelloidea",
+      "clade:Hirundinoidea",
+      "clade:Sylvioidea",
+      "clade:Aegithaloidea"
+    ]
   },
   "clade:Locustelloidea": {
     "id": "clade:Locustelloidea",
@@ -1616,7 +1654,12 @@
     "name": "Muscicapida",
     "rank": "parvorder",
     "parent": "clade:Passerides",
-    "children": []
+    "children": [
+      "clade:Bombycilloidea",
+      "clade:Muscicapoidea",
+      "clade:Reguloidea",
+      "clade:Certhioidea"
+    ]
   },
   "clade:Bombycilloidea": {
     "id": "clade:Bombycilloidea",
