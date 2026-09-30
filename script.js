@@ -569,23 +569,11 @@ async function searchThaiTranslator(query) {
         }
     }
 
-    // Enrich only birds that are actually in the result set.
-    await Promise.all(matches.map(async bird => {
-        if (bird.thaiName) return;
-
-        try {
-            const thaiName = await fetchOnlineThaiName(bird);
-            if (thaiName) bird.thaiName = thaiName;
-        } catch (error) {
-            console.warn("Translator Thai-name lookup failed:", bird.scientificName, error);
-        }
-    }));
-
     const unique = [...new Map(
         matches.map(bird => [bird.scientificName, bird])
     ).values()];
 
-    return unique
+    const ranked = unique
         .map((bird, index) => ({
             bird,
             index,
@@ -596,8 +584,23 @@ async function searchThaiTranslator(query) {
             b.score - a.score ||
             a.bird.commonName.localeCompare(b.bird.commonName) ||
             a.index - b.index
-        )
-        .map(result => result.bird);
+        );
+
+    // Keep the complete result list, but only fetch missing Thai names for
+    // the strongest results. Broad searches must never hammer external APIs.
+    await Promise.all(ranked.slice(0, 20).map(async result => {
+        const bird = result.bird;
+        if (bird.thaiName) return;
+
+        try {
+            const thaiName = await fetchOnlineThaiName(bird);
+            if (thaiName) bird.thaiName = thaiName;
+        } catch (error) {
+            console.warn("Translator Thai-name lookup failed:", bird.scientificName, error);
+        }
+    }));
+
+    return ranked.map(result => result.bird);
 }
 
 function renderThaiTranslatorResults(query, results = null) {
