@@ -511,27 +511,32 @@
       "Acanthizidae": [
         "Eupasseres",
         "Passeri",
-        "Meliphagides"
+        "Meliphagides",
+        "Meliphagoidea"
       ],
       "Meliphagidae": [
         "Eupasseres",
         "Passeri",
-        "Meliphagides"
+        "Meliphagides",
+        "Meliphagoidea"
       ],
       "Maluridae": [
         "Eupasseres",
         "Passeri",
-        "Meliphagides"
+        "Meliphagides",
+        "Meliphagoidea"
       ],
       "Dasyornithidae": [
         "Eupasseres",
         "Passeri",
-        "Meliphagides"
+        "Meliphagides",
+        "Meliphagoidea"
       ],
       "Pardalotidae": [
         "Eupasseres",
         "Passeri",
-        "Meliphagides"
+        "Meliphagides",
+        "Meliphagoidea"
       ],
       "Cinclosomatidae": [
         "Eupasseres",
@@ -748,6 +753,8 @@
       "Fringillidae": [
         "Eupasseres",
         "Passeri",
+        "Passerides",
+        "Passerida",
         "Fringilloidea"
       ],
       "Peucedramidae": [
@@ -758,82 +765,82 @@
       "Icteridae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Parulidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Icteriidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Phaenicophilidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Zeledoniidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Teretistridae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Thraupidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Mitrospingidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Rhodinocichlidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Calyptophilidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Nesospingidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Spindalidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Cardinalidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Emberizidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Passerellidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Calcariidae": [
         "Eupasseres",
         "Passeri",
-        "Fringilloidea"
+        "Emberizoidea"
       ],
       "Acanthisittidae": [
         "Acanthisitti"
@@ -1267,7 +1274,7 @@
     "id": "clade:Phaethontimorphae",
     "name": "Phaethontimorphae",
     "rank": "clade",
-    "parent": "clade:Neoaves",
+    "parent": "clade:Phaethoquornithes",
     "children": [],
     "status": "backbone_external",
     "note": "Named clade involving tropicbirds and several other lineages in some phylogenomic treatments; deep Neoaves placement is not hard-coded."
@@ -1276,10 +1283,11 @@
     "id": "clade:Eurypygimorphae",
     "name": "Eurypygimorphae",
     "rank": "clade",
-    "parent": "clade:Neoaves",
+    "parent": "clade:Phaethoquornithes",
     "children": [],
-    "status": "backbone",
-    "description": "Named Neoaves clade containing tropicbirds (Phaethontiformes) and sunbitterns/kagu (Eurypygiformes) in phylogenomic classifications."
+    "status": "synonym",
+    "description": "Named Neoaves clade containing tropicbirds (Phaethontiformes) and sunbitterns/kagu (Eurypygiformes) in phylogenomic classifications.",
+    "synonymOf": "clade:Phaethontimorphae"
   },
   "clade:Columbaves": {
     "id": "clade:Columbaves",
