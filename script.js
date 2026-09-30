@@ -5992,7 +5992,7 @@ function buildSpeciesHint(
         mysteryTokens.forEach(token => {
             const key = label + "|" + token;
 
-            if (guessedTokens.has(token) && !guessedTraits.has(key)) {
+            if (guessedTokens.has(token)) {
                 shared.push({ label, token, score: 1 });
             }
 
@@ -6138,7 +6138,7 @@ async function showSpeciesHint(guessedBird, anchor) {
     const hint = getSpeciesHintElement();
     const requestId = ++gameState.hintRequestId;
     const cacheKey = (guessedBird.scientificName || guessedBird.commonName) + "|" + (gameState.mysteryBird.scientificName || gameState.mysteryBird.commonName);
-    hint.innerHTML = '<div class="species-hover-hint-title">Hint</div><div class="species-hover-hint-loading">Finding a useful clue…</div>';
+    hint.innerHTML = '<div class="species-hover-hint-loading">Finding…</div>';
     hint.classList.add("visible");
     positionSpeciesHint(anchor);
 
