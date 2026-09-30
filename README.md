@@ -49,7 +49,7 @@ Then open `http://localhost:8080`.
 - `style.css` — visual design and responsive layout
 - `script.js` — game logic, taxonomy rendering, search, study cards, and online lookups
 - `data/` — generated bird, taxonomy, clade, and reference data
-- `.github/workflows/` — data-generation / maintenance workflows
+- `.github/workflows/` — GitHub Pages deployment and automated test workflows
 
 ## Search / discovery
 
@@ -57,5 +57,5 @@ The repository is public and the project includes search-friendly metadata, a si
 
 ## Status
 
-MetaAves is a personal learning project built to explore bird taxonomy, web development, data processing, and interactive educational game design.
+MetaAves is in release preparation. The automated game-system audit covers database integrity, taxonomy relationships, gameplay state transitions, rendered tree integrity, study-card taxonomy, and browser errors.
 
