@@ -1590,7 +1590,7 @@
     "id": "clade:Acanthisitti",
     "name": "Acanthisitti",
     "rank": "suborder",
-    "parent": "clade:Passeriformes",
+    "parent": "order:Passeriformes",
     "children": [],
     "description": "Ancient passerine lineage containing the New Zealand wrens."
   },
@@ -1598,7 +1598,7 @@
     "id": "clade:Eupasseres",
     "name": "Eupasseres",
     "rank": "clade",
-    "parent": "clade:Passeriformes",
+    "parent": "order:Passeriformes",
     "children": [
       "clade:Tyranni",
       "clade:Passeri"
@@ -1923,7 +1923,7 @@
     "id": "clade:Megapodii",
     "name": "Megapodii",
     "rank": "suborder",
-    "parent": "clade:Galliformes",
+    "parent": "order:Galliformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Galliform suborder containing megapodes."
@@ -1932,7 +1932,7 @@
     "id": "clade:Craci",
     "name": "Craci",
     "rank": "suborder",
-    "parent": "clade:Galliformes",
+    "parent": "order:Galliformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Galliform suborder containing guans, chachalacas and curassows."
@@ -1941,7 +1941,7 @@
     "id": "clade:Phasiani",
     "name": "Phasiani",
     "rank": "suborder",
-    "parent": "clade:Galliformes",
+    "parent": "order:Galliformes",
     "children": [
       "clade:Numidioidea",
       "clade:Phasianoidea"
@@ -1971,7 +1971,7 @@
     "id": "clade:Grui",
     "name": "Grui",
     "rank": "suborder",
-    "parent": "clade:Gruiformes",
+    "parent": "order:Gruiformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Gruiform suborder containing cranes and allies."
@@ -1980,7 +1980,7 @@
     "id": "clade:Ralli",
     "name": "Ralli",
     "rank": "suborder",
-    "parent": "clade:Gruiformes",
+    "parent": "order:Gruiformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Gruiform suborder containing rails and allies."
@@ -1989,7 +1989,7 @@
     "id": "clade:Charadrii",
     "name": "Charadrii",
     "rank": "suborder",
-    "parent": "clade:Charadriiformes",
+    "parent": "order:Charadriiformes",
     "children": [
       "clade:Chionida",
       "clade:Charadriida"
@@ -2019,7 +2019,7 @@
     "id": "clade:Scolopaci",
     "name": "Scolopaci",
     "rank": "suborder",
-    "parent": "clade:Charadriiformes",
+    "parent": "order:Charadriiformes",
     "children": [
       "clade:Jacanida",
       "clade:Scolopacida"
@@ -2049,7 +2049,7 @@
     "id": "clade:Lari",
     "name": "Lari",
     "rank": "suborder",
-    "parent": "clade:Charadriiformes",
+    "parent": "order:Charadriiformes",
     "children": [
       "clade:Turnicida",
       "clade:Larida"
@@ -2079,7 +2079,7 @@
     "id": "clade:Fregatae",
     "name": "Fregatae",
     "rank": "suborder",
-    "parent": "clade:Suliformes",
+    "parent": "order:Suliformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Suliform suborder containing frigatebirds."
@@ -2088,7 +2088,7 @@
     "id": "clade:Sulae",
     "name": "Sulae",
     "rank": "suborder",
-    "parent": "clade:Suliformes",
+    "parent": "order:Suliformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Suliform suborder containing boobies, darters and cormorants."
@@ -2097,7 +2097,7 @@
     "id": "clade:Threskiornithes",
     "name": "Threskiornithes",
     "rank": "suborder",
-    "parent": "clade:Pelecaniformes",
+    "parent": "order:Pelecaniformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Pelecaniform suborder containing ibises and spoonbills."
@@ -2106,7 +2106,7 @@
     "id": "clade:Pelecani",
     "name": "Pelecani",
     "rank": "suborder",
-    "parent": "clade:Pelecaniformes",
+    "parent": "order:Pelecaniformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Pelecaniform suborder containing hamerkop, shoebill and pelicans."
@@ -2115,7 +2115,7 @@
     "id": "clade:Ardeae",
     "name": "Ardeae",
     "rank": "suborder",
-    "parent": "clade:Pelecaniformes",
+    "parent": "order:Pelecaniformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Pelecaniform suborder containing herons and relatives."
@@ -2124,7 +2124,7 @@
     "id": "clade:Accipitres",
     "name": "Accipitres",
     "rank": "suborder",
-    "parent": "clade:Accipitriformes",
+    "parent": "order:Accipitriformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Accipitriform suborder containing the secretarybird, osprey and accipitrids."
@@ -2133,7 +2133,7 @@
     "id": "clade:Buceroidea",
     "name": "Buceroidea",
     "rank": "superfamily",
-    "parent": "clade:Bucerotiformes",
+    "parent": "order:Bucerotiformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Superfamily containing hornbills."
@@ -2142,7 +2142,7 @@
     "id": "clade:Upupoidea",
     "name": "Upupoidea",
     "rank": "superfamily",
-    "parent": "clade:Bucerotiformes",
+    "parent": "order:Bucerotiformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Superfamily containing hoopoes and wood hoopoes."
@@ -2151,7 +2151,7 @@
     "id": "clade:Meropi",
     "name": "Meropi",
     "rank": "suborder",
-    "parent": "clade:Coraciiformes",
+    "parent": "order:Coraciiformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Coraciiform suborder containing bee-eaters."
@@ -2160,7 +2160,7 @@
     "id": "clade:Coracii",
     "name": "Coracii",
     "rank": "suborder",
-    "parent": "clade:Coraciiformes",
+    "parent": "order:Coraciiformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Coraciiform suborder containing rollers and ground rollers."
@@ -2169,7 +2169,7 @@
     "id": "clade:Alcedines",
     "name": "Alcedines",
     "rank": "suborder",
-    "parent": "clade:Coraciiformes",
+    "parent": "order:Coraciiformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Coraciiform suborder containing todies, motmots and kingfishers."
@@ -2178,7 +2178,7 @@
     "id": "clade:Galbuli",
     "name": "Galbuli",
     "rank": "suborder",
-    "parent": "clade:Piciformes",
+    "parent": "order:Piciformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Piciform suborder containing jacamars and puffbirds."
@@ -2187,7 +2187,7 @@
     "id": "clade:Pici",
     "name": "Pici",
     "rank": "suborder",
-    "parent": "clade:Piciformes",
+    "parent": "order:Piciformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Piciform suborder containing barbets, toucans, honeyguides and woodpeckers."
@@ -2196,7 +2196,7 @@
     "id": "clade:Strigopoidea",
     "name": "Strigopoidea",
     "rank": "superfamily",
-    "parent": "clade:Psittaciformes",
+    "parent": "order:Psittaciformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Parrot superfamily containing Strigopidae."
@@ -2205,7 +2205,7 @@
     "id": "clade:Cacatuoidea",
     "name": "Cacatuoidea",
     "rank": "superfamily",
-    "parent": "clade:Psittaciformes",
+    "parent": "order:Psittaciformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Parrot superfamily containing cockatoos."
@@ -2214,7 +2214,7 @@
     "id": "clade:Psittacoidea",
     "name": "Psittacoidea",
     "rank": "superfamily",
-    "parent": "clade:Psittaciformes",
+    "parent": "order:Psittaciformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Parrot superfamily containing Psittacidae and Psittaculidae."
@@ -2340,7 +2340,7 @@
     "id": "clade:Anhimae",
     "name": "Anhimae",
     "rank": "suborder",
-    "parent": "clade:Anseriformes",
+    "parent": "order:Anseriformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Anseriform suborder containing the screamers (Anhimidae)."
@@ -2349,7 +2349,7 @@
     "id": "clade:Anseres",
     "name": "Anseres",
     "rank": "suborder",
-    "parent": "clade:Anseriformes",
+    "parent": "order:Anseriformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Anseriform suborder containing the magpie goose and Anatidae."
@@ -2358,7 +2358,7 @@
     "id": "clade:Apodi",
     "name": "Apodi",
     "rank": "suborder",
-    "parent": "clade:Apodiformes",
+    "parent": "order:Apodiformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Apodiform suborder containing treeswifts and swifts."
@@ -2367,7 +2367,7 @@
     "id": "clade:Trochili",
     "name": "Trochili",
     "rank": "suborder",
-    "parent": "clade:Apodiformes",
+    "parent": "order:Apodiformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Apodiform suborder containing hummingbirds."
@@ -2376,7 +2376,7 @@
     "id": "clade:Thinocori",
     "name": "Thinocori",
     "rank": "suborder",
-    "parent": "clade:Charadriiformes",
+    "parent": "order:Charadriiformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Charadriiform suborder containing jacanas, painted-snipes, the plains-wanderer and seedsnipes."
@@ -2385,7 +2385,7 @@
     "id": "clade:Turnici",
     "name": "Turnici",
     "rank": "suborder",
-    "parent": "clade:Charadriiformes",
+    "parent": "order:Charadriiformes",
     "children": [],
     "status": "intermediate_rank",
     "description": "Charadriiform suborder containing buttonquails."
