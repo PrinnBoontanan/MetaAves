@@ -1,0 +1,10 @@
+{
+  "name": "metaaves",
+  "private": true,
+  "scripts": {
+    "test:game": "playwright test tests/game-system.spec.js --workers=1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}
