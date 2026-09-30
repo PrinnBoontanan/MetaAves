@@ -1210,7 +1210,6 @@
     "rank": "clade",
     "parent": "clade:Telluraves",
     "children": [
-      "clade:Psittacopasserae",
       "clade:Eufalconimorphae"
     ],
     "description": "A major Telluraves lineage containing Cariamiformes, Falconiformes, Psittaciformes and Passeriformes."
@@ -1219,20 +1218,20 @@
     "id": "clade:Psittacopasserae",
     "name": "Psittacopasserae",
     "rank": "clade",
-    "parent": "clade:Australaves",
+    "parent": "clade:Eufalconimorphae",
     "children": [],
-    "description": "Clade containing parrots and passerines."
+    "description": "Clade containing parrots and passerines, nested within Eufalconimorphae."
   },
   "clade:Aequornithes": {
     "id": "clade:Aequornithes",
     "name": "Aequornithes",
     "rank": "clade",
-    "parent": "clade:Neoaves",
+    "parent": "clade:Phaethoquornithes",
     "children": [
       "clade:Feraequornithes"
     ],
-    "status": "backbone_external",
-    "note": "Included as a named Neoaves clade, but its exact placement relative to other major Neoaves lineages is not hard-coded here."
+    "status": "backbone",
+    "note": "Placed under Phaethoquornithes in the selected Elementaves backbone; includes Gaviiformes, Sphenisciformes, Procellariiformes, Ciconiiformes, Suliformes and Pelecaniformes."
   },
   "clade:Mirandornithes": {
     "id": "clade:Mirandornithes",
@@ -1247,28 +1246,28 @@
     "id": "clade:Columbimorphae",
     "name": "Columbimorphae",
     "rank": "clade",
-    "parent": "clade:Neoaves",
+    "parent": "clade:Columbaves",
     "children": [],
-    "status": "backbone_external",
-    "note": "Named clade associated with Columbiformes, Pterocliformes and Mesitornithiformes in major phylogenomic treatments."
+    "status": "backbone",
+    "note": "Placed under Columbaves in the selected backbone; includes Columbiformes, Pterocliformes and Mesitornithiformes."
   },
   "clade:Otidimorphae": {
     "id": "clade:Otidimorphae",
     "name": "Otidimorphae",
     "rank": "clade",
-    "parent": "clade:Neoaves",
+    "parent": "clade:Columbaves",
     "children": [],
-    "status": "backbone_external",
-    "note": "Named clade containing Cuculiformes, Musophagiformes and Otidiformes in major phylogenomic treatments."
+    "status": "backbone",
+    "note": "Placed under Columbaves in the selected backbone; includes Cuculiformes, Musophagiformes and Otidiformes."
   },
   "clade:Strisores": {
     "id": "clade:Strisores",
     "name": "Strisores",
     "rank": "clade",
-    "parent": "clade:Neoaves",
+    "parent": "clade:Elementaves",
     "children": [],
-    "status": "backbone_external",
-    "note": "Named clade containing hummingbirds, swifts and several nocturnal bird lineages."
+    "status": "backbone",
+    "note": "Placed under Elementaves in the selected backbone; includes hummingbirds, swifts and several nocturnal bird lineages."
   },
   "clade:Phaethontimorphae": {
     "id": "clade:Phaethontimorphae",
@@ -1307,9 +1306,9 @@
     "parent": "clade:Neoaves",
     "children": [
       "clade:Phaethoquornithes",
-      "clade:Strisores",
       "clade:Opisthocomiformes",
-      "clade:Cursorimorphae"
+      "clade:Cursorimorphae",
+      "clade:Strisores"
     ],
     "description": "Major Neoaves clade in the Stiller et al. 2024 topology."
   },
@@ -1319,8 +1318,8 @@
     "rank": "clade",
     "parent": "clade:Elementaves",
     "children": [
-      "clade:Aequornithes",
-      "clade:Eurypygimorphae"
+      "clade:Eurypygimorphae",
+      "clade:Aequornithes"
     ],
     "description": "Clade containing Aequornithes and Eurypygimorphae."
   },
