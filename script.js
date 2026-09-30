@@ -74,7 +74,6 @@ async function loadGameData() {
             cladeResponse,
             cladeMembershipResponse,
             taxonomyEnrichmentResponse,
-            thaiNameOverrideResponse,
             thaiNameDatabaseResponse
         ] = await Promise.all([
             fetch("data/birds.generated.json?v=20260927-taxonomy"),
@@ -84,7 +83,6 @@ async function loadGameData() {
             fetch("data/clades.json?v=20260927-taxonomy"),
             fetch("data/clade_membership.generated.json?v=20260930-thai-names"),
             fetch("data/taxonomy_enrichment.generated.json?v=global-taxonomy-20260930"),
-            fetch("data/thai_name_overrides.json?v=thai-names-20260930"),
             fetch("data/thai_names.json?v=thai-names-20260930")
         ]);
 
@@ -115,20 +113,10 @@ async function loadGameData() {
             console.warn("Thai bird-name database unavailable:", error);
         }
 
-        try {
-            gameState.thaiNameOverrides = thaiNameOverrideResponse.ok
-                ? ((await thaiNameOverrideResponse.json())?.names || {})
-                : {};
-        } catch (error) {
-            gameState.thaiNameOverrides = {};
-            console.warn("Thai-name overrides unavailable:", error);
-        }
 
         gameState.allBirds.forEach(bird => {
             const databaseName = gameState.thaiNamesDatabase?.[bird.scientificName];
-            const override = gameState.thaiNameOverrides?.[bird.scientificName];
             if (databaseName) bird.thaiName = databaseName;
-            if (override) bird.thaiName = override;
         });
 
         let taxonomyEnrichment = null;
