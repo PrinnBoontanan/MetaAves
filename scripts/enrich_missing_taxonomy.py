@@ -316,7 +316,7 @@ def main():
     membership = load(MEMBERSHIP)
 
     clade_patch = enrich_clade_membership(birds, clades, membership)
-    dump(CLade_PATCH, {
+    dump(CLADE_PATCH, {
         "_meta": {
             "policy": "Append-only. Existing clade memberships are never overwritten.",
             "source": "data/clades.json",
@@ -328,7 +328,7 @@ def main():
     added_post = sum(len(v) for v in clade_patch["postOrderSpecies"].values())
     print(f"Clade additions: {added_clades}")
     print(f"Passerine post-order additions: {added_post}")
-    print(f"Wrote review patch: {CLade_PATCH}")
+    print(f"Wrote review patch: {CLADE_PATCH}")
 
     taxonomy_patch = {"species": {}, "ambiguous": {}}
     if args.taxonomy:
