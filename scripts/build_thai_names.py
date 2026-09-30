@@ -29,12 +29,13 @@ from html import unescape
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import quote, urljoin
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, urlretrieve
 
 ROOT = Path(__file__).resolve().parents[1]
 BIRDS_FILE = ROOT / "data" / "birds.generated.json"
 OVERRIDES_FILE = ROOT / "data" / "thai_name_overrides.json"
 OUTPUT_FILE = ROOT / "data" / "thai_names.generated.json"
+TEMP_EBIRD_XLSX = ROOT / ".cache_ebird_thai_names.xlsx"
 
 AVIBASE_SEARCH = "https://avibase.bsc-eoc.org/search.jsp?qstr={}"
 WIKIDATA_SEARCH = (
@@ -231,6 +232,7 @@ def get_thailand_species() -> set[str]:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ebird-xlsx", type=Path)
+    parser.add_argument("--download-ebird", action="store_true", help="Download the official eBird v2025 alternate common-name workbook automatically.")
     parser.add_argument("--scientific-column", default="F")
     parser.add_argument("--thai-column", default="DV")
     parser.add_argument("--workers", type=int, default=8)
@@ -245,9 +247,17 @@ def main():
     overrides = load_override_names()
     names = dict(overrides)
 
-    if args.ebird_xlsx:
+    ebird_path = args.ebird_xlsx
+    if ebird_path is None or args.download_ebird:
+        ebird_path = TEMP_EBIRD_XLSX
+        print("Downloading official eBird v2025 Thai alternate-name workbook...")
+        request = Request(EBIRD_THAI_NAMES_URL, headers={"User-Agent": "MetaAves Thai-name builder/1.0"})
+        with urlopen(request, timeout=180) as response, ebird_path.open("wb") as handle:
+            handle.write(response.read())
+
+    if ebird_path:
         ebird = load_ebird_names(
-            args.ebird_xlsx,
+            ebird_path,
             args.scientific_column,
             args.thai_column,
         )
@@ -265,7 +275,11 @@ def main():
     }
     targets = sorted((thailand & local_scientific) - set(names))
 
-    print(f"Thailand species in MetaAves: {len(thailand & local_scientific)}")
+    thailand_metaaves = thailand & local_scientific
+    expected_thailand_count = 1112
+    print(f"Thailand species in MetaAves: {len(thailand_metaaves)}")
+    if len(thailand_metaaves) != expected_thailand_count:
+        raise SystemExit(f"Thailand species coverage mismatch: expected {expected_thailand_count}, found {len(thailand_metaaves)}.")
     print(f"Thai names already known: {len(names)}")
     print(f"Online lookups required: {len(targets)}")
 
@@ -293,7 +307,7 @@ def main():
 
     unresolved = sorted(
         scientific
-        for scientific in (thailand & local_scientific)
+        for scientific in thailand_metaaves
         if scientific not in names
     )
 
@@ -310,7 +324,7 @@ def main():
             "thailand_species_checked": len(thailand & local_scientific),
             "unresolved": len(unresolved),
         },
-        "names": dict(sorted(names.items())),
+        "names": {scientific: names[scientific] for scientific in sorted(thailand_metaaves) if scientific in names},
     }
 
     OUTPUT_FILE.write_text(
@@ -319,7 +333,10 @@ def main():
     )
 
     print(f"Wrote {OUTPUT_FILE}")
-    print(f"Thai names: {len(names)}")
+    thai_count = len(output["names"])
+    print(f"Thai names: {thai_count}/{expected_thailand_count}")
+    if thai_count != expected_thailand_count:
+        print("ERROR: Thai database is not complete; refusing to report success.")
     print(f"Unresolved Thailand birds: {len(unresolved)}")
 
     if unresolved:
@@ -327,8 +344,15 @@ def main():
         for scientific in unresolved:
             print(f"  {scientific}")
 
+    if thai_count != expected_thailand_count:
+        return 2
     if args.strict and unresolved:
         return 2
+    try:
+        if TEMP_EBIRD_XLSX.exists() and not args.ebird_xlsx:
+            TEMP_EBIRD_XLSX.unlink()
+    except OSError:
+        pass
     return 0
 
 
