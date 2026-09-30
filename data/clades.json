@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "version": 3,
+    "version": 4,
     "status": "enriched_backbone_with_intermediate_ranks",
     "description": "Named phylogenetic clades used by MetaAves. Clades are not forced into Linnaean rank fields.",
     "sources": [
@@ -1160,28 +1160,23 @@
         "Charadriida"
       ],
       "Rostratulidae": [
-        "Scolopaci",
-        "Jacanida"
+        "Thinocori"
       ],
       "Jacanidae": [
-        "Scolopaci",
-        "Jacanida"
+        "Thinocori"
       ],
       "Thinocoridae": [
-        "Scolopaci",
-        "Jacanida"
+        "Thinocori"
       ],
       "Pedionomidae": [
-        "Scolopaci",
-        "Jacanida"
+        "Thinocori"
       ],
       "Scolopacidae": [
         "Scolopaci",
         "Scolopacida"
       ],
       "Turnicidae": [
-        "Lari",
-        "Turnicida"
+        "Turnici"
       ],
       "Glareolidae": [
         "Lari",
@@ -1304,9 +1299,27 @@
       ],
       "Psittaculidae": [
         "Psittacoidea"
+      ],
+      "Anhimidae": [
+        "Anhimae"
+      ],
+      "Anseranatidae": [
+        "Anseres"
+      ],
+      "Anatidae": [
+        "Anseres"
+      ],
+      "Hemiprocnidae": [
+        "Apodi"
+      ],
+      "Apodidae": [
+        "Apodi"
+      ],
+      "Trochilidae": [
+        "Trochili"
       ]
     },
-    "intermediateRankPolicy": "AviList remains authoritative for order/family/genus/species. Intermediate named groups are enrichment data; only groups that can be mapped to current MetaAves families are included."
+    "intermediateRankPolicy": "AviList remains authoritative for order/family/genus/species. Intermediate named groups are enrichment data; only groups supported by the current source lineage and mapped to current MetaAves families are included."
   },
   "clade:Neornithes": {
     "id": "clade:Neornithes",
@@ -2050,8 +2063,8 @@
     "rank": "infraorder",
     "parent": "clade:Lari",
     "children": [],
-    "status": "intermediate_rank",
-    "description": "Infraorder containing buttonquail."
+    "status": "legacy_compatibility",
+    "description": "Legacy compatibility alias. New data uses the documented suborder Turnici."
   },
   "clade:Larida": {
     "id": "clade:Larida",
@@ -2322,5 +2335,59 @@
     "children": [],
     "status": "intermediate_rank",
     "description": "Sylviida superfamily containing nicators, bearded reedling and larks."
+  },
+  "clade:Anhimae": {
+    "id": "clade:Anhimae",
+    "name": "Anhimae",
+    "rank": "suborder",
+    "parent": "clade:Anseriformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Anseriform suborder containing the screamers (Anhimidae)."
+  },
+  "clade:Anseres": {
+    "id": "clade:Anseres",
+    "name": "Anseres",
+    "rank": "suborder",
+    "parent": "clade:Anseriformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Anseriform suborder containing the magpie goose and Anatidae."
+  },
+  "clade:Apodi": {
+    "id": "clade:Apodi",
+    "name": "Apodi",
+    "rank": "suborder",
+    "parent": "clade:Apodiformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Apodiform suborder containing treeswifts and swifts."
+  },
+  "clade:Trochili": {
+    "id": "clade:Trochili",
+    "name": "Trochili",
+    "rank": "suborder",
+    "parent": "clade:Apodiformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Apodiform suborder containing hummingbirds."
+  },
+  "clade:Thinocori": {
+    "id": "clade:Thinocori",
+    "name": "Thinocori",
+    "rank": "suborder",
+    "parent": "clade:Charadriiformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Charadriiform suborder containing jacanas, painted-snipes, the plains-wanderer and seedsnipes."
+  },
+  "clade:Turnici": {
+    "id": "clade:Turnici",
+    "name": "Turnici",
+    "rank": "suborder",
+    "parent": "clade:Charadriiformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "description": "Charadriiform suborder containing buttonquails."
   }
 }
