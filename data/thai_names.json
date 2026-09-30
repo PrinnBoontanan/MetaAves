@@ -1,9 +1,9 @@
 {
   "_meta": {
-    "source": "OpenFauna Thai locale (scientific-name → Thai bird names), supplemented by existing verified MetaAves entries",
+    "source": "OpenFauna Thai locale, supplemented with existing verified MetaAves names and verified Thai-name entries",
     "sourceRevision": "3511422761fb0b36368ae58383c7db13ff21ece4",
-    "thaiEntries": 1450,
-    "note": "World mode hides Thai names; Thailand mode uses these names.",
+    "thaiEntries": 1451,
+    "note": "Static Thai-name database. World mode hides Thai names; Thailand mode uses these names.",
     "updatedAt": "2026-09-30"
   },
   "names": {
@@ -1456,6 +1456,7 @@
     "Sternula saundersi": "นกนางนวลแกลบน้ำเค็ม",
     "Streptopelia decaocto": "นกเขาแขก",
     "Surniculus dicruroides": "นกคัคคูแซงแซวหางแฉก",
-    "Xema sabini": "นกนางนวลปลายปากเหลือง"
+    "Xema sabini": "นกนางนวลปลายปากเหลือง",
+    "Astur gentilis": "เหยี่ยวนกเขาท้องขาว"
   }
 }
