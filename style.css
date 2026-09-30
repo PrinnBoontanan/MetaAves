@@ -4257,3 +4257,97 @@ a:focus-visible,
         overflow-wrap: anywhere !important;
     }
 }
+
+/* Phone fallback: this block is outside @media so it still works when a real
+   phone exposes a desktop-sized CSS viewport. JS adds .phone-device using the
+   physical screen's short edge as a fallback. */
+body.phone-device .taxonomy-layout {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+body.phone-device .taxonomy-layout > .taxonomy-section,
+body.phone-device .taxonomy-layout > .taxon-section {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  position: static !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+body.phone-device .taxonomy-layout > .taxonomy-section { margin-bottom: 16px !important; }
+body.phone-device .taxonomy-layout > .taxon-section { margin-top: 0 !important; }
+
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  box-sizing: border-box !important;
+  gap: 0 !important;
+  overflow: visible !important;
+}
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card > * {
+  grid-area: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-photo {
+  order: 5 !important;
+  margin: 10px 0 14px !important;
+}
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-photo .taxon-card-image {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  margin: 0 auto !important;
+}
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-wiki-section {
+  order: 6 !important;
+  margin: 0 !important;
+  padding: 14px 0 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-top: 1px solid #e3d8bf !important;
+}
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-species-taxonomy {
+  order: 7 !important;
+  margin-top: 12px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-description {
+  order: 6 !important;
+  margin: 0 !important;
+  padding: 14px 0 0 !important;
+  border-left: 0 !important;
+}
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-wikipedia-link {
+  order: 8 !important;
+  align-self: flex-start !important;
+  width: fit-content !important;
+  margin: 14px 0 0 !important;
+}
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card .taxon-card-taxonomy-column,
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card .taxon-card-taxonomy-row {
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+}
+body.phone-device .taxonomy-tree {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 400px !important;
+  height: min(58vh, 560px) !important;
+}
