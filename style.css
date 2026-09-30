@@ -3950,3 +3950,64 @@ a:focus-visible,
 .meta-tree-connection {
     stroke-linecap: round;
 }
+
+
+/* Phone-specific responsive layout.
+   Phones get a genuinely vertical taxon card instead of the wide tablet/desktop card. */
+@media (max-width: 700px), (pointer: coarse) and (max-height: 500px) {
+    body.phone-device .taxon-card.species-card,
+    body.phone-device .taxon-card:not(.species-card) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) !important;
+        grid-template-areas:
+            "title"
+            "thai"
+            "scientific"
+            "rank"
+            "photo"
+            "description"
+            "taxonomy"
+            "wikipedia" !important;
+        column-gap: 0 !important;
+        row-gap: 10px;
+    }
+
+    body.phone-device .taxon-card.species-card > .taxon-card-photo,
+    body.phone-device .taxon-card:not(.species-card) > .taxon-card-photo {
+        grid-area: photo !important;
+        width: 100%;
+        max-width: 100%;
+        margin: 8px 0 4px !important;
+    }
+
+    body.phone-device .taxon-card.species-card > .taxon-card-species-taxonomy {
+        grid-area: taxonomy !important;
+        border: 0 !important;
+        border-top: 1px solid #e3d8bf !important;
+        padding: 14px 0 0 !important;
+        margin-top: 4px;
+    }
+
+    body.phone-device .taxon-card:not(.species-card) > .taxon-card-photo::after {
+        display: none;
+    }
+
+    body.phone-device .taxon-card:not(.species-card) > .taxon-card-description {
+        grid-area: description !important;
+        padding: 0 !important;
+        margin: 8px 0 0 !important;
+    }
+
+    body.phone-device .taxon-card:not(.species-card) > .taxon-card-wikipedia-link,
+    body.phone-device .taxon-card.species-card > .taxon-card-wikipedia-link {
+        grid-area: wikipedia !important;
+        margin: 4px 0 0 !important;
+        justify-self: start !important;
+    }
+
+    /* Keep the phone tree compact enough that the card is reached quickly. */
+    body.phone-device .taxonomy-tree {
+        min-height: 400px;
+        height: min(58vh, 560px);
+    }
+}
