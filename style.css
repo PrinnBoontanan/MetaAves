@@ -4011,3 +4011,166 @@ a:focus-visible,
         height: min(58vh, 560px);
     }
 }
+
+
+/* ========================================
+   Final phone layout lock
+   The phone must use a single vertical flow for both
+   the taxonomy panel and the Taxon Information card.
+   This intentionally overrides older tablet/desktop card grids.
+======================================== */
+@media (max-width: 700px), (pointer: coarse) and (max-height: 500px) {
+    body.phone-device .taxonomy-layout {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxonomy-section,
+    body.phone-device .taxonomy-layout > .taxon-section {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        position: static !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxonomy-section {
+        margin-bottom: 16px !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section {
+        margin-top: 0 !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card {
+        display: grid !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        min-height: 0 !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        grid-template-rows: none !important;
+        grid-template-areas:
+            "title"
+            "thai"
+            "scientific"
+            "rank"
+            "common"
+            "photo"
+            "description"
+            "taxonomy"
+            "wikipedia" !important;
+        gap: 0 !important;
+        column-gap: 0 !important;
+        row-gap: 10px !important;
+        overflow: visible !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card > h3 {
+        grid-area: title !important;
+        width: 100% !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-thai-name {
+        grid-area: thai !important;
+        width: 100% !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-scientific {
+        grid-area: scientific !important;
+        width: 100% !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-species-rank,
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-rank {
+        grid-area: rank !important;
+        width: 100% !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-common {
+        grid-area: common !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* The photo wrapper is the grid item on the current card markup. */
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-photo {
+        grid-area: photo !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        margin: 4px 0 4px !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-photo .taxon-card-image {
+        display: block;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        margin: 0 !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-wiki-section:not(.taxon-card-species-taxonomy),
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-description {
+        grid-area: description !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 10px 0 0 !important;
+        border-left: 0 !important;
+        border-top: 1px solid #e3d8bf !important;
+        line-height: 1.65 !important;
+        overflow-wrap: anywhere;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-species-taxonomy {
+        grid-area: taxonomy !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        margin: 4px 0 0 !important;
+        padding: 14px 0 0 !important;
+        border-left: 0 !important;
+        border-right: 0 !important;
+        border-top: 1px solid #e3d8bf !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-wikipedia-link {
+        grid-area: wikipedia !important;
+        width: fit-content !important;
+        max-width: 100% !important;
+        margin: 4px 0 0 !important;
+        padding: 0 !important;
+        justify-self: start !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card .taxon-card-taxonomy-column {
+        min-width: 0 !important;
+    }
+
+    body.phone-device .taxonomy-layout > .taxon-section .taxon-card .taxon-card-taxonomy-row {
+        overflow-wrap: anywhere;
+    }
+
+    /* Give the tree enough room to explore without making it dominate a phone. */
+    body.phone-device .taxonomy-tree {
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 400px !important;
+        height: min(58vh, 560px) !important;
+    }
+
+    /* Keep the floating helper out of the card's reading area. */
+    body.phone-device .thai-translator-button {
+        bottom: 12px;
+        right: 12px;
+        max-width: calc(100vw - 24px);
+    }
+}
