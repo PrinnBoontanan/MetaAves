@@ -20,8 +20,18 @@ function isPhoneScreen() {
     const shortestScreenEdge = screenWidth && screenHeight
         ? Math.min(screenWidth, screenHeight)
         : 0;
+    const visualViewportWidth = Number(window.visualViewport?.width) || 0;
+    const visualViewportHeight = Number(window.visualViewport?.height) || 0;
+    const shortestVisualEdge = visualViewportWidth && visualViewportHeight
+        ? Math.min(visualViewportWidth, visualViewportHeight)
+        : 0;
 
-    return phoneLayoutQuery.matches || shortestScreenEdge > 0 && shortestScreenEdge <= 700;
+    // visualViewport represents the area the user can actually see. This is
+    // important on mobile Safari when the layout viewport is temporarily
+    // desktop-sized (for example, Request Desktop Website).
+    return phoneLayoutQuery.matches
+        || shortestVisualEdge > 0 && shortestVisualEdge <= 700
+        || shortestScreenEdge > 0 && shortestScreenEdge <= 700;
 }
 
 function updatePhoneLayoutClass() {
@@ -32,6 +42,7 @@ updatePhoneLayoutClass();
 phoneLayoutQuery.addEventListener("change", updatePhoneLayoutClass);
 window.addEventListener("resize", updatePhoneLayoutClass);
 window.addEventListener("orientationchange", updatePhoneLayoutClass);
+window.visualViewport?.addEventListener("resize", updatePhoneLayoutClass);
 
 const gameState = {
     mode: null,
