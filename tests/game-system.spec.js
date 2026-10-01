@@ -623,6 +623,10 @@ test("MetaAves phone layout stays vertical even with a desktop-sized mobile view
   await page.addInitScript(() => {
     Object.defineProperty(window.screen, "width", { configurable: true, get: () => 390 });
     Object.defineProperty(window.screen, "height", { configurable: true, get: () => 844 });
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      value: { width: 390, height: 844, addEventListener() {} }
+    });
   });
 
   await page.setViewportSize({ width: 980, height: 844 });
