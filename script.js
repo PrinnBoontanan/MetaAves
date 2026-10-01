@@ -4634,6 +4634,17 @@ function appendTaxonCardPhoto(card, wiki) {
     image.alt = wiki.summary.title || "";
     image.loading = "lazy";
 
+    image.addEventListener("load", () => {
+        if (
+            image.naturalWidth > 0 &&
+            image.naturalHeight > 0 &&
+            image.naturalWidth / image.naturalHeight >= 1.65
+        ) {
+            wrapper.classList.add("taxon-card-photo--wide");
+            card.classList.add("taxon-card--wide-photo");
+        }
+    });
+
     wrapper.appendChild(image);
     card.appendChild(wrapper);
 }
