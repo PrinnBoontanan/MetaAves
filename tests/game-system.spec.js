@@ -643,11 +643,24 @@ test("MetaAves phone layout stays vertical when a phone exposes a desktop-sized 
   const layout = await page.evaluate(() => {
     const layout = document.querySelector(".taxonomy-layout");
     const card = document.querySelector(".taxon-card");
+    const directChildren = [...card.children].map(node => {
+      const rect = node.getBoundingClientRect();
+      return {
+        className: node.className || node.tagName,
+        left: rect.left,
+        top: rect.top,
+        width: rect.width
+      };
+    });
+    const taxonomy = card.querySelector(".taxon-card-species-taxonomy");
     return {
       phoneClass: document.body.classList.contains("phone-device"),
       layoutDisplay: getComputedStyle(layout).display,
       cardDisplay: getComputedStyle(card).display,
-      cardFlexDirection: getComputedStyle(card).flexDirection
+      cardFlexDirection: getComputedStyle(card).flexDirection,
+      cardWidth: card.getBoundingClientRect().width,
+      directChildren,
+      taxonomyColumns: taxonomy ? getComputedStyle(taxonomy).gridTemplateColumns : ""
     };
   });
 
@@ -655,6 +668,27 @@ test("MetaAves phone layout stays vertical when a phone exposes a desktop-sized 
   assert(layout.layoutDisplay === "block", "Phone taxonomy layout is not vertical: " + layout.layoutDisplay);
   assert(layout.cardDisplay === "flex", "Phone taxon card is not using vertical flex flow: " + layout.cardDisplay);
   assert(layout.cardFlexDirection === "column", "Phone taxon card is not column-oriented: " + layout.cardFlexDirection);
+  assert(layout.cardWidth > 0, "Phone taxon card has no usable width");
+  for (const child of layout.directChildren) {
+    assert(
+      Math.abs(child.width - layout.cardWidth) < 1.5,
+      "Phone taxon card child does not span the card width: " + JSON.stringify(child)
+    );
+  }
+  for (let i = 1; i < layout.directChildren.length; i++) {
+    assert(
+      layout.directChildren[i].top >= layout.directChildren[i - 1].top - 1,
+      "Phone taxon card children are not vertically ordered: " +
+        JSON.stringify(layout.directChildren)
+    );
+  }
+  const columnCount = layout.taxonomyColumns
+    ? layout.taxonomyColumns.trim().split(/\\s+/).length
+    : 0;
+  assert(
+    columnCount <= 1,
+    "Phone species taxonomy still has multiple columns: " + layout.taxonomyColumns
+  );
 });
 
 test("MetaAves does not classify a touch tablet as a phone", async ({ page }) => {
