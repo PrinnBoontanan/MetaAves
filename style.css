@@ -4427,3 +4427,39 @@ body.phone-device .taxonomy-layout > .taxon-section {
     grid-column: 1 !important;
     grid-row: 2 !important;
 }
+
+
+/* Final phone shell fallback: when an iPhone browser exposes a desktop-sized
+   CSS viewport, keep the entire game shell single-column as well as the
+   taxonomy area. This prevents the top controls from inheriting the desktop
+   two-column grid before the taxonomy card is reached. */
+body.phone-device .game-container {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas:
+        "header"
+        "info"
+        "guess"
+        "taxonomy" !important;
+    width: min(calc(100% - 22px), 700px) !important;
+    min-width: 0 !important;
+    max-width: 700px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    gap: 14px !important;
+    padding-top: 18px !important;
+}
+
+body.phone-device .game-info {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex-wrap: wrap !important;
+}
+
+body.phone-device .guess-section,
+body.phone-device .taxonomy-section,
+body.phone-device .taxon-section {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+}
