@@ -4513,3 +4513,97 @@ body.phone-device #guess-button { padding: 12px 19px; }
 body.phone-device .taxon-card:not(.species-card) > .taxon-card-photo.taxon-card-photo--wide {
     max-width: 100% !important;
 }
+
+/* Phone study-card scale
+   Keep the game-over study card compact on narrow/touch layouts instead of
+   inheriting the desktop 560px card typography and spacing. */
+body.phone-device .game-over-overlay {
+    padding: 10px !important;
+    align-items: center !important;
+}
+
+body.phone-device .game-over-card {
+    width: calc(100vw - 20px) !important;
+    max-width: 560px !important;
+    max-height: 84vh !important;
+    padding: 18px !important;
+    border-radius: 16px !important;
+    font-size: 0.9rem !important;
+}
+
+body.phone-device .game-over-card h2 {
+    font-size: 22px !important;
+    line-height: 1.15 !important;
+}
+
+body.phone-device .game-over-card > p {
+    font-size: 0.88rem !important;
+}
+
+body.phone-device .game-over-card .study-card-label {
+    font-size: 10px !important;
+    margin-bottom: 6px !important;
+}
+
+body.phone-device .study-card-bird {
+    margin-top: 14px !important;
+    padding: 12px 14px !important;
+    border-radius: 11px !important;
+}
+
+body.phone-device .study-card-bird h3 {
+    font-size: 20px !important;
+    line-height: 1.2 !important;
+}
+
+body.phone-device .study-card-bird .scientific-name {
+    font-size: 12px !important;
+}
+
+body.phone-device .study-card-details {
+    gap: 8px !important;
+    margin-top: 8px !important;
+}
+
+body.phone-device .study-card-section {
+    margin-top: 0 !important;
+    padding: 10px 0 !important;
+}
+
+body.phone-device .study-card-section h4 {
+    font-size: 14px !important;
+    margin-bottom: 5px !important;
+}
+
+body.phone-device .study-card-section p,
+body.phone-device .study-card-section li {
+    font-size: 0.86rem !important;
+    line-height: 1.45 !important;
+}
+
+body.phone-device .study-card-hero-image {
+    max-width: 100% !important;
+    max-height: 170px !important;
+    margin: 10px auto 2px !important;
+    border-radius: 10px !important;
+}
+
+body.phone-device .study-taxonomy-row {
+    padding: 5px 0 !important;
+    gap: 2px !important;
+}
+
+body.phone-device .study-taxonomy-label,
+body.phone-device .study-taxonomy-value {
+    font-size: 0.82rem !important;
+}
+
+body.phone-device .game-over-actions {
+    margin-top: 12px !important;
+    gap: 7px !important;
+}
+
+body.phone-device .game-over-actions button {
+    padding: 9px 15px !important;
+    font-size: 0.88rem !important;
+}
