@@ -39,6 +39,11 @@ function isPhoneScreen() {
         /Android.*Mobile|iPhone|iPod|Windows Phone/i.test(userAgent) ||
         navigator.userAgentData?.mobile === true;
 
+    // iOS browsers can expose a Mac-style UA when desktop mode is requested.
+    // On iPhone, navigator.platform can still identify the handset even when
+    // the UA no longer contains "iPhone".
+    const iphonePlatform = navigator.platform === "iPhone" || navigator.platform === "iPod";
+
     // Some phones (especially iPhone Safari with "Request Desktop Website")
     // expose a desktop-sized layout viewport and a Mac-style user agent.
     // In that case screen dimensions are also reported in CSS pixels, so
@@ -53,6 +58,7 @@ function isPhoneScreen() {
 
     return phoneLayoutQuery.matches
         || mobileUserAgent
+        || iphonePlatform
         || shortestVisualEdge > 0 && shortestVisualEdge <= 700
         || shortestScreenEdge > 0 && shortestScreenEdge <= 700
         || touchPhoneShape;
