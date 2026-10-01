@@ -5505,9 +5505,13 @@ function renderTaxonomyTree() {
     canvas.appendChild(nodeLayer);
     taxonomyTree.appendChild(canvas);
 
-    const levelGap = 96;
-    const horizontalGap = 42;
-    const sidePadding = 44;
+    // Phones get a denser tree so the nodes do not dominate the viewport.
+    // CSS also reduces the node typography; these smaller geometry gaps keep
+    // the resulting branches compact rather than leaving oversized empty space.
+    const phoneTree = document.body.classList.contains("phone-device");
+    const levelGap = phoneTree ? 78 : 96;
+    const horizontalGap = phoneTree ? 28 : 42;
+    const sidePadding = phoneTree ? 28 : 44;
     const positions = [];
     const measuredWidths = new Map();
 
