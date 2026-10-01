@@ -6488,7 +6488,6 @@ function buildSpeciesHint(
 }
 
 function getSpeciesHintElement() {
- {
     let hint = document.getElementById("species-hover-hint");
     if (!hint) {
         hint = document.createElement("div");
@@ -6768,6 +6767,14 @@ async function showGameOverCard(result) {
     addStudySection("Breeding", unavailable);
     addStudySection("Conservation", unavailable);
 
+    const setStudyValue = (heading, value) => {
+        const section = document.querySelector(
+            `.study-card-section[data-study-heading="${heading.toLowerCase()}"]`
+        );
+        const paragraph = section?.querySelector("p");
+        if (paragraph) paragraph.textContent = value || unavailable;
+    };
+
     overlay.classList.add("visible");
     if (newGameButton) newGameButton.classList.add("visible");
 
@@ -6870,6 +6877,85 @@ async function showGameOverCard(result) {
     }
 
     if (gameState.mysteryBird !== bird) return;
+
+    // Apply the detailed results after the card is already visible.
+    // Taxonomy remains locally available even if any remote provider fails.
+    try {
+        attachDetailedTaxonomyToBird(bird, wiki);
+    } catch (error) {
+        console.warn("Wikipedia taxonomy enrichment failed:", error);
+    }
+
+    try {
+        const finalTaxonomyRows = mergeDetailedTaxonomyRows(
+            bird,
+            wiki,
+            wikidataDetailed
+        );
+
+        taxonomy.innerHTML = "";
+        finalTaxonomyRows.forEach(([label, value]) => {
+            const row = document.createElement("div");
+            row.className = "study-taxonomy-row";
+
+            const labelElement = document.createElement("span");
+            labelElement.className = "study-taxonomy-label";
+            labelElement.textContent = label;
+
+            const valueElement = document.createElement("span");
+            valueElement.className = "study-taxonomy-value";
+            valueElement.textContent = value;
+
+            row.appendChild(labelElement);
+            row.appendChild(valueElement);
+            taxonomy.appendChild(row);
+        });
+    } catch (error) {
+        console.warn("Detailed taxonomy rendering failed:", error);
+    }
+
+    const studyData = getWikipediaStudyData(
+        wiki?.html,
+        wiki?.wikitext
+    );
+
+    setStudyValue(
+        "Description",
+        studyData.description ||
+            limitWikipediaSentences(
+                wiki?.summary?.extract || "",
+                6,
+                1400
+            )
+    );
+    setStudyValue("Habitat & Distribution", studyData.habitatDistribution);
+    setStudyValue("Diet", studyData.diet);
+    setStudyValue("Behavior", studyData.behavior);
+    setStudyValue("Breeding", studyData.breeding);
+    setStudyValue(
+        "Conservation",
+        onlineConservationStatus ||
+        studyData.conservation ||
+        "No information available online."
+    );
+
+    const placeholder = document.getElementById("study-photo-placeholder");
+    const imageSource = wiki?.summary?.thumbnail?.source;
+
+    if (placeholder && imageSource && !document.getElementById("study-bird-image")) {
+        placeholder.remove();
+
+        const image = document.createElement("img");
+        image.id = "study-bird-image";
+        image.className = "study-card-image study-card-hero-image";
+        image.src = imageSource;
+        image.alt = bird.commonName;
+        image.loading = "lazy";
+        details.before(image);
+    } else if (placeholder && !imageSource) {
+        const photoText = placeholder.querySelector("p");
+        if (photoText) photoText.textContent = "No photo available on Wikipedia.";
+    }
 
     const wikiLink = wiki?.summary?.content_urls?.desktop?.page;
     if (wikiLink) {
