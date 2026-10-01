@@ -619,13 +619,20 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
   );
 });
 
-test("MetaAves phone layout stays vertical even with a desktop-sized mobile viewport", async ({ page }) => {
+test("MetaAves phone layout stays vertical when a phone exposes a desktop-sized viewport", async ({ page }) => {
   await page.addInitScript(() => {
-    Object.defineProperty(window.screen, "width", { configurable: true, get: () => 390 });
-    Object.defineProperty(window.screen, "height", { configurable: true, get: () => 844 });
+    // Model iPhone Safari's "Request Desktop Website" case:
+    // desktop-sized layout viewport + Mac-style UA + touch + tall phone-shaped screen.
+    Object.defineProperty(window.screen, "width", { configurable: true, get: () => 980 });
+    Object.defineProperty(window.screen, "height", { configurable: true, get: () => 2121 });
+    Object.defineProperty(window.navigator, "maxTouchPoints", { configurable: true, get: () => 5 });
+    Object.defineProperty(window.navigator, "userAgent", {
+      configurable: true,
+      get: () => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15"
+    });
     Object.defineProperty(window, "visualViewport", {
       configurable: true,
-      value: { width: 390, height: 844, addEventListener() {} }
+      value: { width: 980, height: 844, addEventListener() {} }
     });
   });
 
@@ -644,8 +651,31 @@ test("MetaAves phone layout stays vertical even with a desktop-sized mobile view
     };
   });
 
-  assert(layout.phoneClass, "Phone detection did not activate from physical screen dimensions");
+  assert(layout.phoneClass, "Phone detection did not activate for a desktop-sized phone viewport");
   assert(layout.layoutDisplay === "block", "Phone taxonomy layout is not vertical: " + layout.layoutDisplay);
   assert(layout.cardDisplay === "flex", "Phone taxon card is not using vertical flex flow: " + layout.cardDisplay);
   assert(layout.cardFlexDirection === "column", "Phone taxon card is not column-oriented: " + layout.cardFlexDirection);
+});
+
+test("MetaAves does not classify a touch tablet as a phone", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window.screen, "width", { configurable: true, get: () => 1488 });
+    Object.defineProperty(window.screen, "height", { configurable: true, get: () => 2266 });
+    Object.defineProperty(window.navigator, "maxTouchPoints", { configurable: true, get: () => 5 });
+    Object.defineProperty(window.navigator, "userAgent", {
+      configurable: true,
+      get: () => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15"
+    });
+    Object.defineProperty(window, "visualViewport", {
+      configurable: true,
+      value: { width: 1488, height: 2266, addEventListener() {} }
+    });
+  });
+
+  await page.setViewportSize({ width: 980, height: 844 });
+  await page.goto("/?e2e=1");
+  await page.waitForFunction(() => !!window.__METAAVES_E2E__);
+
+  const phoneClass = await page.evaluate(() => document.body.classList.contains("phone-device"));
+  assert(!phoneClass, "Tablet-sized touch screen was incorrectly classified as a phone");
 });
