@@ -4366,3 +4366,64 @@ body.phone-device .taxonomy-tree {
   min-height: 400px !important;
   height: min(58vh, 560px) !important;
 }
+
+
+/* Final responsive cascade
+   -------------------------
+   This stylesheet has several desktop refinements later than the original
+   1050px media query. Keep the actual breakpoint at the END so a later
+   desktop rule cannot turn the phone/tablet layout back into two columns.
+   The previous mobile rules were correct but were being overwritten by the
+   later .taxonomy-layout desktop declaration. */
+@media (max-width: 1050px) {
+    .taxonomy-layout {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        grid-template-rows: auto auto !important;
+        gap: 16px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .taxonomy-layout > .taxonomy-section,
+    .taxonomy-layout > .taxon-section {
+        grid-column: 1 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        position: static !important;
+        max-height: none !important;
+        overflow: visible !important;
+        box-sizing: border-box !important;
+    }
+
+    .taxonomy-layout > .taxonomy-section {
+        grid-row: 1 !important;
+    }
+
+    .taxonomy-layout > .taxon-section {
+        grid-row: 2 !important;
+    }
+}
+
+/* A real phone can expose a desktop-sized layout viewport. The JS classifier
+   adds this class from physical/visual screen characteristics, so it remains
+   the stronger phone-specific path even when max-width does not match. */
+body.phone-device .taxonomy-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto auto !important;
+    gap: 16px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+body.phone-device .taxonomy-layout > .taxonomy-section {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+}
+
+body.phone-device .taxonomy-layout > .taxon-section {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+}
