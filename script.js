@@ -20,18 +20,42 @@ function isPhoneScreen() {
     const shortestScreenEdge = screenWidth && screenHeight
         ? Math.min(screenWidth, screenHeight)
         : 0;
+    const longestScreenEdge = screenWidth && screenHeight
+        ? Math.max(screenWidth, screenHeight)
+        : 0;
+    const screenAspectRatio = shortestScreenEdge && longestScreenEdge
+        ? shortestScreenEdge / longestScreenEdge
+        : 1;
+
     const visualViewportWidth = Number(window.visualViewport?.width) || 0;
     const visualViewportHeight = Number(window.visualViewport?.height) || 0;
     const shortestVisualEdge = visualViewportWidth && visualViewportHeight
         ? Math.min(visualViewportWidth, visualViewportHeight)
         : 0;
 
-    // visualViewport represents the area the user can actually see. This is
-    // important on mobile Safari when the layout viewport is temporarily
-    // desktop-sized (for example, Request Desktop Website).
+    const maxTouchPoints = Number(navigator.maxTouchPoints) || 0;
+    const userAgent = String(navigator.userAgent || "");
+    const mobileUserAgent =
+        /Android.*Mobile|iPhone|iPod|Windows Phone/i.test(userAgent) ||
+        navigator.userAgentData?.mobile === true;
+
+    // Some phones (especially iPhone Safari with "Request Desktop Website")
+    // expose a desktop-sized layout viewport and a Mac-style user agent.
+    // In that case screen dimensions are also reported in CSS pixels, so
+    // checking only for <=700px misses the phone completely. A touch device
+    // with a strongly phone-shaped screen is still distinguishable from an
+    // iPad/tablet: phones are typically much narrower relative to their long
+    // edge, while tablets are substantially closer to square.
+    const touchPhoneShape =
+        maxTouchPoints > 0 &&
+        longestScreenEdge >= 900 &&
+        screenAspectRatio <= 0.62;
+
     return phoneLayoutQuery.matches
+        || mobileUserAgent
         || shortestVisualEdge > 0 && shortestVisualEdge <= 700
-        || shortestScreenEdge > 0 && shortestScreenEdge <= 700;
+        || shortestScreenEdge > 0 && shortestScreenEdge <= 700
+        || touchPhoneShape;
 }
 
 function updatePhoneLayoutClass() {
