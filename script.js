@@ -1330,7 +1330,7 @@ function getDeepestSharedTaxon(guessedBird, mysteryBird) {
     // even when an intermediate clade/backbone path is represented slightly
     // differently between the two species. This prevents a real family match
     // such as Bucerotidae from disappearing until a second hornbill is guessed.
-    const rankedLevels = ["genus", "family", "order", "class"];
+    const rankedLevels = ["genus", "family"];
     for (const level of rankedLevels) {
         const guessedValue = getBirdRankValue(guessedBird, level);
         const mysteryValue = getBirdRankValue(mysteryBird, level);
