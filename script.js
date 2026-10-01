@@ -4599,12 +4599,21 @@ function getWikipediaTitleFromTaxon(taxon, info) {
 function appendWikipediaImage(card, wiki, className) {
     if (!card || !wiki?.summary?.thumbnail?.source) return;
 
+    // Keep the image inside the same structural wrapper used by the
+    // responsive taxon-card layout. Previously species cards received a
+    // bare <img>, while the phone layout targeted .taxon-card-photo.
+    // That made the two card variants obey different layout rules.
+    const wrapper = document.createElement("div");
+    wrapper.className = "taxon-card-photo";
+
     const image = document.createElement("img");
     image.className = className;
     image.src = wiki.summary.thumbnail.source;
     image.alt = wiki.summary.title || "";
     image.loading = "lazy";
-    card.appendChild(image);
+
+    wrapper.appendChild(image);
+    card.appendChild(wrapper);
 }
 
 function appendTaxonCardPhoto(card, wiki) {
