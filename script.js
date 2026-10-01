@@ -5515,10 +5515,33 @@ function renderTaxonomyTree() {
     const positions = [];
     const measuredWidths = new Map();
 
+    // Keep the phone tree visually compact even when the browser is using
+    // a desktop-sized CSS viewport. Inline styles here mirror the intended
+    // phone-only scale without changing the desktop/iPad presentation.
+    if (phoneTree) {
+        taxonomyTree.style.borderRadius = "16px";
+        taxonomyTree.style.minHeight = "340px";
+        taxonomyTree.style.height = "min(52vh, 480px)";
+        taxonomyTree.parentElement?.style.setProperty("background", "transparent");
+    }
+
+    function applyPhoneNodeScale(element) {
+        if (!phoneTree) return;
+        element.style.minHeight = "29px";
+        element.style.padding = "4px 9px";
+        element.style.borderRadius = "7px";
+        element.style.fontSize = "12px";
+        element.style.lineHeight = "17px";
+        if (element.classList.contains("meta-species-node")) {
+            element.style.maxWidth = "190px";
+        }
+    }
+
     function measureNode(node) {
         if (measuredWidths.has(node)) return measuredWidths.get(node);
 
         const element = createTreeNodeElement(node);
+        applyPhoneNodeScale(element);
         element.style.visibility = "hidden";
         element.style.position = "absolute";
         element.style.left = "-10000px";
@@ -5636,6 +5659,7 @@ function renderTaxonomyTree() {
 
     positions.forEach(position => {
         const element = createTreeNodeElement(position.node);
+        applyPhoneNodeScale(element);
 
         const nodeHeight = element.offsetHeight || 34;
         const actualWidth = element.offsetWidth || position.width;
