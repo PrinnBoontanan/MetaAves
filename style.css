@@ -4463,3 +4463,53 @@ body.phone-device .taxon-section {
     min-width: 0 !important;
     max-width: none !important;
 }
+
+
+/* Final phone UI polish
+   ---------------------
+   Keep the mobile interface a little lighter and more compact without
+   changing the desktop/tablet presentation. */
+body.phone-device .game-container { font-size: 0.94rem; }
+body.phone-device .game-header { margin-bottom: 24px; }
+body.phone-device .game-header h1 { font-size: 36px; }
+body.phone-device .game-header p { font-size: 0.92rem; }
+body.phone-device .game-info { margin-bottom: 18px; }
+body.phone-device .mode-display,
+body.phone-device .guess-counter { padding: 10px 15px; border-radius: 12px; }
+body.phone-device .guess-section { padding: 20px; border-radius: 16px; margin-bottom: 18px; }
+body.phone-device .taxonomy-section {
+    padding: 20px;
+    border-radius: 18px;
+    overflow: hidden;
+}
+body.phone-device .taxonomy-section h2 { padding: 18px 18px 12px; font-size: 24px; }
+body.phone-device .taxonomy-tree {
+    min-height: 360px !important;
+    height: min(54vh, 500px) !important;
+    border-radius: 14px !important;
+}
+body.phone-device .taxon-section { margin-top: 0; }
+body.phone-device .taxon-card { padding: 18px; border-radius: 16px; }
+body.phone-device .taxon-card h3 { font-size: 24px; }
+body.phone-device .taxon-card p,
+body.phone-device .taxon-card li { font-size: 0.94rem; }
+body.phone-device #bird-search,
+body.phone-device #guess-button { font-size: 15px; }
+body.phone-device #bird-search { padding: 12px; }
+body.phone-device #guess-button { padding: 12px 19px; }
+
+/* Only unusually wide higher-taxon photos get the larger image treatment. */
+.taxon-card:not(.species-card) > .taxon-card-photo.taxon-card-photo--wide {
+    max-width: 360px;
+}
+.taxon-card:not(.species-card).taxon-card--wide-photo {
+    grid-template-columns: minmax(340px, 360px) minmax(0, 1fr);
+}
+@media (max-width: 850px) {
+    .taxon-card:not(.species-card).taxon-card--wide-photo {
+        grid-template-columns: 1fr !important;
+    }
+}
+body.phone-device .taxon-card:not(.species-card) > .taxon-card-photo.taxon-card-photo--wide {
+    max-width: 100% !important;
+}
