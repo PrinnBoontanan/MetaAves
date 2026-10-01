@@ -4345,6 +4345,21 @@ body.phone-device .taxonomy-layout > .taxon-section .taxon-card .taxon-card-taxo
   min-width: 0 !important;
   overflow-wrap: anywhere !important;
 }
+
+/* The taxonomy subsection is itself a grid. Collapse it on phones too,
+   including phones whose browser exposes a desktop-sized viewport. */
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-species-taxonomy {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: auto !important;
+  column-gap: 0 !important;
+  row-gap: 0 !important;
+}
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-species-taxonomy > h4,
+body.phone-device .taxonomy-layout > .taxon-section .taxon-card > .taxon-card-species-taxonomy .taxon-card-taxonomy-column {
+  grid-column: 1 !important;
+}
+
 body.phone-device .taxonomy-tree {
   width: 100% !important;
   min-width: 0 !important;
