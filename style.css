@@ -4478,11 +4478,14 @@ body.phone-device .mode-display,
 body.phone-device .guess-counter { padding: 10px 15px; border-radius: 12px; }
 body.phone-device .guess-section { padding: 20px; border-radius: 16px; margin-bottom: 18px; }
 body.phone-device .taxonomy-section {
-    padding: 20px;
+    padding: 0 !important;
     border-radius: 18px;
     overflow: hidden;
 }
-body.phone-device .taxonomy-section h2 { padding: 18px 18px 12px; font-size: 24px; }
+body.phone-device .taxonomy-section h2 { padding: 12px 14px 8px; font-size: 24px; }
+body.phone-device .taxonomy-content {
+    padding: 8px 8px 10px !important;
+}
 body.phone-device .taxonomy-tree {
     min-height: 360px !important;
     height: min(54vh, 500px) !important;
