@@ -4683,3 +4683,27 @@ body.phone-device .taxonomy-tree.table-mode .taxonomy-table .clade-cell {
 body.phone-device .taxonomy-tree.table-mode .taxonomy-table th {
     white-space: normal !important;
 }
+
+
+/* Keep the phone table entirely inside the taxonomy frame. */
+body.phone-device .taxonomy-tree.table-mode {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    border-radius: 14px !important;
+}
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+}
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table {
+    margin: 0 !important;
+}
