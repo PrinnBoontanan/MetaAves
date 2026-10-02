@@ -4610,3 +4610,76 @@ body.phone-device .game-over-actions button {
     padding: 9px 15px !important;
     font-size: 0.88rem !important;
 }
+
+
+/* Final phone table fix
+   ---------------------
+   Keep every taxonomy column available by horizontal swipe, but prevent the
+   long clade path from consuming the whole table width. Also let the table
+   viewport shrink to its actual rows instead of leaving a large empty block.
+*/
+body.phone-device .taxonomy-tree.table-mode {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+}
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table-wrap {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 430px !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table {
+    width: 900px !important;
+    min-width: 900px !important;
+    max-width: none !important;
+    table-layout: fixed !important;
+}
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table th,
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table td {
+    padding: 9px 10px !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+    vertical-align: top !important;
+}
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table th:nth-child(1),
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table td:nth-child(1) { width: 125px !important; }
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table th:nth-child(2),
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table td:nth-child(2) { width: 245px !important; }
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table th:nth-child(3),
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table td:nth-child(3) { width: 70px !important; }
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table th:nth-child(4),
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table td:nth-child(4) { width: 105px !important; }
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table th:nth-child(5),
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table td:nth-child(5) { width: 105px !important; }
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table th:nth-child(6),
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table td:nth-child(6) { width: 105px !important; }
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table th:nth-child(7),
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table td:nth-child(7) { width: 145px !important; }
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table .clade-cell {
+    min-width: 0 !important;
+    max-width: none !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+}
+
+body.phone-device .taxonomy-tree.table-mode .taxonomy-table th {
+    white-space: normal !important;
+}
