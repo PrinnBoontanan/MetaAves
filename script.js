@@ -6548,6 +6548,8 @@ function buildSpeciesHint(
             selected.push(trait);
         }
 
+        const seenClueTexts = new Set();
+
         selected.forEach(trait => {
             const sentence = getHintEvidenceSentence(
                 mysteryStudy,
@@ -6556,6 +6558,14 @@ function buildSpeciesHint(
             );
 
             if (!sentence) return;
+
+            const normalized = sentence
+                .toLowerCase()
+                .replace(/\\s+/g, " ")
+                .trim();
+
+            if (seenClueTexts.has(normalized)) return;
+            seenClueTexts.add(normalized);
 
             clues.push({
                 heading: "Species clue · " + trait.label,
