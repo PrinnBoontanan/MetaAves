@@ -6487,7 +6487,11 @@ function buildSpeciesHint(
 
         const traits = selectDiverseHintTraits(targetStudies, [], 4);
 
+        const seenClueTexts = new Set();
+
         traits.forEach(trait => {
+            if (clues.length >= 4) return;
+
             const sentence =
                 getHintEvidenceSentence(genusSource, trait, null, "this genus") ||
                 getHintEvidenceSentence(
@@ -6498,6 +6502,16 @@ function buildSpeciesHint(
                 );
 
             if (!sentence) return;
+
+            // Different traits can point to the exact same Wikipedia sentence.
+            // Never show the player the same clue twice.
+            const normalized = sentence
+                .toLowerCase()
+                .replace(/\\s+/g, " ")
+                .trim();
+
+            if (seenClueTexts.has(normalized)) return;
+            seenClueTexts.add(normalized);
 
             clues.push({
                 heading: "Genus clue · " + trait.label,
