@@ -6290,16 +6290,16 @@ function getHintEvidenceSentence(
             const text = normalizeWikipediaText(sentence);
             const lower = text.toLowerCase();
             const tooSpecificSignals = [
-                /\\b\\d+(?:[.,]\\d+)?\\s*(?:km|m|cm|mm|kg|g|years?|months?)\\b/i,
-                /\\b(?:only|solely|exclusively|restricted to|endemic only)\\b/i,
-                /\\b(?:north|south|east|west)ern?\\s+(?:thailand|india|asia|africa|america|australia)\\b/i
+                /\b\\d+(?:[.,]\\d+)?\\s*(?:km|m|cm|mm|kg|g|years?|months?)\b/i,
+                /\b(?:only|solely|exclusively|restricted to|endemic only)\b/i,
+                /\b(?:north|south|east|west)ern?\\s+(?:thailand|india|asia|africa|america|australia)\b/i
             ];
             const specificityPenalty = tooSpecificSignals.reduce(
                 (score, pattern) => score + (pattern.test(text) ? 1 : 0),
                 0
             );
             const duplicatePenalty = usedSentences.has(
-                lower.replace(/\\s+/g, " ").trim()
+                lower.replace(/\s+/g, " ").trim()
             ) ? 100 : 0;
 
             return {
@@ -6614,7 +6614,7 @@ function buildSpeciesHint(
 
             const normalized = sentence
                 .toLowerCase()
-                .replace(/\\s+/g, " ")
+                .replace(/\s+/g, " ")
                 .trim();
 
             if (seenClueTexts.has(normalized)) return;
