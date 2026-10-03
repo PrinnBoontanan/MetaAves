@@ -1785,22 +1785,38 @@ function buildTreeModel() {
                 rightEndpointDepth
             );
 
-            // Side branches are deliberately summarized at FAMILY level.
-            // This keeps the tree readable and matches the Metazooa-style
-            // presentation: two guesses can reveal their shared family
-            // without exposing every subfamily/genus node that happens to
-            // sit below it. Species/genus closeness to the mystery itself is
-            // still handled by the normal guess -> mystery path.
+            // Preserve a shared GENUS when multiple guesses are
+            // actually congeneric. This is important for cases such as
+            // Rhinoceros Hornbill + Great Hornbill: both are Buceros, so
+            // the tree must be able to show
+            //
+            //   Bucerotidae
+            //      └─ Buceros
+            //         ├─ Rhinoceros Hornbill
+            //         └─ Great Hornbill
+            //
+            // If the guesses only share a family, keep the family as the
+            // side-branch endpoint so unrelated species do not expose
+            // unnecessary genus-level detail.
             const commonIndex = leftPath.findIndex(
                 node => node.id === common.id
             );
-            const familyNode =
+            const sharedGenusNode =
+                commonIndex >= 0
+                    ? [...leftPath.slice(0, commonIndex + 1)]
+                        .reverse()
+                        .find(node => node.level === "genus")
+                    : null;
+            const sharedFamilyNode =
                 commonIndex >= 0
                     ? [...leftPath.slice(0, commonIndex + 1)]
                         .reverse()
                         .find(node => node.level === "family")
                     : null;
-            const sideBranchEndpoint = familyNode || common;
+            const sideBranchEndpoint =
+                sharedGenusNode ||
+                sharedFamilyNode ||
+                common;
 
             // If the pair's shared branch is not deeper than both mystery
             // relationships, it adds no new information and stays collapsed.
