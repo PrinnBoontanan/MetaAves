@@ -6264,22 +6264,63 @@ function replaceHintIdentity(text, bird, replacement = "the mystery species") {
     return result;
 }
 
-function getHintEvidenceSentence(study, trait, bird, replacement = "the mystery species") {
+function getHintEvidenceSentence(
+    study,
+    trait,
+    bird,
+    replacement = "the mystery species",
+    usedSentences = new Set()
+) {
     if (!study || !trait) return "";
 
     const source = getHintStudyField(study, trait.category);
     if (!source) return "";
 
-    const sentences = splitWikipediaSentences(source);
-    const matching = sentences.find(sentence =>
-        getHintFactTokens(sentence, trait.category).includes(trait.token)
+    const sentences = splitWikipediaSentences(source)
+        .filter(sentence =>
+            getHintFactTokens(sentence, trait.category).includes(trait.token)
+        );
+
+    if (!sentences.length) return "";
+
+    // Prefer useful, descriptive sentences without turning the clue into
+    // an answer giveaway.  We still keep the actual Wikipedia detail.
+    const ranked = sentences
+        .map(sentence => {
+            const text = normalizeWikipediaText(sentence);
+            const lower = text.toLowerCase();
+            const tooSpecificSignals = [
+                /\\b\\d+(?:[.,]\\d+)?\\s*(?:km|m|cm|mm|kg|g|years?|months?)\\b/i,
+                /\\b(?:only|solely|exclusively|restricted to|endemic only)\\b/i,
+                /\\b(?:north|south|east|west)ern?\\s+(?:thailand|india|asia|africa|america|australia)\\b/i
+            ];
+            const specificityPenalty = tooSpecificSignals.reduce(
+                (score, pattern) => score + (pattern.test(text) ? 1 : 0),
+                0
+            );
+            const duplicatePenalty = usedSentences.has(
+                lower.replace(/\\s+/g, " ").trim()
+            ) ? 100 : 0;
+
+            return {
+                sentence,
+                score:
+                    specificityPenalty * 2 +
+                    duplicatePenalty +
+                    Math.max(0, text.length - 210) * 0.01
+            };
+        })
+        .sort((a, b) => a.score - b.score);
+
+    const chosen = ranked[0]?.sentence;
+    if (!chosen) return "";
+
+    const result = shortenHintSentence(
+        replaceHintIdentity(chosen, bird, replacement),
+        215
     );
 
-    if (!matching) return "";
-
-    return shortenHintSentence(
-        replaceHintIdentity(matching, bird, replacement)
-    );
+    return result;
 }
 
 function getHintTraitPriority(label) {
@@ -6492,22 +6533,34 @@ function buildSpeciesHint(
         traits.forEach(trait => {
             if (clues.length >= 4) return;
 
-            const sentence =
-                getHintEvidenceSentence(genusSource, trait, null, "this genus") ||
-                getHintEvidenceSentence(
-                    mysteryStudy,
+            // Try the genus article first, then cached congener articles. This
+            // prevents several categories from collapsing onto one repeated
+            // Wikipedia sentence.
+            const sources = [genusSource, ...genusMemberStudies, mysteryStudy]
+                .filter(Boolean);
+
+            let sentence = "";
+            for (const source of sources) {
+                const candidate = getHintEvidenceSentence(
+                    source,
                     trait,
-                    gameState.mysteryBird,
-                    "a member of this genus"
+                    source === mysteryStudy ? gameState.mysteryBird : null,
+                    source === mysteryStudy
+                        ? "a member of this genus"
+                        : "this genus",
+                    seenClueTexts
                 );
+                if (candidate) {
+                    sentence = candidate;
+                    break;
+                }
+            }
 
             if (!sentence) return;
 
-            // Different traits can point to the exact same Wikipedia sentence.
-            // Never show the player the same clue twice.
             const normalized = sentence
                 .toLowerCase()
-                .replace(/\\s+/g, " ")
+                .replace(/\s+/g, " ")
                 .trim();
 
             if (seenClueTexts.has(normalized)) return;
