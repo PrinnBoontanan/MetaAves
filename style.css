@@ -4707,3 +4707,48 @@ body.phone-device .taxonomy-tree.table-mode .taxonomy-table-wrap {
 body.phone-device .taxonomy-tree.table-mode .taxonomy-table {
     margin: 0 !important;
 }
+
+
+/* When Wikipedia has no usable photo, do not reserve an empty image column.
+   Let the description and Wikipedia link move forward into the freed space. */
+.taxon-card.species-card.taxon-card-no-photo {
+    grid-template-columns: minmax(0, 1.35fr) minmax(260px, 1fr) !important;
+    grid-template-areas:
+        "title title"
+        "thai thai"
+        "scientific scientific"
+        "rank rank"
+        "description taxonomy"
+        "wikipedia taxonomy" !important;
+}
+
+.taxon-card.species-card.taxon-card-no-photo > .taxon-card-wiki-section:not(.taxon-card-species-taxonomy) {
+    grid-area: description !important;
+}
+
+.taxon-card.species-card.taxon-card-no-photo > .taxon-card-wikipedia-link {
+    grid-area: wikipedia !important;
+    margin-left: 0 !important;
+}
+
+.taxon-card:not(.species-card).taxon-card-no-photo {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas:
+        "title"
+        "rank"
+        "common"
+        "description"
+        "wikipedia" !important;
+}
+
+.taxon-card:not(.species-card).taxon-card-no-photo > .taxon-card-description,
+.taxon-card:not(.species-card).taxon-card-no-photo > .taxon-card-wiki-section {
+    grid-area: description !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+}
+
+.taxon-card:not(.species-card).taxon-card-no-photo > .taxon-card-wikipedia-link {
+    grid-area: wikipedia !important;
+    margin-left: 0 !important;
+}
