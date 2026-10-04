@@ -6302,38 +6302,74 @@ function getHintEvidenceSentence(
     const source = getHintStudyField(study, trait.category);
     if (!source) return "";
 
+    const rejectedClueSignals = [
+        /\\b(?:myth|mythology|legend|legendary|folklore|folktale|roman|greek|egyptian|god|goddess|deity)\\b/i,
+        /\\b(?:etymology|derived from|named after|name refers|name means|called after|honou?r(?:s|ed)?|commemorat(?:es|ing)|in reference to)\\b/i,
+        /\\b(?:genus was|species was|first described|described by|discovered by|introduced by|authority)\\b/i,
+        /\\b(?:taxonomy|classification|classified|related to|member of|belongs to|family of|order of)\\b/i,
+        /\\b(?:according to|traditionally|historically|formerly|previously known)\\b/i
+    ];
+
+    const biologicalTraitSignals = {
+        Appearance: [
+            /\\b(?:plumage|feathers?|wing|wings|tail|bill|beak|crest|crown|throat|breast|belly|underparts|upperparts|eyering|eyebrow|stripe|spot|bar|streak|patch|legs?|feet|eyes?)\\b/i,
+            /\\b(?:black|white|brown|rufous|grey|gray|blue|green|red|yellow|orange|pale|dark|long|short|thick|thin|slender|stocky|large|small|rounded|forked|hooked)\\b/i
+        ],
+        Behavior: [
+            /\\b(?:forages?|feeds?|hunts?|perches?|climbs?|flies?|glides?|soars?|dives?|swims?|walks?|runs?|roosts?|nocturnal|diurnal|territorial|solitary|gregarious|flock|display|calls?|song)\\b/i
+        ],
+        Diet: [
+            /\\b(?:feeds? on|eats?|diet|preys? on|insects?|fruit|seeds?|nectar|fish|reptiles?|amphibians?|crustaceans?|mollus[ck]s?|carrion)\\b/i
+        ],
+        Habitat: [
+            /\\b(?:inhabits?|found in|occurs in|forest|woodland|rainforest|grassland|wetland|marsh|mangrove|savanna|shrubland|canopy|understory|river|stream|mountain|montane|coast|island)\\b/i
+        ],
+        Breeding: [
+            /\\b(?:nests?|nesting|breeds?|breeding|cavity|hollow|nest hole|clutch|eggs?|incubat|fledg)\\b/i
+        ]
+    };
+
     const sentences = splitWikipediaSentences(source)
         .filter(sentence =>
             getHintFactTokens(sentence, trait.category).includes(trait.token)
-        );
+        )
+        .filter(sentence => {
+            const text = normalizeWikipediaText(sentence);
+            if (rejectedClueSignals.some(pattern => pattern.test(text))) return false;
+
+            const signals = biologicalTraitSignals[trait.label] || [];
+            return signals.some(pattern => pattern.test(text));
+        });
 
     if (!sentences.length) return "";
 
-    // Prefer useful, descriptive sentences without turning the clue into
-    // an answer giveaway.  We still keep the actual Wikipedia detail.
     const ranked = sentences
         .map(sentence => {
             const text = normalizeWikipediaText(sentence);
             const lower = text.toLowerCase();
             const tooSpecificSignals = [
-                /\b\\d+(?:[.,]\\d+)?\\s*(?:km|m|cm|mm|kg|g|years?|months?)\b/i,
-                /\b(?:only|solely|exclusively|restricted to|endemic only)\b/i,
-                /\b(?:north|south|east|west)ern?\\s+(?:thailand|india|asia|africa|america|australia)\b/i
+                /\\b\\d+(?:[.,]\\d+)?\\s*(?:km|m|cm|mm|kg|g|years?|months?)\\b/i,
+                /\\b(?:only|solely|exclusively|restricted to|endemic only)\\b/i,
+                /\\b(?:north|south|east|west)ern?\\s+(?:thailand|india|asia|africa|america|australia)\\b/i
             ];
             const specificityPenalty = tooSpecificSignals.reduce(
                 (score, pattern) => score + (pattern.test(text) ? 1 : 0),
                 0
             );
             const duplicatePenalty = usedSentences.has(
-                lower.replace(/\s+/g, " ").trim()
+                lower.replace(/\\s+/g, " ").trim()
             ) ? 100 : 0;
+
+            const biologicalSignalCount = (biologicalTraitSignals[trait.label] || [])
+                .reduce((score, pattern) => score + (pattern.test(text) ? 1 : 0), 0);
 
             return {
                 sentence,
                 score:
                     specificityPenalty * 2 +
                     duplicatePenalty +
-                    Math.max(0, text.length - 210) * 0.01
+                    Math.max(0, text.length - 210) * 0.01 -
+                    biologicalSignalCount * 1.5
             };
         })
         .sort((a, b) => a.score - b.score);
@@ -6341,12 +6377,10 @@ function getHintEvidenceSentence(
     const chosen = ranked[0]?.sentence;
     if (!chosen) return "";
 
-    const result = shortenHintSentence(
+    return shortenHintSentence(
         replaceHintIdentity(chosen, bird, replacement),
         215
     );
-
-    return result;
 }
 
 function getHintTraitPriority(label) {
@@ -6563,7 +6597,7 @@ function buildSpeciesHint(
         const seenClueTexts = new Set();
 
         traits.forEach(trait => {
-            if (clues.length >= 4) return;
+            if (clues.length >= 3) return;
 
             // Try the genus article first, then cached congener articles. This
             // prevents several categories from collapsing onto one repeated
@@ -6599,12 +6633,13 @@ function buildSpeciesHint(
             seenClueTexts.add(normalized);
 
             clues.push({
-                heading: "Genus clue · " + trait.label,
-                text: "A useful difference from other genera in this family is that " + sentence.charAt(0).toLowerCase() + sentence.slice(1)
+                heading: "Main trait · " + trait.label,
+                text: "The mystery genus is distinguished by " +
+                    sentence.charAt(0).toLowerCase() + sentence.slice(1)
             });
         });
 
-        return clues.slice(0, 4);
+        return clues.slice(0, 3);
     }
 
     if (relationship.rank === "Genus") {
@@ -6653,8 +6688,8 @@ function buildSpeciesHint(
             seenClueTexts.add(normalized);
 
             clues.push({
-                heading: "Species clue · " + trait.label,
-                text: "A useful difference from " + guessedBird.commonName + " is that the mystery species " +
+                heading: "Main trait · " + trait.label,
+                text: "The mystery species is distinguished by " +
                     sentence.charAt(0).toLowerCase() + sentence.slice(1)
             });
         });
@@ -6873,10 +6908,7 @@ async function showSpeciesHint(guessedBird, anchor) {
                 hintData = fallbackTraits
                     .map(trait => ({
                         heading:
-                            (relationship.rank === "Family"
-                                ? "Genus clue · "
-                                : "Species clue · ") +
-                            trait.label,
+                            "Main trait · " + trait.label,
                         text:
                             getHintEvidenceSentence(
                                 mysteryStudy,
@@ -6888,9 +6920,7 @@ async function showSpeciesHint(guessedBird, anchor) {
 
                 if (!hintData.length) {
                     hintData = [{
-                        heading: relationship.rank === "Family"
-                            ? "Genus clue"
-                            : "Species clue",
+                        heading: "Main trait",
                         text: "Wikipedia does not provide enough usable detail for a reliable clue here."
                     }];
                 }
@@ -6900,9 +6930,7 @@ async function showSpeciesHint(guessedBird, anchor) {
         } catch (error) {
             console.warn("Species hint generation failed:", error);
             hintData = [{
-                heading: relationship.rank === "Family"
-                    ? "Genus clue"
-                    : "Species clue",
+                heading: "Main trait",
                 text: "Wikipedia could not provide enough reliable information for this hint."
             }];
         }
