@@ -2495,6 +2495,50 @@ function wikipediaLookupCandidates(title, scientificName = "") {
     return candidates;
 }
 
+async function searchWikipediaTaxonByName(taxonName) {
+    const name = String(taxonName || "").trim();
+    if (!name) return [];
+
+    try {
+        const url =
+            "https://en.wikipedia.org/w/api.php?" +
+            new URLSearchParams({
+                action: "query",
+                list: "search",
+                srsearch: '"' + name + '"',
+                srlimit: "8",
+                redirects: "1",
+                format: "json",
+                formatversion: "2",
+                origin: "*"
+            }).toString();
+
+        const response = await fetch(url, {
+            headers: {
+                "Api-User-Agent":
+                    "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
+            }
+        });
+
+        if (!response.ok) return [];
+
+        const data = await response.json();
+        const results = (data?.query?.search || [])
+            .map(item => item.title)
+            .filter(Boolean);
+
+        // Prefer an exact page title before looser search matches.
+        return results.sort((a, b) => {
+            const aExact = a.toLowerCase() === name.toLowerCase() ? 0 : 1;
+            const bExact = b.toLowerCase() === name.toLowerCase() ? 0 : 1;
+            return aExact - bExact;
+        });
+    } catch (error) {
+        console.warn("Wikipedia taxon search failed:", name, error);
+        return [];
+    }
+}
+
 async function searchWikipediaBirdByScientificName(scientificName) {
     const scientific = String(scientificName || "").trim();
     if (!scientific) return [];
@@ -2807,12 +2851,34 @@ async function fetchWikipediaPageData(
         }
     }
 
-    // Slow fallback when the direct title attempts failed to produce the
-    // requested image (or failed completely).
+    // Slow fallback for species: search by scientific name when the common
+    // name/title candidates failed.
     if (expectedType === "bird" && scientificName) {
         const searchedTitles = await searchWikipediaBirdByScientificName(
             scientificName
         );
+
+        for (const searchedTitle of searchedTitles) {
+            const normalizedTitle = wikipediaCacheKey(searchedTitle);
+            if (!normalizedTitle) continue;
+
+            const data = await loadCandidate(normalizedTitle);
+            if (!data) continue;
+
+            if (!firstValidData) firstValidData = data;
+
+            if (!requireThumbnail || data?.summary?.thumbnail?.source) {
+                return data;
+            }
+        }
+    }
+
+    // Taxon names do not have a stable common-name field in the generated
+    // database, and many groups use a different Wikipedia article title
+    // (for example Eagle/Hawk or a genus with a disambiguator). Search the
+    // taxon name as a final fallback, especially when a photo is requested.
+    if (expectedType !== "bird" && title) {
+        const searchedTitles = await searchWikipediaTaxonByName(title);
 
         for (const searchedTitle of searchedTitles) {
             const normalizedTitle = wikipediaCacheKey(searchedTitle);
@@ -4983,7 +5049,7 @@ async function showTaxonInTaxonCard(taxon) {
         }
 
         if (taxon.rank !== "species") {
-            appendTaxonMainTrait(card, taxon, wikiSummary);
+            appendTaxonMainTrait(card, taxon, wikiSummary, gameState.taxonInfo?.[taxon?.id] || {});
         }
 
         if (taxon.rank === "species") {
@@ -5006,7 +5072,12 @@ async function showTaxonInTaxonCard(taxon) {
             card.appendChild(photo);
         }
 
-        const wikiUrl = wikiSummary?.summary?.content_urls?.desktop?.page;
+        const wikiUrl =
+            wikiSummary?.summary?.content_urls?.desktop?.page ||
+            (wikiTitle
+                ? "https://en.wikipedia.org/w/index.php?search=" +
+                  encodeURIComponent(wikiTitle)
+                : "");
         if (wikiUrl) {
             const link = document.createElement("a");
             link.className = "taxon-card-wikipedia-link";
@@ -5127,7 +5198,7 @@ async function showTaxonInTaxonCard(taxon) {
             }
 
             card.appendChild(taxonomySection);
-            appendTaxonMainTrait(card, taxon, finalWiki);
+            appendTaxonMainTrait(card, taxon, finalWiki, gameState.taxonInfo?.[taxon?.id] || {});
         }
 
         if (finalWiki?.summary?.thumbnail?.source) {
@@ -5150,7 +5221,12 @@ async function showTaxonInTaxonCard(taxon) {
             card.classList.add("taxon-card-no-photo");
         }
 
-        const wikiUrl = finalWiki?.summary?.content_urls?.desktop?.page;
+        const wikiUrl =
+            finalWiki?.summary?.content_urls?.desktop?.page ||
+            (wikiTitle
+                ? "https://en.wikipedia.org/w/index.php?search=" +
+                  encodeURIComponent(wikiTitle)
+                : "");
         if (wikiUrl) {
             const link = document.createElement("a");
             link.className = "taxon-card-wikipedia-link";
@@ -5196,8 +5272,13 @@ function selectTaxon(node) {
     showTaxonInTaxonCard(taxon);
 }
 
-function getTaxonMainTrait(taxon, wiki) {
+function getTaxonMainTrait(taxon, wiki, info = {}) {
     const name = String(taxon?.name || "").trim().toLowerCase();
+    const commonName = String(
+        info?.commonName ||
+        taxon?.commonName ||
+        ""
+    ).trim().toLowerCase();
 
     const curated = {
         "palaeognathae": "An ancient bird lineage defined by a distinctive palaeognathous palate; most living members are flightless, while tinamous retain flight.",
@@ -5226,28 +5307,89 @@ function getTaxonMainTrait(taxon, wiki) {
 
     if (curated[name]) return curated[name];
 
+    // Prefer locally curated characteristics whenever a taxon has them.
+    // This guarantees a useful Main trait even when Wikipedia is unavailable.
+    if (Array.isArray(info?.keyCharacteristics) && info.keyCharacteristics.length) {
+        const traits = info.keyCharacteristics
+            .map(value => normalizeWikipediaText(value))
+            .filter(Boolean)
+            .slice(0, 2);
+
+        if (traits.length) {
+            return traits.length === 1
+                ? traits[0]
+                : traits.join("; ") + ".";
+        }
+    }
+
     const text = normalizeWikipediaText(wiki?.summary?.extract || "");
-    if (!text) return "";
+    if (text) {
+        const rejected = [
+            /\\b(?:myth|mythology|legend|legendary|folklore|roman|greek|egyptian|god|goddess|deity)\\b/i,
+            /\\b(?:etymology|derived from|named after|name refers|name means|called after)\\b/i,
+            /\\b(?:first described|described by|discovered by|authority)\\b/i,
+            /\\b(?:taxonomy|classification|classified as|belongs to|member of)\\b/i
+        ];
+        const biological = /\\b(?:plumage|feathers?|bill|beak|tail|wing|crest|body|size|flight|flies?|forages?|feeds?|hunts?|nests?|breeds?|forest|woodland|grassland|wetland|marine|aquatic|arboreal|terrestrial|nocturnal|diurnal|migratory|talons?|raptor|predator|prey|fruit|seeds?|nectar)\\b/i;
 
-    const rejected = [
-        /\\b(?:myth|mythology|legend|legendary|folklore|roman|greek|egyptian|god|goddess|deity)\\b/i,
-        /\\b(?:etymology|derived from|named after|name refers|name means|called after)\\b/i,
-        /\\b(?:first described|described by|discovered by|authority)\\b/i,
-        /\\b(?:taxonomy|classification|classified as|belongs to|member of)\\b/i
-    ];
-    const biological = /\\b(?:plumage|feathers?|bill|beak|tail|wing|crest|body|size|flight|flies?|forages?|feeds?|hunts?|nests?|breeds?|forest|woodland|grassland|wetland|marine|aquatic|arboreal|terrestrial|nocturnal|diurnal|migratory)\\b/i;
+        const sentence = splitWikipediaSentences(text)
+            .map(normalizeWikipediaText)
+            .filter(Boolean)
+            .filter(sentence => !rejected.some(pattern => pattern.test(sentence)))
+            .filter(sentence => biological.test(sentence))[0];
 
-    const sentence = splitWikipediaSentences(text)
-        .map(normalizeWikipediaText)
-        .filter(Boolean)
-        .filter(s => !rejected.some(pattern => pattern.test(s)))
-        .filter(s => biological.test(s))[0];
+        if (sentence) return shortenHintSentence(sentence, 320);
+    }
 
-    return sentence ? shortenHintSentence(sentence, 320) : "";
+    // Name-based biological fallbacks keep every taxon card populated even
+    // when its article is missing or temporarily unreachable. These are
+    // deliberately broad identification traits, not taxonomy trivia.
+    const sourceName = [commonName, name].join(" ");
+
+    if (/eagle|hawk|kestrel|kite|harrier|vulture|osprey|ern|buzzard/.test(sourceName)) {
+        return "Raptorial birds with hooked bills, strong grasping feet, powerful talons, and keen vision; hunting style varies among groups.";
+    }
+    if (/owl/.test(sourceName)) {
+        return "Predatory birds specialized for hunting, often at night, with highly developed hearing, forward-facing eyes, and soft-edged flight feathers.";
+    }
+    if (/woodpecker|wryneck|piculet/.test(sourceName)) {
+        return "Mostly tree-climbing birds with strong bills and specialized feet; many probe or drill into wood while foraging.";
+    }
+    if (/hornbill/.test(sourceName)) {
+        return "Distinctive-billed birds, many with large casques, that commonly nest in tree cavities and often rely heavily on fruit.";
+    }
+    if (/kingfisher|bee-eater|roller|motmot|hoopoe/.test(sourceName)) {
+        return "Visually hunting landbirds with strong bills and agile flight, commonly taking insects or other small animal prey.";
+    }
+    if (/parrot|cockatoo|lorikeet|macaw|parakeet/.test(sourceName)) {
+        return "Strong-billed birds with grasping feet, highly mobile tongues, and specialized bills for manipulating food.";
+    }
+    if (/duck|goose|swan|shelduck|teal|pochard|merganser/.test(sourceName)) {
+        return "Water-associated birds with bills and feet adapted for swimming, feeding, or foraging in wetlands and shallow water.";
+    }
+    if (/pheasant|grouse|quail|turkey|guineafowl|chicken/.test(sourceName)) {
+        return "Mostly ground-associated birds with strong legs and feet adapted for walking, scratching, and foraging on or near the ground.";
+    }
+    if (/pigeon|dove/.test(sourceName)) {
+        return "Compact flying birds with strong wing muscles and a characteristic crop that produces nutrient-rich crop milk for young.";
+    }
+    if (/penguin|auk|guillemot|murre|puffin|gannet|booby|frigatebird|albatross|petrel|shearwater/.test(sourceName)) {
+        return "Marine birds adapted to life at sea, with flight, diving, or soaring specializations shaped by their feeding ecology.";
+    }
+    if (/heron|egret|bittern|stork|ibis|spoonbill|flamingo|crane|rail|coot|grebe/.test(sourceName)) {
+        return "Wetland-associated birds with body and leg adaptations suited to wading, swimming, or foraging in shallow water.";
+    }
+    if (/sparrow|finch|bunting|warbler|thrush|robin|wren|tit|starling|myna|bulbul|sunbird|swallow|martin|flycatcher|drongo|shrike|crow|raven|magpie|jay/.test(sourceName)) {
+        return "Perching birds with feet specialized for gripping branches, with diverse feeding strategies ranging from insects and fruit to seeds and small vertebrates.";
+    }
+    if (/ostrich|emu|cassowary|kiwi|rhea|tinamou/.test(sourceName)) {
+        return "Ground-adapted birds with strong legs; the flightless forms are specialized for running, while tinamous retain powered flight.";
+    }
+
+    return "Members of this taxon share a common evolutionary lineage and associated biological characteristics, while species within the group can occupy different habitats and feeding niches.";
 }
-
-function appendTaxonMainTrait(card, taxon, wiki) {
-    const trait = getTaxonMainTrait(taxon, wiki);
+function appendTaxonMainTrait(card, taxon, wiki, info = gameState.taxonInfo?.[taxon?.id] || {}) {
+    const trait = getTaxonMainTrait(taxon, wiki, info);
     if (!trait) return;
 
     const section = document.createElement("section");
@@ -5290,7 +5432,7 @@ function renderCladeCard(clade, wiki) {
         ) ||
         "No information available on Wikipedia.";
     card.appendChild(description);
-    appendTaxonMainTrait(card, clade, wiki);
+    appendTaxonMainTrait(card, clade, wiki, gameState.taxonInfo?.[clade?.id] || {});
 
     if (wiki?.summary?.thumbnail?.source) {
         appendTaxonCardPhoto(card, wiki);
