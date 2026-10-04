@@ -5125,6 +5125,7 @@ async function showTaxonInTaxonCard(taxon) {
         }
 
         if (finalWiki?.summary?.thumbnail?.source) {
+            card.classList.remove("taxon-card-no-photo");
             const photo = document.createElement("div");
             photo.className = "taxon-card-photo";
 
@@ -5136,6 +5137,10 @@ async function showTaxonInTaxonCard(taxon) {
 
             photo.appendChild(image);
             card.insertBefore(photo, description || null);
+        }
+
+        if (!finalWiki?.summary?.thumbnail?.source) {
+            card.classList.add("taxon-card-no-photo");
         }
 
         const wikiUrl = finalWiki?.summary?.content_urls?.desktop?.page;
