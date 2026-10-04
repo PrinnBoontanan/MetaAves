@@ -6645,6 +6645,120 @@ function getHintStudyFromWikiData(data) {
     return getHintStudyFromSummary(data.summary);
 }
 
+function getBiologicalSummaryTraits(study, limit = 4) {
+    if (!study) return [];
+
+    const source = [
+        study.description,
+        study.habitatDistribution,
+        study.behavior,
+        study.diet,
+        study.breeding
+    ].filter(Boolean).join(" ");
+
+    if (!source) return [];
+
+    const rejected = [
+        /\b(?:myth|mythology|legend|legendary|folklore|folktale|roman|greek|egyptian|god|goddess|deity)\b/i,
+        /\b(?:etymology|derived from|named after|name refers|name means|called after|honou?r(?:s|ed)?|commemorat(?:es|ing)|in reference to)\b/i,
+        /\b(?:first described|described by|discovered by|authority|taxonomy|classification|classified|belongs to|member of|family of|order of)\b/i
+    ];
+
+    const signals = [
+        ["Appearance", "appearance", [
+            /\b(?:plumage|feathers?|bill|beak|tail|wing|crest|crown|throat|breast|belly|underparts|upperparts|eyering|eyebrow|stripe|spot|bar|streak|patch|legs?|feet|eyes?)\b/i,
+            /\b(?:black|white|brown|rufous|grey|gray|blue|green|red|yellow|orange|pale|dark|long|short|thick|thin|slender|stocky|large|small|rounded|forked|hooked)\b/i
+        ]],
+        ["Behavior", "behavior", [
+            /\b(?:forages?|feeds?|hunts?|perches?|climbs?|flies?|glides?|soars?|dives?|swims?|walks?|runs?|roosts?|nocturnal|diurnal|territorial|solitary|gregarious|flock|display|calls?|song)\b/i
+        ]],
+        ["Diet", "diet", [
+            /\b(?:feeds? on|eats?|diet|preys? on|insects?|fruit|seeds?|nectar|fish|reptiles?|amphibians?|crustaceans?|mollus[ck]s?|carrion)\b/i
+        ]],
+        ["Habitat", "habitat", [
+            /\b(?:inhabits?|found in|occurs in|forest|woodland|rainforest|grassland|wetland|marsh|mangrove|savanna|shrubland|canopy|understory|river|stream|mountain|montane|coast|island)\b/i
+        ]],
+        ["Breeding", "breeding", [
+            /\b(?:nests?|nesting|breeds?|breeding|cavity|hollow|nest hole|clutch|eggs?|incubat|fledg)\b/i
+        ]]
+    ];
+
+    const candidates = splitWikipediaSentences(source)
+        .map(normalizeWikipediaText)
+        .filter(Boolean)
+        .filter(sentence => !rejected.some(pattern => pattern.test(sentence)))
+        .map(sentence => {
+            const matches = signals
+                .map(([label, category, patterns]) => ({
+                    label,
+                    category,
+                    score: patterns.reduce(
+                        (count, pattern) => count + (pattern.test(sentence) ? 1 : 0),
+                        0
+                    )
+                }))
+                .filter(item => item.score > 0)
+                .sort((a, b) => b.score - a.score);
+
+            const best = matches[0];
+            if (!best) return null;
+
+            return {
+                label: best.label,
+                category: best.category,
+                token: "__summary__",
+                sentence,
+                score: best.score * 2 + getHintTraitPriority(best.label) * 0.12
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.score - a.score);
+
+    const chosen = [];
+    const usedCategories = new Set();
+
+    for (const candidate of candidates) {
+        if (chosen.length >= limit) break;
+        if (usedCategories.has(candidate.category)) continue;
+        chosen.push(candidate);
+        usedCategories.add(candidate.category);
+    }
+
+    return chosen;
+}
+
+function getSummaryHintEvidenceSentence(study, trait, bird = null, replacement = "the mystery species") {
+    if (!study || !trait) return "";
+
+    const source = [
+        study.description,
+        study.habitatDistribution,
+        study.behavior,
+        study.diet,
+        study.breeding
+    ].filter(Boolean).join(" ");
+
+    const sentences = splitWikipediaSentences(source)
+        .map(normalizeWikipediaText)
+        .filter(Boolean);
+
+    const biological = {
+        Appearance: /\b(?:plumage|feathers?|bill|beak|tail|wing|crest|crown|throat|breast|belly|underparts|upperparts|eyering|eyebrow|stripe|spot|bar|streak|patch|legs?|feet|eyes?|black|white|brown|rufous|grey|gray|blue|green|red|yellow|orange|pale|dark|long|short|thick|thin|slender|stocky|large|small|rounded|forked|hooked)\b/i,
+        Behavior: /\b(?:forages?|feeds?|hunts?|perches?|climbs?|flies?|glides?|soars?|dives?|swims?|walks?|runs?|roosts?|nocturnal|diurnal|territorial|solitary|gregarious|flock|display|calls?|song)\b/i,
+        Diet: /\b(?:feeds? on|eats?|diet|preys? on|insects?|fruit|seeds?|nectar|fish|reptiles?|amphibians?|crustaceans?|mollus[ck]s?|carrion)\b/i,
+        Habitat: /\b(?:inhabits?|found in|occurs in|forest|woodland|rainforest|grassland|wetland|marsh|mangrove|savanna|shrubland|canopy|understory|river|stream|mountain|montane|coast|island)\b/i,
+        Breeding: /\b(?:nests?|nesting|breeds?|breeding|cavity|hollow|nest hole|clutch|eggs?|incubat|fledg)\b/i
+    };
+
+    const sentence = sentences.find(item => biological[trait.label]?.test(item));
+    if (!sentence) return "";
+
+    return shortenHintSentence(
+        replaceHintIdentity(sentence, bird, replacement),
+        215
+    );
+}
+
 function buildSpeciesHint(
     guessedBird,
     guessedStudy,
@@ -6712,6 +6826,36 @@ function buildSpeciesHint(
                     sentence.charAt(0).toLowerCase() + sentence.slice(1)
             });
         });
+
+        // A genus page is often a short or poorly structured Wikipedia
+        // article, so the token-based system can legitimately find no traits.
+        // Fall back to biological sentences from the genus summary instead of
+        // showing the generic "not enough detail" message.
+        if (!clues.length) {
+            const fallbackSource = genusStudy || mysteryStudy;
+            const fallbackTraits = getBiologicalSummaryTraits(fallbackSource, 3);
+
+            fallbackTraits.forEach(trait => {
+                if (clues.length >= 3) return;
+
+                const sentence = getSummaryHintEvidenceSentence(
+                    fallbackSource,
+                    trait,
+                    fallbackSource === mysteryStudy ? gameState.mysteryBird : null,
+                    fallbackSource === mysteryStudy
+                        ? "a member of this genus"
+                        : "this genus"
+                );
+
+                if (!sentence) return;
+
+                clues.push({
+                    heading: "Main trait · " + trait.label,
+                    text: "The mystery genus is distinguished by " +
+                        sentence.charAt(0).toLowerCase() + sentence.slice(1)
+                });
+            });
+        }
 
         return clues.slice(0, 3);
     }
