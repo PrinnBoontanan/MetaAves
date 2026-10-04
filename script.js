@@ -6900,7 +6900,8 @@ function getSummaryHintEvidenceSentence(study, trait, bird = null, replacement =
         215
     );
 }
-\nfunction getBirdHintFallbackTraits(bird, limit = 3) {
+
+function getBirdHintFallbackTraits(bird, limit = 3) {
     if (!bird) return [];
 
     const name = String(bird.commonName || "").toLowerCase();
