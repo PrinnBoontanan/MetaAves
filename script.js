@@ -4983,7 +4983,7 @@ async function showTaxonInTaxonCard(taxon) {
         }
 
         if (taxon.rank !== "species") {
-            appendTaxonMainTrait(card, taxon, finalWiki);
+            appendTaxonMainTrait(card, taxon, wikiSummary);
         }
 
         if (taxon.rank === "species") {
@@ -5002,7 +5002,8 @@ async function showTaxonInTaxonCard(taxon) {
             image.loading = "lazy";
 
             photo.appendChild(image);
-            card.insertBefore(photo, description || null);
+            // Keep the image below the descriptive text and Main trait.
+            card.appendChild(photo);
         }
 
         const wikiUrl = wikiSummary?.summary?.content_urls?.desktop?.page;
@@ -5141,7 +5142,8 @@ async function showTaxonInTaxonCard(taxon) {
             image.loading = "lazy";
 
             photo.appendChild(image);
-            card.insertBefore(photo, description || null);
+            // Keep the image below the descriptive text and Main trait.
+            card.appendChild(photo);
         }
 
         if (!finalWiki?.summary?.thumbnail?.source) {
@@ -5278,14 +5280,6 @@ function renderCladeCard(clade, wiki) {
     rank.classList.add("taxon-card-rank");
     rank.textContent = String(clade.rank || "clade").toUpperCase();
     card.appendChild(rank);
-    // Higher-taxon cards use the same Wikipedia image treatment as
-    // species cards when Wikipedia provides one.
-    if (wiki?.summary?.thumbnail?.source) {
-        appendTaxonCardPhoto(card, wiki);
-    } else {
-        card.classList.add("taxon-card-no-photo");
-    }
-
     const description = document.createElement("p");
     description.classList.add("taxon-card-description");
     description.textContent =
@@ -5297,6 +5291,12 @@ function renderCladeCard(clade, wiki) {
         "No information available on Wikipedia.";
     card.appendChild(description);
     appendTaxonMainTrait(card, clade, wiki);
+
+    if (wiki?.summary?.thumbnail?.source) {
+        appendTaxonCardPhoto(card, wiki);
+    } else {
+        card.classList.add("taxon-card-no-photo");
+    }
 
     const linkUrl = wiki?.summary?.content_urls?.desktop?.page;
     if (linkUrl) {
