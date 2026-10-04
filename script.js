@@ -5325,12 +5325,12 @@ function getTaxonMainTrait(taxon, wiki, info = {}) {
     const text = normalizeWikipediaText(wiki?.summary?.extract || "");
     if (text) {
         const rejected = [
-            /\\b(?:myth|mythology|legend|legendary|folklore|roman|greek|egyptian|god|goddess|deity)\\b/i,
-            /\\b(?:etymology|derived from|named after|name refers|name means|called after)\\b/i,
-            /\\b(?:first described|described by|discovered by|authority)\\b/i,
-            /\\b(?:taxonomy|classification|classified as|belongs to|member of)\\b/i
+            /\b(?:myth|mythology|legend|legendary|folklore|roman|greek|egyptian|god|goddess|deity)\\b/i,
+            /\b(?:etymology|derived from|named after|name refers|name means|called after)\\b/i,
+            /\b(?:first described|described by|discovered by|authority)\\b/i,
+            /\b(?:taxonomy|classification|classified as|belongs to|member of)\\b/i
         ];
-        const biological = /\\b(?:plumage|feathers?|bill|beak|tail|wing|crest|body|size|flight|flies?|forages?|feeds?|hunts?|nests?|breeds?|forest|woodland|grassland|wetland|marine|aquatic|arboreal|terrestrial|nocturnal|diurnal|migratory|talons?|raptor|predator|prey|fruit|seeds?|nectar)\\b/i;
+        const biological = /\b(?:plumage|feathers?|bill|beak|tail|wing|crest|body|size|flight|flies?|forages?|feeds?|hunts?|nests?|breeds?|forest|woodland|grassland|wetland|marine|aquatic|arboreal|terrestrial|nocturnal|diurnal|migratory|talons?|raptor|predator|prey|fruit|seeds?|nectar)\\b/i;
 
         const sentence = splitWikipediaSentences(text)
             .map(normalizeWikipediaText)
