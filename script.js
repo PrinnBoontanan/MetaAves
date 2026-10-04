@@ -7219,7 +7219,9 @@ async function showSpeciesHint(guessedBird, anchor) {
         "|" +
         mysteryKey +
         "|" +
-        (relationship.rank === "Genus" ? guessedKey : "shared");
+        ((relationship.rank === "Genus" || relationship.rank === "Family")
+            ? guessedKey
+            : "shared");
 
     hint.innerHTML = '<div class="species-hover-hint-loading">Reading field-guide clues…</div>';
     hint.classList.add("visible");
