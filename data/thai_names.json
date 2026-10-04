@@ -2,9 +2,9 @@
   "_meta": {
     "source": "OpenFauna Thai locale, supplemented with existing verified MetaAves names and verified Thai-name entries",
     "sourceRevision": "3511422761fb0b36368ae58383c7db13ff21ece4",
-    "thaiEntries": 1448,
-    "note": "Static Thai-name database. World mode hides Thai names; Thailand mode uses these names. Obscure global species are left blank rather than assigning an unverified Thai name.",
-    "updatedAt": "2026-09-30"
+    "thaiEntries": 1451,
+    "note": "Static Thai-name database. World mode hides Thai names; Thailand mode uses these names. Obscure global species are left blank rather than assigning an unverified Thai name. Verified Malkoha names include Thai national biodiversity records.",
+    "updatedAt": "2026-10-04"
   },
   "names": {
     "Abroscopus albogularis": "นกกระจ้อยคอดำ",
@@ -1454,6 +1454,9 @@
     "Streptopelia decaocto": "นกเขาแขก",
     "Surniculus dicruroides": "นกคัคคูแซงแซวหางแฉก",
     "Xema sabini": "นกนางนวลปลายปากเหลือง",
-    "Astur gentilis": "เหยี่ยวนกเขาท้องขาว"
+    "Astur gentilis": "เหยี่ยวนกเขาท้องขาว",
+    "Zanclostomus javanicus": "นกบั้งรอกปากแดง",
+    "Phaenicophaeus curvirostris": "นกบั้งรอกเขียวอกแดง",
+    "Phaenicophaeus diardi": "นกบั้งรอกเล็กท้องเทา"
   }
 }
