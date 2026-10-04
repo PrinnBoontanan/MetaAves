@@ -443,7 +443,11 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
       let state = await getState(page);
 
     assert(state.mystery.commonName, `Game ${game + 1}: no mystery bird`);
-    assert(state.remaining === 12, `Game ${game + 1}: game did not start at 12 guesses`);
+    const expectedMaxGuesses = mode === "world" ? 15 : 12;
+    assert(
+      state.remaining === expectedMaxGuesses,
+      `Game ${game + 1}: game did not start at ${expectedMaxGuesses} guesses`
+    );
 
     const pool = await page.evaluate(() =>
       window.__METAAVES_E2E__.state.birds.map(b => ({
@@ -454,11 +458,11 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
 
     const mysteryName = state.mystery.commonName;
     const wrongBirds = pool.filter(b => b.commonName !== mysteryName).slice(
-      game % Math.max(1, pool.length - 13),
-      game % Math.max(1, pool.length - 13) + 12
+      game % Math.max(1, pool.length - (expectedMaxGuesses + 1)),
+      game % Math.max(1, pool.length - (expectedMaxGuesses + 1)) + expectedMaxGuesses
     );
 
-    assert(wrongBirds.length >= 12, `Game ${game + 1}: not enough wrong birds`);
+    assert(wrongBirds.length >= expectedMaxGuesses, `Game ${game + 1}: not enough wrong birds`);
 
     // Search/autocomplete smoke test before the first guess.
     const searchPrefix = wrongBirds[0].commonName.slice(0, 2);
@@ -531,19 +535,19 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
       await makeUiGuess(page, mysteryName);
       state = await getState(page);
       assert(state.status === "won", `Game ${game + 1}: correct guess did not win`);
-      assert(state.remaining === 8, `Game ${game + 1}: wrong guess count is incorrect after win`);
+      assert(state.remaining === expectedMaxGuesses - 4, `Game ${game + 1}: wrong guess count is incorrect after win`);
       await expect(page.locator("#game-over-overlay")).toHaveClass(/visible/);
       await verifyStudyCard(page, state.mystery);
       await verifyTree(page, `Game ${game + 1}, solved`);
     } else {
-      for (const bird of wrongBirds.slice(1, 12)) {
+      for (const bird of wrongBirds.slice(1, expectedMaxGuesses)) {
         await makeUiGuess(page, bird.commonName);
         state = await getState(page);
         await verifyTree(page, `Game ${game + 1}, loss guess ${bird.commonName}`);
       }
 
       state = await getState(page);
-      assert(state.status === "lost", `Game ${game + 1}: 12 wrong guesses did not lose`);
+      assert(state.status === "lost", `Game ${game + 1}: ${expectedMaxGuesses} wrong guesses did not lose`);
       assert(state.remaining === 0, `Game ${game + 1}: loss did not reach zero`);
       await expect(page.locator("#game-over-overlay")).toHaveClass(/visible/);
       await verifyStudyCard(page, state.mystery);
@@ -560,7 +564,7 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
         family: state.mystery.family,
         genus: state.mystery.genus,
         clades: state.mystery.clades.join(" → "),
-        guessesUsed: 12 - state.remaining
+        guessesUsed: expectedMaxGuesses - state.remaining
       });
     } catch (error) {
       const failedState = await getState(page).catch(() => ({ mystery: {} }));
