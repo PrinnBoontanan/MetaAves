@@ -4982,6 +4982,10 @@ async function showTaxonInTaxonCard(taxon) {
                 "No information available on Wikipedia.";
         }
 
+        if (taxon.rank !== "species") {
+            appendTaxonMainTrait(card, taxon, finalWiki);
+        }
+
         if (taxon.rank === "species") {
             card.classList.add("species-card");
         }
@@ -5122,6 +5126,7 @@ async function showTaxonInTaxonCard(taxon) {
             }
 
             card.appendChild(taxonomySection);
+            appendTaxonMainTrait(card, taxon, finalWiki);
         }
 
         if (finalWiki?.summary?.thumbnail?.source) {
@@ -5189,6 +5194,74 @@ function selectTaxon(node) {
     showTaxonInTaxonCard(taxon);
 }
 
+function getTaxonMainTrait(taxon, wiki) {
+    const name = String(taxon?.name || "").trim().toLowerCase();
+
+    const curated = {
+        "palaeognathae": "An ancient bird lineage defined by a distinctive palaeognathous palate; most living members are flightless, while tinamous retain flight.",
+        "neognathae": "The modern-bird lineage with the neognathous palate, containing the vast majority of living bird species.",
+        "neoaves": "The diverse modern-bird radiation containing nearly all living birds other than palaeognaths and galloanserans.",
+        "galloanseres": "The major waterfowl-and-gamebird lineage, containing ducks, geese, chickens, pheasants, and their relatives.",
+        "telluraves": "A major landbird radiation containing predominantly terrestrial and arboreal birds, including raptors, parrots, woodpeckers, and passerines.",
+        "afroaves": "A landbird clade including raptors and owls together with woodpeckers, hornbills, kingfishers, trogons, mousebirds, and related groups; a predatory ancestry has been proposed but remains debated.",
+        "australaves": "A major landbird clade containing falcons, parrots, seriemas, and passerines, with many highly adapted terrestrial and arboreal forms.",
+        "passeriformes": "The perching-bird radiation, characterized by specialized feet for gripping branches and an enormous diversity of songs, forms, and lifestyles.",
+        "accipitriformes": "A raptorial bird lineage characterized by hooked bills, strong grasping feet, and powerful talons adapted for predation and scavenging.",
+        "strigiformes": "The owl lineage, characterized by forward-facing eyes, highly developed hearing, and adaptations for hunting, often at night.",
+        "piciformes": "A mostly arboreal lineage containing woodpeckers and relatives, many with strong bills and specialized feet for climbing or gripping trunks.",
+        "bucerotiformes": "A mostly tropical landbird lineage including hornbills and hoopoes, with many species having conspicuous bills and distinctive head or facial structures.",
+        "coraciiformes": "A diverse landbird lineage including kingfishers and bee-eaters, many of which have strong bills and specialize in visually hunting prey.",
+        "psittaciformes": "The parrot lineage, distinguished by strongly curved bills, grasping feet, and a highly mobile tongue used for manipulating food.",
+        "falconiformes": "The falcon lineage, characterized by fast aerial hunting, strongly hooked bills, and specialized talons.",
+        "struthioniformes": "The ostrich lineage, containing the world's largest living bird, adapted for powerful running rather than sustained flight.",
+        "casuariiformes": "A lineage of large flightless ratites including cassowaries and emus, with strong legs adapted for running.",
+        "apterygiformes": "The kiwi lineage, made up of small flightless birds with long bills and unusually strong reliance on smell while foraging.",
+        "rheiformes": "A lineage of large flightless rheas adapted for fast running across open South American habitats.",
+        "tinamiformes": "A palaeognathous lineage whose members are unusual among palaeognaths for retaining powered flight.",
+        "anseriformes": "The waterfowl lineage, generally adapted to aquatic or wetland habitats with bills and feet suited to feeding and swimming.",
+        "galliformes": "A mostly ground-associated lineage including chickens, pheasants, turkeys, and grouse, generally adapted for walking, scratching, and feeding on the ground."
+    };
+
+    if (curated[name]) return curated[name];
+
+    const text = normalizeWikipediaText(wiki?.summary?.extract || "");
+    if (!text) return "";
+
+    const rejected = [
+        /\\b(?:myth|mythology|legend|legendary|folklore|roman|greek|egyptian|god|goddess|deity)\\b/i,
+        /\\b(?:etymology|derived from|named after|name refers|name means|called after)\\b/i,
+        /\\b(?:first described|described by|discovered by|authority)\\b/i,
+        /\\b(?:taxonomy|classification|classified as|belongs to|member of)\\b/i
+    ];
+    const biological = /\\b(?:plumage|feathers?|bill|beak|tail|wing|crest|body|size|flight|flies?|forages?|feeds?|hunts?|nests?|breeds?|forest|woodland|grassland|wetland|marine|aquatic|arboreal|terrestrial|nocturnal|diurnal|migratory)\\b/i;
+
+    const sentence = splitWikipediaSentences(text)
+        .map(normalizeWikipediaText)
+        .filter(Boolean)
+        .filter(s => !rejected.some(pattern => pattern.test(s)))
+        .filter(s => biological.test(s))[0];
+
+    return sentence ? shortenHintSentence(sentence, 320) : "";
+}
+
+function appendTaxonMainTrait(card, taxon, wiki) {
+    const trait = getTaxonMainTrait(taxon, wiki);
+    if (!trait) return;
+
+    const section = document.createElement("section");
+    section.className = "taxon-card-wiki-section taxon-card-main-trait";
+
+    const heading = document.createElement("h4");
+    heading.textContent = "Main trait";
+
+    const text = document.createElement("p");
+    text.textContent = trait;
+
+    section.appendChild(heading);
+    section.appendChild(text);
+    card.appendChild(section);
+}
+
 function renderCladeCard(clade, wiki) {
     const card = document.getElementById("taxon-card");
     if (!card) return;
@@ -5223,6 +5296,7 @@ function renderCladeCard(clade, wiki) {
         ) ||
         "No information available on Wikipedia.";
     card.appendChild(description);
+    appendTaxonMainTrait(card, clade, wiki);
 
     const linkUrl = wiki?.summary?.content_urls?.desktop?.page;
     if (linkUrl) {
