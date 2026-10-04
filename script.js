@@ -6526,16 +6526,6 @@ function sanitizeHintIdentity(text, birds = []) {
         .trim();
 }
 function getHintEvidenceSentence(
-");
-            result = result.replace(new RegExp("\\\\b" + escaped + "\\\\b", "gi"), "");
-        });
-
-    return result
-        .replace(/\\s{2,}/g, " ")
-        .replace(/\\s+([,.!?;:])/g, "$1")
-        .trim();
-}
-function getHintEvidenceSentence(
     study,
     trait,
     bird,
