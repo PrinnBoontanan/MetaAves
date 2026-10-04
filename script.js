@@ -6433,7 +6433,7 @@ function getMeaningfulNameWords(name) {
     ]);
 
     return normalizeHintText(name)
-        .split(/\\s+/)
+        .split(/\s+/)
         .map(word => word.replace(/[^a-z-]/g, ""))
         .filter(word =>
             word.length >= 3 &&
@@ -6986,11 +6986,15 @@ function buildSpeciesHint(
 
     if (relationship.rank === "Family") {
         const genusSource = genusStudy || mysteryStudy;
+        const guessedGenusSource = guessedBird?.genus === gameState.mysteryBird?.genus
+            ? null
+            : guessedStudy;
         const targetStudies = [genusSource].filter(Boolean);
+        const genusComparisons = [guessedGenusSource, ...comparisonStudies].filter(Boolean);
 
         const traits = selectDiverseHintTraits(
             targetStudies,
-            comparisonStudies,
+            genusComparisons,
             4
         );
 
@@ -7002,7 +7006,7 @@ function buildSpeciesHint(
             // Try the genus article first, then cached congener articles. This
             // prevents several categories from collapsing onto one repeated
             // Wikipedia sentence.
-            const sources = [genusSource, ...genusMemberStudies, mysteryStudy]
+            const sources = [genusSource, ...genusMemberStudies, ...genusComparisons]
                 .filter(Boolean);
 
             let sentence = "";
@@ -7033,8 +7037,8 @@ function buildSpeciesHint(
             seenClueTexts.add(normalized);
 
             clues.push({
-                heading: "Main trait · " + trait.label,
-                text: "The mystery genus is distinguished by " +
+                heading: "Genus clue · " + trait.label,
+                text: "The mystery genus differs from the guessed genus in that " +
                     sentence.charAt(0).toLowerCase() + sentence.slice(1)
             });
         });
@@ -7073,9 +7077,11 @@ function buildSpeciesHint(
     }
 
     if (relationship.rank === "Genus") {
+        const speciesComparisons = [guessedStudy, ...comparisonStudies].filter(Boolean);
+
         const traits = getSpecificSpeciesTraits(
             mysteryStudy,
-            comparisonStudies,
+            speciesComparisons,
             guessedStudy
         );
 
@@ -7118,8 +7124,8 @@ function buildSpeciesHint(
             seenClueTexts.add(normalized);
 
             clues.push({
-                heading: "Main trait · " + trait.label,
-                text: "The mystery species is distinguished by " +
+                heading: "Species clue · " + trait.label,
+                text: "The mystery species differs from the guessed species in that " +
                     sentence.charAt(0).toLowerCase() + sentence.slice(1)
             });
         });
