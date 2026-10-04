@@ -76,8 +76,8 @@ window.visualViewport?.addEventListener("resize", updatePhoneLayoutClass);
 
 const gameState = {
     mode: null,
-    maxGuesses: 12,
-    guessesRemaining: 12,
+    maxGuesses: 15,
+    guessesRemaining: 15,
     birds: [],
     allBirds: [],
     thailandBirdKeys: null,
@@ -494,6 +494,7 @@ function startNewRoundForMode(mode) {
 
     gameState.mode = mode;
     gameState.birds = pool;
+    gameState.maxGuesses = mode === "world" ? 15 : 12;
     gameState.guessesRemaining = gameState.maxGuesses;
     gameState.guesses = [];
     gameState.selectedTaxonId = null;
@@ -4821,7 +4822,7 @@ function renderBirdCard(
     if (!card) return;
 
     card.innerHTML = "";
-    card.classList.remove("species-card", "clade-card");
+    card.classList.remove("species-card", "clade-card", "taxon-card-no-photo");
     card.classList.add("species-card");
 
     const title = document.createElement("h3");
@@ -4850,10 +4851,11 @@ function renderBirdCard(
         ? limitWikipediaSentences(wiki.summary.extract, 6, 1400)
         : "No information available on Wikipedia.";
 
-    appendWikipediaImage(card, wiki, "taxon-card-image");
-
-    if (!wiki?.summary?.thumbnail?.source) {
-        appendCardSection(card, "Photo", "No photo available on Wikipedia.");
+    const hasPhoto = Boolean(wiki?.summary?.thumbnail?.source);
+    if (hasPhoto) {
+        appendWikipediaImage(card, wiki, "taxon-card-image");
+    } else {
+        card.classList.add("taxon-card-no-photo");
     }
 
     appendCardSection(card, "Description", description);
@@ -4985,6 +4987,7 @@ async function showTaxonInTaxonCard(taxon) {
         }
 
         if (wikiSummary?.summary?.thumbnail?.source) {
+            card.classList.remove("taxon-card-no-photo");
             const photo = document.createElement("div");
             photo.className = "taxon-card-photo";
 
@@ -5185,7 +5188,7 @@ function renderCladeCard(clade, wiki) {
     const card = document.getElementById("taxon-card");
     if (!card) return;
 
-    card.classList.remove("species-card", "clade-card");
+    card.classList.remove("species-card", "clade-card", "taxon-card-no-photo");
     card.classList.add("clade-card");
     card.innerHTML = "";
 
@@ -5202,7 +5205,7 @@ function renderCladeCard(clade, wiki) {
     if (wiki?.summary?.thumbnail?.source) {
         appendTaxonCardPhoto(card, wiki);
     } else {
-        appendCardSection(card, "Photo", "No photo available on Wikipedia.");
+        card.classList.add("taxon-card-no-photo");
     }
 
     const description = document.createElement("p");
@@ -5237,6 +5240,8 @@ function renderTaxonCard(taxon) {
     const info = gameState.taxonInfo?.[taxon.id] || {};
 
     card.innerHTML = "";
+    card.classList.remove("species-card", "clade-card", "taxon-card-no-photo");
+    card.classList.add("taxon-card-no-photo");
 
     const title = document.createElement("h3");
     title.textContent = info.name || taxon.name;
@@ -6540,9 +6545,13 @@ function buildSpeciesHint(
 
     if (relationship.rank === "Family") {
         const genusSource = genusStudy || mysteryStudy;
-        const targetStudies = [genusSource, ...genusMemberStudies].filter(Boolean);
+        const targetStudies = [genusSource].filter(Boolean);
 
-        const traits = selectDiverseHintTraits(targetStudies, [], 4);
+        const traits = selectDiverseHintTraits(
+            targetStudies,
+            comparisonStudies,
+            4
+        );
 
         const seenClueTexts = new Set();
 
@@ -6584,7 +6593,7 @@ function buildSpeciesHint(
 
             clues.push({
                 heading: "Genus clue · " + trait.label,
-                text: sentence
+                text: "Unlike other genera in this family, " + sentence
             });
         });
 
@@ -6638,7 +6647,8 @@ function buildSpeciesHint(
 
             clues.push({
                 heading: "Species clue · " + trait.label,
-                text: sentence
+                text: "Compared with " + guessedBird.commonName + ", the mystery species " +
+                    sentence.charAt(0).toLowerCase() + sentence.slice(1)
             });
         });
 
@@ -6728,6 +6738,7 @@ async function showSpeciesHint(guessedBird, anchor) {
 
             let genusStudy = null;
             let guessedStudy = guessedCached;
+            let siblingGenusStudies = [];
 
             if (relationship.rank === "Family") {
                 const genusTitle = gameState.mysteryBird.genus;
@@ -6738,6 +6749,41 @@ async function showSpeciesHint(guessedBird, anchor) {
                         "general"
                     );
                     genusStudy = getHintStudyFromWikiData(genusData);
+                }
+
+                const siblingGenera = [...new Set(
+                    gameState.birds
+                        .filter(bird =>
+                            bird.family === gameState.mysteryBird.family &&
+                            bird.genus &&
+                            bird.genus !== gameState.mysteryBird.genus
+                        )
+                        .map(bird => bird.genus)
+                )].slice(0, 4);
+
+                const siblingRepresentativeBirds = siblingGenera
+                    .map(genus => gameState.birds.find(bird => bird.genus === genus))
+                    .filter(Boolean);
+
+                siblingGenusStudies = siblingRepresentativeBirds
+                    .map(bird => getCachedHintStudy(bird))
+                    .filter(Boolean);
+
+                if (siblingGenusStudies.length < 2) {
+                    const missing = siblingRepresentativeBirds.filter(
+                        bird => !getCachedHintStudy(bird)
+                    );
+                    const fetched = await Promise.all(
+                        missing.slice(0, 2).map(bird =>
+                            fetchWikipediaPageData(
+                                bird.wikipediaTitle || bird.commonName,
+                                false,
+                                "bird",
+                                bird.scientificName
+                            ).then(data => getHintStudyFromSummary(data?.summary))
+                        )
+                    );
+                    siblingGenusStudies.push(...fetched.filter(Boolean));
                 }
             } else if (relationship.rank === "Genus" && !guessedStudy) {
                 guessedStudy = getHintStudyFromWikiData(
@@ -6763,11 +6809,13 @@ async function showSpeciesHint(guessedBird, anchor) {
                         bird.genus === gameState.mysteryBird.genus &&
                         bird.scientificName !== gameState.mysteryBird.scientificName
                     )
-                    .slice(0, 4);
+                    .slice(0, 3);
 
                 genusMemberStudies = genusMembers
                     .map(bird => getCachedHintStudy(bird))
                     .filter(Boolean);
+
+                comparisonStudies = siblingGenusStudies;
             } else if (relationship.rank === "Genus") {
                 const congeners = gameState.birds
                     .filter(bird =>
