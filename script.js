@@ -6503,6 +6503,29 @@ function replaceHintIdentity(text, bird, replacement = "the mystery species") {
     return result;
 }
 
+function sanitizeHintIdentity(text, birds = []) {
+    let result = String(text || "");
+
+    const identities = birds.flatMap(bird => [
+        bird?.commonName,
+        bird?.scientificName,
+        bird?.wikipediaTitle,
+        bird?.genus
+    ]).filter(Boolean);
+
+    identities
+        .sort((a, b) => String(b).length - String(a).length)
+        .forEach(identity => {
+            const escaped = String(identity).replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\function getHintEvidenceSentence(
+");
+            result = result.replace(new RegExp("\\\\b" + escaped + "\\\\b", "gi"), "");
+        });
+
+    return result
+        .replace(/\\s{2,}/g, " ")
+        .replace(/\\s+([,.!?;:])/g, "$1")
+        .trim();
+}
 function getHintEvidenceSentence(
     study,
     trait,
@@ -7038,8 +7061,11 @@ function buildSpeciesHint(
 
             clues.push({
                 heading: "Genus clue · " + trait.label,
-                text: "The mystery genus differs from the guessed genus in that " +
-                    sentence.charAt(0).toLowerCase() + sentence.slice(1)
+                text: sanitizeHintIdentity(
+                    "The mystery genus differs from the guessed genus in that " +
+                    sentence.charAt(0).toLowerCase() + sentence.slice(1),
+                    [gameState.mysteryBird, guessedBird]
+                )
             });
         });
 
@@ -7125,8 +7151,11 @@ function buildSpeciesHint(
 
             clues.push({
                 heading: "Species clue · " + trait.label,
-                text: "The mystery species differs from the guessed species in that " +
-                    sentence.charAt(0).toLowerCase() + sentence.slice(1)
+                text: sanitizeHintIdentity(
+                    "The mystery species differs from the guessed species in that " +
+                    sentence.charAt(0).toLowerCase() + sentence.slice(1),
+                    [gameState.mysteryBird, guessedBird]
+                )
             });
         });
 
