@@ -6350,11 +6350,13 @@ function getHintEvidenceSentence(
 }
 
 function getHintTraitPriority(label) {
+    // Prefer field-mark-like traits first: appearance and behavior usually
+    // separate close birds better than a broad habitat or diet label.
     return {
-        Habitat: 6,
-        Behavior: 5,
-        Appearance: 4,
-        Diet: 3,
+        Appearance: 7,
+        Behavior: 6,
+        Diet: 4,
+        Habitat: 3,
         Breeding: 2
     }[label] || 0;
 }
@@ -6598,7 +6600,7 @@ function buildSpeciesHint(
 
             clues.push({
                 heading: "Genus clue · " + trait.label,
-                text: "Unlike other genera in this family, " + sentence
+                text: "A useful difference from other genera in this family is that " + sentence.charAt(0).toLowerCase() + sentence.slice(1)
             });
         });
 
@@ -6652,7 +6654,7 @@ function buildSpeciesHint(
 
             clues.push({
                 heading: "Species clue · " + trait.label,
-                text: "Compared with " + guessedBird.commonName + ", the mystery species " +
+                text: "A useful difference from " + guessedBird.commonName + " is that the mystery species " +
                     sentence.charAt(0).toLowerCase() + sentence.slice(1)
             });
         });
