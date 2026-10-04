@@ -6519,29 +6519,29 @@ function getHintEvidenceSentence(
     if (!source) return "";
 
     const rejectedClueSignals = [
-        /\\b(?:myth|mythology|legend|legendary|folklore|folktale|roman|greek|egyptian|god|goddess|deity)\\b/i,
-        /\\b(?:etymology|derived from|named after|name refers|name means|called after|honou?r(?:s|ed)?|commemorat(?:es|ing)|in reference to)\\b/i,
-        /\\b(?:genus was|species was|first described|described by|discovered by|introduced by|authority)\\b/i,
-        /\\b(?:taxonomy|classification|classified|related to|member of|belongs to|family of|order of)\\b/i,
-        /\\b(?:according to|traditionally|historically|formerly|previously known)\\b/i
+        /\b(?:myth|mythology|legend|legendary|folklore|folktale|roman|greek|egyptian|god|goddess|deity)\b/i,
+        /\b(?:etymology|derived from|named after|name refers|name means|called after|honou?r(?:s|ed)?|commemorat(?:es|ing)|in reference to)\b/i,
+        /\b(?:genus was|species was|first described|described by|discovered by|introduced by|authority)\b/i,
+        /\b(?:taxonomy|classification|classified|related to|member of|belongs to|family of|order of)\b/i,
+        /\b(?:according to|traditionally|historically|formerly|previously known)\b/i
     ];
 
     const biologicalTraitSignals = {
         Appearance: [
-            /\\b(?:plumage|feathers?|wing|wings|tail|bill|beak|crest|crown|throat|breast|belly|underparts|upperparts|eyering|eyebrow|stripe|spot|bar|streak|patch|legs?|feet|eyes?)\\b/i,
-            /\\b(?:black|white|brown|rufous|grey|gray|blue|green|red|yellow|orange|pale|dark|long|short|thick|thin|slender|stocky|large|small|rounded|forked|hooked)\\b/i
+            /\b(?:plumage|feathers?|wing|wings|tail|bill|beak|crest|crown|throat|breast|belly|underparts|upperparts|eyering|eyebrow|stripe|spot|bar|streak|patch|legs?|feet|eyes?)\b/i,
+            /\b(?:black|white|brown|rufous|grey|gray|blue|green|red|yellow|orange|pale|dark|long|short|thick|thin|slender|stocky|large|small|rounded|forked|hooked)\b/i
         ],
         Behavior: [
-            /\\b(?:forages?|feeds?|hunts?|perches?|climbs?|flies?|glides?|soars?|dives?|swims?|walks?|runs?|roosts?|nocturnal|diurnal|territorial|solitary|gregarious|flock|display|calls?|song)\\b/i
+            /\b(?:forages?|feeds?|hunts?|perches?|climbs?|flies?|glides?|soars?|dives?|swims?|walks?|runs?|roosts?|nocturnal|diurnal|territorial|solitary|gregarious|flock|display|calls?|song)\b/i
         ],
         Diet: [
-            /\\b(?:feeds? on|eats?|diet|preys? on|insects?|fruit|seeds?|nectar|fish|reptiles?|amphibians?|crustaceans?|mollus[ck]s?|carrion)\\b/i
+            /\b(?:feeds? on|eats?|diet|preys? on|insects?|fruit|seeds?|nectar|fish|reptiles?|amphibians?|crustaceans?|mollus[ck]s?|carrion)\b/i
         ],
         Habitat: [
-            /\\b(?:inhabits?|found in|occurs in|forest|woodland|rainforest|grassland|wetland|marsh|mangrove|savanna|shrubland|canopy|understory|river|stream|mountain|montane|coast|island)\\b/i
+            /\b(?:inhabits?|found in|occurs in|forest|woodland|rainforest|grassland|wetland|marsh|mangrove|savanna|shrubland|canopy|understory|river|stream|mountain|montane|coast|island)\b/i
         ],
         Breeding: [
-            /\\b(?:nests?|nesting|breeds?|breeding|cavity|hollow|nest hole|clutch|eggs?|incubat|fledg)\\b/i
+            /\b(?:nests?|nesting|breeds?|breeding|cavity|hollow|nest hole|clutch|eggs?|incubat|fledg)\b/i
         ]
     };
 
@@ -6564,16 +6564,16 @@ function getHintEvidenceSentence(
             const text = normalizeWikipediaText(sentence);
             const lower = text.toLowerCase();
             const tooSpecificSignals = [
-                /\\b\\d+(?:[.,]\\d+)?\\s*(?:km|m|cm|mm|kg|g|years?|months?)\\b/i,
-                /\\b(?:only|solely|exclusively|restricted to|endemic only)\\b/i,
-                /\\b(?:north|south|east|west)ern?\\s+(?:thailand|india|asia|africa|america|australia)\\b/i
+                /\b\\d+(?:[.,]\\d+)?\\s*(?:km|m|cm|mm|kg|g|years?|months?)\b/i,
+                /\b(?:only|solely|exclusively|restricted to|endemic only)\b/i,
+                /\b(?:north|south|east|west)ern?\s+(?:thailand|india|asia|africa|america|australia)\b/i
             ];
             const specificityPenalty = tooSpecificSignals.reduce(
                 (score, pattern) => score + (pattern.test(text) ? 1 : 0),
                 0
             );
             const duplicatePenalty = usedSentences.has(
-                lower.replace(/\\s+/g, " ").trim()
+                lower.replace(/\s+/g, " ").trim()
             ) ? 100 : 0;
 
             const biologicalSignalCount = (biologicalTraitSignals[trait.label] || [])
@@ -6900,6 +6900,78 @@ function getSummaryHintEvidenceSentence(study, trait, bird = null, replacement =
         215
     );
 }
+\nfunction getBirdHintFallbackTraits(bird, limit = 3) {
+    if (!bird) return [];
+
+    const name = String(bird.commonName || "").toLowerCase();
+    const family = String(bird.family || "").toLowerCase();
+    const order = String(bird.order || "").toLowerCase();
+    const text = [name, family, order].join(" ");
+
+    const candidates = [];
+
+    const add = (label, sentence) => {
+        if (candidates.some(item => item.label === label)) return;
+        candidates.push({ label, text: sentence });
+    };
+
+    if (/eagle|hawk|kestrel|kite|harrier|vulture|osprey|buzzard|accipitr/.test(text)) {
+        add("Appearance", "the mystery bird has the hooked bill, grasping feet, and powerful talons typical of a raptorial bird");
+        add("Behavior", "the mystery bird is adapted for predatory flight, soaring, or active pursuit of prey");
+    }
+    if (/owl|strigiform/.test(text)) {
+        add("Behavior", "the mystery bird is adapted to hunting with strong hearing and highly effective low-light vision");
+        add("Appearance", "the mystery bird has the forward-facing eyes and specialized flight feathers characteristic of owls");
+    }
+    if (/woodpecker|wryneck|piculet|piciform/.test(text)) {
+        add("Appearance", "the mystery bird has adaptations for climbing trunks and manipulating wood with its bill");
+        add("Behavior", "the mystery bird forages on or around tree trunks, often probing or drilling for food");
+    }
+    if (/hornbill/.test(text)) {
+        add("Appearance", "the mystery bird is distinguished by a conspicuous bill, with many relatives also having a casque");
+        add("Breeding", "the mystery bird belongs to a group in which cavity nesting and unusual nest-site behavior are common");
+    }
+    if (/parrot|parakeet|macaw|cockatoo|lorikeet|psittac/.test(text)) {
+        add("Appearance", "the mystery bird has a strongly curved bill and grasping feet adapted for manipulating food");
+        add("Behavior", "the mystery bird uses its feet and highly mobile bill to handle food");
+    }
+    if (/duck|goose|swan|teal|shelduck|pochard|merganser|anseriform/.test(text)) {
+        add("Habitat", "the mystery bird is strongly associated with water, wetlands, or other aquatic habitats");
+        add("Appearance", "the mystery bird has bill and foot adaptations suited to swimming or aquatic feeding");
+    }
+    if (/heron|egret|bittern|stork|ibis|spoonbill|flamingo|crane|rail|coot|grebe/.test(text)) {
+        add("Habitat", "the mystery bird is associated with wetlands or shallow water where it can forage");
+        add("Behavior", "the mystery bird uses wading or swimming adaptations to search for food");
+    }
+    if (/pigeon|dove|columb/.test(text)) {
+        add("Behavior", "the mystery bird has strong flight adaptations and typically forages for plant material such as fruit or seeds");
+    }
+    if (/penguin|auk|guillemot|murre|puffin|gannet|booby|frigate|albatross|petrel|shearwater/.test(text)) {
+        add("Habitat", "the mystery bird is adapted to marine environments and obtains food from the sea");
+        add("Behavior", "the mystery bird has flight, soaring, or diving adaptations suited to life around open water");
+    }
+    if (/sparrow|finch|bunting|warbler|thrush|robin|wren|tit|starling|myna|bulbul|sunbird|swallow|martin|flycatcher|drongo|shrike|crow|raven|magpie|jay|passeriform/.test(text)) {
+        add("Behavior", "the mystery bird is adapted for perching and moving through vegetation while searching for food");
+        add("Appearance", "the mystery bird has the grasping feet characteristic of perching birds");
+    }
+    if (/ostrich|emu|cassowary|kiwi|rhea|tinamou/.test(text)) {
+        add("Behavior", "the mystery bird has strong legs and body adaptations for ground movement");
+    }
+
+    if (!candidates.length) {
+        add(
+            "Habitat",
+            "the mystery bird occupies a characteristic habitat that helps distinguish it from other members of its group"
+        );
+        add(
+            "Behavior",
+            "the mystery bird has feeding or movement behavior adapted to its ecological niche"
+        );
+    }
+
+    return candidates.slice(0, limit);
+}
+
 
 function buildSpeciesHint(
     guessedBird,
@@ -7279,9 +7351,19 @@ async function showSpeciesHint(guessedBird, anchor) {
                     .filter(item => item.text);
 
                 if (!hintData.length) {
+                    hintData = getBirdHintFallbackTraits(
+                        gameState.mysteryBird,
+                        relationship.rank === "Family" ? 3 : 4
+                    ).map(item => ({
+                        heading: "Main trait · " + item.label,
+                        text: item.text
+                    }));
+                }
+
+                if (!hintData.length) {
                     hintData = [{
                         heading: "Main trait",
-                        text: "Wikipedia does not provide enough usable detail for a reliable clue here."
+                        text: "The mystery bird has biological characteristics that distinguish it from other birds in this part of the taxonomy."
                     }];
                 }
             }
@@ -7289,10 +7371,20 @@ async function showSpeciesHint(guessedBird, anchor) {
             gameState.hintCache.set(cacheKey, hintData);
         } catch (error) {
             console.warn("Species hint generation failed:", error);
-            hintData = [{
-                heading: "Main trait",
-                text: "Wikipedia could not provide enough reliable information for this hint."
-            }];
+            hintData = getBirdHintFallbackTraits(
+                gameState.mysteryBird,
+                relationship.rank === "Family" ? 3 : 4
+            ).map(item => ({
+                heading: "Main trait · " + item.label,
+                text: item.text
+            }));
+
+            if (!hintData.length) {
+                hintData = [{
+                    heading: "Main trait",
+                    text: "The mystery bird has biological characteristics that distinguish it from other birds in this part of the taxonomy."
+                }];
+            }
         }
     }
 
