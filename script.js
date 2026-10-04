@@ -6516,7 +6516,16 @@ function sanitizeHintIdentity(text, birds = []) {
     identities
         .sort((a, b) => String(b).length - String(a).length)
         .forEach(identity => {
-            const escaped = String(identity).replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\function getHintEvidenceSentence(
+            const escaped = String(identity).replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&");
+            result = result.replace(new RegExp("\\b" + escaped + "\\b", "gi"), "");
+        });
+
+    return result
+        .replace(/\s{2,}/g, " ")
+        .replace(/\s+([,.!?;:])/g, "$1")
+        .trim();
+}
+function getHintEvidenceSentence(
 ");
             result = result.replace(new RegExp("\\\\b" + escaped + "\\\\b", "gi"), "");
         });
