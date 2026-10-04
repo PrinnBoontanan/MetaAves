@@ -7360,7 +7360,13 @@ async function showSpeciesHint(guessedBird, anchor) {
                 genusStudy,
                 genusMemberStudies,
                 comparisonStudies
-            );
+            ).map(item => ({
+                ...item,
+                text: sanitizeHintIdentity(
+                    item.text,
+                    [gameState.mysteryBird, guessedBird]
+                )
+            })).filter(item => item.text);
 
             if (!hintData.length) {
                 const fallbackTraits = selectDiverseHintTraits(
