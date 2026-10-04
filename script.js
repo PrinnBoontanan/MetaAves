@@ -6516,7 +6516,7 @@ function sanitizeHintIdentity(text, birds = []) {
     identities
         .sort((a, b) => String(b).length - String(a).length)
         .forEach(identity => {
-            const escaped = String(identity).replace(/[.*+?^\${}()|[\]\\]/g, "\\const escaped = String(identity).replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&");");
+            const escaped = String(identity).replace(/[.*+?^\\$\\{\\}()|[\\]\\\\]/g, "\\$&");
             result = result.replace(new RegExp("\\b" + escaped + "\\b", "gi"), "");
         });
 
@@ -6525,6 +6525,7 @@ function sanitizeHintIdentity(text, birds = []) {
         .replace(/\s+([,.!?;:])/g, "$1")
         .trim();
 }
+
 function getHintEvidenceSentence(
     study,
     trait,
