@@ -5049,7 +5049,6 @@ async function showTaxonInTaxonCard(taxon) {
         }
 
         if (taxon.rank !== "species") {
-            appendTaxonMainTrait(card, taxon, wikiSummary, gameState.taxonInfo?.[taxon?.id] || {});
         }
 
         if (taxon.rank === "species") {
@@ -5198,7 +5197,6 @@ async function showTaxonInTaxonCard(taxon) {
             }
 
             card.appendChild(taxonomySection);
-            appendTaxonMainTrait(card, taxon, finalWiki, gameState.taxonInfo?.[taxon?.id] || {});
         }
 
         if (finalWiki?.summary?.thumbnail?.source) {
@@ -5432,7 +5430,6 @@ function renderCladeCard(clade, wiki) {
         ) ||
         "No information available on Wikipedia.";
     card.appendChild(description);
-    appendTaxonMainTrait(card, clade, wiki, gameState.taxonInfo?.[clade?.id] || {});
 
     if (wiki?.summary?.thumbnail?.source) {
         appendTaxonCardPhoto(card, wiki);
