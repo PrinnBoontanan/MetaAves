@@ -6566,6 +6566,33 @@ function getHintEvidenceSentence(
         ]
     };
 
+    const categorySpecificSignals = {
+        Appearance: [
+            /\b(?:plumage|feathers?|wing|wings|tail|bill|beak|crest|crown|throat|breast|belly|underparts|upperparts|eyering|eyebrow|stripe|spot|bar|streak|patch|legs?|feet|eyes?)\b/i,
+            /\b(?:black|white|brown|rufous|grey|gray|blue|green|red|yellow|orange|pale|dark|long|short|thick|thin|slender|stocky|large|small|rounded|forked|hooked)\b/i
+        ],
+        Behavior: [
+            /\b(?:forages?|feeds?|hunts?|perches?|climbs?|flies?|glides?|soars?|dives?|swims?|walks?|runs?|roosts?|nocturnal|diurnal|territorial|solitary|gregarious|flock|display|calls?|song)\b/i
+        ],
+        Diet: [
+            /\b(?:diet|feeds? on|eats?|preys? on|food|feeding|insects?|fruit|seeds?|nectar|fish|reptiles?|amphibians?|crustaceans?|mollus[ck]s?|carrion)\b/i
+        ],
+        Habitat: [
+            /\b(?:habitat|distribution|range|inhabits?|lives? in|found in|found on|occurs? in|forest|woodland|rainforest|grassland|wetland|marsh|mangrove|savanna|shrubland|canopy|understory|river|stream|mountain|montane|coast|coastal|island|lowland|highland|elevation|altitude)\b/i
+        ],
+        Breeding: [
+            /\b(?:nests?|nesting|breeds?|breeding|cavity|hollow|nest hole|clutch|eggs?|incubat|fledg|reproduct)\b/i
+        ]
+    };
+
+    const taxonomyContextSignals = [
+        /\b(?:taxonomy|taxonomic|classification|classified|taxon|taxa)\b/i,
+        /\b(?:placed|included|assigned|classified)\s+(?:in|within|under)\b/i,
+        /\b(?:belongs?|belonging|member)\s+(?:to|of)\b/i,
+        /\b(?:closely|distantly)\s+related\s+to\b/i,
+        /\b(?:family|subfamily|genus|species|subspecies|order|suborder|infraorder|parvorder|superfamily|class|subclass|infraclass|clade)\b[^.]{0,80}\b(?:family|subfamily|genus|species|subspecies|order|suborder|infraorder|parvorder|superfamily|class|subclass|infraclass|clade)\b/i
+    ];
+
     const sentences = splitWikipediaSentences(source)
         .filter(sentence =>
             getHintFactTokens(sentence, trait.category).includes(trait.token)
@@ -6573,8 +6600,9 @@ function getHintEvidenceSentence(
         .filter(sentence => {
             const text = normalizeWikipediaText(sentence);
             if (rejectedClueSignals.some(pattern => pattern.test(text))) return false;
+            if (taxonomyContextSignals.some(pattern => pattern.test(text))) return false;
 
-            const signals = biologicalTraitSignals[trait.label] || [];
+            const signals = categorySpecificSignals[trait.label] || [];
             return signals.some(pattern => pattern.test(text));
         });
 

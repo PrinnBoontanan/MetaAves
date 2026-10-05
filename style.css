@@ -3029,6 +3029,7 @@ input:focus-visible,
 .species-hover-hint.visible {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
     transform: translateY(0);
 }
 
