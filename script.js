@@ -7032,7 +7032,7 @@ function getBirdHintFallbackTraits(bird, limit = 3) {
 }
 
 
-function buildGenusHint(mysteryGenusStudy, guessedGenusStudy) {
+function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null) {
     if (!mysteryGenusStudy || !guessedGenusStudy) return [];
 
     // Genus system only: both inputs are genus-level studies.
@@ -7247,7 +7247,8 @@ async function showSpeciesHint(guessedBird, anchor) {
 
                 hintData = buildGenusHint(
                     mysteryGenusStudy,
-                    guessedGenusStudy
+                    guessedGenusStudy,
+                    guessedBird
                 );
 
                 if (!hintData.length) {
