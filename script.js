@@ -4744,18 +4744,11 @@ function appendTaxonCardPhoto(card, wiki) {
     image.className = "taxon-card-image";
     image.src = wiki.summary.thumbnail.source;
     image.alt = wiki.summary.title || "";
-    image.loading = "lazy";
-
-    image.addEventListener("load", () => {
-        if (
-            image.naturalWidth > 0 &&
-            image.naturalHeight > 0 &&
-            image.naturalWidth / image.naturalHeight >= 1.65
-        ) {
-            wrapper.classList.add("taxon-card-photo--wide");
-            card.classList.add("taxon-card--wide-photo");
-        }
-    });
+    // Load the single taxon-card image immediately. More importantly,
+    // do not change the card's grid after the image loads: on touch tablets
+    // that caused the photo column to jump between compact and wide sizes
+    // while scrolling/lazy-loading.
+    image.loading = "eager";
 
     wrapper.appendChild(image);
     card.appendChild(wrapper);

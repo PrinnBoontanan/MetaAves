@@ -4848,12 +4848,15 @@ body.phone-device .taxonomy-tree.table-mode .taxonomy-table {
         grid-area: wikipedia !important;
     }
 
+    /* Image aspect ratio must never change the iPad card width.
+       Keep the photo column stable even if an old card still carries the
+       wide-photo class from cached/runtime markup. */
     .taxon-card:not(.species-card).taxon-card--wide-photo {
-        grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) !important;
+        grid-template-columns: minmax(260px, 280px) minmax(0, 1fr) !important;
     }
 
     .taxon-card:not(.species-card).taxon-card--wide-photo > .taxon-card-photo {
-        max-width: 340px !important;
+        max-width: 280px !important;
     }
 
     /* Species cards also keep the photo beside the information on iPad. */
