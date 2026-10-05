@@ -6527,6 +6527,15 @@ function sanitizeHintIdentity(text, birds = []) {
         .trim();
 }
 
+function hintContainsBirdIdentity(text, birds = []) {
+    const lower = String(text || "").toLowerCase();
+    return birds
+        .flatMap(bird => [bird?.commonName, bird?.scientificName, bird?.wikipediaTitle])
+        .map(value => String(value || "").trim().toLowerCase())
+        .filter(value => value.length >= 3)
+        .some(identity => lower.includes(identity));
+}
+
 function getHintEvidenceSentence(
     study,
     trait,
@@ -7080,7 +7089,10 @@ function buildGenusHint(mysteryGenusStudy, guessedGenusStudy) {
                 null,
                 "the mystery genus"
             );
-            if (!sentence) continue;
+            if (!sentence || hintContainsBirdIdentity(
+                sentence,
+                [gameState.mysteryBird, guessedBird]
+            )) continue;
 
             clues.push({
                 heading: "Genus clue · " + trait.label,
@@ -7251,7 +7263,10 @@ async function showSpeciesHint(guessedBird, anchor) {
                             null,
                             "the mystery genus"
                         );
-                        if (!sentence) return null;
+                        if (!sentence || hintContainsBirdIdentity(
+                            sentence,
+                            [gameState.mysteryBird, guessedBird]
+                        )) return null;
 
                         return {
                             heading: "Genus clue · " + trait.label,
@@ -7320,7 +7335,10 @@ async function showSpeciesHint(guessedBird, anchor) {
                             mystery,
                             "the mystery species"
                         );
-                        if (!sentence) return null;
+                        if (!sentence || hintContainsBirdIdentity(
+                            sentence,
+                            [mystery, guessedBird]
+                        )) return null;
 
                         return {
                             heading: "Species clue · " + trait.label,
