@@ -4752,3 +4752,64 @@ body.phone-device .taxonomy-tree.table-mode .taxonomy-table {
     grid-area: wikipedia !important;
     margin-left: 0 !important;
 }
+
+
+/* ========================================
+   Full-width iPad / tablet layout
+   Keep desktop sizing intact while allowing
+   touch tablets to use their entire viewport.
+======================================== */
+@media (min-width: 701px) and (max-width: 1366px) and (pointer: coarse) {
+    html,
+    body {
+        width: 100%;
+        min-width: 0;
+        overflow-x: clip;
+    }
+
+    .game-container,
+    body.phone-device .game-container {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 24px clamp(14px, 2.2vw, 30px) !important;
+    }
+
+    .taxonomy-layout,
+    body.phone-device .taxonomy-layout {
+        width: 100% !important;
+        max-width: none !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 18px !important;
+    }
+
+    .taxonomy-layout > .taxonomy-section,
+    .taxonomy-layout > .taxon-section,
+    body.phone-device .taxonomy-layout > .taxonomy-section,
+    body.phone-device .taxonomy-layout > .taxon-section {
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        margin-inline: 0 !important;
+    }
+
+    .taxonomy-section,
+    .taxon-section {
+        box-sizing: border-box;
+        min-width: 0;
+    }
+
+    .taxon-section {
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .taxonomy-tree,
+    .taxonomy-content,
+    .taxonomy-tree.table-mode,
+    .taxonomy-tree.table-mode .taxonomy-table-wrap {
+        max-width: 100%;
+        min-width: 0;
+    }
+}
