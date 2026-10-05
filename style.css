@@ -4813,3 +4813,83 @@ body.phone-device .taxonomy-tree.table-mode .taxonomy-table {
         min-width: 0;
     }
 }
+
+
+/* iPad tablet taxon-card side layout */
+@media (min-width: 701px) and (max-width: 1366px) and (pointer: coarse) {
+    /* Keep the full-width page, but preserve the desktop side-by-side
+       taxon card instead of letting the <=850px mobile rule stack it. */
+    .taxon-card:not(.species-card) {
+        grid-template-columns: minmax(260px, 280px) minmax(0, 1fr) !important;
+        grid-template-areas:
+            "title title"
+            "rank rank"
+            "common common"
+            "image description"
+            "image wikipedia" !important;
+        column-gap: 32px !important;
+    }
+
+    .taxon-card:not(.species-card) > .taxon-card-photo {
+        grid-area: image !important;
+        width: 100% !important;
+        max-width: 280px !important;
+        margin: 8px 0 0 !important;
+    }
+
+    .taxon-card:not(.species-card) > .taxon-card-description,
+    .taxon-card:not(.species-card) > .taxon-card-wiki-section {
+        grid-area: description !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .taxon-card:not(.species-card) > .taxon-card-wikipedia-link {
+        grid-area: wikipedia !important;
+    }
+
+    .taxon-card:not(.species-card).taxon-card--wide-photo {
+        grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) !important;
+    }
+
+    .taxon-card:not(.species-card).taxon-card--wide-photo > .taxon-card-photo {
+        max-width: 340px !important;
+    }
+
+    /* Species cards also keep the photo beside the information on iPad. */
+    .taxon-card.species-card {
+        grid-template-columns: minmax(220px, 240px) minmax(0, 1fr) !important;
+        grid-template-areas:
+            "title title"
+            "thai thai"
+            "scientific scientific"
+            "rank rank"
+            "photo description"
+            "photo taxonomy"
+            "photo wikipedia" !important;
+        column-gap: 24px !important;
+    }
+
+    .taxon-card.species-card > .taxon-card-photo {
+        grid-area: photo !important;
+        width: 100% !important;
+        max-width: 240px !important;
+        margin: 6px 0 0 !important;
+    }
+
+    .taxon-card.species-card > .taxon-card-wiki-section:not(.taxon-card-species-taxonomy) {
+        grid-area: description !important;
+    }
+
+    .taxon-card.species-card > .taxon-card-species-taxonomy {
+        grid-area: taxonomy !important;
+        border-left: 1px solid #e3d8bf !important;
+        border-top: 0 !important;
+        padding-left: 18px !important;
+        padding-top: 0 !important;
+    }
+
+    .taxon-card.species-card > .taxon-card-wikipedia-link {
+        grid-area: wikipedia !important;
+    }
+}
