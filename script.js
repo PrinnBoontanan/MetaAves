@@ -2769,6 +2769,25 @@ async function fetchWikipediaPageData(
         if (expectedType === "bird") {
             data.validatedBird = isWikipediaBirdPage(data.summary);
             if (!data.validatedBird) return null;
+        } else {
+            // Higher taxa must never silently use a bird article as their
+            // representative page/image. Wikipedia search can return a
+            // species page for a broad or redirected taxon name, so reject
+            // any result whose title is one of our known bird identities.
+            const summaryTitle = String(data.summary?.title || "").trim().toLowerCase();
+            const isBirdArticle = gameState.allBirds?.some(bird => {
+                const identities = [
+                    bird.commonName,
+                    bird.scientificName,
+                    bird.wikipediaTitle
+                ]
+                    .map(value => String(value || "").trim().toLowerCase())
+                    .filter(Boolean);
+
+                return identities.some(identity => identity === summaryTitle);
+            });
+
+            if (isBirdArticle) return null;
         }
 
         if (!includeHtml) return data;
@@ -7035,73 +7054,127 @@ function getBirdHintFallbackTraits(bird, limit = 3) {
 function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null) {
     if (!mysteryGenusStudy || !guessedGenusStudy) return [];
 
-    // Genus system only: both inputs are genus-level studies.
-    const traits = selectDiverseHintTraits(
-        [mysteryGenusStudy],
-        [guessedGenusStudy],
-        3
-    );
+    // Genus system only: every source sentence comes from the two genus
+    // articles. Never load or inspect the mystery species article here.
+    const mysterySource = [
+        mysteryGenusStudy.description,
+        mysteryGenusStudy.habitatDistribution,
+        mysteryGenusStudy.behavior,
+        mysteryGenusStudy.diet,
+        mysteryGenusStudy.breeding
+    ].filter(Boolean).join(" ");
+
+    const guessedSource = [
+        guessedGenusStudy.description,
+        guessedGenusStudy.habitatDistribution,
+        guessedGenusStudy.behavior,
+        guessedGenusStudy.diet,
+        guessedGenusStudy.breeding
+    ].filter(Boolean).join(" ");
+
+    if (!mysterySource) return [];
+
+    const rejected = [
+        /\\b(?:myth|mythology|legend|legendary|folklore|folktale|roman|greek|egyptian|god|goddess|deity)\\b/i,
+        /\\b(?:etymology|derived from|named after|name refers|name means|called after|honou?r(?:s|ed)?|commemorat(?:es|ing)|in reference to)\\b/i,
+        /\\b(?:taxonomy|classification|classified|related to|member of|belongs to|family of|order of)\\b/i,
+        /\\b(?:first described|described by|discovered by|authority)\\b/i
+    ];
+
+    const categorySignals = {
+        Appearance: /\\b(?:plumage|feathers?|wing|wings|tail|bill|beak|crest|crown|throat|breast|belly|underparts|upperparts|eyering|eyebrow|stripe|spot|bar|streak|patch|legs?|feet|eyes?|black|white|brown|rufous|grey|gray|blue|green|red|yellow|orange|pale|dark|long|short|thick|thin|slender|stocky|large|small|rounded|forked|hooked)\\b/i,
+        Behavior: /\\b(?:forages?|feeds?|hunts?|perches?|climbs?|flies?|glides?|soars?|dives?|swims?|walks?|runs?|roosts?|nocturnal|diurnal|territorial|solitary|gregarious|flock|display|calls?|song)\\b/i,
+        Diet: /\\b(?:diet|feeds? on|eats?|preys? on|food|feeding|insects?|fruit|seeds?|nectar|fish|reptiles?|amphibians?|crustaceans?|mollus[ck]s?|carrion)\\b/i,
+        Habitat: /\\b(?:habitat|distribution|range|inhabits?|lives? in|found in|found on|occurs? in|forest|woodland|rainforest|grassland|wetland|marsh|mangrove|savanna|shrubland|canopy|understory|river|stream|mountain|montane|coast|coastal|island|lowland|highland|elevation|altitude)\\b/i,
+        Breeding: /\\b(?:nests?|nesting|breeds?|breeding|cavity|hollow|nest hole|clutch|eggs?|incubat|fledg|reproduct)\\b/i
+    };
+
+    const guessedSentences = splitWikipediaSentences(guessedSource)
+        .map(normalizeWikipediaText)
+        .filter(Boolean)
+        .filter(sentence => !rejected.some(pattern => pattern.test(sentence)));
+
+    const guessedCategoryCounts = new Map();
+    guessedSentences.forEach(sentence => {
+        Object.entries(categorySignals).forEach(([category, pattern]) => {
+            if (pattern.test(sentence)) {
+                guessedCategoryCounts.set(
+                    category,
+                    (guessedCategoryCounts.get(category) || 0) + 1
+                );
+            }
+        });
+    });
+
+    const mysterySentences = splitWikipediaSentences(mysterySource)
+        .map(normalizeWikipediaText)
+        .filter(Boolean)
+        .filter(sentence => !rejected.some(pattern => pattern.test(sentence)))
+        .filter(sentence => !hintContainsBirdIdentity(
+            sentence,
+            [
+                gameState.mysteryBird,
+                guessedBird,
+                ...gameState.birds.filter(bird => bird.genus === gameState.mysteryBird?.genus)
+            ]
+        ));
+
+    const candidates = [];
+    mysterySentences.forEach(sentence => {
+        Object.entries(categorySignals).forEach(([category, pattern]) => {
+            if (!pattern.test(sentence)) return;
+
+            const categoryPenalty = guessedCategoryCounts.get(category) || 0;
+            candidates.push({
+                category,
+                sentence,
+                score:
+                    getHintTraitPriority(category) * 2 -
+                    categoryPenalty * 0.15 -
+                    Math.max(0, sentence.length - 220) * 0.01
+            });
+        });
+    });
+
+    candidates.sort((a, b) => b.score - a.score);
 
     const clues = [];
-    const seenClueTexts = new Set();
+    const usedCategories = new Set();
+    const usedSentences = new Set();
 
-    for (const trait of traits) {
+    for (const candidate of candidates) {
         if (clues.length >= 3) break;
+        const normalized = candidate.sentence.toLowerCase().replace(/\\s+/g, " ").trim();
+        if (usedSentences.has(normalized)) continue;
+        if (usedCategories.has(candidate.category) && usedCategories.size < 3) continue;
 
-        const sentence = getHintEvidenceSentence(
-            mysteryGenusStudy,
-            trait,
-            null,
-            "the mystery genus",
-            seenClueTexts
-        );
-        if (!sentence) continue;
-
-        const normalized = sentence.toLowerCase().replace(/\s+/g, " ").trim();
-        if (seenClueTexts.has(normalized)) continue;
-        seenClueTexts.add(normalized);
+        usedSentences.add(normalized);
+        usedCategories.add(candidate.category);
 
         clues.push({
-            heading: "Genus clue · " + trait.label,
+            heading: "Genus clue · " + candidate.category,
             text:
                 "The mystery genus differs from the guessed genus in that " +
-                sentence.charAt(0).toLowerCase() +
-                sentence.slice(1)
+                candidate.sentence.charAt(0).toLowerCase() +
+                candidate.sentence.slice(1)
         });
     }
 
-    if (!clues.length) {
-        const mysteryTraits = getBiologicalSummaryTraits(mysteryGenusStudy, 3);
-        const guessedTraitKeys = new Set(
-            getBiologicalSummaryTraits(guessedGenusStudy, 6).map(
-                trait => trait.label + "|" + trait.category
-            )
-        );
+    // If the two genus pages do not provide enough category-diverse facts,
+    // fill the remaining slots with the strongest unused genus-only facts.
+    for (const candidate of candidates) {
+        if (clues.length >= 3) break;
+        const normalized = candidate.sentence.toLowerCase().replace(/\\s+/g, " ").trim();
+        if (usedSentences.has(normalized)) continue;
 
-        for (const trait of mysteryTraits) {
-            if (clues.length >= 3) break;
-            const key = trait.label + "|" + trait.category;
-            if (guessedTraitKeys.has(key)) continue;
-
-            const sentence = getSummaryHintEvidenceSentence(
-                mysteryGenusStudy,
-                trait,
-                null,
-                "the mystery genus"
-            );
-            if (!sentence || hintContainsBirdIdentity(
-                sentence,
-                [gameState.mysteryBird, guessedBird]
-            )) continue;
-
-            clues.push({
-                heading: "Genus clue · " + trait.label,
-                text:
-                    "The mystery genus differs from the guessed genus in that " +
-                    sentence.charAt(0).toLowerCase() +
-                    sentence.slice(1)
-            });
-        }
+        usedSentences.add(normalized);
+        clues.push({
+            heading: "Genus clue · " + candidate.category,
+            text:
+                "The mystery genus differs from the guessed genus in that " +
+                candidate.sentence.charAt(0).toLowerCase() +
+                candidate.sentence.slice(1)
+        });
     }
 
     return clues.slice(0, 3);
