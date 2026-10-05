@@ -4335,16 +4335,19 @@ async function fetchWikidataDetailedTaxonomy(bird) {
 
                 const canonicalRank = canonicalRankFromLabel(rankName);
 
+                const taxonName = String(entity.labels?.en?.value || "").trim();
+                const isQid = /^Q\\d+$/.test(taxonName);
+
                 if (
                     canonicalRank &&
+                    taxonName &&
+                    !isQid &&
                     !rows.some(row => row.rank === canonicalRank)
                 ) {
                     rows.push({
                         rank: canonicalRank,
                         label: rankLabels.get(canonicalRank),
-                        name:
-                            entity.labels?.en?.value ||
-                            entityId
+                        name: taxonName
                     });
                 }
             }
@@ -6239,12 +6242,25 @@ function getHintRelationship(guessedBird) {
     const mystery = gameState.mysteryBird;
     if (!guessedBird || !mystery || guessedBird === mystery) return null;
 
-    if (guessedBird.genus && mystery.genus && guessedBird.genus === mystery.genus) {
-        return { rank: "Genus", value: guessedBird.genus };
+    // Two independent hint systems:
+    // Species clue = same genus, different species.
+    // Genus clue = same family, different genus.
+    if (
+        guessedBird.genus &&
+        mystery.genus &&
+        guessedBird.genus === mystery.genus &&
+        guessedBird.scientificName !== mystery.scientificName
+    ) {
+        return { rank: "Species", value: guessedBird.genus };
     }
 
-    if (guessedBird.family && mystery.family && guessedBird.family === mystery.family) {
-        return { rank: "Family", value: guessedBird.family };
+    if (
+        guessedBird.family &&
+        mystery.family &&
+        guessedBird.family === mystery.family &&
+        guessedBird.genus !== mystery.genus
+    ) {
+        return { rank: "Genus", value: guessedBird.family };
     }
 
     return null;
@@ -6979,175 +6995,139 @@ function getBirdHintFallbackTraits(bird, limit = 3) {
 }
 
 
+function buildGenusHint(mysteryGenusStudy, guessedGenusStudy) {
+    if (!mysteryGenusStudy || !guessedGenusStudy) return [];
+
+    // Genus system only: both inputs are genus-level studies.
+    const traits = selectDiverseHintTraits(
+        [mysteryGenusStudy],
+        [guessedGenusStudy],
+        3
+    );
+
+    const clues = [];
+    const seenClueTexts = new Set();
+
+    for (const trait of traits) {
+        if (clues.length >= 3) break;
+
+        const sentence = getHintEvidenceSentence(
+            mysteryGenusStudy,
+            trait,
+            null,
+            "the mystery genus",
+            seenClueTexts
+        );
+        if (!sentence) continue;
+
+        const normalized = sentence.toLowerCase().replace(/\s+/g, " ").trim();
+        if (seenClueTexts.has(normalized)) continue;
+        seenClueTexts.add(normalized);
+
+        clues.push({
+            heading: "Genus clue · " + trait.label,
+            text:
+                "The mystery genus differs from the guessed genus in that " +
+                sentence.charAt(0).toLowerCase() +
+                sentence.slice(1)
+        });
+    }
+
+    if (!clues.length) {
+        const mysteryTraits = getBiologicalSummaryTraits(mysteryGenusStudy, 3);
+        const guessedTraitKeys = new Set(
+            getBiologicalSummaryTraits(guessedGenusStudy, 6).map(
+                trait => trait.label + "|" + trait.category
+            )
+        );
+
+        for (const trait of mysteryTraits) {
+            if (clues.length >= 3) break;
+            const key = trait.label + "|" + trait.category;
+            if (guessedTraitKeys.has(key)) continue;
+
+            const sentence = getSummaryHintEvidenceSentence(
+                mysteryGenusStudy,
+                trait,
+                null,
+                "the mystery genus"
+            );
+            if (!sentence) continue;
+
+            clues.push({
+                heading: "Genus clue · " + trait.label,
+                text:
+                    "The mystery genus differs from the guessed genus in that " +
+                    sentence.charAt(0).toLowerCase() +
+                    sentence.slice(1)
+            });
+        }
+    }
+
+    return clues.slice(0, 3);
+}
+
 function buildSpeciesHint(
     guessedBird,
     guessedStudy,
     mysteryStudy,
-    genusStudy = null,
-    genusMemberStudies = [],
     comparisonStudies = []
 ) {
-    const relationship = getHintRelationship(guessedBird);
-    if (!relationship || !mysteryStudy) return [];
+    if (!mysteryStudy || !guessedStudy) return [];
+
+    // Species system only: individual species studies are compared here.
+    const traits = getSpecificSpeciesTraits(
+        mysteryStudy,
+        comparisonStudies,
+        guessedStudy
+    );
+
+    const selected = [];
+    const usedCategories = new Set();
+
+    for (const trait of traits) {
+        if (selected.length >= 4) break;
+        if (usedCategories.has(trait.category)) continue;
+        usedCategories.add(trait.category);
+        selected.push(trait);
+    }
+
+    for (const trait of traits) {
+        if (selected.length >= 4) break;
+        if (selected.some(item =>
+            item.category === trait.category &&
+            item.token === trait.token
+        )) continue;
+        selected.push(trait);
+    }
 
     const clues = [];
+    const seenClueTexts = new Set();
 
-    if (relationship.rank === "Family") {
-        const genusSource = genusStudy || mysteryStudy;
-        const guessedGenusSource = guessedBird?.genus === gameState.mysteryBird?.genus
-            ? null
-            : guessedStudy;
-        const targetStudies = [genusSource].filter(Boolean);
-        const genusComparisons = [guessedGenusSource, ...comparisonStudies].filter(Boolean);
-
-        const traits = selectDiverseHintTraits(
-            targetStudies,
-            genusComparisons,
-            4
-        );
-
-        const seenClueTexts = new Set();
-
-        traits.forEach(trait => {
-            if (clues.length >= 3) return;
-
-            // Try the genus article first, then cached congener articles. This
-            // prevents several categories from collapsing onto one repeated
-            // Wikipedia sentence.
-            const sources = [genusSource, ...genusMemberStudies, ...genusComparisons]
-                .filter(Boolean);
-
-            let sentence = "";
-            for (const source of sources) {
-                const candidate = getHintEvidenceSentence(
-                    source,
-                    trait,
-                    source === mysteryStudy ? gameState.mysteryBird : null,
-                    source === mysteryStudy
-                        ? "a member of this genus"
-                        : "this genus",
-                    seenClueTexts
-                );
-                if (candidate) {
-                    sentence = candidate;
-                    break;
-                }
-            }
-
-            if (!sentence) return;
-
-            const normalized = sentence
-                .toLowerCase()
-                .replace(/\s+/g, " ")
-                .trim();
-
-            if (seenClueTexts.has(normalized)) return;
-            seenClueTexts.add(normalized);
-
-            clues.push({
-                heading: "Genus clue · " + trait.label,
-                text: sanitizeHintIdentity(
-                    "The mystery genus differs from the guessed genus in that " +
-                    sentence.charAt(0).toLowerCase() + sentence.slice(1),
-                    [gameState.mysteryBird, guessedBird]
-                )
-            });
-        });
-
-        // A genus page is often a short or poorly structured Wikipedia
-        // article, so the token-based system can legitimately find no traits.
-        // Fall back to biological sentences from the genus summary instead of
-        // showing the generic "not enough detail" message.
-        if (!clues.length) {
-            const fallbackSource = genusStudy || mysteryStudy;
-            const fallbackTraits = getBiologicalSummaryTraits(fallbackSource, 3);
-
-            fallbackTraits.forEach(trait => {
-                if (clues.length >= 3) return;
-
-                const sentence = getSummaryHintEvidenceSentence(
-                    fallbackSource,
-                    trait,
-                    fallbackSource === mysteryStudy ? gameState.mysteryBird : null,
-                    fallbackSource === mysteryStudy
-                        ? "a member of this genus"
-                        : "this genus"
-                );
-
-                if (!sentence) return;
-
-                clues.push({
-                    heading: "Main trait · " + trait.label,
-                    text: "The mystery genus is distinguished by " +
-                        sentence.charAt(0).toLowerCase() + sentence.slice(1)
-                });
-            });
-        }
-
-        return clues.slice(0, 3);
-    }
-
-    if (relationship.rank === "Genus") {
-        const speciesComparisons = [guessedStudy, ...comparisonStudies].filter(Boolean);
-
-        const traits = getSpecificSpeciesTraits(
+    for (const trait of selected) {
+        const sentence = getHintEvidenceSentence(
             mysteryStudy,
-            speciesComparisons,
-            guessedStudy
+            trait,
+            gameState.mysteryBird
         );
+        if (!sentence) continue;
 
-        const selected = [];
-        const usedCategories = new Set();
+        const normalized = sentence.toLowerCase().replace(/\s+/g, " ").trim();
+        if (seenClueTexts.has(normalized)) continue;
+        seenClueTexts.add(normalized);
 
-        for (const trait of traits) {
-            if (selected.length >= 4) break;
-            if (usedCategories.has(trait.category)) continue;
-            usedCategories.add(trait.category);
-            selected.push(trait);
-        }
-
-        for (const trait of traits) {
-            if (selected.length >= 4) break;
-            if (selected.some(item =>
-                item.category === trait.category &&
-                item.token === trait.token
-            )) continue;
-            selected.push(trait);
-        }
-
-        const seenClueTexts = new Set();
-
-        selected.forEach(trait => {
-            const sentence = getHintEvidenceSentence(
-                mysteryStudy,
-                trait,
-                gameState.mysteryBird
-            );
-
-            if (!sentence) return;
-
-            const normalized = sentence
-                .toLowerCase()
-                .replace(/\s+/g, " ")
-                .trim();
-
-            if (seenClueTexts.has(normalized)) return;
-            seenClueTexts.add(normalized);
-
-            clues.push({
-                heading: "Species clue · " + trait.label,
-                text: sanitizeHintIdentity(
-                    "The mystery species differs from the guessed species in that " +
-                    sentence.charAt(0).toLowerCase() + sentence.slice(1),
-                    [gameState.mysteryBird, guessedBird]
-                )
-            });
+        clues.push({
+            heading: "Species clue · " + trait.label,
+            text: sanitizeHintIdentity(
+                "The mystery species differs from the guessed species in that " +
+                sentence.charAt(0).toLowerCase() +
+                sentence.slice(1),
+                [gameState.mysteryBird, guessedBird]
+            )
         });
-
-        return clues;
     }
 
-    return [];
+    return clues.slice(0, 4);
 }
 
 function getSpeciesHintElement() {
@@ -7192,24 +7172,17 @@ async function showSpeciesHint(guessedBird, anchor) {
 
     const hint = getSpeciesHintElement();
     const requestId = ++gameState.hintRequestId;
-
-    const mysteryKey =
-        gameState.mysteryBird.scientificName ||
-        gameState.mysteryBird.commonName;
-    const guessedKey =
-        guessedBird.scientificName ||
-        guessedBird.commonName;
+    const mystery = gameState.mysteryBird;
 
     const cacheKey =
         relationship.rank +
         "|" +
-        mysteryKey +
+        (mystery.scientificName || mystery.commonName) +
         "|" +
-        ((relationship.rank === "Genus" || relationship.rank === "Family")
-            ? guessedKey
-            : "shared");
+        (guessedBird.scientificName || guessedBird.commonName);
 
-    hint.innerHTML = '<div class="species-hover-hint-loading">Reading field-guide clues…</div>';
+    hint.innerHTML =
+        '<div class="species-hover-hint-loading">Reading field-guide clues…</div>';
     hint.classList.add("visible");
     positionSpeciesHint(anchor);
 
@@ -7217,200 +7190,125 @@ async function showSpeciesHint(guessedBird, anchor) {
 
     if (!hintData) {
         try {
-            const mysteryCached = getCachedHintStudy(gameState.mysteryBird);
-            const guessedCached = getCachedHintStudy(guessedBird);
+            if (relationship.rank === "Genus") {
+                // GENUS SYSTEM: fetch only the two genera. No species study
+                // is loaded and no mystery-species traits are compared.
+                const [mysteryGenusData, guessedGenusData] = await Promise.all([
+                    fetchWikipediaPageData(mystery.genus, true, "general"),
+                    fetchWikipediaPageData(guessedBird.genus, true, "general")
+                ]);
 
-            const mysteryDataPromise = mysteryCached
-                ? Promise.resolve(mysteryCached)
-                : fetchWikipediaPageData(
-                    gameState.mysteryBird.wikipediaTitle ||
-                        gameState.mysteryBird.commonName,
-                    true,
-                    "bird",
-                    gameState.mysteryBird.scientificName
-                ).then(getHintStudyFromWikiData);
+                if (requestId !== gameState.hintRequestId) return;
 
-            let genusStudy = null;
-            let guessedStudy = guessedCached;
-            let siblingGenusStudies = [];
+                const mysteryGenusStudy =
+                    getHintStudyFromWikiData(mysteryGenusData);
+                const guessedGenusStudy =
+                    getHintStudyFromWikiData(guessedGenusData);
 
-            if (relationship.rank === "Family") {
-                const genusTitle = gameState.mysteryBird.genus;
-                if (genusTitle) {
-                    const genusData = await fetchWikipediaPageData(
-                        genusTitle,
-                        true,
-                        "general"
-                    );
-                    genusStudy = getHintStudyFromWikiData(genusData);
-                }
-
-                const siblingGenera = [...new Set(
-                    gameState.birds
-                        .filter(bird =>
-                            bird.family === gameState.mysteryBird.family &&
-                            bird.genus &&
-                            bird.genus !== gameState.mysteryBird.genus
-                        )
-                        .map(bird => bird.genus)
-                )].slice(0, 4);
-
-                const siblingRepresentativeBirds = siblingGenera
-                    .map(genus => gameState.birds.find(bird => bird.genus === genus))
-                    .filter(Boolean);
-
-                siblingGenusStudies = siblingRepresentativeBirds
-                    .map(bird => getCachedHintStudy(bird))
-                    .filter(Boolean);
-
-                if (siblingGenusStudies.length < 2) {
-                    const missing = siblingRepresentativeBirds.filter(
-                        bird => !getCachedHintStudy(bird)
-                    );
-                    const fetched = await Promise.all(
-                        missing.slice(0, 2).map(bird =>
-                            fetchWikipediaPageData(
-                                bird.wikipediaTitle || bird.commonName,
-                                false,
-                                "bird",
-                                bird.scientificName
-                            ).then(data => getHintStudyFromSummary(data?.summary))
-                        )
-                    );
-                    siblingGenusStudies.push(...fetched.filter(Boolean));
-                }
-            } else if (relationship.rank === "Genus" && !guessedStudy) {
-                guessedStudy = getHintStudyFromWikiData(
-                    await fetchWikipediaPageData(
-                        guessedBird.wikipediaTitle || guessedBird.commonName,
-                        true,
-                        "bird",
-                        guessedBird.scientificName
-                    )
+                hintData = buildGenusHint(
+                    mysteryGenusStudy,
+                    guessedGenusStudy
                 );
-            }
 
-            const mysteryStudy = await mysteryDataPromise;
+                if (!hintData.length) {
+                    const fallbackTraits = getBiologicalSummaryTraits(
+                        mysteryGenusStudy,
+                        3
+                    );
 
-            if (requestId !== gameState.hintRequestId) return;
+                    hintData = fallbackTraits.map(trait => {
+                        const sentence = getSummaryHintEvidenceSentence(
+                            mysteryGenusStudy,
+                            trait,
+                            null,
+                            "the mystery genus"
+                        );
+                        if (!sentence) return null;
 
-            let genusMemberStudies = [];
-            let comparisonStudies = [];
+                        return {
+                            heading: "Genus clue · " + trait.label,
+                            text:
+                                "The mystery genus is distinguished by " +
+                                sentence.charAt(0).toLowerCase() +
+                                sentence.slice(1)
+                        };
+                    }).filter(Boolean);
+                }
+            } else {
+                // SPECIES SYSTEM: only individual species data is used here.
+                const mysteryCached = getCachedHintStudy(mystery);
+                const guessedCached = getCachedHintStudy(guessedBird);
 
-            if (relationship.rank === "Family") {
-                const genusMembers = gameState.birds
-                    .filter(bird =>
-                        bird.genus === gameState.mysteryBird.genus &&
-                        bird.scientificName !== gameState.mysteryBird.scientificName
-                    )
-                    .slice(0, 3);
+                const [mysteryStudy, guessedStudy] = await Promise.all([
+                    mysteryCached
+                        ? Promise.resolve(mysteryCached)
+                        : fetchWikipediaPageData(
+                            mystery.wikipediaTitle || mystery.commonName,
+                            true,
+                            "bird",
+                            mystery.scientificName
+                        ).then(getHintStudyFromWikiData),
+                    guessedCached
+                        ? Promise.resolve(guessedCached)
+                        : fetchWikipediaPageData(
+                            guessedBird.wikipediaTitle || guessedBird.commonName,
+                            true,
+                            "bird",
+                            guessedBird.scientificName
+                        ).then(getHintStudyFromWikiData)
+                ]);
 
-                genusMemberStudies = genusMembers
-                    .map(bird => getCachedHintStudy(bird))
-                    .filter(Boolean);
+                if (requestId !== gameState.hintRequestId) return;
 
-                comparisonStudies = siblingGenusStudies;
-            } else if (relationship.rank === "Genus") {
                 const congeners = gameState.birds
                     .filter(bird =>
-                        bird.genus === gameState.mysteryBird.genus &&
-                        bird.scientificName !== gameState.mysteryBird.scientificName &&
+                        bird.genus === mystery.genus &&
+                        bird.scientificName !== mystery.scientificName &&
                         bird.scientificName !== guessedBird.scientificName
                     )
                     .slice(0, 3);
 
-                comparisonStudies = congeners
+                const comparisonStudies = congeners
                     .map(bird => getCachedHintStudy(bird))
                     .filter(Boolean);
 
-                if (comparisonStudies.length < 2) {
-                    const missing = congeners.filter(bird => !getCachedHintStudy(bird));
-                    const fetched = await Promise.all(
-                        missing.slice(0, 2).map(bird =>
-                            fetchWikipediaPageData(
-                                bird.wikipediaTitle || bird.commonName,
-                                false,
-                                "bird",
-                                bird.scientificName
-                            ).then(data => getHintStudyFromSummary(data?.summary))
-                        )
-                    );
-                    comparisonStudies.push(...fetched.filter(Boolean));
-                }
-            }
-
-            if (requestId !== gameState.hintRequestId) return;
-
-            hintData = buildSpeciesHint(
-                guessedBird,
-                guessedStudy,
-                mysteryStudy,
-                genusStudy,
-                genusMemberStudies,
-                comparisonStudies
-            ).map(item => ({
-                ...item,
-                text: sanitizeHintIdentity(
-                    item.text,
-                    [gameState.mysteryBird, guessedBird]
-                )
-            })).filter(item => item.text);
-
-            if (!hintData.length) {
-                const fallbackTraits = selectDiverseHintTraits(
-                    [mysteryStudy].filter(Boolean),
-                    [],
-                    relationship.rank === "Family" ? 3 : 4
+                hintData = buildSpeciesHint(
+                    guessedBird,
+                    guessedStudy,
+                    mysteryStudy,
+                    comparisonStudies
                 );
 
-                hintData = fallbackTraits
-                    .map(trait => ({
-                        heading:
-                            "Main trait · " + trait.label,
-                        text:
-                            getHintEvidenceSentence(
-                                mysteryStudy,
-                                trait,
-                                gameState.mysteryBird
-                            )
-                    }))
-                    .filter(item => item.text);
-
                 if (!hintData.length) {
-                    hintData = getBirdHintFallbackTraits(
-                        gameState.mysteryBird,
-                        relationship.rank === "Family" ? 3 : 4
-                    ).map(item => ({
-                        heading: "Main trait · " + item.label,
-                        text: item.text
-                    }));
-                }
+                    const fallbackTraits = getBiologicalSummaryTraits(
+                        mysteryStudy,
+                        4
+                    );
 
-                if (!hintData.length) {
-                    hintData = [{
-                        heading: "Main trait",
-                        text: "The mystery bird has biological characteristics that distinguish it from other birds in this part of the taxonomy."
-                    }];
+                    hintData = fallbackTraits.map(trait => {
+                        const sentence = getSummaryHintEvidenceSentence(
+                            mysteryStudy,
+                            trait,
+                            mystery,
+                            "the mystery species"
+                        );
+                        if (!sentence) return null;
+
+                        return {
+                            heading: "Species clue · " + trait.label,
+                            text:
+                                "The mystery species is distinguished by " +
+                                sentence.charAt(0).toLowerCase() +
+                                sentence.slice(1)
+                        };
+                    }).filter(Boolean);
                 }
             }
 
-            gameState.hintCache.set(cacheKey, hintData);
+            gameState.hintCache.set(cacheKey, hintData || []);
         } catch (error) {
-            console.warn("Species hint generation failed:", error);
-            hintData = getBirdHintFallbackTraits(
-                gameState.mysteryBird,
-                relationship.rank === "Family" ? 3 : 4
-            ).map(item => ({
-                heading: "Main trait · " + item.label,
-                text: item.text
-            }));
-
-            if (!hintData.length) {
-                hintData = [{
-                    heading: "Main trait",
-                    text: "The mystery bird has biological characteristics that distinguish it from other birds in this part of the taxonomy."
-                }];
-            }
+            console.warn("Hint generation failed:", error);
+            hintData = [];
         }
     }
 
@@ -7421,12 +7319,14 @@ async function showSpeciesHint(guessedBird, anchor) {
     const title = document.createElement("div");
     title.className = "species-hover-hint-title";
     title.textContent =
-        relationship.rank === "Family"
+        relationship.rank === "Genus"
             ? "About the mystery genus"
             : "Compare this species with the mystery";
     hint.appendChild(title);
 
     hintData.forEach(section => {
+        if (!section?.text) return;
+
         const block = document.createElement("div");
         block.className = "species-hover-hint-section";
 
