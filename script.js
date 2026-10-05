@@ -10,9 +10,10 @@
 // The shorter physical screen dimension is a useful phone-only fallback:
 // current iPhones/Android phones are <= 700 CSS px on their short edge,
 // while iPads are wider than that.
-const phoneLayoutQuery = window.matchMedia(
-    "(max-width: 700px), (pointer: coarse) and (max-height: 500px)"
-);
+// Keep phone detection stable while scrolling. Mobile Safari changes
+// visualViewport height as its browser bars appear/disappear, so viewport-height
+// based detection can incorrectly switch an iPad into the phone layout mid-scroll.
+const phoneLayoutQuery = window.matchMedia("(max-width: 700px)");
 
 function isPhoneScreen() {
     const screenWidth = Number(window.screen?.width) || 0;
@@ -26,12 +27,6 @@ function isPhoneScreen() {
     const screenAspectRatio = shortestScreenEdge && longestScreenEdge
         ? shortestScreenEdge / longestScreenEdge
         : 1;
-
-    const visualViewportWidth = Number(window.visualViewport?.width) || 0;
-    const visualViewportHeight = Number(window.visualViewport?.height) || 0;
-    const shortestVisualEdge = visualViewportWidth && visualViewportHeight
-        ? Math.min(visualViewportWidth, visualViewportHeight)
-        : 0;
 
     const maxTouchPoints = Number(navigator.maxTouchPoints) || 0;
     const userAgent = String(navigator.userAgent || "");
@@ -59,7 +54,6 @@ function isPhoneScreen() {
     return phoneLayoutQuery.matches
         || mobileUserAgent
         || iphonePlatform
-        || shortestVisualEdge > 0 && shortestVisualEdge <= 700
         || shortestScreenEdge > 0 && shortestScreenEdge <= 700
         || touchPhoneShape;
 }
@@ -72,7 +66,6 @@ updatePhoneLayoutClass();
 phoneLayoutQuery.addEventListener("change", updatePhoneLayoutClass);
 window.addEventListener("resize", updatePhoneLayoutClass);
 window.addEventListener("orientationchange", updatePhoneLayoutClass);
-window.visualViewport?.addEventListener("resize", updatePhoneLayoutClass);
 
 const gameState = {
     mode: null,
