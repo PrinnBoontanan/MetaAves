@@ -2520,10 +2520,26 @@ async function searchWikipediaTaxonByName(taxonName) {
             .map(item => item.title)
             .filter(Boolean);
 
-        // Prefer an exact page title before looser search matches.
-        return results.sort((a, b) => {
-            const aExact = a.toLowerCase() === name.toLowerCase() ? 0 : 1;
-            const bExact = b.toLowerCase() === name.toLowerCase() ? 0 : 1;
+        // Never accept an unrelated fuzzy match for a taxonomic name.
+        // This is especially important for names such as Piciformes:
+        // Wikipedia search can otherwise return "Pici" (the pasta).
+        const normalizedName = name.toLowerCase();
+        const strictResults = results.filter(title => {
+            const normalizedTitle = String(title).trim().toLowerCase();
+            return (
+                normalizedTitle === normalizedName ||
+                normalizedTitle.startsWith(normalizedName + " (") ||
+                normalizedTitle.endsWith(" (" + normalizedName + ")") ||
+                normalizedTitle.replace(/\\s*\\([^)]*\\)$/, "") === normalizedName
+            );
+        });
+
+        // If Wikipedia has no page whose title actually represents the
+        // requested taxon, return nothing rather than displaying an
+        // unrelated search result.
+        return strictResults.sort((a, b) => {
+            const aExact = a.toLowerCase() === normalizedName ? 0 : 1;
+            const bExact = b.toLowerCase() === normalizedName ? 0 : 1;
             return aExact - bExact;
         });
     } catch (error) {
