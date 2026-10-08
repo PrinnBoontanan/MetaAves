@@ -6571,6 +6571,44 @@ function hintContainsBirdIdentity(text, birds = []) {
         .some(identity => lower.includes(identity));
 }
 
+
+function getHintKnownTaxonomyValues(birds = []) {
+    const values = new Set();
+    birds.filter(Boolean).forEach(bird => {
+        [
+            bird.class, bird.order, bird.family, bird.genus,
+            ...(Array.isArray(bird.cladePath) ? bird.cladePath : [])
+        ].filter(Boolean).forEach(value =>
+            values.add(String(value).trim().toLowerCase())
+        );
+    });
+    return [...values].filter(value => value.length >= 3);
+}
+
+function isUsableHintSentence(sentence, birds = []) {
+    const text = normalizeWikipediaText(sentence || "");
+    if (!text) return false;
+
+    // Taxonomy is already visible in the tree. Never repeat it as a clue.
+    const forbiddenTaxonomy = [
+        /\b(?:family|genus|genera|order|suborder|infraorder|parvorder|superfamily|subfamily|class|subclass|infraclass|clade|taxon|taxa|taxonomy|taxonomic|classification|classified)\b/i,
+        /\b(?:species|subspecies)\s+of\s+(?:bird|birds)\b/i,
+        /\b(?:belongs?|belonging|member)\s+(?:to|of)\b/i,
+        /\b(?:closely|distantly)\s+related\s+to\b/i,
+        /\b(?:placed|included|assigned|classified)\s+(?:in|within|under)\b/i
+    ];
+    if (forbiddenTaxonomy.some(pattern => pattern.test(text))) return false;
+
+    const lower = text.toLowerCase();
+    const knownTaxonomy = getHintKnownTaxonomyValues(birds);
+    if (knownTaxonomy.some(value => {
+        const escaped = value.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+        return new RegExp("\\b" + escaped + "\\b", "i").test(lower);
+    })) return false;
+
+    return !hintContainsBirdIdentity(text, birds);
+}
+
 function getHintEvidenceSentence(
     study,
     trait,
@@ -7126,14 +7164,12 @@ function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null
         .map(normalizeWikipediaText)
         .filter(Boolean)
         .filter(sentence => !rejected.some(pattern => pattern.test(sentence)))
-        .filter(sentence => !hintContainsBirdIdentity(
-            sentence,
-            [
+        .filter(sentence =>
+            isUsableHintSentence(sentence, [
                 gameState.mysteryBird,
-                guessedBird,
-                ...gameState.birds.filter(bird => bird.genus === gameState.mysteryBird?.genus)
-            ]
-        ));
+                guessedBird
+            ])
+        );
 
     const candidates = [];
     mysterySentences.forEach(sentence => {
@@ -7167,12 +7203,22 @@ function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null
         usedSentences.add(normalized);
         usedCategories.add(candidate.category);
 
+        const cleaned = replaceHintIdentity(
+            candidate.sentence,
+            gameState.mysteryBird,
+            "this bird"
+        );
+        if (!isUsableHintSentence(cleaned, [
+            gameState.mysteryBird,
+            guessedBird
+        ])) continue;
+
         clues.push({
             heading: "Genus clue · " + candidate.category,
             text:
                 "The mystery genus differs from the guessed genus in that " +
-                candidate.sentence.charAt(0).toLowerCase() +
-                candidate.sentence.slice(1)
+                cleaned.charAt(0).toLowerCase() +
+                cleaned.slice(1)
         });
     }
 
@@ -7184,12 +7230,22 @@ function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null
         if (usedSentences.has(normalized)) continue;
 
         usedSentences.add(normalized);
+        const cleaned = replaceHintIdentity(
+            candidate.sentence,
+            gameState.mysteryBird,
+            "this bird"
+        );
+        if (!isUsableHintSentence(cleaned, [
+            gameState.mysteryBird,
+            guessedBird
+        ])) continue;
+
         clues.push({
             heading: "Genus clue · " + candidate.category,
             text:
                 "The mystery genus differs from the guessed genus in that " +
-                candidate.sentence.charAt(0).toLowerCase() +
-                candidate.sentence.slice(1)
+                cleaned.charAt(0).toLowerCase() +
+                cleaned.slice(1)
         });
     }
 
@@ -7245,14 +7301,24 @@ function buildSpeciesHint(
         if (seenClueTexts.has(normalized)) continue;
         seenClueTexts.add(normalized);
 
+        const cleaned = replaceHintIdentity(
+            sentence,
+            gameState.mysteryBird,
+            "this bird"
+        );
+        const clueText =
+            "The mystery species differs from the guessed species in that " +
+            cleaned.charAt(0).toLowerCase() +
+            cleaned.slice(1);
+
+        if (!isUsableHintSentence(clueText, [
+            gameState.mysteryBird,
+            guessedBird
+        ])) continue;
+
         clues.push({
             heading: "Species clue · " + trait.label,
-            text: sanitizeHintIdentity(
-                "The mystery species differs from the guessed species in that " +
-                sentence.charAt(0).toLowerCase() +
-                sentence.slice(1),
-                [gameState.mysteryBird, guessedBird]
-            )
+            text: clueText
         });
     }
 
@@ -7303,7 +7369,10 @@ async function showSpeciesHint(guessedBird, anchor) {
     const requestId = ++gameState.hintRequestId;
     const mystery = gameState.mysteryBird;
 
+    const hintVersion = "strict-no-known-taxonomy-v2";
     const cacheKey =
+        hintVersion +
+        "|" +
         relationship.rank +
         "|" +
         (mystery.scientificName || mystery.commonName) +
@@ -7353,7 +7422,7 @@ async function showSpeciesHint(guessedBird, anchor) {
                             null,
                             "the mystery genus"
                         );
-                        if (!sentence || hintContainsBirdIdentity(
+                        if (!sentence || !isUsableHintSentence(
                             sentence,
                             [gameState.mysteryBird, guessedBird]
                         )) return null;
@@ -7425,7 +7494,7 @@ async function showSpeciesHint(guessedBird, anchor) {
                             mystery,
                             "the mystery species"
                         );
-                        if (!sentence || hintContainsBirdIdentity(
+                        if (!sentence || !isUsableHintSentence(
                             sentence,
                             [mystery, guessedBird]
                         )) return null;
