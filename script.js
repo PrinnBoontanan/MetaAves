@@ -145,7 +145,7 @@ async function loadGameData() {
             fetch("data/taxonomy.generated.json?v=20260927-taxonomy"),
             fetch("data/taxonomy_overrides.json?v=20260930-taxonomy-audit-v2"),
             fetch("data/taxon_info.json?v=20260927-taxonomy"),
-            fetch("data/clades.json?v=20261008-no-pici-clade-v5"),
+            fetch("data/clades.json?v=20261008-pici-taxonomy-wiki-v6"),
             fetch("data/clade_membership.generated.json?v=20260930-taxonomy-audit-v2"),
             fetch("data/thai_names.json?v=thai-names-20260930b")
         ]);
