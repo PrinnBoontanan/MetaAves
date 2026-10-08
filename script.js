@@ -83,6 +83,7 @@ const gameState = {
     gameStatus: "playing",
     taxonomyView: "tree",
     wikipediaCache: new Map(),
+    studyPreloadCache: new Map(),
     thaiNameCache: new Map(),
     taxonCardRequestId: 0,
     hintCache: new Map(),
@@ -493,6 +494,12 @@ function startNewRoundForMode(mode) {
     gameState.selectedTaxonId = null;
     gameState.gameStatus = "playing";
     gameState.mysteryBird = pool[Math.floor(Math.random() * pool.length)];
+
+    // Preload the study card immediately while the player is playing.
+    // Only the single mystery bird is fetched, so this does not create a
+    // large batch of Wikipedia/Wikidata requests.
+    gameState.studyPreloadCache.clear();
+    preloadStudyCardData(gameState.mysteryBird);
 
     gameState.hintCache.clear();
     gameState.hintRequestId++;
@@ -7565,6 +7572,53 @@ function getBirdTaxonomyText(bird) {
     ].filter(Boolean).join(" → ");
 }
 
+function getStudyPreloadKey(bird) {
+    return bird?.scientificName || bird?.wikipediaTitle || bird?.commonName || "";
+}
+
+function preloadStudyCardData(bird) {
+    if (!bird) return Promise.resolve(null);
+
+    const key = getStudyPreloadKey(bird);
+    if (!key) return Promise.resolve(null);
+
+    const existing = gameState.studyPreloadCache.get(key);
+    if (existing) return existing;
+
+    const wikiTitle = bird.wikipediaTitle || bird.commonName;
+    const preload = Promise.allSettled([
+        fetchWikipediaPageData(
+            wikiTitle,
+            true,
+            "bird",
+            bird.scientificName
+        ),
+        gameState.mode === "thailand"
+            ? fetchOnlineThaiName(bird)
+            : Promise.resolve(""),
+        fetchWikidataConservationStatus(bird),
+        fetchWikidataDetailedTaxonomy(bird)
+    ]).then(results => ({
+        wiki: results[0]?.status === "fulfilled" ? results[0].value : null,
+        thaiName: results[1]?.status === "fulfilled" ? results[1].value : "",
+        onlineConservationStatus:
+            results[2]?.status === "fulfilled" ? results[2].value : "",
+        wikidataDetailed:
+            results[3]?.status === "fulfilled" ? results[3].value : {}
+    })).catch(error => {
+        console.warn("Study card preload failed:", error);
+        return {
+            wiki: null,
+            thaiName: "",
+            onlineConservationStatus: "",
+            wikidataDetailed: {}
+        };
+    });
+
+    gameState.studyPreloadCache.set(key, preload);
+    return preload;
+}
+
 async function showGameOverCard(result) {
     const overlay = document.getElementById("game-over-overlay");
     const newGameButton = document.getElementById("new-game-button");
@@ -7683,38 +7737,19 @@ async function showGameOverCard(result) {
     overlay.classList.add("visible");
     if (newGameButton) newGameButton.classList.add("visible");
 
-    const wikiTitle = bird.wikipediaTitle || bird.commonName;
-    // Fast first paint: the summary endpoint provides the title, intro and
-    // thumbnail without waiting for the full article HTML/wikitext. Wikimedia
-    // documents the summary endpoint specifically for displaying basic page
-    // information before deeper content is needed.
     const isE2E = new URLSearchParams(window.location.search).get("e2e") === "1";
 
-    const fastResults = isE2E
-        ? [
-            { status: "fulfilled", value: null },
-            { status: "fulfilled", value: "" }
-        ]
-        : await Promise.allSettled([
-            fetchWikipediaPageData(
-                wikiTitle,
-                false,
-                "bird",
-                bird.scientificName
-            ),
-            gameState.mode === "thailand"
-                ? fetchOnlineThaiName(bird)
-                : Promise.resolve("")
-        ]);
+    const preloaded = isE2E
+        ? {
+            wiki: null,
+            thaiName: "",
+            onlineConservationStatus: "",
+            wikidataDetailed: {}
+        }
+        : await preloadStudyCardData(bird);
 
-    const fastWiki =
-        fastResults[0]?.status === "fulfilled"
-            ? fastResults[0].value
-            : null;
-    const fastThaiName =
-        fastResults[1]?.status === "fulfilled"
-            ? fastResults[1].value
-            : "";
+    const fastWiki = preloaded?.wiki || null;
+    const fastThaiName = preloaded?.thaiName || "";
 
     if (gameState.mysteryBird !== bird) return;
 
@@ -7750,36 +7785,14 @@ async function showGameOverCard(result) {
         details.before(image);
     }
 
-    // Now load the expensive article/taxonomy providers in the background.
-    // The user can read the card while these sections are being enriched.
+    // Everything needed by the card was preloaded during gameplay.
+    // Reuse the same cached results instead of starting another round of
+    // Wikipedia/Wikidata requests when the card opens.
     let wiki = fastWiki;
-    let onlineConservationStatus = "";
-    let wikidataDetailed = {};
-
-    if (!isE2E) {
-        const detailedResults = await Promise.allSettled([
-            fetchWikipediaPageData(
-                wikiTitle,
-                true,
-                "bird",
-                bird.scientificName
-            ),
-            fetchWikidataConservationStatus(bird),
-            fetchWikidataDetailedTaxonomy(bird)
-        ]);
-
-        if (detailedResults[0]?.status === "fulfilled" && detailedResults[0].value) {
-            wiki = detailedResults[0].value;
-        }
-        onlineConservationStatus =
-            detailedResults[1]?.status === "fulfilled"
-                ? detailedResults[1].value
-                : "";
-        wikidataDetailed =
-            detailedResults[2]?.status === "fulfilled"
-                ? detailedResults[2].value
-                : {};
-    }
+    const onlineConservationStatus =
+        preloaded?.onlineConservationStatus || "";
+    const wikidataDetailed =
+        preloaded?.wikidataDetailed || {};
 
     if (gameState.mysteryBird !== bird) return;
 
