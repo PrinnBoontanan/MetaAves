@@ -1269,25 +1269,25 @@
       ],
       "Lybiidae": [
         
-      ],
+      "Pici"],
       "Megalaimidae": [
         
-      ],
+      "Pici"],
       "Ramphastidae": [
         
-      ],
+      "Pici"],
       "Semnornithidae": [
         
-      ],
+      "Pici"],
       "Capitonidae": [
         
-      ],
+      "Pici"],
       "Indicatoridae": [
         
-      ],
+      "Pici"],
       "Picidae": [
         
-      ],
+      "Pici"],
       "Strigopidae": [
         "Strigopoidea"
       ],
@@ -2183,7 +2183,17 @@
     "status": "intermediate_rank",
     "description": "Piciform suborder containing jacamars and puffbirds."
   },
-    "clade:Strigopoidea": {
+    "clade:Pici": {
+    "id": "clade:Pici",
+    "name": "Pici",
+    "rank": "suborder",
+    "parent": "order:Piciformes",
+    "children": [],
+    "status": "intermediate_rank",
+    "wikipediaTitle": "Pici (taxon)",
+    "description": "Piciform suborder containing barbets, toucans, honeyguides and woodpeckers."
+  },
+  "clade:Strigopoidea": {
     "id": "clade:Strigopoidea",
     "name": "Strigopoidea",
     "rank": "superfamily",
