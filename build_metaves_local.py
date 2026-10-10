@@ -62,7 +62,8 @@ def validate():
 
 def main():
     print("MetaAves LOCAL taxonomy builder v3 — classic taxonomy + separate clades")
-    print("Runs on this PC only. Nothing is pushed to GitHub.")\n    print("Taxonomy: Class → Order → Family → Genus → Species. No suborder/infraorder/etc.");
+    print("Runs on this PC only. Nothing is pushed to GitHub.")
+    print("Taxonomy: Class → Order → Family → Genus → Species. No suborder/infraorder/etc.")
 
     for p in [SCRIPTS/"import_avilist.py", DATA]:
         if not p.exists():
