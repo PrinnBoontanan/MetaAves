@@ -7136,18 +7136,18 @@ function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null
     if (!mysterySource) return [];
 
     const rejected = [
-        /\\b(?:myth|mythology|legend|legendary|folklore|folktale|roman|greek|egyptian|god|goddess|deity)\\b/i,
-        /\\b(?:etymology|derived from|named after|name refers|name means|called after|honou?r(?:s|ed)?|commemorat(?:es|ing)|in reference to)\\b/i,
-        /\\b(?:taxonomy|classification|classified|related to|member of|belongs to|family of|order of)\\b/i,
-        /\\b(?:first described|described by|discovered by|authority)\\b/i
+        /\b(?:myth|mythology|legend|legendary|folklore|folktale|roman|greek|egyptian|god|goddess|deity)\b/i,
+        /\b(?:etymology|derived from|named after|name refers|name means|called after|honou?r(?:s|ed)?|commemorat(?:es|ing)|in reference to)\b/i,
+        /\b(?:taxonomy|classification|classified|related to|member of|belongs to|family of|order of)\b/i,
+        /\b(?:first described|described by|discovered by|authority)\b/i
     ];
 
     const categorySignals = {
-        Appearance: /\\b(?:plumage|feathers?|wing|wings|tail|bill|beak|crest|crown|throat|breast|belly|underparts|upperparts|eyering|eyebrow|stripe|spot|bar|streak|patch|legs?|feet|eyes?|black|white|brown|rufous|grey|gray|blue|green|red|yellow|orange|pale|dark|long|short|thick|thin|slender|stocky|large|small|rounded|forked|hooked)\\b/i,
-        Behavior: /\\b(?:forages?|feeds?|hunts?|perches?|climbs?|flies?|glides?|soars?|dives?|swims?|walks?|runs?|roosts?|nocturnal|diurnal|territorial|solitary|gregarious|flock|display|calls?|song)\\b/i,
-        Diet: /\\b(?:diet|feeds? on|eats?|preys? on|food|feeding|insects?|fruit|seeds?|nectar|fish|reptiles?|amphibians?|crustaceans?|mollus[ck]s?|carrion)\\b/i,
-        Habitat: /\\b(?:habitat|distribution|range|inhabits?|lives? in|found in|found on|occurs? in|forest|woodland|rainforest|grassland|wetland|marsh|mangrove|savanna|shrubland|canopy|understory|river|stream|mountain|montane|coast|coastal|island|lowland|highland|elevation|altitude)\\b/i,
-        Breeding: /\\b(?:nests?|nesting|breeds?|breeding|cavity|hollow|nest hole|clutch|eggs?|incubat|fledg|reproduct)\\b/i
+        Appearance: /\b(?:plumage|feathers?|wing|wings|tail|bill|beak|crest|crown|throat|breast|belly|underparts|upperparts|eyering|eyebrow|stripe|spot|bar|streak|patch|legs?|feet|eyes?|black|white|brown|rufous|grey|gray|blue|green|red|yellow|orange|pale|dark|long|short|thick|thin|slender|stocky|large|small|rounded|forked|hooked)\b/i,
+        Behavior: /\b(?:forages?|feeds?|hunts?|perches?|climbs?|flies?|glides?|soars?|dives?|swims?|walks?|runs?|roosts?|nocturnal|diurnal|territorial|solitary|gregarious|flock|display|calls?|song)\b/i,
+        Diet: /\b(?:diet|feeds? on|eats?|preys? on|food|feeding|insects?|fruit|seeds?|nectar|fish|reptiles?|amphibians?|crustaceans?|mollus[ck]s?|carrion)\b/i,
+        Habitat: /\b(?:habitat|distribution|range|inhabits?|lives? in|found in|found on|occurs? in|forest|woodland|rainforest|grassland|wetland|marsh|mangrove|savanna|shrubland|canopy|understory|river|stream|mountain|montane|coast|coastal|island|lowland|highland|elevation|altitude)\b/i,
+        Breeding: /\b(?:nests?|nesting|breeds?|breeding|cavity|hollow|nest hole|clutch|eggs?|incubat|fledg|reproduct)\b/i
     };
 
     const guessedSentences = splitWikipediaSentences(guessedSource)
@@ -7203,7 +7203,7 @@ function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null
 
     for (const candidate of candidates) {
         if (clues.length >= 3) break;
-        const normalized = candidate.sentence.toLowerCase().replace(/\\s+/g, " ").trim();
+        const normalized = candidate.sentence.toLowerCase().replace(/\s+/g, " ").trim();
         if (usedSentences.has(normalized)) continue;
         if (usedCategories.has(candidate.category) && usedCategories.size < 3) continue;
 
@@ -7233,7 +7233,7 @@ function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null
     // fill the remaining slots with the strongest unused genus-only facts.
     for (const candidate of candidates) {
         if (clues.length >= 3) break;
-        const normalized = candidate.sentence.toLowerCase().replace(/\\s+/g, " ").trim();
+        const normalized = candidate.sentence.toLowerCase().replace(/\s+/g, " ").trim();
         if (usedSentences.has(normalized)) continue;
 
         usedSentences.add(normalized);
