@@ -75,6 +75,7 @@ const gameState = {
     allBirds: [],
     thailandBirdKeys: null,
     mysteryBird: null,
+    previousMysteryBirdKey: null,
     guesses: [],
     taxonomy: null,
     taxonInfo: null,
@@ -493,7 +494,20 @@ function startNewRoundForMode(mode) {
     gameState.guesses = [];
     gameState.selectedTaxonId = null;
     gameState.gameStatus = "playing";
-    gameState.mysteryBird = pool[Math.floor(Math.random() * pool.length)];
+
+    // Avoid repeating the immediately previous mystery bird. Keep the full
+    // active pool available; only exclude the previous identity for this draw.
+    const previousMysteryKey = gameState.previousMysteryBirdKey;
+    const eligiblePool = pool.length > 1
+        ? pool.filter(bird =>
+            (bird.scientificName || bird.commonName) !== previousMysteryKey
+        )
+        : pool;
+    const mysteryPool = eligiblePool.length ? eligiblePool : pool;
+    gameState.mysteryBird =
+        mysteryPool[Math.floor(Math.random() * mysteryPool.length)];
+    gameState.previousMysteryBirdKey =
+        gameState.mysteryBird.scientificName || gameState.mysteryBird.commonName;
 
     // Preload the study card immediately while the player is playing.
     // Only the single mystery bird is fetched, so this does not create a
@@ -6284,9 +6298,9 @@ function getHintRelationship(guessedBird) {
     const mystery = gameState.mysteryBird;
     if (!guessedBird || !mystery || guessedBird === mystery) return null;
 
-    // Two independent hint systems:
-    // Species clue = same genus, different species.
-    // Genus clue = same family, different genus.
+    // Species clues compare the individual birds. Genus clues compare their
+    // genera only when the birds belong to the same family. For that case,
+    // show both systems independently rather than letting genus replace species.
     if (
         guessedBird.genus &&
         mystery.genus &&
@@ -6302,7 +6316,7 @@ function getHintRelationship(guessedBird) {
         guessedBird.family === mystery.family &&
         guessedBird.genus !== mystery.genus
     ) {
-        return { rank: "Genus", value: guessedBird.family };
+        return { rank: "Both", value: guessedBird.family };
     }
 
     return null;
@@ -7395,7 +7409,9 @@ async function showSpeciesHint(guessedBird, anchor) {
 
     if (!hintData) {
         try {
-            if (relationship.rank === "Genus") {
+            let genusHintData = [];
+
+            if (relationship.rank === "Genus" || relationship.rank === "Both") {
                 // GENUS SYSTEM: fetch only the two genera. No species study
                 // is loaded and no mystery-species traits are compared.
                 const [mysteryGenusData, guessedGenusData] = await Promise.all([
@@ -7443,7 +7459,10 @@ async function showSpeciesHint(guessedBird, anchor) {
                         };
                     }).filter(Boolean);
                 }
-            } else {
+                genusHintData = hintData || [];
+            }
+
+            if (relationship.rank === "Species" || relationship.rank === "Both") {
                 // SPECIES SYSTEM: only individual species data is used here.
                 const mysteryCached = getCachedHintStudy(mystery);
                 const guessedCached = getCachedHintStudy(guessedBird);
@@ -7517,6 +7536,12 @@ async function showSpeciesHint(guessedBird, anchor) {
                 }
             }
 
+            if (relationship.rank === "Both") {
+                // Preserve both independent clue sets instead of letting the
+                // species result overwrite the genus result.
+                hintData = [...genusHintData, ...(hintData || [])];
+            }
+
             gameState.hintCache.set(cacheKey, hintData || []);
         } catch (error) {
             console.warn("Hint generation failed:", error);
@@ -7533,7 +7558,9 @@ async function showSpeciesHint(guessedBird, anchor) {
     title.textContent =
         relationship.rank === "Genus"
             ? "About the mystery genus"
-            : "Compare this species with the mystery";
+            : relationship.rank === "Both"
+                ? "Compare this species and genus with the mystery"
+                : "Compare this species with the mystery";
     hint.appendChild(title);
 
     hintData.forEach(section => {
