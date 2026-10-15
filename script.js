@@ -6917,31 +6917,41 @@ function getSpecificSpeciesTraits(mysteryStudy, comparisonStudies, guessedStudy)
         });
     });
 
-    return getHintStudyTraits(mysteryStudy)
+    const mysteryTraits = getHintStudyTraits(mysteryStudy);
+    const distinctive = mysteryTraits
         .filter(item => {
             const key = item.category + "|" + item.token;
             const seenElsewhere = comparisons.length
                 ? (comparisonCounts.get(key) || 0) / comparisons.length
                 : 0;
-
-            if (guessedTraits.has(key)) return false;
-            if (seenElsewhere > 0.45) return false;
-            return true;
+            return !guessedTraits.has(key) && seenElsewhere <= 0.45;
         })
         .map(item => {
             const key = item.category + "|" + item.token;
             const seenElsewhere = comparisons.length
                 ? (comparisonCounts.get(key) || 0) / comparisons.length
                 : 0;
-
             return {
                 ...item,
+                shared: false,
                 score:
                     getHintTraitPriority(item.label) * 0.12 +
                     (1 - seenElsewhere) * 1.2 +
                     (seenElsewhere === 0 ? 0.4 : 0)
             };
         })
+        .sort((a, b) => b.score - a.score);
+
+    // If no supported distinguishing trait exists, use a verified trait
+    // present in both species rather than inventing a contrast.
+    if (distinctive.length) return distinctive;
+    return mysteryTraits
+        .filter(item => guessedTraits.has(item.category + "|" + item.token))
+        .map(item => ({
+            ...item,
+            shared: true,
+            score: getHintTraitPriority(item.label)
+        }))
         .sort((a, b) => b.score - a.score);
 }
 
@@ -7295,12 +7305,19 @@ function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null
             guessedBird
         ])) continue;
 
+        const sharedTokens = getHintEvidenceTokens(candidate.sentence);
+        const sharedWithGuessedGenus = sharedTokens.length > 0 &&
+            guessedSentences.some(sentence =>
+                sharedTokens.some(token => getHintEvidenceTokens(sentence).includes(token))
+            );
+
         clues.push({
             heading: "Genus clue · " + candidate.category,
-            text:
-                "The mystery genus differs from the guessed genus in that " +
-                cleaned.charAt(0).toLowerCase() +
-                cleaned.slice(1)
+            text: sharedWithGuessedGenus
+                ? "A trait shared by both genera is that " +
+                    cleaned.charAt(0).toLowerCase() + cleaned.slice(1)
+                : "A trait of the mystery genus is that " +
+                    cleaned.charAt(0).toLowerCase() + cleaned.slice(1)
         });
     }
 
@@ -7322,12 +7339,19 @@ function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null
             guessedBird
         ])) continue;
 
+        const sharedTokens = getHintEvidenceTokens(candidate.sentence);
+        const sharedWithGuessedGenus = sharedTokens.length > 0 &&
+            guessedSentences.some(sentence =>
+                sharedTokens.some(token => getHintEvidenceTokens(sentence).includes(token))
+            );
+
         clues.push({
             heading: "Genus clue · " + candidate.category,
-            text:
-                "The mystery genus differs from the guessed genus in that " +
-                cleaned.charAt(0).toLowerCase() +
-                cleaned.slice(1)
+            text: sharedWithGuessedGenus
+                ? "A trait shared by both genera is that " +
+                    cleaned.charAt(0).toLowerCase() + cleaned.slice(1)
+                : "A trait of the mystery genus is that " +
+                    cleaned.charAt(0).toLowerCase() + cleaned.slice(1)
         });
     }
 
@@ -7388,10 +7412,11 @@ function buildSpeciesHint(
             gameState.mysteryBird,
             "this bird"
         );
-        const clueText =
-            "The mystery species differs from the guessed species in that " +
-            cleaned.charAt(0).toLowerCase() +
-            cleaned.slice(1);
+        const clueText = trait.shared
+            ? "A trait shared by both birds is that " +
+                cleaned.charAt(0).toLowerCase() + cleaned.slice(1)
+            : "A trait of the mystery species is that " +
+                cleaned.charAt(0).toLowerCase() + cleaned.slice(1);
 
         if (!isUsableHintSentence(clueText, [
             gameState.mysteryBird,
@@ -7451,7 +7476,7 @@ async function showSpeciesHint(guessedBird, anchor) {
     const requestId = ++gameState.hintRequestId;
     const mystery = gameState.mysteryBird;
 
-    const hintVersion = "strict-no-known-taxonomy-v3";
+    const hintVersion = "trait-first-no-false-contrast-v4";
     const cacheKey =
         hintVersion +
         "|" +
@@ -7514,7 +7539,7 @@ async function showSpeciesHint(guessedBird, anchor) {
                         return {
                             heading: "Genus clue · " + trait.label,
                             text:
-                                "The mystery genus is distinguished by " +
+                                "A trait of the mystery genus is that " +
                                 sentence.charAt(0).toLowerCase() +
                                 sentence.slice(1)
                         };
@@ -7589,7 +7614,7 @@ async function showSpeciesHint(guessedBird, anchor) {
                         return {
                             heading: "Species clue · " + trait.label,
                             text:
-                                "The mystery species is distinguished by " +
+                                "A trait of the mystery species is that " +
                                 sentence.charAt(0).toLowerCase() +
                                 sentence.slice(1)
                         };
@@ -7630,9 +7655,7 @@ async function showSpeciesHint(guessedBird, anchor) {
         safeHintData.push({
             heading: "Genus clue · Taxonomic comparison",
             text:
-                "The mystery genus is distinct from the genus represented by " +
-                guessedName +
-                ". Its verified genus-level field-guide article could not be loaded, so MetaAves will not invent a genus-specific trait."
+                "No verified genus-level trait could be loaded for this clue, so MetaAves cannot safely provide a biological detail here. It will not claim the genera differ without evidence."
         });
     }
 
@@ -7643,9 +7666,7 @@ async function showSpeciesHint(guessedBird, anchor) {
         safeHintData.push({
             heading: "Species clue · Species-level comparison",
             text:
-                "The mystery is a different species from " +
-                guessedName +
-                ". The available verified species article did not provide enough evidence for a specific field mark, so this fallback avoids inventing one."
+                "No verified species-level trait could be loaded for this clue, so MetaAves cannot safely provide a biological detail here. It will not claim the birds differ without evidence."
         });
     }
 
