@@ -2502,22 +2502,31 @@ function isWikipediaTaxonPage(summary, requestedTitle, expectedRank = "") {
 
     // A matching title alone is not enough: ambiguous names can point to
     // unrelated subjects (for example, Pici the pasta).
+    if (
+        summary.type === "disambiguation" ||
+        /\b(pasta|food|dish|cuisine|culinary|plant genus|flowering plant|fungus|bacteria)\b/i.test(
+            String(summary.description || "") + " " + String(summary.extract || "")
+        )
+    ) return false;
+
     const text = (
         String(summary.description || "") + " " +
         String(summary.extract || "")
     ).toLowerCase();
     const rank = String(expectedRank || "").toLowerCase();
+    const hasBirdSignal =
+        /\b(bird|birds|avian|aves|ornith|hornbills?|woodpeckers?|sparrows?|toucans?|passerines?|piciformes|bucerotiformes)\b/.test(text);
     const signalsByRank = {
-        class: /\b(class of birds|birds|avian|aves|class)\b/,
-        order: /\b(order of birds|order of avian|birds|avian|ornith|order)\b/,
-        family: /\b(family of birds|family of avian|birds|avian|hornbills|woodpeckers|sparrows|family)\b/,
-        genus: /\b(genus of birds|genus of|birds|avian|hornbills|woodpeckers|sparrows|genus)\b/,
-        species: /\b(species of bird|bird species|birds|avian|species)\b/,
-        clade: /\b(clade|suborder|infraorder|parvorder|superfamily|subfamily|taxon|taxonomic group|group of birds|birds|avian|ornith)\b/
+        class: /\b(class of birds|birds|avian|aves)\b/,
+        order: /\b(order of birds|order of avian|ornith|piciformes|bucerotiformes|passeriformes)\b/,
+        family: /\b(family of birds|family of avian|family of passerine birds|hornbills|woodpeckers|sparrows|family)\b/,
+        genus: /\b(genus of birds|genus of hornbills|genus of woodpeckers|genus of sparrows|genus)\b/,
+        species: /\b(species of bird|bird species|birds|avian)\b/,
+        clade: /\b(clade|suborder|infraorder|parvorder|superfamily|subfamily|taxon|taxonomic group|group of birds|ornith)\b/
     };
     const rankSignal = signalsByRank[rank] || signalsByRank.clade;
 
-    return titleMatches && rankSignal.test(text);
+    return titleMatches && hasBirdSignal && rankSignal.test(text);
 }
 
 function wikipediaLookupCandidates(title, scientificName = "") {
