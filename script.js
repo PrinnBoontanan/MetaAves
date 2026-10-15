@@ -2107,6 +2107,7 @@ function createTreeNodeElement(node) {
 
 async function fetchOnlineThaiName(bird) {
     if (!bird?.scientificName) return null;
+    if (new URLSearchParams(window.location.search).get("e2e") === "1") return null;
 
     const scientificName = String(bird.scientificName).trim();
     if (!scientificName) return null;
@@ -2800,6 +2801,7 @@ async function fetchWikipediaPageData(
     requireThumbnail = false,
     expectedTaxonRank = ""
 ) {
+    if (new URLSearchParams(window.location.search).get("e2e") === "1") return null;
     // Fast path: try the exact/common Wikipedia title first. The previous
     // implementation searched by scientific name BEFORE trying this, which
     // added an unnecessary network round trip to almost every card open.
@@ -4312,6 +4314,7 @@ function parseWikipediaDetailedTaxonomy(wikitext) {
 async function fetchWikidataDetailedTaxonomy(bird) {
     const scientificName = String(bird?.scientificName || "").trim();
     if (!scientificName) return {};
+    if (new URLSearchParams(window.location.search).get("e2e") === "1") return {};
 
     const cacheKey = "wikidata-taxonomy:" + scientificName.toLowerCase();
     gameState.wikipediaCache ||= new Map();
@@ -6234,6 +6237,7 @@ function renderTaxonomyTree() {
 async function fetchWikidataConservationStatus(bird) {
     const scientificName = String(bird?.scientificName || "").trim();
     if (!scientificName) return "";
+    if (new URLSearchParams(window.location.search).get("e2e") === "1") return "";
 
     const statusLabels = {
         Q211005: ["LC", "Least Concern"],
