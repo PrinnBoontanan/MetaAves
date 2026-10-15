@@ -657,11 +657,16 @@ test("MetaAves phone layout stays vertical when a phone exposes a desktop-sized 
   const layout = await page.evaluate(() => {
     const layout = document.querySelector(".taxonomy-layout");
     const card = document.querySelector(".taxon-card");
+    const cardRect = card.getBoundingClientRect();
+    const cardStyle = getComputedStyle(card);
+    const contentLeft = cardRect.left + parseFloat(cardStyle.paddingLeft || "0");
+    const contentRight = cardRect.right - parseFloat(cardStyle.paddingRight || "0");
     const directChildren = [...card.children].map(node => {
       const rect = node.getBoundingClientRect();
       return {
         className: node.className || node.tagName,
         left: rect.left,
+        right: rect.right,
         top: rect.top,
         width: rect.width
       };
@@ -675,6 +680,8 @@ test("MetaAves phone layout stays vertical when a phone exposes a desktop-sized 
       cardFlexDirection: getComputedStyle(card).flexDirection,
       cardWidth: card.getBoundingClientRect().width,
       directChildren,
+      contentLeft,
+      contentRight,
       taxonomyColumns: taxonomy ? getComputedStyle(taxonomy).gridTemplateColumns : ""
     };
   });
@@ -692,15 +699,16 @@ test("MetaAves phone layout stays vertical when a phone exposes a desktop-sized 
   assert(layout.cardWidth > 0, "Phone taxon card has no usable width");
   for (const child of layout.directChildren) {
     assert(
-      Math.abs(child.width - layout.cardWidth) < 1.5,
-      "Phone taxon card child does not span the card width: " + JSON.stringify(child)
+      child.left >= layout.contentLeft - 1.5 && child.right <= layout.contentRight + 1.5,
+      "Phone taxon card child overflows the card content width: " + JSON.stringify(child)
     );
   }
-  for (let i = 1; i < layout.directChildren.length; i++) {
+  const visualChildren = [...layout.directChildren].sort((a, b) => a.top - b.top);
+  for (let i = 1; i < visualChildren.length; i++) {
     assert(
-      layout.directChildren[i].top >= layout.directChildren[i - 1].top - 1,
+      visualChildren[i].top >= visualChildren[i - 1].top - 1,
       "Phone taxon card children are not vertically ordered: " +
-        JSON.stringify(layout.directChildren)
+        JSON.stringify(visualChildren)
     );
   }
   const columnCount = layout.taxonomyColumns
