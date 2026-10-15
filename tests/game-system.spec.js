@@ -704,7 +704,7 @@ test("MetaAves phone layout stays vertical when a phone exposes a desktop-sized 
     );
   }
   const columnCount = layout.taxonomyColumns
-    ? layout.taxonomyColumns.trim().split(/\\s+/).length
+    ? layout.taxonomyColumns.trim().split(/\s+/).length
     : 0;
   assert(
     columnCount <= 1,
@@ -733,4 +733,30 @@ test("MetaAves does not classify a touch tablet as a phone", async ({ page }) =>
 
   const phoneClass = await page.evaluate(() => document.body.classList.contains("phone-device"));
   assert(!phoneClass, "Tablet-sized touch screen was incorrectly classified as a phone");
+});
+
+test("MetaAves rejects unrelated Wikipedia homonyms for taxa", async ({ page }) => {
+  await page.goto("/?e2e=1");
+  await page.waitForFunction(() => !!window.__METAAVES_E2E__);
+  const result = await page.evaluate(() => {
+    const api = window.__METAAVES_E2E__;
+    return {
+      rejectsPasta: !api.isWikipediaTaxonPage({
+        title: "Pici",
+        description: "A type of pasta",
+        extract: "Pici is a thick, hand-rolled pasta from Tuscany."
+      }, "Pici (taxon)", "clade"),
+      acceptsTaxon: api.isWikipediaTaxonPage({
+        title: "Pici (taxon)",
+        description: "Suborder of birds",
+        extract: "Pici is a suborder of Piciformes, a group of birds including woodpeckers and toucans."
+      }, "Pici (taxon)", "clade"),
+      sameFamilyDifferentGenusShowsBoth: api.getHintRelationship(
+        { commonName: "Bird A", scientificName: "GenusA a", genus: "GenusA", family: "FamilyX" },
+        { commonName: "Bird B", scientificName: "GenusB b", genus: "GenusB", family: "FamilyX" }
+      )
+    };
+  });
+  assert(result.rejectsPasta, "Taxon Wikipedia validator accepted the unrelated Pici pasta page");
+  assert(result.acceptsTaxon, "Taxon Wikipedia validator rejected the disambiguated Pici taxon page");
 });
