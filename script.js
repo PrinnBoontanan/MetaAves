@@ -7703,6 +7703,18 @@ function getStudyPreloadKey(bird) {
 function preloadStudyCardData(bird) {
     if (!bird) return Promise.resolve(null);
 
+    // End-to-end tests verify game logic and local fallback behavior. Do not
+    // launch optional Wikipedia/Wikidata/third-party requests for every test
+    // round; those services rate-limit automated runs and are not deterministic.
+    if (new URLSearchParams(window.location.search).get("e2e") === "1") {
+        return Promise.resolve({
+            wiki: null,
+            thaiName: "",
+            onlineConservationStatus: "",
+            wikidataDetailed: {}
+        });
+    }
+
     const key = getStudyPreloadKey(bird);
     if (!key) return Promise.resolve(null);
 
