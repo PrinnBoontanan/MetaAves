@@ -8125,7 +8125,9 @@ async function startGame() {
             getDeepestSharedTaxon,
             buildTreeModel,
             getBirdPoolForMode,
-            normalizeSearchText
+            normalizeSearchText,
+            getHintRelationship,
+            isWikipediaTaxonPage
         };
     }
 }
