@@ -2482,6 +2482,44 @@ function isWikipediaBirdPage(summary) {
     return birdSignals.some(signal => text.includes(signal));
 }
 
+function isWikipediaTaxonPage(summary, requestedTitle, expectedRank = "") {
+    if (!summary) return false;
+
+    const normalizeTitle = value => String(value || "")
+        .replace(/_/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+    const requested = normalizeTitle(requestedTitle);
+    const actual = normalizeTitle(summary.title);
+    if (!requested || !actual) return false;
+
+    const withoutDisambiguator = value =>
+        value.replace(/\s+\([^)]*\)$/, "").trim();
+    const titleMatches =
+        actual === requested ||
+        withoutDisambiguator(actual) === withoutDisambiguator(requested);
+
+    // A matching title alone is not enough: ambiguous names can point to
+    // unrelated subjects (for example, Pici the pasta).
+    const text = (
+        String(summary.description || "") + " " +
+        String(summary.extract || "")
+    ).toLowerCase();
+    const rank = String(expectedRank || "").toLowerCase();
+    const signalsByRank = {
+        class: /\b(class of birds|birds|avian|aves|class)\b/,
+        order: /\b(order of birds|order of avian|birds|avian|ornith|order)\b/,
+        family: /\b(family of birds|family of avian|birds|avian|hornbills|woodpeckers|sparrows|family)\b/,
+        genus: /\b(genus of birds|genus of|birds|avian|hornbills|woodpeckers|sparrows|genus)\b/,
+        species: /\b(species of bird|bird species|birds|avian|species)\b/,
+        clade: /\b(clade|suborder|infraorder|parvorder|superfamily|subfamily|taxon|taxonomic group|group of birds|birds|avian|ornith)\b/
+    };
+    const rankSignal = signalsByRank[rank] || signalsByRank.clade;
+
+    return titleMatches && rankSignal.test(text);
+}
+
 function wikipediaLookupCandidates(title, scientificName = "") {
     const cleanTitle = String(title || "").trim();
     const cleanScientificName = String(scientificName || "").trim();
@@ -2750,7 +2788,8 @@ async function fetchWikipediaPageData(
     includeHtml = false,
     expectedType = "bird",
     scientificName = "",
-    requireThumbnail = false
+    requireThumbnail = false,
+    expectedTaxonRank = ""
 ) {
     // Fast path: try the exact/common Wikipedia title first. The previous
     // implementation searched by scientific name BEFORE trying this, which
@@ -2825,6 +2864,9 @@ async function fetchWikipediaPageData(
             });
 
             if (isBirdArticle) return null;
+            if (!isWikipediaTaxonPage(data.summary, title, expectedTaxonRank)) {
+                return null;
+            }
         }
 
         if (!includeHtml) return data;
@@ -5069,7 +5111,9 @@ async function showTaxonInTaxonCard(taxon) {
         wikiTitle,
         false,
         taxon.rank === "species" ? "bird" : "taxon",
-        taxon.rank === "species" ? taxon.scientificName : ""
+        taxon.rank === "species" ? taxon.scientificName : "",
+        false,
+        taxon.rank
     );
 
     if (
@@ -5140,7 +5184,8 @@ async function showTaxonInTaxonCard(taxon) {
             true,
             taxon.rank === "species" ? "bird" : "taxon",
             taxon.rank === "species" ? taxon.scientificName : "",
-            true
+            true,
+            taxon.rank
         ),
         taxon.rank === "species"
             ? fetchWikidataDetailedTaxonomy(taxon)
@@ -5172,7 +5217,9 @@ async function showTaxonInTaxonCard(taxon) {
                     6,
                     1400
                 ) ||
-                "No information available on Wikipedia.";
+                gameState.taxonInfo?.[taxon.id]?.description ||
+                taxon.description ||
+                "No verified Wikipedia article is available for this taxon.";
         }
 
         if (taxon.rank === "species") {
@@ -5473,7 +5520,8 @@ function renderCladeCard(clade, wiki) {
             6,
             1400
         ) ||
-        "No information available on Wikipedia.";
+        clade.description ||
+        "No verified Wikipedia article is available for this taxon.";
     card.appendChild(description);
 
     if (wiki?.summary?.thumbnail?.source) {
@@ -7390,7 +7438,7 @@ async function showSpeciesHint(guessedBird, anchor) {
     const requestId = ++gameState.hintRequestId;
     const mystery = gameState.mysteryBird;
 
-    const hintVersion = "strict-no-known-taxonomy-v2";
+    const hintVersion = "strict-no-known-taxonomy-v3";
     const cacheKey =
         hintVersion +
         "|" +
@@ -7415,8 +7463,8 @@ async function showSpeciesHint(guessedBird, anchor) {
                 // GENUS SYSTEM: fetch only the two genera. No species study
                 // is loaded and no mystery-species traits are compared.
                 const [mysteryGenusData, guessedGenusData] = await Promise.all([
-                    fetchWikipediaPageData(mystery.genus, true, "general"),
-                    fetchWikipediaPageData(guessedBird.genus, true, "general")
+                    fetchWikipediaPageData(mystery.genus, true, "taxon", "", false, "genus"),
+                    fetchWikipediaPageData(guessedBird.genus, true, "taxon", "", false, "genus")
                 ]);
 
                 if (requestId !== gameState.hintRequestId) return;
@@ -7550,6 +7598,46 @@ async function showSpeciesHint(guessedBird, anchor) {
     }
 
     if (requestId !== gameState.hintRequestId) return;
+
+    // Ensure each eligible clue category has a visible result. When a source
+    // is unavailable, be transparent instead of inventing a biological trait.
+    const safeHintData = Array.isArray(hintData) ? hintData : [];
+    const guessedName = guessedBird.commonName || "the guessed bird";
+    const hasGenusClue = safeHintData.some(item =>
+        /^Genus clue\s*·/i.test(String(item?.heading || ""))
+    );
+    const hasSpeciesClue = safeHintData.some(item =>
+        /^Species clue\s*·/i.test(String(item?.heading || ""))
+    );
+
+    if (
+        (relationship.rank === "Genus" || relationship.rank === "Both") &&
+        !hasGenusClue
+    ) {
+        safeHintData.push({
+            heading: "Genus clue · Taxonomic comparison",
+            text:
+                "The mystery genus is different from the genus of " +
+                guessedName +
+                ", although both belong to the same family. Verified genus-level field-guide details could not be loaded, so compare documented genus traits instead of assuming both genera are identical."
+        });
+    }
+
+    if (
+        (relationship.rank === "Species" || relationship.rank === "Both") &&
+        !hasSpeciesClue
+    ) {
+        safeHintData.push({
+            heading: "Species clue · Species-level comparison",
+            text:
+                "The mystery is a different species from " +
+                guessedName +
+                ". The available verified species article did not provide enough evidence for a specific field mark, so this fallback avoids inventing one."
+        });
+    }
+
+    hintData = safeHintData;
+    gameState.hintCache.set(cacheKey, hintData);
 
     hint.innerHTML = "";
 
