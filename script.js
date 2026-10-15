@@ -7632,7 +7632,7 @@ async function showSpeciesHint(guessedBird, anchor) {
             text:
                 "The mystery genus is distinct from the genus represented by " +
                 guessedName +
-                ". Its verified genus-level field-guide article could not be loaded, so MetaAves will not invent a genus-specific trait.";
+                ". Its verified genus-level field-guide article could not be loaded, so MetaAves will not invent a genus-specific trait."
         });
     }
 
