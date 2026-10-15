@@ -75,6 +75,7 @@ const gameState = {
     allBirds: [],
     thailandBirdKeys: null,
     mysteryBird: null,
+    previousMysteryBirdKey: null,
     guesses: [],
     taxonomy: null,
     taxonInfo: null,
@@ -493,7 +494,20 @@ function startNewRoundForMode(mode) {
     gameState.guesses = [];
     gameState.selectedTaxonId = null;
     gameState.gameStatus = "playing";
-    gameState.mysteryBird = pool[Math.floor(Math.random() * pool.length)];
+
+    // Avoid repeating the immediately previous mystery bird. Keep the full
+    // active pool available; only exclude the previous identity for this draw.
+    const previousMysteryKey = gameState.previousMysteryBirdKey;
+    const eligiblePool = pool.length > 1
+        ? pool.filter(bird =>
+            (bird.scientificName || bird.commonName) !== previousMysteryKey
+        )
+        : pool;
+    const mysteryPool = eligiblePool.length ? eligiblePool : pool;
+    gameState.mysteryBird =
+        mysteryPool[Math.floor(Math.random() * mysteryPool.length)];
+    gameState.previousMysteryBirdKey =
+        gameState.mysteryBird.scientificName || gameState.mysteryBird.commonName;
 
     // Preload the study card immediately while the player is playing.
     // Only the single mystery bird is fetched, so this does not create a
@@ -2093,6 +2107,7 @@ function createTreeNodeElement(node) {
 
 async function fetchOnlineThaiName(bird) {
     if (!bird?.scientificName) return null;
+    if (new URLSearchParams(window.location.search).get("e2e") === "1") return null;
 
     const scientificName = String(bird.scientificName).trim();
     if (!scientificName) return null;
@@ -2468,6 +2483,53 @@ function isWikipediaBirdPage(summary) {
     return birdSignals.some(signal => text.includes(signal));
 }
 
+function isWikipediaTaxonPage(summary, requestedTitle, expectedRank = "") {
+    if (!summary) return false;
+
+    const normalizeTitle = value => String(value || "")
+        .replace(/_/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+    const requested = normalizeTitle(requestedTitle);
+    const actual = normalizeTitle(summary.title);
+    if (!requested || !actual) return false;
+
+    const withoutDisambiguator = value =>
+        value.replace(/\s+\([^)]*\)$/, "").trim();
+    const titleMatches =
+        actual === requested ||
+        withoutDisambiguator(actual) === withoutDisambiguator(requested);
+
+    // A matching title alone is not enough: ambiguous names can point to
+    // unrelated subjects (for example, Pici the pasta).
+    if (
+        summary.type === "disambiguation" ||
+        /\b(pasta|food|dish|cuisine|culinary|plant genus|flowering plant|fungus|bacteria)\b/i.test(
+            String(summary.description || "") + " " + String(summary.extract || "")
+        )
+    ) return false;
+
+    const text = (
+        String(summary.description || "") + " " +
+        String(summary.extract || "")
+    ).toLowerCase();
+    const rank = String(expectedRank || "").toLowerCase();
+    const hasBirdSignal =
+        /\b(bird|birds|avian|aves|ornith|hornbills?|woodpeckers?|sparrows?|toucans?|passerines?|piciformes|bucerotiformes)\b/.test(text);
+    const signalsByRank = {
+        class: /\b(class of birds|birds|avian|aves)\b/,
+        order: /\b(order of birds|order of avian|ornith|piciformes|bucerotiformes|passeriformes)\b/,
+        family: /\b(family of birds|family of avian|family of passerine birds|hornbills|woodpeckers|sparrows|family)\b/,
+        genus: /\b(genus of birds|genus of hornbills|genus of woodpeckers|genus of sparrows|genus)\b/,
+        species: /\b(species of bird|bird species|birds|avian)\b/,
+        clade: /\b(clade|suborder|infraorder|parvorder|superfamily|subfamily|taxon|taxonomic group|group of birds|ornith)\b/
+    };
+    const rankSignal = signalsByRank[rank] || signalsByRank.clade;
+
+    return titleMatches && hasBirdSignal && rankSignal.test(text);
+}
+
 function wikipediaLookupCandidates(title, scientificName = "") {
     const cleanTitle = String(title || "").trim();
     const cleanScientificName = String(scientificName || "").trim();
@@ -2736,8 +2798,10 @@ async function fetchWikipediaPageData(
     includeHtml = false,
     expectedType = "bird",
     scientificName = "",
-    requireThumbnail = false
+    requireThumbnail = false,
+    expectedTaxonRank = ""
 ) {
+    if (new URLSearchParams(window.location.search).get("e2e") === "1") return null;
     // Fast path: try the exact/common Wikipedia title first. The previous
     // implementation searched by scientific name BEFORE trying this, which
     // added an unnecessary network round trip to almost every card open.
@@ -2811,6 +2875,9 @@ async function fetchWikipediaPageData(
             });
 
             if (isBirdArticle) return null;
+            if (!isWikipediaTaxonPage(data.summary, title, expectedTaxonRank)) {
+                return null;
+            }
         }
 
         if (!includeHtml) return data;
@@ -4247,6 +4314,7 @@ function parseWikipediaDetailedTaxonomy(wikitext) {
 async function fetchWikidataDetailedTaxonomy(bird) {
     const scientificName = String(bird?.scientificName || "").trim();
     if (!scientificName) return {};
+    if (new URLSearchParams(window.location.search).get("e2e") === "1") return {};
 
     const cacheKey = "wikidata-taxonomy:" + scientificName.toLowerCase();
     gameState.wikipediaCache ||= new Map();
@@ -5055,7 +5123,9 @@ async function showTaxonInTaxonCard(taxon) {
         wikiTitle,
         false,
         taxon.rank === "species" ? "bird" : "taxon",
-        taxon.rank === "species" ? taxon.scientificName : ""
+        taxon.rank === "species" ? taxon.scientificName : "",
+        false,
+        taxon.rank
     );
 
     if (
@@ -5126,7 +5196,8 @@ async function showTaxonInTaxonCard(taxon) {
             true,
             taxon.rank === "species" ? "bird" : "taxon",
             taxon.rank === "species" ? taxon.scientificName : "",
-            true
+            true,
+            taxon.rank
         ),
         taxon.rank === "species"
             ? fetchWikidataDetailedTaxonomy(taxon)
@@ -5158,7 +5229,9 @@ async function showTaxonInTaxonCard(taxon) {
                     6,
                     1400
                 ) ||
-                "No information available on Wikipedia.";
+                gameState.taxonInfo?.[taxon.id]?.description ||
+                taxon.description ||
+                "No verified Wikipedia article is available for this taxon.";
         }
 
         if (taxon.rank === "species") {
@@ -5459,7 +5532,8 @@ function renderCladeCard(clade, wiki) {
             6,
             1400
         ) ||
-        "No information available on Wikipedia.";
+        clade.description ||
+        "No verified Wikipedia article is available for this taxon.";
     card.appendChild(description);
 
     if (wiki?.summary?.thumbnail?.source) {
@@ -6163,6 +6237,7 @@ function renderTaxonomyTree() {
 async function fetchWikidataConservationStatus(bird) {
     const scientificName = String(bird?.scientificName || "").trim();
     if (!scientificName) return "";
+    if (new URLSearchParams(window.location.search).get("e2e") === "1") return "";
 
     const statusLabels = {
         Q211005: ["LC", "Least Concern"],
@@ -6284,9 +6359,9 @@ function getHintRelationship(guessedBird) {
     const mystery = gameState.mysteryBird;
     if (!guessedBird || !mystery || guessedBird === mystery) return null;
 
-    // Two independent hint systems:
-    // Species clue = same genus, different species.
-    // Genus clue = same family, different genus.
+    // Species clues compare the individual birds. Genus clues compare their
+    // genera only when the birds belong to the same family. For that case,
+    // show both systems independently rather than letting genus replace species.
     if (
         guessedBird.genus &&
         mystery.genus &&
@@ -6302,7 +6377,7 @@ function getHintRelationship(guessedBird) {
         guessedBird.family === mystery.family &&
         guessedBird.genus !== mystery.genus
     ) {
-        return { rank: "Genus", value: guessedBird.family };
+        return { rank: "Both", value: guessedBird.family };
     }
 
     return null;
@@ -7376,7 +7451,7 @@ async function showSpeciesHint(guessedBird, anchor) {
     const requestId = ++gameState.hintRequestId;
     const mystery = gameState.mysteryBird;
 
-    const hintVersion = "strict-no-known-taxonomy-v2";
+    const hintVersion = "strict-no-known-taxonomy-v3";
     const cacheKey =
         hintVersion +
         "|" +
@@ -7395,12 +7470,14 @@ async function showSpeciesHint(guessedBird, anchor) {
 
     if (!hintData) {
         try {
-            if (relationship.rank === "Genus") {
+            let genusHintData = [];
+
+            if (relationship.rank === "Genus" || relationship.rank === "Both") {
                 // GENUS SYSTEM: fetch only the two genera. No species study
                 // is loaded and no mystery-species traits are compared.
                 const [mysteryGenusData, guessedGenusData] = await Promise.all([
-                    fetchWikipediaPageData(mystery.genus, true, "general"),
-                    fetchWikipediaPageData(guessedBird.genus, true, "general")
+                    fetchWikipediaPageData(mystery.genus, true, "taxon", "", false, "genus"),
+                    fetchWikipediaPageData(guessedBird.genus, true, "taxon", "", false, "genus")
                 ]);
 
                 if (requestId !== gameState.hintRequestId) return;
@@ -7443,7 +7520,10 @@ async function showSpeciesHint(guessedBird, anchor) {
                         };
                     }).filter(Boolean);
                 }
-            } else {
+                genusHintData = hintData || [];
+            }
+
+            if (relationship.rank === "Species" || relationship.rank === "Both") {
                 // SPECIES SYSTEM: only individual species data is used here.
                 const mysteryCached = getCachedHintStudy(mystery);
                 const guessedCached = getCachedHintStudy(guessedBird);
@@ -7517,6 +7597,12 @@ async function showSpeciesHint(guessedBird, anchor) {
                 }
             }
 
+            if (relationship.rank === "Both") {
+                // Preserve both independent clue sets instead of letting the
+                // species result overwrite the genus result.
+                hintData = [...genusHintData, ...(hintData || [])];
+            }
+
             gameState.hintCache.set(cacheKey, hintData || []);
         } catch (error) {
             console.warn("Hint generation failed:", error);
@@ -7526,6 +7612,46 @@ async function showSpeciesHint(guessedBird, anchor) {
 
     if (requestId !== gameState.hintRequestId) return;
 
+    // Ensure each eligible clue category has a visible result. When a source
+    // is unavailable, be transparent instead of inventing a biological trait.
+    const safeHintData = Array.isArray(hintData) ? hintData : [];
+    const guessedName = guessedBird.commonName || "the guessed bird";
+    const hasGenusClue = safeHintData.some(item =>
+        /^Genus clue\s*·/i.test(String(item?.heading || ""))
+    );
+    const hasSpeciesClue = safeHintData.some(item =>
+        /^Species clue\s*·/i.test(String(item?.heading || ""))
+    );
+
+    if (
+        (relationship.rank === "Genus" || relationship.rank === "Both") &&
+        !hasGenusClue
+    ) {
+        safeHintData.push({
+            heading: "Genus clue · Taxonomic comparison",
+            text:
+                "The mystery genus is distinct from the genus represented by " +
+                guessedName +
+                ". Its verified genus-level field-guide article could not be loaded, so MetaAves will not invent a genus-specific trait.";
+        });
+    }
+
+    if (
+        (relationship.rank === "Species" || relationship.rank === "Both") &&
+        !hasSpeciesClue
+    ) {
+        safeHintData.push({
+            heading: "Species clue · Species-level comparison",
+            text:
+                "The mystery is a different species from " +
+                guessedName +
+                ". The available verified species article did not provide enough evidence for a specific field mark, so this fallback avoids inventing one."
+        });
+    }
+
+    hintData = safeHintData;
+    gameState.hintCache.set(cacheKey, hintData);
+
     hint.innerHTML = "";
 
     const title = document.createElement("div");
@@ -7533,7 +7659,9 @@ async function showSpeciesHint(guessedBird, anchor) {
     title.textContent =
         relationship.rank === "Genus"
             ? "About the mystery genus"
-            : "Compare this species with the mystery";
+            : relationship.rank === "Both"
+                ? "Compare this species and genus with the mystery"
+                : "Compare this species with the mystery";
     hint.appendChild(title);
 
     hintData.forEach(section => {
@@ -7578,6 +7706,18 @@ function getStudyPreloadKey(bird) {
 
 function preloadStudyCardData(bird) {
     if (!bird) return Promise.resolve(null);
+
+    // End-to-end tests verify game logic and local fallback behavior. Do not
+    // launch optional Wikipedia/Wikidata/third-party requests for every test
+    // round; those services rate-limit automated runs and are not deterministic.
+    if (new URLSearchParams(window.location.search).get("e2e") === "1") {
+        return Promise.resolve({
+            wiki: null,
+            thaiName: "",
+            onlineConservationStatus: "",
+            wikidataDetailed: {}
+        });
+    }
 
     const key = getStudyPreloadKey(bird);
     if (!key) return Promise.resolve(null);
@@ -8010,7 +8150,9 @@ async function startGame() {
             getDeepestSharedTaxon,
             buildTreeModel,
             getBirdPoolForMode,
-            normalizeSearchText
+            normalizeSearchText,
+            getHintRelationship,
+            isWikipediaTaxonPage
         };
     }
 }
