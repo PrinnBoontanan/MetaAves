@@ -5127,7 +5127,7 @@ async function showTaxonInTaxonCard(taxon) {
     // First paint: fetch only the lightweight Wikipedia summary.
     // This keeps the card responsive instead of waiting for Wikidata,
     // full article parsing, thumbnail candidate retries, and Thai lookup.
-    const wikiSummary = await fetchWikipediaPageData(
+    let wikiSummary = await fetchWikipediaPageData(
         wikiTitle,
         false,
         taxon.rank === "species" ? "bird" : "taxon",
@@ -5135,6 +5135,25 @@ async function showTaxonInTaxonCard(taxon) {
         false,
         taxon.rank
     );
+
+    // Some taxonomy enrichment records contain a stale or overly broad
+    // Wikipedia URL. If that lookup fails, retry the actual taxon name rather
+    // than concluding that the group has no article (e.g. Campephagidae).
+    if (
+        !wikiSummary &&
+        taxon.rank !== "species" &&
+        taxon.name &&
+        wikipediaCacheKey(taxon.name) !== wikipediaCacheKey(wikiTitle)
+    ) {
+        wikiSummary = await fetchWikipediaPageData(
+            taxon.name,
+            false,
+            "taxon",
+            "",
+            false,
+            taxon.rank
+        );
+    }
 
     if (
         gameState.selectedTaxonId !== selectionId ||
@@ -5199,14 +5218,30 @@ async function showTaxonInTaxonCard(taxon) {
 
     // Second paint: enrich the already-visible card.
     Promise.all([
-        fetchWikipediaPageData(
-            wikiTitle,
-            true,
-            taxon.rank === "species" ? "bird" : "taxon",
-            taxon.rank === "species" ? taxon.scientificName : "",
-            true,
-            taxon.rank
-        ),
+        (async () => {
+            const preferred = await fetchWikipediaPageData(
+                wikiTitle,
+                true,
+                taxon.rank === "species" ? "bird" : "taxon",
+                taxon.rank === "species" ? taxon.scientificName : "",
+                true,
+                taxon.rank
+            );
+            if (
+                preferred ||
+                taxon.rank === "species" ||
+                !taxon.name ||
+                wikipediaCacheKey(taxon.name) === wikipediaCacheKey(wikiTitle)
+            ) return preferred;
+            return fetchWikipediaPageData(
+                taxon.name,
+                true,
+                "taxon",
+                "",
+                true,
+                taxon.rank
+            );
+        })(),
         taxon.rank === "species"
             ? fetchWikidataDetailedTaxonomy(taxon)
             : Promise.resolve({}),
@@ -5239,6 +5274,7 @@ async function showTaxonInTaxonCard(taxon) {
                 ) ||
                 gameState.taxonInfo?.[taxon.id]?.description ||
                 taxon.description ||
+                getTaxonMainTrait(taxon, finalWiki, gameState.taxonInfo?.[taxon.id] || {}) ||
                 "No verified Wikipedia article is available for this taxon.";
         }
 
@@ -5398,6 +5434,7 @@ function getTaxonMainTrait(taxon, wiki, info = {}) {
         "telluraves": "A major landbird radiation containing predominantly terrestrial and arboreal birds, including raptors, parrots, woodpeckers, and passerines.",
         "afroaves": "A landbird clade including raptors and owls together with woodpeckers, hornbills, kingfishers, trogons, mousebirds, and related groups; a predatory ancestry has been proposed but remains debated.",
         "australaves": "A major landbird clade containing falcons, parrots, seriemas, and passerines, with many highly adapted terrestrial and arboreal forms.",
+        "campephagidae": "The cuckooshrikes and allies are small to medium-sized passerine birds found mainly in subtropical and tropical Africa, Asia, and Australasia. The family contains many species across multiple genera; woodshrikes and allies traditionally included here are now placed in Vangidae, while the black-breasted fruithunter is classified with thrushes (Turdidae).",
         "passeriformes": "The perching-bird radiation, characterized by specialized feet for gripping branches and an enormous diversity of songs, forms, and lifestyles.",
         "accipitriformes": "A raptorial bird lineage characterized by hooked bills, strong grasping feet, and powerful talons adapted for predation and scavenging.",
         "strigiformes": "The owl lineage, characterized by forward-facing eyes, highly developed hearing, and adaptations for hunting, often at night.",
