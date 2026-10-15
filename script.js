@@ -5091,6 +5091,61 @@ function renderBirdCard(
     }
 }
 
+async function fetchWikimediaCommonsTaxonImage(taxonName) {
+    const name = String(taxonName || "").trim();
+    if (!name || new URLSearchParams(window.location.search).get("e2e") === "1") {
+        return "";
+    }
+
+    try {
+        const params = new URLSearchParams({
+            action: "query",
+            generator: "search",
+            gsrsearch: 'filetype:bitmap "' + name + '"',
+            gsrnamespace: "6",
+            gsrlimit: "8",
+            prop: "imageinfo",
+            iiprop: "url",
+            iiurlwidth: "600",
+            format: "json",
+            origin: "*"
+        });
+        const response = await fetch(
+            "https://commons.wikimedia.org/w/api.php?" + params.toString(),
+            {
+                headers: {
+                    "Api-User-Agent":
+                        "MetaAves/1.0 (https://github.com/PrinnBoontanan/MetaAves)"
+                }
+            }
+        );
+        if (!response.ok) return "";
+
+        const data = await response.json();
+        const pages = Object.values(data?.query?.pages || {});
+        const normalizedName = name.toLowerCase();
+
+        // Prefer filenames that explicitly contain the scientific taxon name.
+        // The Commons query is exact-phrase constrained to reduce unrelated
+        // images for short or ambiguous taxon names.
+        const ranked = pages
+            .map(page => ({
+                title: String(page.title || ""),
+                url: page.imageinfo?.[0]?.thumburl || page.imageinfo?.[0]?.url || ""
+            }))
+            .filter(item => item.url)
+            .sort((a, b) =>
+                Number(b.title.toLowerCase().includes(normalizedName)) -
+                Number(a.title.toLowerCase().includes(normalizedName))
+            );
+
+        return ranked[0]?.url || "";
+    } catch (error) {
+        console.warn("Wikimedia Commons taxon-image fallback failed:", name, error);
+        return "";
+    }
+}
+
 async function showTaxonInTaxonCard(taxon) {
     const card = document.getElementById("taxon-card");
     if (!card || !taxon) return;
@@ -5254,7 +5309,28 @@ async function showTaxonInTaxonCard(taxon) {
             gameState.taxonCardRequestId !== requestId
         ) return;
 
-        const finalWiki = wiki || wikiSummary;
+        let finalWiki = wiki || wikiSummary;
+
+        // A valid taxon article can have no thumbnail in Wikipedia's summary
+        // API. In that case, try Wikimedia Commons for a relevant taxon image
+        // instead of leaving the card photo-less.
+        if (
+            !finalWiki?.summary?.thumbnail?.source &&
+            taxon.rank !== "species" &&
+            taxon.name
+        ) {
+            const fallbackImage = await fetchWikimediaCommonsTaxonImage(taxon.name);
+            if (fallbackImage) {
+                finalWiki = {
+                    ...(finalWiki || {}),
+                    summary: {
+                        ...(finalWiki?.summary || {}),
+                        title: finalWiki?.summary?.title || taxon.name,
+                        thumbnail: { source: fallbackImage }
+                    }
+                };
+            }
+        }
 
         if (taxon.rank === "clade") {
             renderCladeCard(taxon, finalWiki);
