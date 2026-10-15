@@ -2070,20 +2070,28 @@ function createTreeNodeElement(node) {
             element.classList.add("meta-species-clickable");
             element.style.pointerEvents = "auto";
 
-            element.addEventListener("mouseenter", event => {
-                showSpeciesHint(node.bird, event.currentTarget);
-            });
-            element.addEventListener("mousemove", event => {
-                positionSpeciesHint(event.currentTarget);
-            });
-            element.addEventListener("mouseleave", hideSpeciesHint);
+            element.addEventListener("click", event => {
+                // On desktop, open clues by click rather than hover so the
+                // player can move into the clue card and scroll it normally.
+                // Clicking the same bird again closes its clue and opens the
+                // usual taxon card.
+                const relationship = getHintRelationship(node.bird);
+                const hint = document.getElementById("species-hover-hint");
+                const birdKey = node.bird.scientificName || node.bird.commonName;
+                if (relationship && gameState.gameStatus === "playing") {
+                    if (
+                        hint?.classList.contains("visible") &&
+                        hint.dataset.birdKey === birdKey
+                    ) {
+                        hideSpeciesHint();
+                    } else {
+                        showSpeciesHint(node.bird, event.currentTarget);
+                        return;
+                    }
+                }
 
-            element.addEventListener("click", () => {
                 // The mystery species should always reopen the Study Card
                 // after the game has ended, even if the round was lost.
-                // In a lost game its nodeType remains "mystery", so checking
-                // only "correct" / "revealed-lost" would incorrectly open
-                // the normal Taxon Card instead.
                 if (
                     node.bird === gameState.mysteryBird &&
                     (
@@ -6359,9 +6367,9 @@ function getHintRelationship(guessedBird) {
     const mystery = gameState.mysteryBird;
     if (!guessedBird || !mystery || guessedBird === mystery) return null;
 
-    // Species clues compare the individual birds. Genus clues compare their
-    // genera only when the birds belong to the same family. For that case,
-    // show both systems independently rather than letting genus replace species.
+    // Clue progression follows taxonomy: same family but different genera
+    // unlocks genus clues first. Species clues unlock only after the guess is
+    // in the same genus as the mystery bird.
     if (
         guessedBird.genus &&
         mystery.genus &&
@@ -6377,7 +6385,7 @@ function getHintRelationship(guessedBird) {
         guessedBird.family === mystery.family &&
         guessedBird.genus !== mystery.genus
     ) {
-        return { rank: "Both", value: guessedBird.family };
+        return { rank: "Genus", value: guessedBird.family };
     }
 
     return null;
@@ -7438,8 +7446,24 @@ function getSpeciesHintElement() {
         hint = document.createElement("div");
         hint.id = "species-hover-hint";
         hint.className = "species-hover-hint";
-        hint.setAttribute("role", "tooltip");
+        hint.setAttribute("role", "dialog");
+        hint.setAttribute("aria-label", "Bird clue");
         document.body.appendChild(hint);
+
+        // A clue remains open while the pointer is over it, so its internal
+        // scrollbar is usable. Dismiss it with an outside click or Escape.
+        document.addEventListener("click", event => {
+            if (
+                hint.classList.contains("visible") &&
+                !hint.contains(event.target) &&
+                !event.target.closest?.(".meta-species-clickable")
+            ) {
+                hideSpeciesHint();
+            }
+        });
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape") hideSpeciesHint();
+        });
     }
     return hint;
 }
@@ -7475,8 +7499,9 @@ async function showSpeciesHint(guessedBird, anchor) {
     const hint = getSpeciesHintElement();
     const requestId = ++gameState.hintRequestId;
     const mystery = gameState.mysteryBird;
+    hint.dataset.birdKey = guessedBird.scientificName || guessedBird.commonName || "";
 
-    const hintVersion = "trait-first-no-false-contrast-v4";
+    const hintVersion = "trait-first-clickable-progression-v5";
     const cacheKey =
         hintVersion +
         "|" +
