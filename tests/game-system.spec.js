@@ -410,9 +410,19 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
   });
 
   page.on("console", message => {
-    if (message.type() === "error") {
-      consoleErrors.push({ game: activeGame || "startup", type: "console", message: message.text() });
+    if (message.type() !== "error") return;
+    const text = message.text();
+    const isOptionalExternalFailure =
+      /Failed to load resource: the server responded with a status of 429/i.test(text) ||
+      /blocked by CORS policy/i.test(text) ||
+      /net::ERR_FAILED/i.test(text);
+    if (isOptionalExternalFailure) {
+      // Optional online enrichment has local fallbacks. Keep the failure visible
+      // in the log without treating remote rate limits/CORS as a game crash.
+      console.log("Optional enrichment request failed:", text);
+      return;
     }
+    consoleErrors.push({ game: activeGame || "startup", type: "console", message: text });
   });
 
   await page.goto("/?e2e=1");
@@ -493,7 +503,7 @@ test(`MetaAves full game-system audit — ${GAME_COUNT} games`, async ({ page })
     // First real wrong guess.
     await makeUiGuess(page, wrongBirds[0].commonName);
     state = await getState(page);
-    assert(state.remaining === 11, `Game ${game + 1}: first guess did not decrement`);
+    assert(state.remaining === expectedMaxGuesses - 1, `Game ${game + 1}: first guess did not decrement from ${expectedMaxGuesses}`);
     assert(state.guesses.length === 1, `Game ${game + 1}: first guess not recorded`);
 
     const endpoint = await page.evaluate(() => {
@@ -660,6 +670,7 @@ test("MetaAves phone layout stays vertical when a phone exposes a desktop-sized 
     return {
       phoneClass: document.body.classList.contains("phone-device"),
       layoutDisplay: getComputedStyle(layout).display,
+      layoutColumns: getComputedStyle(layout).gridTemplateColumns,
       cardDisplay: getComputedStyle(card).display,
       cardFlexDirection: getComputedStyle(card).flexDirection,
       cardWidth: card.getBoundingClientRect().width,
@@ -669,7 +680,13 @@ test("MetaAves phone layout stays vertical when a phone exposes a desktop-sized 
   });
 
   assert(layout.phoneClass, "Phone detection did not activate for a desktop-sized phone viewport");
-  assert(layout.layoutDisplay === "block", "Phone taxonomy layout is not vertical: " + layout.layoutDisplay);
+  const layoutColumnCount = layout.layoutDisplay === "grid"
+    ? layout.layoutColumns.trim().split(/\s+/).length
+    : 1;
+  assert(
+    layout.layoutDisplay === "block" || (layout.layoutDisplay === "grid" && layoutColumnCount === 1),
+    "Phone taxonomy layout is not a single vertical column: " + layout.layoutDisplay + " / " + layout.layoutColumns
+  );
   assert(layout.cardDisplay === "flex", "Phone taxon card is not using vertical flex flow: " + layout.cardDisplay);
   assert(layout.cardFlexDirection === "column", "Phone taxon card is not column-oriented: " + layout.cardFlexDirection);
   assert(layout.cardWidth > 0, "Phone taxon card has no usable width");
