@@ -7626,9 +7626,9 @@ async function showSpeciesHint(guessedBird, anchor) {
         safeHintData.push({
             heading: "Genus clue · Taxonomic comparison",
             text:
-                "The mystery genus is different from the genus of " +
+                "The mystery genus is distinct from the genus represented by " +
                 guessedName +
-                ", although both belong to the same family. Verified genus-level field-guide details could not be loaded, so compare documented genus traits instead of assuming both genera are identical."
+                ". Its verified genus-level field-guide article could not be loaded, so MetaAves will not invent a genus-specific trait.";
         });
     }
 
