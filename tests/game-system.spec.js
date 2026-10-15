@@ -751,12 +751,26 @@ test("MetaAves rejects unrelated Wikipedia homonyms for taxa", async ({ page }) 
         description: "Suborder of birds",
         extract: "Pici is a suborder of Piciformes, a group of birds including woodpeckers and toucans."
       }, "Pici (taxon)", "clade"),
-      sameFamilyDifferentGenusShowsBoth: api.getHintRelationship(
-        { commonName: "Bird A", scientificName: "GenusA a", genus: "GenusA", family: "FamilyX" },
-        { commonName: "Bird B", scientificName: "GenusB b", genus: "GenusB", family: "FamilyX" }
-      )
+      sameFamilyDifferentGenusShowsBoth: (() => {
+        api.state.mysteryBird = {
+          commonName: "Bird B", scientificName: "GenusB b", genus: "GenusB", family: "FamilyX"
+        };
+        return api.getHintRelationship({
+          commonName: "Bird A", scientificName: "GenusA a", genus: "GenusA", family: "FamilyX"
+        })?.rank === "Both";
+      })(),
+      sameGenusShowsSpeciesClue: (() => {
+        api.state.mysteryBird = {
+          commonName: "Bird B", scientificName: "GenusA b", genus: "GenusA", family: "FamilyX"
+        };
+        return api.getHintRelationship({
+          commonName: "Bird A", scientificName: "GenusA a", genus: "GenusA", family: "FamilyX"
+        })?.rank === "Species";
+      })()
     };
   });
   assert(result.rejectsPasta, "Taxon Wikipedia validator accepted the unrelated Pici pasta page");
   assert(result.acceptsTaxon, "Taxon Wikipedia validator rejected the disambiguated Pici taxon page");
+  assert(result.sameFamilyDifferentGenusShowsBoth, "Same-family/different-genus guess must enable both clue categories");
+  assert(result.sameGenusShowsSpeciesClue, "Same-genus guess must enable the species clue");
 });
