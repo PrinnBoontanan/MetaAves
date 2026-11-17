@@ -838,7 +838,18 @@ test("MetaAves separates Appearance from Description and other study-card catego
       "It occurs in forest and woodland across parts of South and Southeast Asia.",
       "It builds a hanging nest in which it lays two eggs."
     ].join(" ");
-    const study = api.getWikipediaStudyData("", "", summary);
+    const html = `
+      <div class="mw-parser-output">
+        <p>The crimson sunbird is a species of bird in the sunbird family.</p>
+        <h2><span class="mw-headline" id="Description">Description</span></h2>
+        <p>The male has crimson plumage with a dark throat and blue-green crown. The female is olive-brown above and yellowish below. Both sexes have a medium-length, thin, down-curved bill and a brush-tipped tubular tongue, adaptations for nectar feeding. It feeds largely on nectar and may also take insects. Its flight is fast and direct on short wings. It is the unofficial national bird of Singapore.</p>
+        <h2><span class="mw-headline" id="Habitat_and_distribution">Habitat and distribution</span></h2>
+        <p>It occurs in forest and woodland across parts of South and Southeast Asia.</p>
+        <h2><span class="mw-headline" id="Breeding">Breeding</span></h2>
+        <p>It builds a hanging nest in which it lays two eggs.</p>
+      </div>
+    `;
+    const study = api.getWikipediaStudyData(html, "", summary);
     return {
       study,
       billSentenceIsAppearance: api.wikipediaSentenceMatchesCategory(
@@ -851,6 +862,9 @@ test("MetaAves separates Appearance from Description and other study-card catego
       ),
       externalBillSentence: api.classifyExternalStudySentence(
         "The bird has a long curved bill and a brush-tipped tongue."
+      ),
+      externalFlightSentence: api.classifyExternalStudySentence(
+        "Its flight is fast and direct on short wings."
       )
     };
   });
@@ -867,6 +881,7 @@ test("MetaAves separates Appearance from Description and other study-card catego
   assert(result.billSentenceIsAppearance, "Bill/tongue anatomy must classify as Appearance");
   assert(result.billSentenceIsNotDiet, "Feeding-adaptation anatomy must not classify as Diet");
   assert(result.externalBillSentence === "appearance", "External-source appearance sentence was not classified as Appearance");
+  assert(result.externalFlightSentence === "behavior", "External-source flight sentence was incorrectly classified as Appearance");
 });
 
 test("MetaAves classifies mixed bird ecology prose into the correct study-card sections", async ({ page }) => {
