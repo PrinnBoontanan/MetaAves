@@ -8399,11 +8399,17 @@ async function showGameOverCard(result) {
     // Paint the useful study card immediately from local taxonomy + the
     // lightweight Wikipedia summary. Detailed article sections are filled in
     // below without blocking this first render.
-    setStudyValue("Description", limitWikipediaSentences(
-        fastWiki?.summary?.extract || "",
-        6,
-        1400
-    ));
+    const fastStudy = getWikipediaStudyData(
+        "",
+        "",
+        fastWiki?.summary?.extract || ""
+    );
+    setStudyValue("Description", fastStudy.description);
+    setStudyValue("Appearance", fastStudy.appearance);
+    setStudyValue("Habitat & Distribution", fastStudy.habitatDistribution);
+    setStudyValue("Diet", fastStudy.diet);
+    setStudyValue("Behavior", fastStudy.behavior);
+    setStudyValue("Breeding", fastStudy.breeding);
 
     const fastImageSource = fastWiki?.summary?.thumbnail?.source;
     const fastPlaceholder = document.getElementById("study-photo-placeholder");
