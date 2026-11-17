@@ -120,7 +120,8 @@ CLADE_PATHS_BY_ORDER = {
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Aequornithes"
+        "Aequornithes",
+        "Feraequornithes"
     ],
     "Procellariiformes": [
         "Neornithes",
@@ -128,7 +129,8 @@ CLADE_PATHS_BY_ORDER = {
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Aequornithes"
+        "Aequornithes",
+        "Feraequornithes"
     ],
     "Ciconiiformes": [
         "Neornithes",
@@ -1823,7 +1825,7 @@ def main():
                 family_clade_path,
                 clade_parent_by_name,
             )
-        elif order_name:
+        elif order_name and not order_clade_path:
             unmapped_orders.add(order_name)
 
         parent_id = "class:Aves"
@@ -1872,7 +1874,7 @@ def main():
                 "_meta": {
                     "version": 2,
                     "generatedBy": "scripts/import_avilist.py",
-                    "source": "Wikipedia bird phylogeny pages, using Stiller et al. 2024 where those pages identify that topology",
+                    "source": "Named clade references including Sangster & Mayr (2021) for Feraequornithes and the cited avian phylogenomic backbones used by the order/family mappings.",
                     "policy": "Detailed named clades are included where the source provides a usable lineage. Contested alternative deep Neoaves relationships are not mixed into the same lineage."
                 },
                 "species": clade_membership,

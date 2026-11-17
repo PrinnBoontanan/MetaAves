@@ -2964,15 +2964,23 @@ input:focus-visible,
     border-bottom: 0;
 }
 
-/* The study/game-over taxonomy uses the same compact two-column treatment. */
+/* The study/game-over taxonomy uses column-major order: finish column one
+   from top to bottom, then continue at the top of column two. */
 .study-taxonomy {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 24px;
     row-gap: 0;
+    align-items: start;
 }
 
-.study-taxonomy-row {
+.study-taxonomy-column {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.study-taxonomy-column .study-taxonomy-row {
     min-width: 0;
     margin: 0;
 }

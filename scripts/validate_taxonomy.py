@@ -50,16 +50,28 @@ def main() -> None:
             if not str(bird.get(rank) or "").strip():
                 fail(f"{scientific} is missing {rank}")
 
-    taxonomy_species = taxonomy.get("species", {}) if isinstance(taxonomy, dict) else {}
-    for scientific, ranks in taxonomy_species.items():
+    taxonomy_species = {
+        str(entry.get("name") or "").strip(): entry
+        for entry in taxonomy.values()
+        if isinstance(entry, dict) and entry.get("rank") == "species"
+    } if isinstance(taxonomy, dict) else {}
+    for scientific in taxonomy_species:
         if scientific not in bird_by_scientific:
             fail(f"taxonomy contains unknown species: {scientific}")
-        if not isinstance(ranks, dict):
-            fail(f"taxonomy ranks are not an object: {scientific}")
+    for scientific, bird in bird_by_scientific.items():
+        species_node = taxonomy_species.get(scientific)
+        if not species_node:
+            fail(f"taxonomy is missing a species node for {scientific}")
+        parent = taxonomy.get(species_node.get("parent"))
+        if not isinstance(parent, dict) or parent.get("rank") != "genus" or parent.get("name") != bird.get("genus"):
+            fail(f"species-to-genus taxonomy link is inconsistent for {scientific}")
 
     meta = clades.get("_meta", {})
     order_paths = meta.get("orderCladePaths", {})
-    family_paths = meta.get("passerineFamilyCladePaths", {})
+    family_paths = {
+        **meta.get("passerineFamilyCladePaths", {}),
+        **meta.get("nonpasserineFamilyCladePaths", {}),
+    }
 
     if not isinstance(order_paths, dict):
         fail("clades._meta.orderCladePaths is missing or invalid")
@@ -118,6 +130,18 @@ def main() -> None:
                     fail(
                         f"membership.{section}[{scientific}] references unknown clade: {clade}"
                     )
+
+    # Every bird whose order has a configured phylogenetic backbone must inherit
+    # every clade in that backbone. This checks the whole species list, not
+    # selected examples, and catches missing clades during data regeneration.
+    for scientific, bird in bird_by_scientific.items():
+        expected_order_path = order_paths.get(bird.get("order"), [])
+        actual_path = membership.get("species", {}).get(scientific)
+        if expected_order_path and not isinstance(actual_path, list):
+            fail(f"{scientific} has no species clade-membership path")
+        missing = [name for name in expected_order_path if name not in (actual_path or [])]
+        if missing:
+            fail(f"{scientific} is missing order-level clades: " + ", ".join(missing))
 
     # Every clade membership path must agree with the parent links declared in clades.json.
     clade_parent_by_name = {}
