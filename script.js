@@ -85,6 +85,7 @@ const gameState = {
     taxonomyView: "tree",
     wikipediaCache: new Map(),
     studyPreloadCache: new Map(),
+    externalStudyCache: new Map(),
     thaiNameCache: new Map(),
     taxonCardRequestId: 0,
     hintCache: new Map(),
@@ -7846,6 +7847,239 @@ async function showSpeciesHint(guessedBird, anchor) {
     positionSpeciesHint(anchor);
 }
 
+
+function renderStudyTaxonomyRows(container, rows) {
+    if (!container) return;
+    container.innerHTML = "";
+    const safeRows = (Array.isArray(rows) ? rows : []).filter(row => Array.isArray(row) && row[0] && row[1]);
+    const rowsPerColumn = Math.ceil(safeRows.length / 2);
+    for (let columnIndex = 0; columnIndex < 2; columnIndex += 1) {
+        const column = document.createElement("div");
+        column.className = "study-taxonomy-column";
+        column.dataset.taxonomyColumn = String(columnIndex + 1);
+        safeRows.slice(columnIndex * rowsPerColumn, (columnIndex + 1) * rowsPerColumn).forEach(([label, value]) => {
+            const row = document.createElement("div");
+            row.className = "study-taxonomy-row";
+            const labelElement = document.createElement("span");
+            labelElement.className = "study-taxonomy-label";
+            labelElement.textContent = label;
+            const valueElement = document.createElement("span");
+            valueElement.className = "study-taxonomy-value";
+            valueElement.textContent = value;
+            row.appendChild(labelElement);
+            row.appendChild(valueElement);
+            column.appendChild(row);
+        });
+        if (column.childElementCount) container.appendChild(column);
+    }
+}
+
+function classifyExternalStudySentence(sentence) {
+    const patterns = {
+        habitatDistribution: /\b(?:habitat|habitats|inhabits?|occurs?|distributed|distribution|range|found in|found on|forests?|woodlands?|grasslands?|wetlands?|marsh(?:es)?|mangroves?|savannas?|coasts?|islands?|mountains?|elevations?|lowlands?)\b/i,
+        diet: /\b(?:diet|feeds? on|feeding on|eats?|consumes?|preys? on|food consists|insects?|fish|crustaceans?|mollus[ck]s?|seeds?|fruit|nectar|small mammals?|rodents?|reptiles?|amphibians?|carrion)\b/i,
+        breeding: /\b(?:breeds?|breeding|nests?|nesting|nest|eggs?|clutch|incubat(?:es|ion)|fledg(?:es|ing)|courtship|mate|reproduct(?:ion|ive))\b/i,
+        behavior: /\b(?:behavior|behaviour|forag(?:es|ing)|hunts?|migrat(?:es|ory|ion)|flocks?|solitary|territorial|nocturnal|diurnal|soars?|glides?|hovers?|dives?|swims?|wades?|perches?|vocali[sz](?:es|ation)|calls?|song|display|roosts?)\b/i
+    };
+    const scores = Object.entries(patterns).map(([category, pattern]) => ({
+        category,
+        score: (sentence.match(new RegExp(pattern.source, "gi")) || []).length
+    })).filter(item => item.score > 0).sort((a, b) => b.score - a.score);
+    return scores[0]?.category || "";
+}
+
+function classifyExternalStudyText(values) {
+    const output = { habitatDistribution: [], diet: [], behavior: [], breeding: [] };
+    (Array.isArray(values) ? values : [values]).filter(Boolean).forEach(value => {
+        const cleanText = normalizeWikipediaText(String(value).replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " "));
+        splitWikipediaSentences(cleanText).forEach(sentence => {
+            const category = classifyExternalStudySentence(sentence);
+            if (category && output[category].length < 8) output[category].push(sentence);
+        });
+    });
+    Object.keys(output).forEach(category => {
+        output[category] = [...new Set(output[category])].join(" ");
+    });
+    return output;
+}
+
+async function fetchGBIFStudyData(bird) {
+    const scientificName = String(bird?.scientificName || "").trim();
+    if (!scientificName) return null;
+    try {
+        const matchUrl = "https://api.gbif.org/v1/species/match?" +
+            new URLSearchParams({ name: scientificName, strict: "true" }).toString();
+        const matchResponse = await fetch(matchUrl, { headers: { Accept: "application/json" } });
+        if (!matchResponse.ok) return null;
+        const match = await matchResponse.json();
+        if (!match?.key || String(match.rank || "").toUpperCase() !== "SPECIES" ||
+            String(match.canonicalName || "").toLowerCase() !== scientificName.toLowerCase()) return null;
+
+        const [descriptionResult, distributionResult] = await Promise.allSettled([
+            fetch("https://api.gbif.org/v1/species/" + match.key + "/descriptions?limit=100",
+                { headers: { Accept: "application/json" } }).then(response => response.ok ? response.json() : null),
+            fetch("https://api.gbif.org/v1/species/" + match.key + "/distributions?limit=100",
+                { headers: { Accept: "application/json" } }).then(response => response.ok ? response.json() : null)
+        ]);
+        const descriptions = descriptionResult.status === "fulfilled"
+            ? (descriptionResult.value?.results || []).map(item => item?.description).filter(Boolean) : [];
+        const distributions = distributionResult.status === "fulfilled"
+            ? (distributionResult.value?.results || [])
+                .filter(item => !item.status || /present|native|introduced/i.test(item.status))
+                .map(item => item.country || item.locality).filter(Boolean) : [];
+        return {
+            descriptions,
+            distributions: [...new Set(distributions)].slice(0, 12),
+            source: { label: "GBIF", url: "https://www.gbif.org/species/" + match.key }
+        };
+    } catch (error) {
+        console.warn("GBIF study lookup failed:", scientificName, error);
+        return null;
+    }
+}
+
+async function fetchINaturalistStudyData(bird) {
+    const scientificName = String(bird?.scientificName || "").trim();
+    if (!scientificName) return null;
+    try {
+        const searchUrl = "https://api.inaturalist.org/v1/taxa/autocomplete?" +
+            new URLSearchParams({ q: scientificName, per_page: "10" }).toString();
+        const searchResponse = await fetch(searchUrl, { headers: { Accept: "application/json" } });
+        if (!searchResponse.ok) return null;
+        const candidates = await searchResponse.json();
+        const taxon = (Array.isArray(candidates) ? candidates : []).find(item =>
+            String(item?.name || "").toLowerCase() === scientificName.toLowerCase() &&
+            String(item?.rank || "").toLowerCase() === "species" &&
+            (!item?.iconic_taxon_name || item.iconic_taxon_name === "Aves")
+        );
+        if (!taxon?.id) return null;
+        const detailResponse = await fetch(
+            "https://api.inaturalist.org/v1/taxa/" + encodeURIComponent(taxon.id),
+            { headers: { Accept: "application/json" } }
+        );
+        if (!detailResponse.ok) return null;
+        const detail = await detailResponse.json();
+        const conservation = (detail.conservation_statuses || [])
+            .filter(status => /iucn/i.test(String(status.authority || "")) &&
+                (!status.place || /world|global/i.test(String(status.place.name || status.place.display_name || ""))))
+            .map(status => status.status_name || status.status).find(Boolean) || "";
+        return {
+            descriptions: detail.description ? [detail.description] : [],
+            conservation,
+            source: { label: "iNaturalist", url: "https://www.inaturalist.org/taxa/" + taxon.id }
+        };
+    } catch (error) {
+        console.warn("iNaturalist study lookup failed:", scientificName, error);
+        return null;
+    }
+}
+
+function deduplicateStudyData(studyData) {
+    const result = { ...(studyData || {}) };
+    const orderedFields = ["description", "habitatDistribution", "diet", "behavior", "breeding", "conservation"];
+    const seenSentences = [];
+    const tokensFor = sentence => new Set(normalizeHintText(sentence).split(/\s+/).filter(token => token.length > 2));
+    const overlaps = (left, right) => {
+        const a = tokensFor(left), b = tokensFor(right);
+        if (!a.size || !b.size) return false;
+        let common = 0;
+        a.forEach(token => { if (b.has(token)) common += 1; });
+        return common / Math.min(a.size, b.size) >= 0.84;
+    };
+    orderedFields.forEach(field => {
+        const source = String(result[field] || "");
+        if (!source) return;
+        const kept = [];
+        splitWikipediaSentences(source).forEach(sentence => {
+            const normalized = normalizeHintText(sentence);
+            if (!normalized || seenSentences.some(previous =>
+                previous.normalized === normalized || overlaps(sentence, previous.text))) return;
+            kept.push(sentence);
+            seenSentences.push({ normalized, text: sentence });
+        });
+        result[field] = kept.join(" ");
+    });
+    return result;
+}
+
+async function fetchExternalBirdStudyData(bird) {
+    if (!bird) return null;
+    const key = getStudyPreloadKey(bird);
+    if (!key) return null;
+    const cached = gameState.externalStudyCache.get(key);
+    if (cached) return cached;
+    const pending = Promise.allSettled([fetchGBIFStudyData(bird), fetchINaturalistStudyData(bird)])
+        .then(results => {
+            const gbif = results[0]?.status === "fulfilled" ? results[0].value : null;
+            const inat = results[1]?.status === "fulfilled" ? results[1].value : null;
+            const classified = classifyExternalStudyText([
+                ...(gbif?.descriptions || []), ...(inat?.descriptions || [])
+            ]);
+            if (gbif?.distributions?.length) {
+                classified.habitatDistribution = [
+                    classified.habitatDistribution,
+                    "Recorded distribution includes " + gbif.distributions.join(", ") + "."
+                ].filter(Boolean).join(" ");
+            }
+            return {
+                ...classified,
+                conservation: inat?.conservation || "",
+                sources: [gbif?.source, inat?.source].filter(Boolean)
+            };
+        }).catch(error => {
+            console.warn("External bird study lookup failed:", key, error);
+            return { habitatDistribution: "", diet: "", behavior: "", breeding: "", conservation: "", sources: [] };
+        });
+    gameState.externalStudyCache.set(key, pending);
+    return pending;
+}
+
+function mergeExternalStudyData(wikipediaStudy, externalStudy, bird, wikipediaDescription = "") {
+    const wiki = wikipediaStudy || {};
+    const external = externalStudy || {};
+    const combine = (...values) => values.filter(Boolean).join(" ");
+    return deduplicateStudyData({
+        description: wikipediaDescription || wiki.description || "",
+        habitatDistribution: combine(external.habitatDistribution, wiki.habitatDistribution, bird?.distribution),
+        diet: combine(external.diet, wiki.diet),
+        behavior: combine(external.behavior, wiki.behavior),
+        breeding: combine(external.breeding, wiki.breeding),
+        conservation: external.conservation || wiki.conservation || "",
+        sources: external.sources || []
+    });
+}
+
+function appendStudySources(details, bird, externalStudy) {
+    if (!details) return;
+    const section = document.createElement("div");
+    section.className = "study-card-section";
+    section.dataset.studyHeading = "sources";
+    const heading = document.createElement("h4");
+    heading.textContent = "Sources & further reading";
+    section.appendChild(heading);
+    const links = [
+        ...(externalStudy?.sources || []),
+        { label: "Cornell Lab / All About Birds search", url: "https://www.google.com/search?q=" + encodeURIComponent("site:allaboutbirds.org/guide " + bird.scientificName) },
+        { label: "BirdLife International search", url: "https://www.google.com/search?q=" + encodeURIComponent("site:birdlife.org " + bird.scientificName + " species factsheet") },
+        { label: "eBird species search", url: "https://www.google.com/search?q=" + encodeURIComponent("site:ebird.org/species " + bird.scientificName) },
+        { label: "Google Scholar research search", url: "https://scholar.google.com/scholar?q=" + encodeURIComponent(bird.scientificName) }
+    ];
+    const list = document.createElement("ul");
+    links.forEach(item => {
+        if (!item?.url) return;
+        const li = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = item.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = item.label;
+        li.appendChild(link);
+        list.appendChild(li);
+    });
+    section.appendChild(list);
+    details.appendChild(section);
+}
+
 // ========================================
 // Game Over Card
 // ========================================
@@ -7874,7 +8108,8 @@ function preloadStudyCardData(bird) {
             wiki: null,
             thaiName: "",
             onlineConservationStatus: "",
-            wikidataDetailed: {}
+            wikidataDetailed: {},
+            externalStudy: null
         });
     }
 
@@ -7896,21 +8131,25 @@ function preloadStudyCardData(bird) {
             ? fetchOnlineThaiName(bird)
             : Promise.resolve(""),
         fetchWikidataConservationStatus(bird),
-        fetchWikidataDetailedTaxonomy(bird)
+        fetchWikidataDetailedTaxonomy(bird),
+        fetchExternalBirdStudyData(bird)
     ]).then(results => ({
         wiki: results[0]?.status === "fulfilled" ? results[0].value : null,
         thaiName: results[1]?.status === "fulfilled" ? results[1].value : "",
         onlineConservationStatus:
             results[2]?.status === "fulfilled" ? results[2].value : "",
         wikidataDetailed:
-            results[3]?.status === "fulfilled" ? results[3].value : {}
+            results[3]?.status === "fulfilled" ? results[3].value : {},
+        externalStudy:
+            results[4]?.status === "fulfilled" ? results[4].value : null
     })).catch(error => {
         console.warn("Study card preload failed:", error);
         return {
             wiki: null,
             thaiName: "",
             onlineConservationStatus: "",
-            wikidataDetailed: {}
+            wikidataDetailed: {},
+            externalStudy: null
         };
     });
 
@@ -7965,24 +8204,7 @@ async function showGameOverCard(result) {
         ["Species", bird.species || bird.scientificName]
     ];
 
-    taxonomyRows.forEach(([label, value]) => {
-        if (!value) return;
-
-        const row = document.createElement("div");
-        row.className = "study-taxonomy-row";
-
-        const labelElement = document.createElement("span");
-        labelElement.className = "study-taxonomy-label";
-        labelElement.textContent = label;
-
-        const valueElement = document.createElement("span");
-        valueElement.className = "study-taxonomy-value";
-        valueElement.textContent = value;
-
-        row.appendChild(labelElement);
-        row.appendChild(valueElement);
-        taxonomy.appendChild(row);
-    });
+    renderStudyTaxonomyRows(taxonomy, taxonomyRows);
 
     const unavailable = "No information available on Wikipedia.";
 
@@ -8110,41 +8332,21 @@ async function showGameOverCard(result) {
             wikidataDetailed
         );
 
-        taxonomy.innerHTML = "";
-        finalTaxonomyRows.forEach(([label, value]) => {
-            const row = document.createElement("div");
-            row.className = "study-taxonomy-row";
-
-            const labelElement = document.createElement("span");
-            labelElement.className = "study-taxonomy-label";
-            labelElement.textContent = label;
-
-            const valueElement = document.createElement("span");
-            valueElement.className = "study-taxonomy-value";
-            valueElement.textContent = value;
-
-            row.appendChild(labelElement);
-            row.appendChild(valueElement);
-            taxonomy.appendChild(row);
-        });
+        renderStudyTaxonomyRows(taxonomy, finalTaxonomyRows);
     } catch (error) {
         console.warn("Detailed taxonomy rendering failed:", error);
     }
 
-    const studyData = getWikipediaStudyData(
-        wiki?.html,
-        wiki?.wikitext
+    const wikipediaStudy = getWikipediaStudyData(wiki?.html, wiki?.wikitext);
+    const studyData = mergeExternalStudyData(
+        wikipediaStudy,
+        preloaded?.externalStudy || {},
+        bird,
+        limitWikipediaSentences(wiki?.summary?.extract || "", 6, 1400)
     );
 
-    setStudyValue(
-        "Description",
-        studyData.description ||
-            limitWikipediaSentences(
-                wiki?.summary?.extract || "",
-                6,
-                1400
-            )
-    );
+    // Keep the description anchored to the Wikipedia lead as requested.
+    setStudyValue("Description", studyData.description);
     setStudyValue("Habitat & Distribution", studyData.habitatDistribution);
     setStudyValue("Diet", studyData.diet);
     setStudyValue("Behavior", studyData.behavior);
@@ -8152,6 +8354,7 @@ async function showGameOverCard(result) {
     setStudyValue(
         "Conservation",
         onlineConservationStatus ||
+        bird.conservation ||
         studyData.conservation ||
         "No information available online."
     );
@@ -8189,6 +8392,7 @@ async function showGameOverCard(result) {
         wikiSection.appendChild(link);
         details.appendChild(wikiSection);
     }
+    appendStudySources(details, bird, preloaded?.externalStudy || {});
 }
 
 function closeGameOverCard() {
@@ -8311,6 +8515,8 @@ async function startGame() {
             getBirdPoolForMode,
             normalizeSearchText,
             getHintRelationship,
+            renderStudyTaxonomyRows,
+            deduplicateStudyData,
             isWikipediaTaxonPage
         };
     }

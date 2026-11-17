@@ -194,6 +194,32 @@ async function auditDatabase(data) {
     }
   }
 
+
+  for (const bird of birds) {
+    const expected = [
+      ...(orderPaths[bird.order] || []),
+      ...(familyPaths[bird.family] || [])
+    ];
+    const actual = membership.species?.[bird.scientificName];
+    if (expected.length && !Array.isArray(actual)) {
+      errors.push("Missing complete species clade membership: " + bird.scientificName);
+      continue;
+    }
+    const missing = expected.filter(name => !actual.includes(name));
+    if (missing.length) {
+      errors.push("Incomplete clade membership for " + bird.scientificName + ": " + missing.join(", "));
+    }
+  }
+
+  for (const order of ["Procellariiformes", "Sphenisciformes"]) {
+    if (!(orderPaths[order] || []).includes("Feraequornithes")) {
+      errors.push(order + " is missing the documented Feraequornithes clade");
+    }
+  }
+  if ((orderPaths.Gaviiformes || []).includes("Feraequornithes")) {
+    errors.push("Gaviiformes must remain outside Feraequornithes");
+  }
+
   const cladeByName = new Map(
     Object.values(clades)
       .filter(x => x && x.id && x.name)
@@ -743,7 +769,43 @@ test("MetaAves does not classify a touch tablet as a phone", async ({ page }) =>
   assert(!phoneClass, "Tablet-sized touch screen was incorrectly classified as a phone");
 });
 
-test("MetaAves rejects unrelated Wikipedia homonyms for taxa", async ({ page }) => {
+
+test("MetaAves study taxonomy reads down the first column before the second and removes repeated section text", async ({ page }) => {
+  await page.goto("/?e2e=1");
+  await page.waitForFunction(() => !!window.__METAAVES_E2E__);
+  const result = await page.evaluate(() => {
+    const api = window.__METAAVES_E2E__;
+    const container = document.createElement("div");
+    api.renderStudyTaxonomyRows(container, [
+      ["Class", "Aves"], ["Clade", "Neognathae"], ["Order", "Passeriformes"],
+      ["Family", "Turdidae"], ["Genus", "Turdus"], ["Species", "Turdus merula"]
+    ]);
+    const columns = [...container.children].map(column =>
+      [...column.querySelectorAll(".study-taxonomy-row")].map(row =>
+        row.querySelector(".study-taxonomy-label")?.textContent
+      )
+    );
+    const deduped = api.deduplicateStudyData({
+      description: "This bird has a long bill. It feeds on fish.",
+      habitatDistribution: "It has a long bill. It nests on cliffs.",
+      diet: "It feeds on fish.",
+      behavior: "It nests on cliffs."
+    });
+    return { columns, deduped };
+  });
+  assert(
+    JSON.stringify(result.columns) === JSON.stringify([
+      ["Class", "Clade", "Order"],
+      ["Family", "Genus", "Species"]
+    ]),
+    "Study taxonomy must be read top-to-bottom in column one, then column two"
+  );
+  assert(!result.deduped.habitatDistribution.includes("long bill"), "Description fact was repeated in habitat");
+  assert(!result.deduped.diet.includes("feeds on fish"), "Description fact was repeated in diet");
+  assert(!result.deduped.behavior.includes("nests on cliffs"), "Habitat fact was repeated in behavior");
+});
+
+test("MetaAves validates taxon pages and enforces two-stage clue progression", async ({ page }) => {
   await page.goto("/?e2e=1");
   await page.waitForFunction(() => !!window.__METAAVES_E2E__);
   const result = await page.evaluate(() => {
@@ -759,13 +821,30 @@ test("MetaAves rejects unrelated Wikipedia homonyms for taxa", async ({ page }) 
         description: "Suborder of birds",
         extract: "Pici is a suborder of Piciformes, a group of birds including woodpeckers and toucans."
       }, "Pici (taxon)", "clade"),
-      sameFamilyDifferentGenusShowsBoth: (() => {
+      sameFamilyDifferentGenusShowsGenusOnly: (() => {
         api.state.mysteryBird = {
           commonName: "Bird B", scientificName: "GenusB b", genus: "GenusB", family: "FamilyX"
         };
         return api.getHintRelationship({
           commonName: "Bird A", scientificName: "GenusA a", genus: "GenusA", family: "FamilyX"
-        })?.rank === "Both";
+        })?.rank === "Genus";
+      })(),
+
+      sameSpeciesDoesNotShowClue: (() => {
+        api.state.mysteryBird = {
+          commonName: "Bird A", scientificName: "GenusA a", genus: "GenusA", family: "FamilyX"
+        };
+        return api.getHintRelationship({
+          commonName: "Bird A", scientificName: "GenusA a", genus: "GenusA", family: "FamilyX"
+        }) === null;
+      })(),
+      differentFamilyDoesNotShowClue: (() => {
+        api.state.mysteryBird = {
+          commonName: "Bird B", scientificName: "GenusB b", genus: "GenusB", family: "FamilyY"
+        };
+        return api.getHintRelationship({
+          commonName: "Bird A", scientificName: "GenusA a", genus: "GenusA", family: "FamilyX"
+        }) === null;
       })(),
       sameGenusShowsSpeciesClue: (() => {
         api.state.mysteryBird = {
@@ -779,6 +858,8 @@ test("MetaAves rejects unrelated Wikipedia homonyms for taxa", async ({ page }) 
   });
   assert(result.rejectsPasta, "Taxon Wikipedia validator accepted the unrelated Pici pasta page");
   assert(result.acceptsTaxon, "Taxon Wikipedia validator rejected the disambiguated Pici taxon page");
-  assert(result.sameFamilyDifferentGenusShowsBoth, "Same-family/different-genus guess must enable both clue categories");
+  assert(result.sameFamilyDifferentGenusShowsGenusOnly, "Same-family/different-genus guess must enable only the genus clue");
   assert(result.sameGenusShowsSpeciesClue, "Same-genus guess must enable the species clue");
+  assert(result.sameSpeciesDoesNotShowClue, "Guessing the mystery species must not show a clue");
+  assert(result.differentFamilyDoesNotShowClue, "Different-family guesses must not unlock genus or species clues");
 });

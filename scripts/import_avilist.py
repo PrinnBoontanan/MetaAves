@@ -120,7 +120,8 @@ CLADE_PATHS_BY_ORDER = {
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Aequornithes"
+        "Aequornithes",
+        "Feraequornithes"
     ],
     "Procellariiformes": [
         "Neornithes",
@@ -128,7 +129,8 @@ CLADE_PATHS_BY_ORDER = {
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Aequornithes"
+        "Aequornithes",
+        "Feraequornithes"
     ],
     "Ciconiiformes": [
         "Neornithes",
@@ -1406,6 +1408,24 @@ def load_clade_parent_map(path):
     return parents
 
 
+
+
+def load_clade_backbone_config(path):
+    """Read current order/family lineage mappings from clades.json.
+
+    The metadata file is the single source of truth. Module-level maps are
+    retained only as backward-compatible fallbacks for older local datasets.
+    """
+    if not path.exists():
+        return {"orderPaths": {}, "passerineFamilyPaths": {}, "nonpasserineFamilyPaths": {}}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    meta = data.get("_meta", {})
+    return {
+        "orderPaths": meta.get("orderCladePaths", {}),
+        "passerineFamilyPaths": meta.get("passerineFamilyCladePaths", {}),
+        "nonpasserineFamilyPaths": meta.get("nonpasserineFamilyCladePaths", {}),
+    }
+
 def normalize_clade_path(path, parent_by_name):
     """Restore every known parent and return a broad-to-specific path."""
     result = []
@@ -1723,9 +1743,9 @@ def main():
     post_order_clade_membership = {}
     unmapped_orders = set()
 
-    clade_parent_by_name = load_clade_parent_map(
-        Path("data") / "clades.json"
-    )
+    clade_config_path = Path("data") / "clades.json"
+    clade_parent_by_name = load_clade_parent_map(clade_config_path)
+    clade_backbone = load_clade_backbone_config(clade_config_path)
 
     taxa = {
         "class:Aves": {
@@ -1797,13 +1817,27 @@ def main():
         birds.append(bird)
 
         order_name = bird.get("order")
-        order_clade_path = list(CLADE_PATHS_BY_ORDER.get(order_name, []))
+        order_clade_path = list(
+            clade_backbone["orderPaths"].get(
+                order_name,
+                CLADE_PATHS_BY_ORDER.get(order_name, [])
+            )
+        )
 
         family_name = bird.get("family")
-        family_clade_path = (
-            PASSERINE_FAMILY_CLADE_PATHS.get(family_name)
+        family_mapping = (
+            clade_backbone["passerineFamilyPaths"]
             if order_name == "Passeriformes"
-            else NONPASSERINE_FAMILY_CLADE_PATHS.get(family_name)
+            else clade_backbone["nonpasserineFamilyPaths"]
+        )
+        fallback_family_mapping = (
+            PASSERINE_FAMILY_CLADE_PATHS
+            if order_name == "Passeriformes"
+            else NONPASSERINE_FAMILY_CLADE_PATHS
+        )
+        family_clade_path = family_mapping.get(
+            family_name,
+            fallback_family_mapping.get(family_name)
         )
 
         # Build one broad-to-specific lineage.  The family path supplies the
@@ -1823,7 +1857,7 @@ def main():
                 family_clade_path,
                 clade_parent_by_name,
             )
-        elif order_name:
+        elif order_name and not order_clade_path:
             unmapped_orders.add(order_name)
 
         parent_id = "class:Aves"
@@ -1872,7 +1906,7 @@ def main():
                 "_meta": {
                     "version": 2,
                     "generatedBy": "scripts/import_avilist.py",
-                    "source": "Wikipedia bird phylogeny pages, using Stiller et al. 2024 where those pages identify that topology",
+                    "source": "data/clades.json orderCladePaths and family paths, including Sangster & Mayr (2021) for Feraequornithes.",
                     "policy": "Detailed named clades are included where the source provides a usable lineage. Contested alternative deep Neoaves relationships are not mixed into the same lineage."
                 },
                 "species": clade_membership,
