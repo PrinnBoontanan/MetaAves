@@ -3321,6 +3321,14 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
     // This check intentionally runs before Diet/Behavior classification.
     const physicalTraitSignal =
         /\b(?:plumage|plumaged|feathers?|bill|beak|tongue|wings?|tail|crest|throat|breast|belly|abdomen|back|mantle|crown|upperparts|underparts|eye[- ]ring|moustachial|malar|supercilium|legs?|feet|iris|body length|body size|weight|weighs|colour|color|coloured|colored|iridescent|rufous|streaks?|stripes?|markings?|patches?)\b/i;
+    const explicitMorphologySignal =
+        /\b(?:plumage|plumaged|feathers?|bill|beak|tongue|crest|throat|breast|belly|abdomen|back|mantle|crown|upperparts|underparts|eye[- ]ring|moustachial|malar|supercilium|legs?|feet|iris|body length|body size|weight|weighs|colour|color|coloured|colored|iridescent|rufous|streaks?|stripes?|markings?|patches?)\b/i;
+    const behaviorMotionSignal =
+        /\b(?:flight is|flies|flying|soars?|glides?|hovers?|dives?|swims?|wades?|perches?)\b/i;
+    const appearanceSignal = (
+        physicalTraitSignal.test(text) &&
+        !(behaviorMotionSignal.test(text) && !explicitMorphologySignal.test(text))
+    );
     const sexOrAgeAppearanceSignal =
         /\b(?:male|female|sexes|adult|juvenile|immature)\b/i.test(text) &&
         /\b(?:similar|different|larger|smaller|longer|shorter|brown|black|white|yellow|red|green|blue|grey|gray|olive|crimson|rufous|bright|dark|pale|streaked|spotted)\b/i.test(text);
@@ -3329,11 +3337,11 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
         /\b(?:male|female|plumage|feathers?|body|head|back|throat|breast|belly|wing|tail|crown)\b/i.test(text);
 
     if (category === "appearance") {
-        return physicalTraitSignal.test(text) || sexOrAgeAppearanceSignal || colorAppearanceSignal;
+        return appearanceSignal || sexOrAgeAppearanceSignal || colorAppearanceSignal;
     }
     if (
         category !== "appearance" &&
-        (physicalTraitSignal.test(text) || sexOrAgeAppearanceSignal || colorAppearanceSignal)
+        (appearanceSignal || sexOrAgeAppearanceSignal || colorAppearanceSignal)
     ) {
         return false;
     }
