@@ -16,9 +16,14 @@
       {
         "name": "Stiller et al. 2024",
         "note": "Selected deep Neoaves backbone."
+      },
+      {
+        "name": "Sangster & Mayr (2021) — Feraequornithes",
+        "url": "https://doi.org/10.3897/vertebrate-zoology.71.e61728",
+        "note": "Defines Feraequornithes as the clade comprising Procellariiformes, Sphenisciformes, Ciconiiformes, Suliformes and Pelecaniformes; Gaviiformes remains outside it."
       }
     ],
-    "uncertaintyPolicy": "Ranked AviList taxonomy remains authoritative. Named phylogenetic clades are an enrichment layer. Passerine intermediate groups are included where family-level placement is documented; uncertain deep relationships are not invented.",
+    "uncertaintyPolicy": "AviList ranked taxonomy remains authoritative. Named phylogenetic clades are inherited from the order- and family-level backbone paths; uncertain relationships are not inferred beyond those documented paths.",
     "orderCladePaths": {
       "Struthioniformes": [
         "Neornithes",
@@ -122,7 +127,8 @@
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Aequornithes"
+        "Aequornithes",
+        "Feraequornithes"
       ],
       "Procellariiformes": [
         "Neornithes",
@@ -130,7 +136,8 @@
         "Neoaves",
         "Elementaves",
         "Phaethoquornithes",
-        "Aequornithes"
+        "Aequornithes",
+        "Feraequornithes"
       ],
       "Ciconiiformes": [
         "Neornithes",
@@ -1268,26 +1275,26 @@
         "Galbuli"
       ],
       "Lybiidae": [
-        
-      "Pici"],
+        "Pici"
+      ],
       "Megalaimidae": [
-        
-      "Pici"],
+        "Pici"
+      ],
       "Ramphastidae": [
-        
-      "Pici"],
+        "Pici"
+      ],
       "Semnornithidae": [
-        
-      "Pici"],
+        "Pici"
+      ],
       "Capitonidae": [
-        
-      "Pici"],
+        "Pici"
+      ],
       "Indicatoridae": [
-        
-      "Pici"],
+        "Pici"
+      ],
       "Picidae": [
-        
-      "Pici"],
+        "Pici"
+      ],
       "Strigopidae": [
         "Strigopoidea"
       ],
@@ -2183,7 +2190,7 @@
     "status": "intermediate_rank",
     "description": "Piciform suborder containing jacamars and puffbirds."
   },
-    "clade:Pici": {
+  "clade:Pici": {
     "id": "clade:Pici",
     "name": "Pici",
     "rank": "suborder",
