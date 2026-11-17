@@ -139,9 +139,16 @@ def main() -> None:
         actual_path = membership.get("species", {}).get(scientific)
         if expected_order_path and not isinstance(actual_path, list):
             fail(f"{scientific} has no species clade-membership path")
-        missing = [name for name in expected_order_path if name not in (actual_path or [])]
+        expected_family_path = family_paths.get(bird.get("family"), [])
+        missing = [name for name in [*expected_order_path, *expected_family_path] if name not in (actual_path or [])]
         if missing:
-            fail(f"{scientific} is missing order-level clades: " + ", ".join(missing))
+            fail(f"{scientific} is missing expected order/family clades: " + ", ".join(missing))
+
+    for order in ("Procellariiformes", "Sphenisciformes"):
+        if "Feraequornithes" not in order_paths.get(order, []):
+            fail(f"{order} is missing the documented Feraequornithes clade")
+    if "Feraequornithes" in order_paths.get("Gaviiformes", []):
+        fail("Gaviiformes must remain outside Feraequornithes")
 
     # Every clade membership path must agree with the parent links declared in clades.json.
     clade_parent_by_name = {}

@@ -8034,15 +8034,16 @@ async function fetchExternalBirdStudyData(bird) {
     return pending;
 }
 
-function mergeExternalStudyData(wikipediaStudy, externalStudy, bird) {
+function mergeExternalStudyData(wikipediaStudy, externalStudy, bird, wikipediaDescription = "") {
     const wiki = wikipediaStudy || {};
     const external = externalStudy || {};
+    const combine = (...values) => values.filter(Boolean).join(" ");
     return deduplicateStudyData({
-        description: "",
-        habitatDistribution: external.habitatDistribution || wiki.habitatDistribution || bird?.distribution || "",
-        diet: external.diet || wiki.diet || "",
-        behavior: external.behavior || wiki.behavior || "",
-        breeding: external.breeding || wiki.breeding || "",
+        description: wikipediaDescription || wiki.description || "",
+        habitatDistribution: combine(external.habitatDistribution, wiki.habitatDistribution, bird?.distribution),
+        diet: combine(external.diet, wiki.diet),
+        behavior: combine(external.behavior, wiki.behavior),
+        breeding: combine(external.breeding, wiki.breeding),
         conservation: external.conservation || wiki.conservation || "",
         sources: external.sources || []
     });
@@ -8340,14 +8341,12 @@ async function showGameOverCard(result) {
     const studyData = mergeExternalStudyData(
         wikipediaStudy,
         preloaded?.externalStudy || {},
-        bird
+        bird,
+        limitWikipediaSentences(wiki?.summary?.extract || "", 6, 1400)
     );
 
     // Keep the description anchored to the Wikipedia lead as requested.
-    setStudyValue(
-        "Description",
-        limitWikipediaSentences(wiki?.summary?.extract || "", 6, 1400)
-    );
+    setStudyValue("Description", studyData.description);
     setStudyValue("Habitat & Distribution", studyData.habitatDistribution);
     setStudyValue("Diet", studyData.diet);
     setStudyValue("Behavior", studyData.behavior);

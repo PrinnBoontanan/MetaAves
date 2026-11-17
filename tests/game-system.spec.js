@@ -194,6 +194,32 @@ async function auditDatabase(data) {
     }
   }
 
+
+  for (const bird of birds) {
+    const expected = [
+      ...(orderPaths[bird.order] || []),
+      ...(familyPaths[bird.family] || [])
+    ];
+    const actual = membership.species?.[bird.scientificName];
+    if (expected.length && !Array.isArray(actual)) {
+      errors.push("Missing complete species clade membership: " + bird.scientificName);
+      continue;
+    }
+    const missing = expected.filter(name => !actual.includes(name));
+    if (missing.length) {
+      errors.push("Incomplete clade membership for " + bird.scientificName + ": " + missing.join(", "));
+    }
+  }
+
+  for (const order of ["Procellariiformes", "Sphenisciformes"]) {
+    if (!(orderPaths[order] || []).includes("Feraequornithes")) {
+      errors.push(order + " is missing the documented Feraequornithes clade");
+    }
+  }
+  if ((orderPaths.Gaviiformes || []).includes("Feraequornithes")) {
+    errors.push("Gaviiformes must remain outside Feraequornithes");
+  }
+
   const cladeByName = new Map(
     Object.values(clades)
       .filter(x => x && x.id && x.name)
@@ -819,7 +845,7 @@ test("MetaAves validates taxon pages and enforces two-stage clue progression", a
         return api.getHintRelationship({
           commonName: "Bird A", scientificName: "GenusA a", genus: "GenusA", family: "FamilyX"
         }) === null;
-      })()
+      })(),
       sameGenusShowsSpeciesClue: (() => {
         api.state.mysteryBird = {
           commonName: "Bird B", scientificName: "GenusA b", genus: "GenusA", family: "FamilyX"
