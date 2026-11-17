@@ -199,14 +199,29 @@ def main() -> None:
         if not name:
             continue
         parent = str(entry.get("parent") or "").strip()
-        clade_parent_by_name[name] = parent.split(":", 1)[1] if parent.startswith("clade:") else parent or None
+        clade_parent_by_name[name] = parent or None
 
     def check_clade_path(path, label):
         for index in range(1, len(path)):
             child = path[index]
             expected_parent = path[index - 1]
             declared_parent = clade_parent_by_name.get(child)
-            if declared_parent and declared_parent != expected_parent:
+            if not declared_parent:
+                continue
+
+            # Membership paths intentionally omit ranked taxonomy nodes.
+            # A clade may therefore declare an order as its parent while the
+            # previous item in the compressed path is that order's clade
+            # backbone (e.g. Galloanserae -> order:Anseriformes -> Anhimae).
+            if declared_parent.startswith("clade:"):
+                parent_matches = declared_parent == "clade:" + expected_parent
+            elif declared_parent.startswith("order:"):
+                order_name = declared_parent.split(":", 1)[1]
+                parent_matches = expected_parent in order_paths.get(order_name, [])
+            else:
+                parent_matches = False
+
+            if not parent_matches:
                 fail(
                     f"{label} has inconsistent clade parent: "
                     f"{child} declares {declared_parent}, path says {expected_parent}"
