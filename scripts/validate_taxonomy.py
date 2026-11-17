@@ -62,16 +62,24 @@ def main() -> None:
         species_node = taxonomy_species.get(scientific)
         if not species_node:
             fail(f"taxonomy is missing a species node for {scientific}")
-        parent = taxonomy.get(species_node.get("parent"))
-        if not isinstance(parent, dict) or parent.get("rank") != "genus" or parent.get("name") != bird.get("genus"):
+        genus_node = taxonomy.get(species_node.get("parent"))
+        if not isinstance(genus_node, dict) or genus_node.get("rank") != "genus" or genus_node.get("name") != bird.get("genus"):
             fail(f"species-to-genus taxonomy link is inconsistent for {scientific}")
+        family_node = taxonomy.get(genus_node.get("parent"))
+        if not isinstance(family_node, dict) or family_node.get("rank") != "family" or family_node.get("name") != bird.get("family"):
+            fail(f"genus-to-family taxonomy link is inconsistent for {scientific}")
+        order_node = taxonomy.get(family_node.get("parent"))
+        if not isinstance(order_node, dict) or order_node.get("rank") != "order" or order_node.get("name") != bird.get("order"):
+            fail(f"family-to-order taxonomy link is inconsistent for {scientific}")
+        class_node = taxonomy.get(order_node.get("parent"))
+        if not isinstance(class_node, dict) or class_node.get("rank") != "class" or class_node.get("name") != "Aves":
+            fail(f"order-to-Aves taxonomy link is inconsistent for {scientific}")
 
     meta = clades.get("_meta", {})
     order_paths = meta.get("orderCladePaths", {})
-    family_paths = {
-        **meta.get("passerineFamilyCladePaths", {}),
-        **meta.get("nonpasserineFamilyCladePaths", {}),
-    }
+    passerine_family_paths = meta.get("passerineFamilyCladePaths", {})
+    nonpasserine_family_paths = meta.get("nonpasserineFamilyCladePaths", {})
+    family_paths = {**passerine_family_paths, **nonpasserine_family_paths}
 
     if not isinstance(order_paths, dict):
         fail("clades._meta.orderCladePaths is missing or invalid")
@@ -84,18 +92,26 @@ def main() -> None:
         for bird in birds
         if bird.get("order") == "Passeriformes"
     }
+    bird_nonpasserine_families = {
+        str(bird.get("family") or "").strip()
+        for bird in birds
+        if bird.get("order") != "Passeriformes"
+    }
     missing_order_backbones = sorted(bird_orders - set(order_paths))
     extra_order_backbones = sorted(set(order_paths) - bird_orders)
     if missing_order_backbones:
         fail("missing clade backbone for orders: " + ", ".join(missing_order_backbones))
     if extra_order_backbones:
         fail("stale clade backbone for orders: " + ", ".join(extra_order_backbones))
-    missing_passerine_families = sorted(bird_passerine_families - set(family_paths))
-    extra_passerine_families = sorted(set(family_paths) - bird_passerine_families)
+    missing_passerine_families = sorted(bird_passerine_families - set(passerine_family_paths))
+    extra_passerine_families = sorted(set(passerine_family_paths) - bird_passerine_families)
+    extra_nonpasserine_families = sorted(set(nonpasserine_family_paths) - bird_nonpasserine_families)
     if missing_passerine_families:
         fail("missing passerine clade mapping for families: " + ", ".join(missing_passerine_families))
     if extra_passerine_families:
         fail("stale passerine clade mapping for families: " + ", ".join(extra_passerine_families))
+    if extra_nonpasserine_families:
+        fail("stale non-passerine clade mapping for families: " + ", ".join(extra_nonpasserine_families))
 
     known_clades = set()
 
@@ -143,6 +159,13 @@ def main() -> None:
         missing = [name for name in [*expected_order_path, *expected_family_path] if name not in (actual_path or [])]
         if missing:
             fail(f"{scientific} is missing expected order/family clades: " + ", ".join(missing))
+        expected_post_path = family_paths.get(bird.get("family"), [])
+        actual_post_path = membership.get("postOrderSpecies", {}).get(scientific, [])
+        if expected_post_path and not isinstance(actual_post_path, list):
+            fail(f"{scientific} is missing its family-level post-order clade path")
+        missing_post = [name for name in expected_post_path if name not in (actual_post_path or [])]
+        if missing_post:
+            fail(f"{scientific} is missing family-level post-order clades: " + ", ".join(missing_post))
 
     for order in ("Procellariiformes", "Sphenisciformes"):
         if "Feraequornithes" not in order_paths.get(order, []):
