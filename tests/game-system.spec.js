@@ -805,6 +805,23 @@ test("MetaAves study taxonomy reads down the first column before the second and 
   assert(!result.deduped.behavior.includes("nests on cliffs"), "Habitat fact was repeated in behavior");
 });
 
+test("MetaAves uses the Wikipedia summary lead when detailed article sections are unavailable", async ({ page }) => {
+  await page.goto("/?e2e=1");
+  await page.waitForFunction(() => !!window.__METAAVES_E2E__);
+  const result = await page.evaluate(() => {
+    const api = window.__METAAVES_E2E__;
+    const study = api.getWikipediaStudyData(
+      "",
+      "",
+      "The greater necklaced laughingthrush is found in Bangladesh, Bhutan, China, India, Laos, Myanmar, Nepal, Thailand and Vietnam. Its natural habitats are subtropical or tropical moist lowland forest and subtropical or tropical moist montane forest. It feeds on insects and other small invertebrates."
+    );
+    return study;
+  });
+  assert(/Bangladesh|Thailand/.test(result.habitatDistribution), "Summary range information was not recovered");
+  assert(/lowland forest|montane forest/.test(result.habitatDistribution), "Summary habitat information was not recovered");
+  assert(/insects|invertebrates/.test(result.diet), "Summary diet information was not recovered");
+});
+
 test("MetaAves classifies mixed bird ecology prose into the correct study-card sections", async ({ page }) => {
   await page.goto("/?e2e=1");
   await page.waitForFunction(() => !!window.__METAAVES_E2E__);
