@@ -8560,6 +8560,7 @@ async function startGame() {
             deduplicateStudyData,
             extractWikipediaCategoryText,
             wikipediaSentenceMatchesCategory,
+            getWikipediaStudyData,
             isWikipediaTaxonPage
         };
     }
