@@ -89,6 +89,7 @@ const gameState = {
     thaiNameCache: new Map(),
     taxonCardRequestId: 0,
     hintCache: new Map(),
+    genusStudyPreloadCache: new Map(),
     hintRequestId: 0,
     thaiNameOverrides: {},
     thaiNamesDatabase: {}
@@ -515,6 +516,10 @@ function startNewRoundForMode(mode) {
     // large batch of Wikipedia/Wikidata requests.
     gameState.studyPreloadCache.clear();
     preloadStudyCardData(gameState.mysteryBird);
+
+    // The mystery genus is known from the beginning. Fetch its verified
+    // genus-level article while the player is making guesses.
+    preloadGenusStudyData(gameState.mysteryBird.genus);
 
     gameState.hintCache.clear();
     gameState.hintRequestId++;
@@ -1428,6 +1433,11 @@ function makeGuess() {
     }
 
     gameState.guesses.push(bird);
+
+    // A guessed bird can unlock a genus comparison. Start preparing that
+    // genus immediately, not when the player later opens the clue.
+    if (bird.genus) preloadGenusStudyData(bird.genus);
+
     gameState.guessesRemaining--;
 
     const isCorrect =
@@ -3331,7 +3341,9 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
             ["behavior", "behaviour", "shy", "secretive", "quiet",
              "social", "solitary", "flock", "flocks", "pair", "pairs",
              "territor", "roost", "migrat", "vocal", "call", "calls",
-             "flight", "flies", "forages", "courtship", "display"]
+             "flight", "flies", "forages", "foraging", "dominant",
+             "dominance", "mixed-species", "mimicry", "courtship",
+             "display", "interacts", "association", "associations"]
         ],
 
         breeding: [
@@ -3483,17 +3495,15 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
         );
 
         if (isDedicated) {
-            if (category === "diet") {
-                // Wikipedia sections such as "Feeding" often mix actual diet
-                // with foraging behaviour, habitat, or other ecology details.
-                // Keep only sentences that contain clear food/diet evidence.
-                for (const sentence of splitWikipediaSentences(text)) {
-                    if (wikipediaSentenceMatchesCategory(sentence, category)) {
-                        values.push(sentence);
-                    }
+            // Dedicated Wikipedia sections are not guaranteed to contain
+            // only the subject named by their heading. "Behavior and ecology"
+            // commonly mixes feeding, habitat, social interactions and
+            // breeding. Classify sentence-by-sentence for every field so a
+            // sentence about flock dominance can never become a diet fact.
+            for (const sentence of splitWikipediaSentences(text)) {
+                if (wikipediaSentenceMatchesCategory(sentence, category)) {
+                    values.push(sentence);
                 }
-            } else {
-                values.push(text);
             }
         }
     }
@@ -7132,6 +7142,37 @@ function getHintStudyFromWikiData(data) {
     return getHintStudyFromSummary(data.summary);
 }
 
+// Genus pages are fetched in the background as soon as a round/guess makes
+// them relevant. The same promise is reused by the clue UI, so opening a clue
+// normally reads prepared data instead of starting a network request.
+function preloadGenusStudyData(genus) {
+    const name = String(genus || "").trim();
+    if (!name) return Promise.resolve(null);
+
+    if (new URLSearchParams(window.location.search).get("e2e") === "1") {
+        return Promise.resolve(null);
+    }
+
+    const key = name.toLowerCase();
+    const existing = gameState.genusStudyPreloadCache.get(key);
+    if (existing) return existing;
+
+    const pending = fetchWikipediaPageData(
+        name,
+        true,
+        "taxon",
+        "",
+        false,
+        "genus"
+    ).then(getHintStudyFromWikiData).catch(error => {
+        console.warn("Genus study preload failed:", name, error);
+        return null;
+    });
+
+    gameState.genusStudyPreloadCache.set(key, pending);
+    return pending;
+}
+
 function getBiologicalSummaryTraits(study, limit = 4) {
     if (!study) return [];
 
@@ -7639,17 +7680,12 @@ async function showSpeciesHint(guessedBird, anchor) {
             if (relationship.rank === "Genus" || relationship.rank === "Both") {
                 // GENUS SYSTEM: fetch only the two genera. No species study
                 // is loaded and no mystery-species traits are compared.
-                const [mysteryGenusData, guessedGenusData] = await Promise.all([
-                    fetchWikipediaPageData(mystery.genus, true, "taxon", "", false, "genus"),
-                    fetchWikipediaPageData(guessedBird.genus, true, "taxon", "", false, "genus")
+                const [mysteryGenusStudy, guessedGenusStudy] = await Promise.all([
+                    preloadGenusStudyData(mystery.genus),
+                    preloadGenusStudyData(guessedBird.genus)
                 ]);
 
                 if (requestId !== gameState.hintRequestId) return;
-
-                const mysteryGenusStudy =
-                    getHintStudyFromWikiData(mysteryGenusData);
-                const guessedGenusStudy =
-                    getHintStudyFromWikiData(guessedGenusData);
 
                 hintData = buildGenusHint(
                     mysteryGenusStudy,
