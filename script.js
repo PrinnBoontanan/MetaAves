@@ -7973,7 +7973,16 @@ function renderStudyTaxonomyRows(container, rows) {
 function classifyExternalStudySentence(sentence) {
     // Appearance wins over diet when a sentence describes feeding anatomy,
     // such as a bill or tongue adapted for nectar feeding.
-    if (/\b(?:plumage|feathers?|bill|beak|tongue|wings?|tail|crest|throat|breast|belly|upperparts|underparts|eye[- ]ring|legs?|feet|iris|body length|weighs|weight|iridescent|rufous|crimson)\b/i.test(sentence)) {
+    const externalAppearanceSignal =
+        /\b(?:plumage|feathers?|bill|beak|tongue|wings?|tail|crest|throat|breast|belly|upperparts|underparts|eye[- ]ring|legs?|feet|iris|body length|weighs|weight|iridescent|rufous|crimson)\b/i.test(sentence);
+    const externalExplicitMorphologySignal =
+        /\b(?:plumage|feathers?|bill|beak|tongue|crest|throat|breast|belly|upperparts|underparts|eye[- ]ring|legs?|feet|iris|body length|weighs|weight|iridescent|rufous|crimson)\b/i.test(sentence);
+    const externalMotionSignal =
+        /\b(?:flight is|flies|flying|soars?|glides?|hovers?|dives?|swims?|wades?|perches?)\b/i.test(sentence);
+    if (
+        externalAppearanceSignal &&
+        !(externalMotionSignal && !externalExplicitMorphologySignal)
+    ) {
         return "appearance";
     }
     const patterns = {
