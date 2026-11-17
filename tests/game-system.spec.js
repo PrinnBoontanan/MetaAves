@@ -822,6 +822,53 @@ test("MetaAves uses the Wikipedia summary lead when detailed article sections ar
   assert(/insects|invertebrates/.test(result.diet), "Summary diet information was not recovered");
 });
 
+test("MetaAves separates Appearance from Description and other study-card categories", async ({ page }) => {
+  await page.goto("/?e2e=1");
+  await page.waitForFunction(() => !!window.__METAAVES_E2E__);
+  const result = await page.evaluate(() => {
+    const api = window.__METAAVES_E2E__;
+    const summary = [
+      "The crimson sunbird is a species of bird in the sunbird family.",
+      "The male has crimson plumage with a dark throat and blue-green crown.",
+      "The female is olive-brown above and yellowish below.",
+      "Both sexes have a medium-length, thin, down-curved bill and a brush-tipped tubular tongue, adaptations for nectar feeding.",
+      "It feeds largely on nectar and may also take insects.",
+      "Its flight is fast and direct on short wings.",
+      "It is the unofficial national bird of Singapore.",
+      "It occurs in forest and woodland across parts of South and Southeast Asia.",
+      "It builds a hanging nest in which it lays two eggs."
+    ].join(" ");
+    const study = api.getWikipediaStudyData("", "", summary);
+    return {
+      study,
+      billSentenceIsAppearance: api.wikipediaSentenceMatchesCategory(
+        "Both sexes have a thin, down-curved bill and a brush-tipped tongue adapted for nectar feeding.",
+        "appearance"
+      ),
+      billSentenceIsNotDiet: !api.wikipediaSentenceMatchesCategory(
+        "Both sexes have a thin, down-curved bill and a brush-tipped tongue adapted for nectar feeding.",
+        "diet"
+      ),
+      externalBillSentence: api.classifyExternalStudySentence(
+        "The bird has a long curved bill and a brush-tipped tongue."
+      )
+    };
+  });
+
+  assert(/crimson plumage/i.test(result.study.appearance), "Male plumage was not placed in Appearance");
+  assert(/olive-brown/i.test(result.study.appearance), "Female plumage was not placed in Appearance");
+  assert(/down-curved bill|brush-tipped tubular tongue/i.test(result.study.appearance), "Bill/tongue anatomy was not placed in Appearance");
+  assert(!/crimson plumage|olive-brown|down-curved bill/i.test(result.study.description), "Appearance facts leaked into Description");
+  assert(/feeds largely on nectar|takes insects/i.test(result.study.diet), "Actual food sources were not placed in Diet");
+  assert(/flight is fast and direct/i.test(result.study.behavior), "Flight behavior was not placed in Behavior");
+  assert(/forest and woodland/i.test(result.study.habitatDistribution), "Habitat/range was not placed in Habitat & Distribution");
+  assert(/hanging nest|two eggs/i.test(result.study.breeding), "Nesting/eggs were not placed in Breeding");
+  assert(/unofficial national bird/i.test(result.study.description), "General species fact was incorrectly discarded from Description");
+  assert(result.billSentenceIsAppearance, "Bill/tongue anatomy must classify as Appearance");
+  assert(result.billSentenceIsNotDiet, "Feeding-adaptation anatomy must not classify as Diet");
+  assert(result.externalBillSentence === "appearance", "External-source appearance sentence was not classified as Appearance");
+});
+
 test("MetaAves classifies mixed bird ecology prose into the correct study-card sections", async ({ page }) => {
   await page.goto("/?e2e=1");
   await page.waitForFunction(() => !!window.__METAAVES_E2E__);
