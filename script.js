@@ -7915,7 +7915,7 @@ function classifyExternalStudySentence(sentence) {
         habitatDistribution: /\b(?:habitat|habitats|inhabits?|occurs?|distributed|distribution|range|found in|found on|forests?|woodlands?|grasslands?|wetlands?|marsh(?:es)?|mangroves?|savannas?|coasts?|islands?|mountains?|elevations?|lowlands?)\b/i,
         diet: /\b(?:diet|feeds? on|feeding on|eats?|consumes?|preys? on|food consists|insects?|fish|crustaceans?|mollus[ck]s?|seeds?|fruit|nectar|small mammals?|rodents?|reptiles?|amphibians?|carrion)\b/i,
         breeding: /\b(?:breeds?|breeding|nests?|nesting|nest|eggs?|clutch|incubat(?:es|ion)|fledg(?:es|ing)|courtship|mate|reproduct(?:ion|ive))\b/i,
-        behavior: /\b(?:behavior|behaviour|forag(?:es|ing)|hunts?|migrat(?:es|ory|ion)|flocks?|solitary|territorial|nocturnal|diurnal|soars?|glides?|hovers?|dives?|swims?|wades?|perches?|vocali[sz](?:es|ation)|calls?|song|display|roosts?)\b/i
+        behavior: /\b(?:behavior|behaviour|forag(?:es|ing)|hunts?|migrat(?:es|ory|ion)|flocks?|solitary|territorial|nocturnal|diurnal|soars?|glides?|hovers?|dives?|swims?|wades?|perches?|vocali[sz](?:es|ation)|calls?|song|display|roosts?|dominant|dominance|mimicry|mixed-species)\b/i
     };
     const scores = Object.entries(patterns).map(([category, pattern]) => ({
         category,
