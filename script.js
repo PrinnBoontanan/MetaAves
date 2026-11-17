@@ -4008,9 +4008,13 @@ function extractWikipediaWikitextSection(wikitext, candidates) {
     return bestText;
 }
 
-function getWikipediaStudyData(html, wikitext = "") {
+function getWikipediaStudyData(html, wikitext = "", summaryExtract = "") {
     const sections = extractWikipediaSections(html);
-    const lead = sections.__lead__ || "";
+    // REST summary is a reliable fallback when article HTML/wikitext is
+    // unavailable or section parsing fails. Reuse its sentences for the
+    // category fields instead of leaving Habitat/Diet/Behavior blank merely
+    // because the detailed article endpoint did not load.
+    const lead = sections.__lead__ || normalizeWikipediaText(summaryExtract) || "";
     const leadSentences = splitWikipediaSentences(lead);
 
     const wikipediaIucnStatus = formatWikipediaConservationStatus(
@@ -7099,7 +7103,7 @@ function getCachedHintStudy(bird) {
 
     const html = cached.html || "";
     const wikitext = cached.wikitext || "";
-    const parsed = getWikipediaStudyData(html, wikitext);
+    const parsed = getWikipediaStudyData(html, wikitext, cached.summary?.extract || "");
 
     if (parsed && Object.values(parsed).some(Boolean)) return parsed;
 
@@ -7135,7 +7139,8 @@ function getHintStudyFromWikiData(data) {
 
     const parsed = getWikipediaStudyData(
         data.html || "",
-        data.wikitext || ""
+        data.wikitext || "",
+        data.summary?.extract || ""
     );
 
     if (parsed && Object.values(parsed).some(Boolean)) return parsed;
@@ -8373,7 +8378,7 @@ async function showGameOverCard(result) {
         console.warn("Detailed taxonomy rendering failed:", error);
     }
 
-    const wikipediaStudy = getWikipediaStudyData(wiki?.html, wiki?.wikitext);
+    const wikipediaStudy = getWikipediaStudyData(wiki?.html, wiki?.wikitext, wiki?.summary?.extract || "");
     const studyData = mergeExternalStudyData(
         wikipediaStudy,
         preloaded?.externalStudy || {},
