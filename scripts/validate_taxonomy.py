@@ -113,21 +113,38 @@ def main() -> None:
     if extra_nonpasserine_families:
         fail("stale non-passerine clade mapping for families: " + ", ".join(extra_nonpasserine_families))
 
-    known_clades = set()
-
-    def collect_paths(value):
-        if isinstance(value, list):
-            for name in value:
-                if isinstance(name, str) and name.strip():
-                    known_clades.add(name.strip())
-
-    for path in order_paths.values():
-        collect_paths(path)
-    for path in family_paths.values():
-        collect_paths(path)
+    # Membership paths may legitimately contain any named clade node in
+    # clades.json, including intermediate clades that are not repeated in the
+    # configured order/family backbone arrays (for example Muscicapida).
+    # Build the valid-name set from the actual clade tree, not only from those
+    # narrower convenience mappings; otherwise valid species paths are
+    # incorrectly rejected by the validator.
+    known_clades = {
+        str(entry.get("name") or "").strip()
+        for clade_id, entry in clades.items()
+        if isinstance(clade_id, str)
+        and clade_id.startswith("clade:")
+        and isinstance(entry, dict)
+        and str(entry.get("name") or "").strip()
+    }
 
     if not known_clades:
         fail("no clades were found in clades.json")
+
+    # The configured backbone mappings must also reference real clade nodes.
+    for mapping_name, mapping in (
+        ("orderCladePaths", order_paths),
+        ("familyCladePaths", family_paths),
+    ):
+        for taxon_name, path in mapping.items():
+            if not isinstance(path, list):
+                fail(f"clades._meta.{mapping_name}[{taxon_name}] is not a list")
+            for clade_name in path:
+                if clade_name not in known_clades:
+                    fail(
+                        f"clades._meta.{mapping_name}[{taxon_name}] "
+                        f"references unknown clade: {clade_name}"
+                    )
 
     for section in MEMBERSHIP_SECTIONS:
         entries = membership.get(section, {})
