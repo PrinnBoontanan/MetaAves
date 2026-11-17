@@ -2,7 +2,7 @@
 
 **Bird taxonomy guessing game — a Metazooa-inspired game for exploring the diversity of birds.**
 
-[Play MetaAves on GitHub Pages](https://prinnboontanan.github.io/MetaAves/) · [View the source repository](https://github.com/PrinnBoontanan/MetaAves)
+[Play MetaAves on GitHub Pages](https://prinnboontanan.github.io/MetaAves/)
 
 **MetaAves** is a bird-only taxonomy guessing game inspired by Metazooa.
 
