@@ -8553,6 +8553,8 @@ async function startGame() {
             getHintRelationship,
             renderStudyTaxonomyRows,
             deduplicateStudyData,
+            extractWikipediaCategoryText,
+            wikipediaSentenceMatchesCategory,
             isWikipediaTaxonPage
         };
     }
