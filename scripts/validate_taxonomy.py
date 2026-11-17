@@ -240,8 +240,17 @@ def main() -> None:
             if parent not in clades:
                 # Some clades intentionally attach directly to a ranked taxon
                 # such as the Passeriformes order rather than to another clade.
-                ranked_name = parent.split(":", 1)[1] if parent.startswith("clade:") else parent
-                if not any(key.endswith(":" + ranked_name) for key in taxonomy if isinstance(key, str)):
+                if parent.startswith("clade:"):
+                    fail(f"{clade_id} references missing parent {parent}")
+                ranked_name = parent.split(":", 1)[1] if ":" in parent else parent
+                if (
+                    parent not in taxonomy and
+                    not any(
+                        key.endswith(":" + ranked_name)
+                        for key in taxonomy
+                        if isinstance(key, str)
+                    )
+                ):
                     fail(f"{clade_id} references missing parent {parent}")
             elif clade_id not in (clades[parent].get("children") or []):
                 fail(f"{clade_id} is missing from its parent's children list")
