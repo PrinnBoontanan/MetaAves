@@ -3281,7 +3281,7 @@ function isDedicatedWikipediaHeading(heading, category) {
     // section. Its sentences must be classified individually rather than
     // copying the entire section into one category.
     const categoryTerms = {
-        description: ["description", "appearance", "identification"],
+        appearance: ["appearance", "plumage", "identification", "description"],
         habitat: ["habitat"],
         distribution: ["distribution", "range", "geographic range"],
         diet: ["diet", "feeding", "food"],
@@ -3315,6 +3315,36 @@ function isDedicatedWikipediaHeading(heading, category) {
 
 function wikipediaSentenceMatchesCategory(sentence, category) {
     const text = sentence.toLowerCase();
+
+    // Physical traits belong in Appearance even when the same sentence
+    // mentions feeding adaptations (for example, a brush-tipped tongue).
+    // This check intentionally runs before Diet/Behavior classification.
+    const physicalTraitSignal =
+        /\b(?:plumage|plumaged|feathers?|bill|beak|tongue|wings?|tail|crest|throat|breast|belly|abdomen|back|mantle|crown|upperparts|underparts|eye[- ]ring|moustachial|malar|supercilium|legs?|feet|iris|body length|body size|weight|weighs|colour|color|coloured|colored|iridescent|rufous|streaks?|stripes?|markings?|patches?)\b/i;
+    const explicitMorphologySignal =
+        /\b(?:plumage|plumaged|feathers?|bill|beak|tongue|crest|throat|breast|belly|abdomen|back|mantle|crown|upperparts|underparts|eye[- ]ring|moustachial|malar|supercilium|legs?|feet|iris|body length|body size|weight|weighs|colour|color|coloured|colored|iridescent|rufous|streaks?|stripes?|markings?|patches?)\b/i;
+    const behaviorMotionSignal =
+        /\b(?:flight is|flies|flying|soars?|glides?|hovers?|dives?|swims?|wades?|perches?)\b/i;
+    const appearanceSignal = (
+        physicalTraitSignal.test(text) &&
+        !(behaviorMotionSignal.test(text) && !explicitMorphologySignal.test(text))
+    );
+    const sexOrAgeAppearanceSignal =
+        /\b(?:male|female|sexes|adult|juvenile|immature)\b/i.test(text) &&
+        /\b(?:similar|different|larger|smaller|longer|shorter|brown|black|white|yellow|red|green|blue|grey|gray|olive|crimson|rufous|bright|dark|pale|streaked|spotted)\b/i.test(text);
+    const colorAppearanceSignal =
+        /\b(?:crimson|scarlet|rufous|olive[- ]brown|iridescent|yellow|red|blue|green|black|white|grey|gray)\b/i.test(text) &&
+        /\b(?:male|female|plumage|feathers?|body|head|back|throat|breast|belly|wing|tail|crown)\b/i.test(text);
+
+    if (category === "appearance") {
+        return appearanceSignal || sexOrAgeAppearanceSignal || colorAppearanceSignal;
+    }
+    if (
+        category !== "appearance" &&
+        (appearanceSignal || sexOrAgeAppearanceSignal || colorAppearanceSignal)
+    ) {
+        return false;
+    }
 
     const rules = {
         habitatDistribution: [
@@ -4008,6 +4038,26 @@ function extractWikipediaWikitextSection(wikitext, candidates) {
     return bestText;
 }
 
+function extractWikipediaDescription(sections, lead) {
+    const descriptionSection = findWikipediaSection(sections, ["description", "overview"]);
+    const candidates = [
+        ...splitWikipediaSentences(descriptionSection),
+        ...splitWikipediaSentences(lead)
+    ];
+    const excludedCategories = [
+        "appearance", "habitatDistribution", "diet",
+        "behavior", "breeding", "conservation"
+    ];
+    const kept = [];
+    for (const sentence of candidates) {
+        if (excludedCategories.some(category =>
+            wikipediaSentenceMatchesCategory(sentence, category)
+        )) continue;
+        if (!kept.includes(sentence)) kept.push(sentence);
+    }
+    return limitWikipediaSentences(kept.join(" "), 3, 900);
+}
+
 function getWikipediaStudyData(html, wikitext = "", summaryExtract = "") {
     const sections = extractWikipediaSections(html);
     // REST summary is a reliable fallback when article HTML/wikitext is
@@ -4027,17 +4077,18 @@ function getWikipediaStudyData(html, wikitext = "", summaryExtract = "") {
     const data = {
         sections,
 
-        description: limitWikipediaSentences(
-            findWikipediaSection(sections, [
-                "description",
-                "description and identification",
-                "description and appearance",
-                "appearance",
-                "identification"
-            ]) || lead,
-            7,
-            1800
-        ),
+        // Keep the general species overview separate from physical traits.
+        // Description sections are split sentence-by-sentence below rather
+        // than copied wholesale (bird articles often mix plumage, feeding,
+        // behavior and range in one section).
+        description: extractWikipediaDescription(sections, lead),
+
+        appearance: extractWikipediaCategoryText(sections, "appearance", [
+            "appearance",
+            "plumage",
+            "identification",
+            "description"
+        ]),
 
         habitatDistribution: extractWikipediaCategoryText(
             sections,
@@ -4122,6 +4173,10 @@ function getWikipediaStudyData(html, wikitext = "", summaryExtract = "") {
     const leadMatches = category => leadSentences.filter(sentence =>
         wikipediaSentenceMatchesCategory(sentence, category)
     );
+
+    if (!data.appearance) {
+        data.appearance = leadMatches("appearance").slice(0, 4).join(" ");
+    }
 
     if (!data.habitatDistribution) {
         data.habitatDistribution =
@@ -6717,7 +6772,7 @@ function getHintStudyTraits(study) {
 
 function getHintStudyField(study, category) {
     const fields = {
-        appearance: "description",
+        appearance: "appearance",
         habitat: "habitatDistribution",
         behavior: "behavior",
         diet: "diet",
@@ -7916,11 +7971,26 @@ function renderStudyTaxonomyRows(container, rows) {
 }
 
 function classifyExternalStudySentence(sentence) {
+    // Appearance wins over diet when a sentence describes feeding anatomy,
+    // such as a bill or tongue adapted for nectar feeding.
+    const externalAppearanceSignal =
+        /\b(?:plumage|feathers?|bill|beak|tongue|wings?|tail|crest|throat|breast|belly|upperparts|underparts|eye[- ]ring|legs?|feet|iris|body length|weighs|weight|iridescent|rufous|crimson)\b/i.test(sentence);
+    const externalExplicitMorphologySignal =
+        /\b(?:plumage|feathers?|bill|beak|tongue|crest|throat|breast|belly|upperparts|underparts|eye[- ]ring|legs?|feet|iris|body length|weighs|weight|iridescent|rufous|crimson)\b/i.test(sentence);
+    const externalMotionSignal =
+        /\b(?:flight is|flies|flying|soars?|glides?|hovers?|dives?|swims?|wades?|perches?)\b/i.test(sentence);
+    if (
+        externalAppearanceSignal &&
+        !(externalMotionSignal && !externalExplicitMorphologySignal)
+    ) {
+        return "appearance";
+    }
     const patterns = {
+        appearance: /\b(?:male|female|sexes|plumage|feathers?|bill|beak|tongue|tail|crest|throat|breast|belly|upperparts|underparts|colour|color|crimson|olive|rufous|iridescent|body length|weighs|weight)\b/i,
         habitatDistribution: /\b(?:habitat|habitats|inhabits?|occurs?|distributed|distribution|range|found in|found on|forests?|woodlands?|grasslands?|wetlands?|marsh(?:es)?|mangroves?|savannas?|coasts?|islands?|mountains?|elevations?|lowlands?)\b/i,
         diet: /\b(?:diet|feeds? on|feeding on|eats?|consumes?|preys? on|food consists|insects?|fish|crustaceans?|mollus[ck]s?|seeds?|fruit|nectar|small mammals?|rodents?|reptiles?|amphibians?|carrion)\b/i,
         breeding: /\b(?:breeds?|breeding|nests?|nesting|nest|eggs?|clutch|incubat(?:es|ion)|fledg(?:es|ing)|courtship|mate|reproduct(?:ion|ive))\b/i,
-        behavior: /\b(?:behavior|behaviour|forag(?:es|ing)|hunts?|migrat(?:es|ory|ion)|flocks?|solitary|territorial|nocturnal|diurnal|soars?|glides?|hovers?|dives?|swims?|wades?|perches?|vocali[sz](?:es|ation)|calls?|song|display|roosts?|dominant|dominance|mimicry|mixed-species)\b/i
+        behavior: /\b(?:behavior|behaviour|flight|flies|flying|forag(?:es|ing)|hunts?|migrat(?:es|ory|ion)|flocks?|solitary|territorial|nocturnal|diurnal|soars?|glides?|hovers?|dives?|swims?|wades?|perches?|vocali[sz](?:es|ation)|calls?|song|display|roosts?|dominant|dominance|mimicry|mixed-species)\b/i
     };
     const scores = Object.entries(patterns).map(([category, pattern]) => ({
         category,
@@ -7930,7 +8000,7 @@ function classifyExternalStudySentence(sentence) {
 }
 
 function classifyExternalStudyText(values) {
-    const output = { habitatDistribution: [], diet: [], behavior: [], breeding: [] };
+    const output = { appearance: [], habitatDistribution: [], diet: [], behavior: [], breeding: [] };
     (Array.isArray(values) ? values : [values]).filter(Boolean).forEach(value => {
         const cleanText = normalizeWikipediaText(String(value).replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " "));
         splitWikipediaSentences(cleanText).forEach(sentence => {
@@ -8017,7 +8087,7 @@ async function fetchINaturalistStudyData(bird) {
 
 function deduplicateStudyData(studyData) {
     const result = { ...(studyData || {}) };
-    const orderedFields = ["description", "habitatDistribution", "diet", "behavior", "breeding", "conservation"];
+    const orderedFields = ["description", "appearance", "habitatDistribution", "diet", "behavior", "breeding", "conservation"];
     const seenSentences = [];
     const tokensFor = sentence => new Set(normalizeHintText(sentence).split(/\s+/).filter(token => token.length > 2));
     const overlaps = (left, right) => {
@@ -8069,7 +8139,7 @@ async function fetchExternalBirdStudyData(bird) {
             };
         }).catch(error => {
             console.warn("External bird study lookup failed:", key, error);
-            return { habitatDistribution: "", diet: "", behavior: "", breeding: "", conservation: "", sources: [] };
+            return { appearance: "", habitatDistribution: "", diet: "", behavior: "", breeding: "", conservation: "", sources: [] };
         });
     gameState.externalStudyCache.set(key, pending);
     return pending;
@@ -8081,6 +8151,7 @@ function mergeExternalStudyData(wikipediaStudy, externalStudy, bird, wikipediaDe
     const combine = (...values) => values.filter(Boolean).join(" ");
     return deduplicateStudyData({
         description: wikipediaDescription || wiki.description || "",
+        appearance: combine(external.appearance, wiki.appearance),
         habitatDistribution: combine(external.habitatDistribution, wiki.habitatDistribution, bird?.distribution),
         diet: combine(external.diet, wiki.diet),
         behavior: combine(external.behavior, wiki.behavior),
@@ -8282,6 +8353,7 @@ async function showGameOverCard(result) {
     details.before(photoPlaceholder);
 
     addStudySection("Description", unavailable);
+    addStudySection("Appearance", unavailable);
     addStudySection("Habitat & Distribution", unavailable);
     addStudySection("Diet", unavailable);
     addStudySection("Behavior", unavailable);
@@ -8327,11 +8399,17 @@ async function showGameOverCard(result) {
     // Paint the useful study card immediately from local taxonomy + the
     // lightweight Wikipedia summary. Detailed article sections are filled in
     // below without blocking this first render.
-    setStudyValue("Description", limitWikipediaSentences(
-        fastWiki?.summary?.extract || "",
-        6,
-        1400
-    ));
+    const fastStudy = getWikipediaStudyData(
+        "",
+        "",
+        fastWiki?.summary?.extract || ""
+    );
+    setStudyValue("Description", fastStudy.description);
+    setStudyValue("Appearance", fastStudy.appearance);
+    setStudyValue("Habitat & Distribution", fastStudy.habitatDistribution);
+    setStudyValue("Diet", fastStudy.diet);
+    setStudyValue("Behavior", fastStudy.behavior);
+    setStudyValue("Breeding", fastStudy.breeding);
 
     const fastImageSource = fastWiki?.summary?.thumbnail?.source;
     const fastPlaceholder = document.getElementById("study-photo-placeholder");
@@ -8388,6 +8466,7 @@ async function showGameOverCard(result) {
 
     // Keep the description anchored to the Wikipedia lead as requested.
     setStudyValue("Description", studyData.description);
+    setStudyValue("Appearance", studyData.appearance);
     setStudyValue("Habitat & Distribution", studyData.habitatDistribution);
     setStudyValue("Diet", studyData.diet);
     setStudyValue("Behavior", studyData.behavior);
@@ -8560,6 +8639,8 @@ async function startGame() {
             deduplicateStudyData,
             extractWikipediaCategoryText,
             wikipediaSentenceMatchesCategory,
+            classifyExternalStudySentence,
+            classifyExternalStudyText,
             getWikipediaStudyData,
             isWikipediaTaxonPage
         };
