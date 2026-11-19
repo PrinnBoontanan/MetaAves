@@ -3071,7 +3071,7 @@ function cleanWikipediaNode(node) {
 
 function isCleanWikipediaStudySentence(value) {
     const sentence = normalizeWikipediaText(value);
-    if (!sentence || sentence.length < 24) return false;
+    if (!sentence || sentence.length < 16) return false;
 
     // Taxonomic authority/subspecies-list entries are not natural-history
     // statements. They often look like "scutulata (Raffles, 1822) in ...".
@@ -8832,7 +8832,11 @@ async function startGame() {
             buildGenusHint,
             buildSpeciesHint,
             getBiologicalSummaryTraits,
-            getSummaryHintEvidenceSentence
+            getSummaryHintEvidenceSentence,
+            extractWikipediaSections,
+            fetchGBIFGenusStudyData,
+            fetchINaturalistGenusStudyData,
+            fetchExternalGenusStudyData
         };
     }
 }
