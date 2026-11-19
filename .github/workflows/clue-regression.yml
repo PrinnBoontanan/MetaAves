@@ -1,0 +1,46 @@
+name: MetaAves Clue and Study Card Regression
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clue-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    name: Clue and study-card regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start MetaAves
+        run: |
+          python3 -m http.server 8080 > /tmp/metaaves-server.log 2>&1 &
+          echo $! > /tmp/metaaves-server.pid
+
+      - name: Run all deterministic browser tests
+        run: npx playwright test tests/game-system.spec.js --workers=1 --grep-invert "full game-system audit"
+        env:
+          CI: "true"
+          METAAVES_BASE_URL: "http://localhost:8080"
