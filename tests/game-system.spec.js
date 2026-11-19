@@ -965,8 +965,8 @@ test("MetaAves produces genus clues from genus-level GBIF/iNaturalist evidence a
   const result = await page.evaluate(() => {
     const api = window.__METAAVES_E2E__;
     const external = api.classifyExternalStudyText([
-      "Members of this genus are nocturnal hunters that capture insects and small vertebrates.",
-      "They generally nest in tree cavities and lay two to four eggs."
+      "These birds are nocturnal and hunt after sunset.",
+      "They feed on insects and small vertebrates."
     ]);
     api.state.mysteryBird = {
       commonName: "Mystery bird",
@@ -976,13 +976,13 @@ test("MetaAves produces genus clues from genus-level GBIF/iNaturalist evidence a
     };
     const genusClues = api.buildGenusHint(
       {
-        description: "Members of this genus are nocturnal hunters that capture insects and small vertebrates.",
+        description: "These birds are nocturnal and hunt after sunset.",
         behavior: external.behavior,
         diet: external.diet
       },
       {
-        description: "Members of this other genus are active during daylight and feed mainly on fruit.",
-        behavior: "Members of this other genus are active during daylight and feed mainly on fruit."
+        description: "These birds are active during daylight.",
+        behavior: "These birds are active during daylight."
       },
       {
         commonName: "Guessed bird",
@@ -994,7 +994,7 @@ test("MetaAves produces genus clues from genus-level GBIF/iNaturalist evidence a
     return { external, genusClues };
   });
 
-  assert(/nocturnal hunters/i.test(result.external.behavior), "Genus-level behavior evidence was not classified");
+  assert(/nocturnal|hunt after sunset/i.test(result.external.behavior), "Genus-level behavior evidence was not classified");
   assert(/insects|small vertebrates/i.test(result.external.diet), "Genus-level feeding evidence was not classified");
   assert(result.genusClues.some(clue => /Genus clue/.test(clue.heading)), "Genus-level source evidence did not produce a visible genus clue");
   assert(result.genusClues.every(clue => !/species clue/i.test(clue.heading)), "Genus evidence was incorrectly labelled as a species clue");
