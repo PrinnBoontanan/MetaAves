@@ -917,7 +917,7 @@ test("MetaAves renders all Study Card sections when independent providers return
     const details = document.querySelector(".study-card-details");
     return {
       headings: [...details.querySelectorAll(".study-card-section h4")].map(item => item.textContent),
-      content: details.innerText,
+      content: details.textContent,
       overlayVisible: document.getElementById("game-over-overlay").classList.contains("visible"),
       mergedAppearance: mergedDirectly.appearance,
       renderedAppearance: renderedStudy?.appearance || ""
