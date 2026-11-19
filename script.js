@@ -8046,6 +8046,8 @@ function renderStudyTaxonomyRows(container, rows) {
 }
 
 function classifyExternalStudySentence(sentence) {
+    if (!isCleanWikipediaStudySentence(sentence)) return "";
+
     // Appearance wins over diet when a sentence describes feeding anatomy,
     // such as a bill or tongue adapted for nectar feeding.
     const externalAppearanceSignal =
@@ -8067,8 +8069,6 @@ function classifyExternalStudySentence(sentence) {
         breeding: /\b(?:breeds?|breeding|nests?|nesting|nest|eggs?|clutch|incubat(?:es|ion)|fledg(?:es|ing)|courtship|mate|reproduct(?:ion|ive))\b/i,
         behavior: /\b(?:behavior|behaviour|flight|flies|flying|forag(?:es|ing)|hunts?|migrat(?:es|ory|ion)|flocks?|solitary|territorial|nocturnal|diurnal|soars?|glides?|hovers?|dives?|swims?|wades?|perches?|vocali[sz](?:es|ation)|calls?|song|display|roosts?|dominant|dominance|mimicry|mixed-species)\b/i
     };
-    if (!isCleanWikipediaStudySentence(sentence)) return "";
-
     const scores = Object.entries(patterns).map(([category, pattern]) => ({
         category,
         score: (sentence.match(new RegExp(pattern.source, "gi")) || []).length
