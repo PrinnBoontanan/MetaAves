@@ -805,6 +805,127 @@ test("MetaAves study taxonomy reads down the first column before the second and 
   assert(!result.deduped.behavior.includes("nests on cliffs"), "Habitat fact was repeated in behavior");
 });
 
+test("MetaAves renders full ecological sections in the normal species card", async ({ page }) => {
+  await page.goto("/?e2e=1");
+  await page.waitForFunction(() => !!window.__METAAVES_E2E__);
+  const result = await page.evaluate(() => {
+    const api = window.__METAAVES_E2E__;
+    const bird = api.state.allBirds.find(item => item.genus && item.family && item.scientificName);
+    if (!bird) throw new Error("Loaded bird dataset has no species suitable for card rendering.");
+    api.state.mode = "world";
+    api.renderBirdCard(
+      bird,
+      {
+        summary: {
+          extract: "The test bird is a forest-dwelling bird species.",
+          content_urls: { desktop: { page: "https://en.wikipedia.org/wiki/Bird" } }
+        }
+      },
+      {},
+      "",
+      {
+        appearance: "It has a dark crown and a pale throat.",
+        habitatDistribution: "It inhabits lowland forest and woodland.",
+        diet: "It feeds on insects and small fruit.",
+        behavior: "It forages in the canopy and gives a repeated call.",
+        breeding: "It nests in a tree cavity and lays two eggs.",
+        conservation: "LC - Least Concern",
+        sources: [{ label: "GBIF", url: "https://www.gbif.org/" }]
+      }
+    );
+    const card = document.getElementById("taxon-card");
+    const headings = [...card.querySelectorAll(".taxon-card-study-sections h4")].map(item => item.textContent);
+    const text = card.querySelector(".taxon-card-study-sections")?.innerText || "";
+    return {
+      headings,
+      text,
+      sources: [...card.querySelectorAll(".taxon-card-study-sources a")].map(link => link.textContent),
+      contentGridArea: getComputedStyle(card.querySelector(".taxon-card-study-sections")).gridArea
+    };
+  });
+
+  for (const heading of ["Description", "Appearance", "Habitat & Distribution", "Diet", "Behavior", "Breeding", "Conservation"]) {
+    assert(result.headings.includes(heading), "Normal species card is missing the " + heading + " section");
+  }
+  assert(/dark crown/.test(result.text), "Appearance data did not reach the species card");
+  assert(/lowland forest/.test(result.text), "Habitat data did not reach the species card");
+  assert(/insects/.test(result.text), "Diet data did not reach the species card");
+  assert(/canopy/.test(result.text), "Behavior data did not reach the species card");
+  assert(/tree cavity/.test(result.text), "Breeding data did not reach the species card");
+  assert(result.sources.includes("GBIF"), "The species card did not show its verified source link");
+  assert(result.contentGridArea.includes("description"), "Ecological sections are not placed in the species-card content column");
+});
+
+test("MetaAves renders all Study Card sections when independent providers return usable data", async ({ page }) => {
+  await page.goto("/?e2e=1");
+  await page.waitForFunction(() => !!window.__METAAVES_E2E__);
+  const result = await page.evaluate(async () => {
+    const api = window.__METAAVES_E2E__;
+    const bird = api.state.allBirds.find(item => item.genus && item.family && item.scientificName);
+    if (!bird) throw new Error("Loaded bird dataset has no species suitable for Study Card rendering.");
+    api.state.mode = "world";
+    api.state.mysteryBird = bird;
+
+    const html = [
+      '<div class="mw-parser-output">',
+      '<p>The test bird is a forest-dwelling bird species.</p>',
+      '<h2><span class="mw-headline">Description</span></h2>',
+      '<p>The test bird is a forest-dwelling bird species.</p>',
+      '<h2><span class="mw-headline">Appearance</span></h2>',
+      '<p>It has a dark crown and a pale throat.</p>',
+      '<h2><span class="mw-headline">Habitat and distribution</span></h2>',
+      '<p>It inhabits lowland forest and woodland.</p>',
+      '<h2><span class="mw-headline">Diet</span></h2>',
+      '<p>It feeds on insects and small fruit.</p>',
+      '<h2><span class="mw-headline">Behaviour</span></h2>',
+      '<p>It forages in the canopy and gives a repeated call.</p>',
+      '<h2><span class="mw-headline">Breeding</span></h2>',
+      '<p>It nests in a tree cavity and lays two eggs.</p>',
+      '</div>'
+    ].join('');
+
+    await api.showGameOverCard("won", {
+      wiki: {
+        summary: {
+          extract: "The test bird is a forest-dwelling bird species.",
+          content_urls: { desktop: { page: "https://en.wikipedia.org/wiki/Bird" } }
+        },
+        html,
+        wikitext: ""
+      },
+      thaiName: "",
+      onlineConservationStatus: "",
+      wikidataDetailed: {},
+      externalStudy: {
+        appearance: "It has a dark crown and a pale throat.",
+        habitatDistribution: "It inhabits lowland forest and woodland.",
+        diet: "It feeds on insects and small fruit.",
+        behavior: "It forages in the canopy and gives a repeated call.",
+        breeding: "It nests in a tree cavity and lays two eggs.",
+        conservation: "LC - Least Concern",
+        sources: [{ label: "GBIF", url: "https://www.gbif.org/" }]
+      }
+    });
+
+    const details = document.querySelector(".study-card-details");
+    return {
+      headings: [...details.querySelectorAll(".study-card-section h4")].map(item => item.textContent),
+      content: details.innerText,
+      overlayVisible: document.getElementById("game-over-overlay").classList.contains("visible")
+    };
+  });
+
+  assert(result.overlayVisible, "Study Card overlay did not open");
+  for (const heading of ["Description", "Appearance", "Habitat & Distribution", "Diet", "Behavior", "Breeding", "Conservation"]) {
+    assert(result.headings.includes(heading), "Study Card is missing the " + heading + " section");
+  }
+  assert(/dark crown/.test(result.content), "Study Card omitted Appearance evidence");
+  assert(/lowland forest/.test(result.content), "Study Card omitted Habitat evidence");
+  assert(/insects/.test(result.content), "Study Card omitted Diet evidence");
+  assert(/canopy/.test(result.content), "Study Card omitted Behavior evidence");
+  assert(/tree cavity/.test(result.content), "Study Card omitted Breeding evidence");
+});
+
 test("MetaAves uses the Wikipedia summary lead when detailed article sections are unavailable", async ({ page }) => {
   await page.goto("/?e2e=1");
   await page.waitForFunction(() => !!window.__METAAVES_E2E__);
@@ -957,6 +1078,94 @@ test("MetaAves removes captions and subspecies authorities from study-card prose
   assert(/call is a repeated/i.test(result.behavior), "Call behavior was lost");
   assert(/three to five eggs|tree hole/i.test(result.breeding), "Nesting information was lost");
   assert(!/Raffles|scutulata/i.test(result.breeding), "Subspecies list text leaked into Breeding");
+});
+
+test("MetaAves opens a visible genus clue from an actual clickable tree species node", async ({ page }) => {
+  await page.goto("/?e2e=1");
+  await page.waitForFunction(() => !!window.__METAAVES_E2E__);
+
+  const result = await page.evaluate(() => {
+    const api = window.__METAAVES_E2E__;
+    const normalize = value => api.normalizeTaxonomyComparisonValue(value);
+    const byFamily = new Map();
+
+    for (const bird of api.state.allBirds || []) {
+      const family = normalize(bird.family);
+      const genus = normalize(bird.genus);
+      if (!family || !genus || !bird.scientificName) continue;
+      const genera = byFamily.get(family) || new Map();
+      if (!genera.has(genus)) genera.set(genus, bird);
+      byFamily.set(family, genera);
+    }
+
+    let pair = null;
+    for (const genera of byFamily.values()) {
+      const representatives = [...genera.values()];
+      if (representatives.length >= 2) {
+        pair = { mystery: representatives[0], guessed: representatives[1] };
+        break;
+      }
+    }
+    if (!pair) throw new Error("No same-family/different-genus species pair exists in the loaded AviList data.");
+
+    api.state.mysteryBird = pair.mystery;
+    api.state.gameStatus = "playing";
+    api.state.mode = "world";
+
+    const node = api.createTreeNodeElement({
+      type: "species",
+      name: pair.guessed.commonName,
+      nodeType: "guess",
+      bird: pair.guessed
+    });
+    document.body.appendChild(node);
+    node.click();
+
+    return {
+      relationship: api.getHintRelationship(pair.guessed),
+      nodeIsClickable: node.classList.contains("meta-species-clickable")
+    };
+  });
+
+  assert(result.relationship?.rank === "Genus", "Real AviList pair did not unlock a genus relationship");
+  assert(result.nodeIsClickable, "Rendered tree species node is not clickable");
+
+  await page.locator("#species-hover-hint.visible").waitFor({ state: "visible", timeout: 5000 });
+  const hintText = await page.locator("#species-hover-hint").innerText();
+  assert(/About the mystery genus/i.test(hintText), "Genus clue popup title did not render");
+  assert(/Genus clue/i.test(hintText), "The clickable tree node did not display a genus clue");
+});
+
+test("MetaAves normalizes family/genus labels before clue progression", async ({ page }) => {
+  await page.goto("/?e2e=1");
+  await page.waitForFunction(() => !!window.__METAAVES_E2E__);
+  const result = await page.evaluate(() => {
+    const api = window.__METAAVES_E2E__;
+    api.state.mysteryBird = {
+      commonName: "Mystery bird",
+      scientificName: "Strix aluco",
+      genus: "Strix",
+      family: "Strigidae"
+    };
+    const genusClue = api.getHintRelationship({
+      commonName: "Guessed bird",
+      scientificName: "Athene noctua",
+      genus: " athene ",
+      family: " strigidae "
+    });
+    const speciesClue = api.getHintRelationship({
+      commonName: "Congener",
+      scientificName: "STRIX URALENSIS",
+      genus: " strix ",
+      family: "STRIGIDAE"
+    });
+    return {
+      genusRank: genusClue?.rank,
+      speciesRank: speciesClue?.rank
+    };
+  });
+  assert(result.genusRank === "Genus", "Case/spacing differences suppressed a valid genus clue");
+  assert(result.speciesRank === "Species", "Case/spacing differences suppressed a valid species clue");
 });
 
 test("MetaAves produces genus clues from genus-level GBIF/iNaturalist evidence and keeps species evidence separate", async ({ page }) => {
