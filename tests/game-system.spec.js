@@ -863,6 +863,9 @@ test("MetaAves renders all Study Card sections when independent providers return
     const api = window.__METAAVES_E2E__;
     const bird = api.state.allBirds.find(item => item.genus && item.family && item.scientificName);
     if (!bird) throw new Error("Loaded bird dataset has no species suitable for Study Card rendering.");
+    // Follow the real startup flow first; otherwise the initial mode
+    // selector remains above the end-game Study Card in the browser.
+    document.getElementById("world-mode-button")?.click();
     api.state.mode = "world";
     api.state.mysteryBird = bird;
 
@@ -923,6 +926,7 @@ test("MetaAves renders all Study Card sections when independent providers return
       content: details.textContent,
       appearanceText: appearanceParagraph?.textContent || "",
       overlayVisible: overlay.classList.contains("visible"),
+      modeOverlayVisible: document.getElementById("mode-overlay").classList.contains("visible"),
       overlayVisibility: getComputedStyle(overlay).visibility,
       cardVisibility: getComputedStyle(document.querySelector(".game-over-card")).visibility,
       mergedAppearance: mergedDirectly.appearance,
@@ -936,6 +940,7 @@ test("MetaAves renders all Study Card sections when independent providers return
   }
   assert(/dark crown/.test(result.mergedAppearance), "External/Wikipedia merge lost Appearance evidence: " + result.mergedAppearance);
   assert(/dark crown/.test(result.renderedAppearance), "Game-over renderer did not receive Appearance evidence: " + result.renderedAppearance);
+  assert(!result.modeOverlayVisible, "Startup mode selector was not closed before opening the Study Card");
   assert(result.overlayVisible && result.overlayVisibility === "visible" && result.cardVisibility === "visible", "Study Card overlay/card visibility: " + JSON.stringify({classVisible:result.overlayVisible,overlay:result.overlayVisibility,card:result.cardVisibility}));
   assert(/dark crown/.test(result.appearanceText), "Study Card Appearance paragraph was not populated: " + result.appearanceText);
   assert(/dark crown/.test(result.content), "Study Card omitted Appearance evidence: " + result.content);
