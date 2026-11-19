@@ -931,6 +931,16 @@ test("MetaAves renders all Study Card sections when independent providers return
       overlayVisible: overlay.classList.contains("visible"),
       modeOverlayVisible: document.getElementById("mode-overlay").classList.contains("visible"),
       overlayVisibility: getComputedStyle(overlay).visibility,
+      overlayInlineStyle: overlay.getAttribute("style"),
+      modeOverlayVisibility: getComputedStyle(document.getElementById("mode-overlay")).visibility,
+      loadedStylesheets: [...document.styleSheets].map(sheet => sheet.href || "inline"),
+      overlayCssRules: [...document.styleSheets].flatMap(sheet => {
+        try {
+          return [...sheet.cssRules]
+            .filter(rule => rule.selectorText?.includes("game-over-overlay"))
+            .map(rule => ({ selector: rule.selectorText, css: rule.style.cssText }));
+        } catch { return []; }
+      }),
       cardVisibility: getComputedStyle(document.querySelector(".game-over-card")).visibility,
       mergedAppearance: mergedDirectly.appearance,
       renderedAppearance: renderedStudy?.appearance || ""
@@ -944,7 +954,7 @@ test("MetaAves renders all Study Card sections when independent providers return
   assert(/dark crown/.test(result.mergedAppearance), "External/Wikipedia merge lost Appearance evidence: " + result.mergedAppearance);
   assert(/dark crown/.test(result.renderedAppearance), "Game-over renderer did not receive Appearance evidence: " + result.renderedAppearance);
   assert(!result.modeOverlayVisible, "Startup mode selector was not closed before opening the Study Card");
-  assert(result.overlayVisible && result.overlayVisibility === "visible" && result.cardVisibility === "visible", "Study Card overlay/card visibility: " + JSON.stringify({classVisible:result.overlayVisible,overlay:result.overlayVisibility,card:result.cardVisibility}));
+  assert(result.overlayVisible && result.overlayVisibility === "visible" && result.cardVisibility === "visible", "Study Card overlay/card visibility: " + JSON.stringify({classVisible:result.overlayVisible,overlay:result.overlayVisibility,card:result.cardVisibility,inline:result.overlayInlineStyle,mode:result.modeOverlayVisibility,stylesheets:result.loadedStylesheets,rules:result.overlayCssRules}));
   assert(/dark crown/.test(result.appearanceText), "Study Card Appearance paragraph was not populated: " + result.appearanceText);
   assert(/dark crown/.test(result.content), "Study Card omitted Appearance evidence: " + result.content);
   assert(/lowland forest/.test(result.content), "Study Card omitted Habitat evidence");
