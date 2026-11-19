@@ -3049,8 +3049,8 @@ function cleanWikipediaNode(node) {
     // taxon navigation and reference lists inside otherwise valid sections.
     clone.querySelectorAll(
         "section, table, style, script, noscript, audio, video, figure, figcaption, " +
-        ".thumb, .thumbinner, .thumbcaption, .gallery, .gallerybox, " +
-        ".mw-file-element, .mw-kartographer-map, .maplink, " +
+        ".thumb, .thumbinner, .thumbcaption, .gallery, .gallerybox, .gallerytext, " +
+        ".mw-file-element, .mw-kartographer-map, .maplink, .mw-audio-player, .mw-tmh-player, " +
         ".navbox, .reflist, .reference, sup.reference, .mw-references-wrap, " +
         ".mw-editsection, .metadata, .shortdescription, .infobox, " +
         ".listen, .audio, .sound, .haudio, .mediaContainer, " +
@@ -3528,6 +3528,11 @@ function isWikipediaNonContentSection(heading) {
     return [
         "references",
         "reference",
+        "subspecies",
+        "taxonomy",
+        "systematics",
+        "classification",
+        "taxonomic history",
         "notes",
         "citations",
         "bibliography",
