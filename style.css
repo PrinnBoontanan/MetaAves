@@ -4908,8 +4908,9 @@ body.phone-device .taxonomy-tree.table-mode .taxonomy-table {
         margin: 6px 0 0 !important;
     }
 
-    .taxon-card.species-card > .taxon-card-wiki-section:not(.taxon-card-species-taxonomy) {
+    .taxon-card.species-card > .taxon-card-study-sections {
         grid-area: description !important;
+        min-width: 0 !important;
     }
 
     .taxon-card.species-card > .taxon-card-species-taxonomy {
