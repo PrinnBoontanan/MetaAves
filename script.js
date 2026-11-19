@@ -4994,6 +4994,33 @@ function appendCardSection(card, heading, text) {
     card.appendChild(section);
 }
 
+function appendTaxonCardSources(container, externalStudy) {
+    const sources = (externalStudy?.sources || [])
+        .filter(source => source?.label && source?.url);
+    if (!container || !sources.length) return;
+
+    const section = document.createElement("div");
+    section.className = "taxon-card-wiki-section taxon-card-study-sources";
+
+    const heading = document.createElement("h4");
+    heading.textContent = "Sources & further reading";
+    section.appendChild(heading);
+
+    const list = document.createElement("ul");
+    sources.forEach(source => {
+        const item = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = source.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = source.label;
+        item.appendChild(link);
+        list.appendChild(item);
+    });
+    section.appendChild(list);
+    container.appendChild(section);
+}
+
 async function showBirdInTaxonCard(bird) {
     const card = document.getElementById("taxon-card");
     if (!card || !bird) return;
@@ -5006,18 +5033,12 @@ async function showBirdInTaxonCard(bird) {
     card.classList.remove("clade-card");
     card.classList.add("species-card");
 
-    // In Thailand mode, resolve the Thai name before the first paint so the
-    // card never flashes a missing-name state for a bird whose name is still
-    // being resolved from the local database or online fallback sources.
     const thaiNamePromise = gameState.mode === "thailand"
         ? fetchOnlineThaiName(bird)
         : Promise.resolve("");
 
-    // Render from local data + the lightweight Wikipedia summary first.
-    // Full article parsing happens after the card is already usable.
-    // Neither remote lookup is allowed to strand the card in a
-    // permanent loading state. A missing Wikipedia page or a temporary Thai
-    // lookup failure should still leave the local species card usable.
+    // Paint immediately from the summary. Its lead sentences are also
+    // classified into the ecological sections while detailed sources load.
     const [wikiSummaryResult, thaiNameResult] = await Promise.allSettled([
         fetchWikipediaPageData(
             bird.wikipediaTitle || bird.commonName,
@@ -5035,7 +5056,7 @@ async function showBirdInTaxonCard(bird) {
             : null;
     const initialThaiName =
         thaiNameResult.status === "fulfilled"
-            ? thaiNameResult.value
+            ? thaiNameResult.value || ""
             : "";
 
     if (
@@ -5053,11 +5074,14 @@ async function showBirdInTaxonCard(bird) {
         {},
         gameState.mode === "thailand"
             ? (initialThaiName || bird.thaiName || "")
-            : ""
+            : "",
+        {}
     );
 
-    // Enrich the already-visible card in the background.
-    Promise.all([
+    // A rejected Wikidata/Thai/Wikipedia request previously prevented the
+    // final render entirely, leaving only the summary-only version visible.
+    // Resolve providers independently and use every successful result.
+    Promise.allSettled([
         fetchWikipediaPageData(
             bird.wikipediaTitle || bird.commonName,
             true,
@@ -5068,12 +5092,22 @@ async function showBirdInTaxonCard(bird) {
         fetchWikidataDetailedTaxonomy(bird),
         gameState.mode === "thailand"
             ? fetchOnlineThaiName(bird)
-            : Promise.resolve("")
-    ]).then(([wiki, wikidataDetailed, thaiName]) => {
+            : Promise.resolve(""),
+        fetchExternalBirdStudyData(bird)
+    ]).then(results => {
         if (
             gameState.selectedTaxonId !== selectionId ||
             gameState.taxonCardRequestId !== requestId
         ) return;
+
+        const wiki =
+            results[0]?.status === "fulfilled" ? results[0].value : null;
+        const wikidataDetailed =
+            results[1]?.status === "fulfilled" ? results[1].value || {} : {};
+        const thaiName =
+            results[2]?.status === "fulfilled" ? results[2].value || "" : "";
+        const externalStudy =
+            results[3]?.status === "fulfilled" ? results[3].value || {} : {};
 
         const displayThaiName =
             gameState.mode === "thailand"
@@ -5081,24 +5115,31 @@ async function showBirdInTaxonCard(bird) {
                 : "";
 
         if (displayThaiName) bird.thaiName = displayThaiName;
-        attachDetailedTaxonomyToBird(bird, wiki);
+        try {
+            attachDetailedTaxonomyToBird(bird, wiki || wikiSummary);
+        } catch (error) {
+            console.warn("Bird taxon taxonomy enrichment failed:", error);
+        }
 
-        renderBirdCard(
-            bird,
-            wiki || wikiSummary,
-            wikidataDetailed || {},
-            displayThaiName
-        );
-    }).catch(error => {
-        console.warn("Bird taxon enrichment failed:", error);
+        try {
+            renderBirdCard(
+                bird,
+                wiki || wikiSummary,
+                wikidataDetailed,
+                displayThaiName,
+                externalStudy
+            );
+        } catch (error) {
+            console.warn("Bird taxon card enrichment could not be rendered:", error);
+        }
     });
 }
-
 function renderBirdCard(
     bird,
     wiki,
     wikidataDetailed = {},
-    thaiName = bird?.thaiName || ""
+    thaiName = bird?.thaiName || "",
+    externalStudy = {}
 ) {
     const card = document.getElementById("taxon-card");
     if (!card) return;
@@ -5129,10 +5170,6 @@ function renderBirdCard(
     card.appendChild(rank);
 
     const hasWikiSummary = Boolean(wiki?.summary?.extract);
-    const description = hasWikiSummary
-        ? limitWikipediaSentences(wiki.summary.extract, 6, 1400)
-        : "No information available on Wikipedia.";
-
     const hasPhoto = Boolean(wiki?.summary?.thumbnail?.source);
     if (hasPhoto) {
         appendWikipediaImage(card, wiki, "taxon-card-image");
@@ -5140,10 +5177,44 @@ function renderBirdCard(
         card.classList.add("taxon-card-no-photo");
     }
 
-    appendCardSection(card, "Description", description);
+    // Use the same category parser and external-source merger as the end-of-
+    // game Study Card. The normal species card previously rendered only the
+    // Wikipedia description and taxonomy, even after full article data loaded.
+    const wikipediaStudy = getWikipediaStudyData(
+        wiki?.html || "",
+        wiki?.wikitext || "",
+        wiki?.summary?.extract || ""
+    );
+    const studyData = mergeExternalStudyData(
+        wikipediaStudy,
+        externalStudy || {},
+        bird,
+        hasWikiSummary
+            ? limitWikipediaSentences(wiki.summary.extract, 6, 1400)
+            : ""
+    );
 
-    // Taxonomy is intentionally shown only for species cards. Higher taxon
-    // cards do not repeat their taxonomy because the tree already provides it.
+    const studySections = document.createElement("div");
+    studySections.className = "taxon-card-study-sections";
+
+    const description = studyData.description ||
+        (hasWikiSummary
+            ? limitWikipediaSentences(wiki.summary.extract, 6, 1400)
+            : "No information available on Wikipedia.");
+    appendCardSection(studySections, "Description", description);
+    appendCardSection(studySections, "Appearance", studyData.appearance);
+    appendCardSection(studySections, "Habitat & Distribution", studyData.habitatDistribution);
+    appendCardSection(studySections, "Diet", studyData.diet);
+    appendCardSection(studySections, "Behavior", studyData.behavior);
+    appendCardSection(studySections, "Breeding", studyData.breeding);
+    appendCardSection(
+        studySections,
+        "Conservation",
+        studyData.conservation || bird.conservation || ""
+    );
+    appendTaxonCardSources(studySections, externalStudy);
+    card.appendChild(studySections);
+
     const taxonomySection = document.createElement("div");
     taxonomySection.className = "taxon-card-wiki-section taxon-card-species-taxonomy";
 
@@ -5187,19 +5258,16 @@ function renderBirdCard(
     card.appendChild(taxonomySection);
 
     const link = wiki?.summary?.content_urls?.desktop?.page;
-    if (link) {
-        const wikipediaLink = document.createElement("a");
-        wikipediaLink.className = "taxon-card-wikipedia-link";
-        wikipediaLink.href = link;
-        wikipediaLink.target = "_blank";
-        wikipediaLink.rel = "noopener noreferrer";
-        wikipediaLink.textContent = "Wikipedia";
-        card.appendChild(wikipediaLink);
-    } else {
-        appendCardSection(card, "Wikipedia", "No Wikipedia page available.");
-    }
+    const wikipediaLink = document.createElement("a");
+    wikipediaLink.className = "taxon-card-wikipedia-link";
+    wikipediaLink.href = link ||
+        ("https://en.wikipedia.org/wiki/" +
+            encodeURIComponent(String(bird.wikipediaTitle || bird.commonName).replace(/ /g, "_")));
+    wikipediaLink.target = "_blank";
+    wikipediaLink.rel = "noopener noreferrer";
+    wikipediaLink.textContent = link ? "Wikipedia" : "Search Wikipedia";
+    card.appendChild(wikipediaLink);
 }
-
 async function fetchWikimediaCommonsTaxonImage(taxonName) {
     const name = String(taxonName || "").trim();
     if (!name || new URLSearchParams(window.location.search).get("e2e") === "1") {
@@ -6585,27 +6653,48 @@ async function fetchWikidataConservationStatus(bird) {
 // Family / Genus hover hints
 // ========================================
 
+function normalizeTaxonomyComparisonValue(value) {
+    return String(value || "")
+        .normalize("NFKC")
+        .replace(/_/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+}
+
 function getHintRelationship(guessedBird) {
     const mystery = gameState.mysteryBird;
-    if (!guessedBird || !mystery || guessedBird === mystery) return null;
+    if (!guessedBird || !mystery) return null;
 
-    // Clue progression follows taxonomy: same family but different genera
-    // unlocks genus clues first. Species clues unlock only after the guess is
-    // in the same genus as the mystery bird.
+    const guessedScientificName = normalizeTaxonomyComparisonValue(guessedBird.scientificName);
+    const mysteryScientificName = normalizeTaxonomyComparisonValue(mystery.scientificName);
     if (
-        guessedBird.genus &&
-        mystery.genus &&
-        guessedBird.genus === mystery.genus &&
-        guessedBird.scientificName !== mystery.scientificName
+        guessedScientificName &&
+        mysteryScientificName &&
+        guessedScientificName === mysteryScientificName
+    ) return null;
+
+    const guessedGenus = normalizeTaxonomyComparisonValue(guessedBird.genus);
+    const mysteryGenus = normalizeTaxonomyComparisonValue(mystery.genus);
+    const guessedFamily = normalizeTaxonomyComparisonValue(guessedBird.family);
+    const mysteryFamily = normalizeTaxonomyComparisonValue(mystery.family);
+
+    if (
+        guessedGenus &&
+        mysteryGenus &&
+        guessedGenus === mysteryGenus &&
+        guessedScientificName !== mysteryScientificName
     ) {
         return { rank: "Species", value: guessedBird.genus };
     }
 
     if (
-        guessedBird.family &&
-        mystery.family &&
-        guessedBird.family === mystery.family &&
-        guessedBird.genus !== mystery.genus
+        guessedFamily &&
+        mysteryFamily &&
+        guessedFamily === mysteryFamily &&
+        guessedGenus &&
+        mysteryGenus &&
+        guessedGenus !== mysteryGenus
     ) {
         return { rank: "Genus", value: guessedBird.family };
     }
@@ -8482,7 +8571,7 @@ function preloadStudyCardData(bird) {
     return preload;
 }
 
-async function showGameOverCard(result) {
+async function showGameOverCard(result, e2ePreloadedData = null) {
     const overlay = document.getElementById("game-over-overlay");
     const newGameButton = document.getElementById("new-game-button");
     const title = document.getElementById("game-over-title");
@@ -8586,14 +8675,17 @@ async function showGameOverCard(result) {
 
     const isE2E = new URLSearchParams(window.location.search).get("e2e") === "1";
 
-    const preloaded = isE2E
-        ? {
-            wiki: null,
-            thaiName: "",
-            onlineConservationStatus: "",
-            wikidataDetailed: {}
-        }
-        : await preloadStudyCardData(bird);
+    const preloaded = isE2E && e2ePreloadedData
+        ? e2ePreloadedData
+        : isE2E
+            ? {
+                wiki: null,
+                thaiName: "",
+                onlineConservationStatus: "",
+                wikidataDetailed: {},
+                externalStudy: null
+            }
+            : await preloadStudyCardData(bird);
 
     const fastWiki = preloaded?.wiki || null;
     const fastThaiName = preloaded?.thaiName || "";
@@ -8726,6 +8818,7 @@ async function showGameOverCard(result) {
         details.appendChild(wikiSection);
     }
     appendStudySources(details, bird, preloaded?.externalStudy || {});
+    return studyData;
 }
 
 function closeGameOverCard() {
@@ -8848,6 +8941,13 @@ async function startGame() {
             getBirdPoolForMode,
             normalizeSearchText,
             getHintRelationship,
+            normalizeTaxonomyComparisonValue,
+            createTreeNodeElement,
+            showSpeciesHint,
+            showBirdInTaxonCard,
+            renderBirdCard,
+            showGameOverCard,
+            mergeExternalStudyData,
             renderStudyTaxonomyRows,
             deduplicateStudyData,
             extractWikipediaCategoryText,
