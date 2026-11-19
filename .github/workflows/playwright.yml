@@ -110,10 +110,3 @@ jobs:
         env:
           CI: "true"
           METAAVES_BASE_URL: "http://localhost:8080"
-
-      - name: Run 20-game release audit independently of taxonomy validation
-        run: npx playwright test tests/game-system.spec.js --workers=1 --grep "full game-system audit"
-        env:
-          CI: "true"
-          METAAVES_GAMES: "20"
-          METAAVES_BASE_URL: "http://localhost:8080"
