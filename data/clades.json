@@ -2185,10 +2185,10 @@
     "id": "clade:Galbuli",
     "name": "Galbuli",
     "rank": "suborder",
-    "parent": "order:Galbuliformes",
+    "parent": "order:Piciformes",
     "children": [],
     "status": "intermediate_rank",
-    "description": "Suborder-level clade containing jacamars and puffbirds in the Galbuliformes order."
+    "description": "Piciform suborder containing jacamars and puffbirds."
   },
   "clade:Pici": {
     "id": "clade:Pici",
