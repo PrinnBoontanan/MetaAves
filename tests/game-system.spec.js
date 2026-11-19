@@ -1131,6 +1131,9 @@ test("MetaAves opens a visible genus clue from an actual clickable tree species 
   assert(result.nodeIsClickable, "Rendered tree species node is not clickable");
 
   await page.locator("#species-hover-hint.visible").waitFor({ state: "visible", timeout: 5000 });
+  await page.waitForFunction(() =>
+    /Genus clue/i.test(document.getElementById("species-hover-hint")?.innerText || "")
+  );
   const hintText = await page.locator("#species-hover-hint").innerText();
   assert(/About the mystery genus/i.test(hintText), "Genus clue popup title did not render");
   assert(/Genus clue/i.test(hintText), "The clickable tree node did not display a genus clue");
