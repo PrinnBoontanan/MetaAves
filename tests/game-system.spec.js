@@ -917,6 +917,89 @@ test("MetaAves classifies mixed bird ecology prose into the correct study-card s
   assert(/mimicry/i.test(result.behavior), "Behavioral mimicry information was lost from Behavior");
 });
 
+test("MetaAves removes captions and subspecies authorities from study-card prose", async ({ page }) => {
+  await page.goto("/?e2e=1");
+  await page.waitForFunction(() => !!window.__METAAVES_E2E__);
+  const result = await page.evaluate(() => {
+    const api = window.__METAAVES_E2E__;
+    const html = `
+      <div class="mw-parser-output">
+        <section data-mw-section-id="0">
+          <p>The brown boobook is a typical owl species.</p>
+        </section>
+        <section data-mw-section-id="1">
+          <div class="mw-heading"><h2>Diet</h2></div>
+          <p>It feeds mainly on large insects, frogs, lizards, small birds, and mice.</p>
+          <figure><img src="/caption.jpg"><figcaption>Brown boobook in Phuket, Thailand</figcaption></figure>
+          <div class="listen">Brown boobook call</div>
+          <ul><li><i>rexpimenti</i> Abdulali, 1979 in Great Nicobar Island</li></ul>
+        </section>
+        <section data-mw-section-id="2">
+          <div class="mw-heading"><h2>Behaviour</h2></div>
+          <p>The brown boobook is nocturnal but can often be located by small birds mobbing it while it roosts.</p>
+          <p>Its call is a repeated low, soft, musical oo-uk.</p>
+        </section>
+        <section data-mw-section-id="3">
+          <div class="mw-heading"><h2>Breeding</h2></div>
+          <p>It lays three to five eggs in a tree hole.</p>
+          <ul><li><i>scutulata</i> (Raffles, 1822) in the Malay Peninsula and Sumatra</li></ul>
+        </section>
+      </div>
+    `;
+    const study = api.getWikipediaStudyData(html, "", "");
+    return study;
+  });
+
+  assert(/large insects|frogs|lizards/i.test(result.diet), "Actual prey information was lost from Diet");
+  assert(!/Abdulali|Raffles|Great Nicobar|Malay Peninsula/i.test(result.diet), "Subspecies authority/list text leaked into Diet");
+  assert(!/Brown boobook in Phuket|Brown boobook call/i.test(result.diet), "Image/audio captions leaked into Diet");
+  assert(/nocturnal|roosts/i.test(result.behavior), "Nocturnal/roosting behavior was lost");
+  assert(/call is a repeated/i.test(result.behavior), "Call behavior was lost");
+  assert(/three to five eggs|tree hole/i.test(result.breeding), "Nesting information was lost");
+  assert(!/Raffles|scutulata/i.test(result.breeding), "Subspecies list text leaked into Breeding");
+});
+
+test("MetaAves produces genus clues from genus-level GBIF/iNaturalist evidence and keeps species evidence separate", async ({ page }) => {
+  await page.goto("/?e2e=1");
+  await page.waitForFunction(() => !!window.__METAAVES_E2E__);
+  const result = await page.evaluate(() => {
+    const api = window.__METAAVES_E2E__;
+    const external = api.classifyExternalStudyText([
+      "Members of this genus are nocturnal hunters that capture insects and small vertebrates.",
+      "They generally nest in tree cavities and lay two to four eggs."
+    ]);
+    api.state.mysteryBird = {
+      commonName: "Mystery bird",
+      scientificName: "GenusA alpha",
+      genus: "GenusA",
+      family: "FamilyA"
+    };
+    const genusClues = api.buildGenusHint(
+      {
+        description: "Members of this genus are nocturnal hunters that capture insects and small vertebrates.",
+        behavior: external.behavior,
+        diet: external.diet
+      },
+      {
+        description: "Members of this other genus are active during daylight and feed mainly on fruit.",
+        behavior: "Members of this other genus are active during daylight and feed mainly on fruit."
+      },
+      {
+        commonName: "Guessed bird",
+        scientificName: "GenusB beta",
+        genus: "GenusB",
+        family: "FamilyA"
+      }
+    );
+    return { external, genusClues };
+  });
+
+  assert(/nocturnal hunters/i.test(result.external.behavior), "Genus-level behavior evidence was not classified");
+  assert(/insects|small vertebrates/i.test(result.external.diet), "Genus-level feeding evidence was not classified");
+  assert(result.genusClues.some(clue => /Genus clue/.test(clue.heading)), "Genus-level source evidence did not produce a visible genus clue");
+  assert(result.genusClues.every(clue => !/species clue/i.test(clue.heading)), "Genus evidence was incorrectly labelled as a species clue");
+});
+
 test("MetaAves validates taxon pages and enforces two-stage clue progression", async ({ page }) => {
   await page.goto("/?e2e=1");
   await page.waitForFunction(() => !!window.__METAAVES_E2E__);
