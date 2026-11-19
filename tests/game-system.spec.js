@@ -863,6 +863,15 @@ test("MetaAves renders all Study Card sections when independent providers return
     const api = window.__METAAVES_E2E__;
     const bird = api.state.allBirds.find(item => item.genus && item.family && item.scientificName);
     if (!bird) throw new Error("Loaded bird dataset has no species suitable for Study Card rendering.");
+    // The game-over renderer is tested independently of the initial
+    // mode-selection dialog. Close that startup-only dialog just as the
+    // real player does after choosing a mode.
+    const modeOverlay = document.getElementById("mode-overlay");
+    modeOverlay?.classList.remove("visible");
+    modeOverlay?.setAttribute("aria-hidden", "true");
+    // Let the shared 200 ms modal visibility transition finish before
+    // opening the second overlay.
+    await new Promise(resolve => setTimeout(resolve, 250));
     api.state.mode = "world";
     api.state.mysteryBird = bird;
 
@@ -913,12 +922,31 @@ test("MetaAves renders all Study Card sections when independent providers return
       preloaded.wiki.summary.extract
     );
     const renderedStudy = await api.showGameOverCard("won", preloaded);
+    // The Study Card uses the same 200 ms visibility transition.
+    await new Promise(resolve => setTimeout(resolve, 250));
 
     const details = document.querySelector(".study-card-details");
+    const overlay = document.getElementById("game-over-overlay");
+    const appearanceSection = details.querySelector('[data-study-heading="appearance"]');
+    const appearanceParagraph = appearanceSection?.querySelector("p");
     return {
       headings: [...details.querySelectorAll(".study-card-section h4")].map(item => item.textContent),
-      content: details.innerText,
-      overlayVisible: document.getElementById("game-over-overlay").classList.contains("visible"),
+      content: details.textContent,
+      appearanceText: appearanceParagraph?.textContent || "",
+      overlayVisible: overlay.classList.contains("visible"),
+      modeOverlayVisible: document.getElementById("mode-overlay").classList.contains("visible"),
+      overlayVisibility: getComputedStyle(overlay).visibility,
+      overlayInlineStyle: overlay.getAttribute("style"),
+      modeOverlayVisibility: getComputedStyle(document.getElementById("mode-overlay")).visibility,
+      loadedStylesheets: [...document.styleSheets].map(sheet => sheet.href || "inline"),
+      overlayCssRules: [...document.styleSheets].flatMap(sheet => {
+        try {
+          return [...sheet.cssRules]
+            .filter(rule => rule.selectorText?.includes("game-over-overlay"))
+            .map(rule => ({ selector: rule.selectorText, css: rule.style.cssText }));
+        } catch { return []; }
+      }),
+      cardVisibility: getComputedStyle(document.querySelector(".game-over-card")).visibility,
       mergedAppearance: mergedDirectly.appearance,
       renderedAppearance: renderedStudy?.appearance || ""
     };
@@ -930,6 +958,9 @@ test("MetaAves renders all Study Card sections when independent providers return
   }
   assert(/dark crown/.test(result.mergedAppearance), "External/Wikipedia merge lost Appearance evidence: " + result.mergedAppearance);
   assert(/dark crown/.test(result.renderedAppearance), "Game-over renderer did not receive Appearance evidence: " + result.renderedAppearance);
+  assert(!result.modeOverlayVisible, "Startup mode selector was not closed before opening the Study Card");
+  assert(result.overlayVisible && result.overlayVisibility === "visible" && result.cardVisibility === "visible", "Study Card overlay/card visibility: " + JSON.stringify({classVisible:result.overlayVisible,overlay:result.overlayVisibility,card:result.cardVisibility,inline:result.overlayInlineStyle,mode:result.modeOverlayVisibility,stylesheets:result.loadedStylesheets,rules:result.overlayCssRules}));
+  assert(/dark crown/.test(result.appearanceText), "Study Card Appearance paragraph was not populated: " + result.appearanceText);
   assert(/dark crown/.test(result.content), "Study Card omitted Appearance evidence: " + result.content);
   assert(/lowland forest/.test(result.content), "Study Card omitted Habitat evidence");
   assert(/insects/.test(result.content), "Study Card omitted Diet evidence");
