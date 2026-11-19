@@ -199,20 +199,41 @@ def main() -> None:
         parent = str(entry.get("parent") or "").strip()
         clade_parent_by_name[name] = parent.split(":", 1)[1] if parent.startswith("clade:") else parent or None
 
-    def check_clade_path(path, label):
+    def check_clade_path(path, label, scientific):
+        bird = bird_by_scientific.get(scientific, {})
         for index in range(1, len(path)):
             child = path[index]
             expected_parent = path[index - 1]
             declared_parent = clade_parent_by_name.get(child)
-            if declared_parent and declared_parent != expected_parent:
-                fail(
-                    f"{label} has inconsistent clade parent: "
-                    f"{child} declares {declared_parent}, path says {expected_parent}"
+            if not declared_parent or declared_parent == expected_parent:
+                continue
+
+            # A named clade can attach directly to a ranked taxon instead of
+            # another named clade. In that case the membership path still
+            # includes the broader order backbone before the order-attached
+            # clade (e.g. Galloanserae -> Anhimae, whose declared parent is
+            # order:Anseriformes). Validate that ranked parent against this
+            # species rather than incorrectly requiring it to be the previous
+            # clade in the path.
+            if ":" in declared_parent:
+                rank, parent_name = declared_parent.split(":", 1)
+                expected_taxon = (
+                    "Aves" if rank == "class" else
+                    scientific if rank == "species" else
+                    bird.get(rank)
                 )
+                if rank in CORE_RANKS or rank in ("class", "species"):
+                    if str(expected_taxon or "").strip() == parent_name:
+                        continue
+
+            fail(
+                f"{label} has inconsistent clade parent: "
+                f"{child} declares {declared_parent}, path says {expected_parent}"
+            )
 
     for section in MEMBERSHIP_SECTIONS:
         for scientific, path in membership.get(section, {}).items():
-            check_clade_path(path, f"membership.{section}[{scientific}]")
+            check_clade_path(path, f"membership.{section}[{scientific}]", scientific)
 
     # Parent/children links in clades.json must agree in both directions.
     for clade_id, entry in clades.items():
