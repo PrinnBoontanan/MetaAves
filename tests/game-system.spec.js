@@ -915,10 +915,16 @@ test("MetaAves renders all Study Card sections when independent providers return
     const renderedStudy = await api.showGameOverCard("won", preloaded);
 
     const details = document.querySelector(".study-card-details");
+    const overlay = document.getElementById("game-over-overlay");
+    const appearanceSection = details.querySelector('[data-study-heading="appearance"]');
+    const appearanceParagraph = appearanceSection?.querySelector("p");
     return {
       headings: [...details.querySelectorAll(".study-card-section h4")].map(item => item.textContent),
-      content: details.innerText,
-      overlayVisible: document.getElementById("game-over-overlay").classList.contains("visible"),
+      content: details.textContent,
+      appearanceText: appearanceParagraph?.textContent || "",
+      overlayVisible: overlay.classList.contains("visible"),
+      overlayVisibility: getComputedStyle(overlay).visibility,
+      cardVisibility: getComputedStyle(document.querySelector(".game-over-card")).visibility,
       mergedAppearance: mergedDirectly.appearance,
       renderedAppearance: renderedStudy?.appearance || ""
     };
@@ -930,6 +936,8 @@ test("MetaAves renders all Study Card sections when independent providers return
   }
   assert(/dark crown/.test(result.mergedAppearance), "External/Wikipedia merge lost Appearance evidence: " + result.mergedAppearance);
   assert(/dark crown/.test(result.renderedAppearance), "Game-over renderer did not receive Appearance evidence: " + result.renderedAppearance);
+  assert(result.overlayVisible && result.overlayVisibility === "visible" && result.cardVisibility === "visible", "Study Card overlay/card is not visibly rendered");
+  assert(/dark crown/.test(result.appearanceText), "Study Card Appearance paragraph was not populated: " + result.appearanceText);
   assert(/dark crown/.test(result.content), "Study Card omitted Appearance evidence: " + result.content);
   assert(/lowland forest/.test(result.content), "Study Card omitted Habitat evidence");
   assert(/insects/.test(result.content), "Study Card omitted Diet evidence");
