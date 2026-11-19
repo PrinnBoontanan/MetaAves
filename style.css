@@ -2660,11 +2660,29 @@ input:focus-visible,
     line-height: 1.2;
 }
 
-.taxon-card.species-card > .taxon-card-wiki-section:not(.taxon-card-species-taxonomy) {
+.taxon-card.species-card > .taxon-card-study-sections {
     grid-area: description;
+    min-width: 0;
+    width: 100%;
+    margin-top: 0;
+}
+
+.taxon-card.species-card > .taxon-card-study-sections > .taxon-card-wiki-section {
+    grid-area: auto;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #e4d9c4;
+}
+
+.taxon-card.species-card > .taxon-card-study-sections > .taxon-card-wiki-section:first-child {
     margin-top: 0;
     padding-top: 0;
     border-top: none;
+}
+
+.taxon-card.species-card > .taxon-card-study-sections .taxon-card-study-sources ul {
+    margin: 0;
+    padding-left: 20px;
 }
 
 .taxon-card.species-card > .taxon-card-species-taxonomy {
@@ -2805,6 +2823,7 @@ input:focus-visible,
     .taxon-card:has(.taxon-card-image) > h3,
     .taxon-card:has(.taxon-card-image) > .taxon-card-rank,
     .taxon-card:has(.taxon-card-image) > .taxon-card-wiki-section,
+    .taxon-card:has(.taxon-card-image) > .taxon-card-study-sections,
     .taxon-card:has(.taxon-card-image) > .taxon-card-wikipedia-link,
     .taxon-card:has(.taxon-card-image) > .taxon-card-image {
         grid-column: 1;
@@ -4731,7 +4750,7 @@ body.phone-device .taxonomy-tree.table-mode .taxonomy-table {
         "wikipedia taxonomy" !important;
 }
 
-.taxon-card.species-card.taxon-card-no-photo > .taxon-card-wiki-section:not(.taxon-card-species-taxonomy) {
+.taxon-card.species-card.taxon-card-no-photo > .taxon-card-study-sections {
     grid-area: description !important;
 }
 
