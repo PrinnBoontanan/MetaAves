@@ -884,7 +884,7 @@ test("MetaAves renders all Study Card sections when independent providers return
       '</div>'
     ].join('');
 
-    await api.showGameOverCard("won", {
+    const preloaded = {
       wiki: {
         summary: {
           extract: "The test bird is a forest-dwelling bird species.",
@@ -905,13 +905,22 @@ test("MetaAves renders all Study Card sections when independent providers return
         conservation: "LC - Least Concern",
         sources: [{ label: "GBIF", url: "https://www.gbif.org/" }]
       }
-    });
+    };
+    const mergedDirectly = api.mergeExternalStudyData(
+      api.getWikipediaStudyData(html, "", preloaded.wiki.summary.extract),
+      preloaded.externalStudy,
+      bird,
+      preloaded.wiki.summary.extract
+    );
+    const renderedStudy = await api.showGameOverCard("won", preloaded);
 
     const details = document.querySelector(".study-card-details");
     return {
       headings: [...details.querySelectorAll(".study-card-section h4")].map(item => item.textContent),
       content: details.innerText,
-      overlayVisible: document.getElementById("game-over-overlay").classList.contains("visible")
+      overlayVisible: document.getElementById("game-over-overlay").classList.contains("visible"),
+      mergedAppearance: mergedDirectly.appearance,
+      renderedAppearance: renderedStudy?.appearance || ""
     };
   });
 
@@ -919,7 +928,7 @@ test("MetaAves renders all Study Card sections when independent providers return
   for (const heading of ["Description", "Appearance", "Habitat & Distribution", "Diet", "Behavior", "Breeding", "Conservation"]) {
     assert(result.headings.includes(heading), "Study Card is missing the " + heading + " section");
   }
-  assert(/dark crown/.test(result.content), "Study Card omitted Appearance evidence");
+  assert(/dark crown/.test(result.mergedAppearance), "External/Wikipedia merge lost Appearance evidence: " + result.mergedAppearance);\n  assert(/dark crown/.test(result.renderedAppearance), "Game-over renderer did not receive Appearance evidence: " + result.renderedAppearance);\n  assert(/dark crown/.test(result.content), "Study Card omitted Appearance evidence: " + result.content);
   assert(/lowland forest/.test(result.content), "Study Card omitted Habitat evidence");
   assert(/insects/.test(result.content), "Study Card omitted Diet evidence");
   assert(/canopy/.test(result.content), "Study Card omitted Behavior evidence");
