@@ -3037,24 +3037,64 @@ function cleanWikipediaNode(node) {
 
     const clone = node.cloneNode(true);
 
-    // Remove the section's own heading. The heading is metadata for our
-    // parser, not article prose, so it must never appear inside a Study Card
-    // value such as "Description".
+    // Headings are section metadata, not prose.
     clone.querySelectorAll(
         ":scope > .mw-heading, " +
         ":scope > h1, :scope > h2, :scope > h3, " +
         ":scope > h4, :scope > h5, :scope > h6"
     ).forEach(element => element.remove());
 
-    // Child sections are parsed separately. Keeping them here would make a
-    // parent such as "Behaviour and ecology" swallow Diet and Breeding.
+    // Remove non-prose content before reading textContent. Wikipedia bird
+    // pages commonly place photo captions, audio widgets, infobox fragments,
+    // taxon navigation and reference lists inside otherwise valid sections.
     clone.querySelectorAll(
-        "section, table, style, script, noscript, " +
-        ".navbox, .reflist, .reference, .mw-references-wrap, " +
-        ".mw-editsection, .metadata, .shortdescription"
+        "section, table, style, script, noscript, audio, video, figure, figcaption, " +
+        ".thumb, .thumbinner, .thumbcaption, .gallery, .gallerybox, .gallerytext, " +
+        ".mw-file-element, .mw-kartographer-map, .maplink, .mw-audio-player, .mw-tmh-player, " +
+        ".navbox, .reflist, .reference, sup.reference, .mw-references-wrap, " +
+        ".mw-editsection, .metadata, .shortdescription, .infobox, " +
+        ".listen, .audio, .sound, .haudio, .mediaContainer, " +
+        ".mw-collapsible, .portal, .sistersitebox"
     ).forEach(element => element.remove());
 
+    // Keep paragraph/list boundaries. Reading clone.textContent directly
+    // joins adjacent blocks, which can turn a subspecies citation into the
+    // beginning of an unrelated feeding or behavior sentence.
+    const blocks = [...clone.querySelectorAll("p, li, dd, blockquote")]
+        .filter(element => !element.parentElement?.closest("p, li, dd, blockquote"))
+        .map(element => normalizeWikipediaText(element.textContent))
+        .filter(Boolean);
+
+    if (blocks.length) return blocks.join(". ");
     return normalizeWikipediaText(clone.textContent);
+}
+
+function isCleanWikipediaStudySentence(value) {
+    const sentence = normalizeWikipediaText(value);
+    if (!sentence || sentence.length < 16) return false;
+
+    // Taxonomic authority/subspecies-list entries are not natural-history
+    // statements. They often look like "scutulata (Raffles, 1822) in ...".
+    if (/^[a-z][a-z-]+(?:\s+[a-z][a-z-]+)?\s*\(?[A-Z][a-z]+(?:\s+et al\.)?,?\s*(?:17|18|19|20)\d{2}\)?\b/.test(sentence)) {
+        return false;
+    }
+
+    // Reject standalone author-year fragments and editorial/media residue.
+    if (/^(?:image|photo|pictured|sound|listen|audio|video|call recording|distribution map)\b/i.test(sentence)) {
+        return false;
+    }
+    if (/\b(?:edit source|citation needed|listen to|audio file|media player|thumbnail)\b/i.test(sentence)) {
+        return false;
+    }
+
+    return true;
+}
+
+function joinWikipediaBlocks(parts) {
+    return (Array.isArray(parts) ? parts : [])
+        .map(value => String(value || "").trim().replace(/[.!?]+$/g, ""))
+        .filter(Boolean)
+        .join(". ");
 }
 
 function extractWikipediaSections(html) {
@@ -3133,7 +3173,7 @@ function extractWikipediaSections(html) {
             sibling = sibling.nextElementSibling;
         }
 
-        const text = normalizeWikipediaText(parts.join(" "));
+        const text = normalizeWikipediaText(joinWikipediaBlocks(parts));
         if (text) sections[headingText] = text;
     });
 
@@ -3149,7 +3189,7 @@ function extractWikipediaSections(html) {
         leadNode = leadNode.nextElementSibling;
     }
 
-    sections.__lead__ = normalizeWikipediaText(leadParts.join(" "));
+    sections.__lead__ = normalizeWikipediaText(joinWikipediaBlocks(leadParts));
     return sections;
 }
 
@@ -3361,7 +3401,7 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
         diet: [
             ["diet", "feeds", "feed on", "feeding", "eats", "eat",
              "consumes", "consist of", "made up of", "food includes",
-             "foods include", "primarily", "mainly", "mostly"],
+             "foods include"],
             ["seeds", "berries", "fruit", "fruits", "insects",
              "invertebrates", "nectar", "fish", "prey", "grubs",
              "worms", "spiders", "arthropods", "vertebrates", "carrion"]
@@ -3397,25 +3437,15 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
         // Food words by themselves are not enough: an article can mention
         // "insects", "spiders", etc. while discussing habitat, threats, or
         // another subject. Require an actual diet/feeding construction.
-        const strongDietSignals = [
-            "diet", "feeds", "feed on", "feeding", "eats", "eat",
-            "consumes", "consist of", "made up of", "food includes",
-            "foods include", "diet includes", "diet consists",
-            "primarily", "mainly", "mostly"
-        ];
+        // Use whole-word/phrase matching. Substring checks for "eat" or
+        // "feeds" falsely classify unrelated words such as "greater" as diet.
+        const strongDietSignal =
+            /\b(?:diet|feeds?|feed on|feeding|eats?|eat|consumes?|consist of|made up of|food includes|foods include|diet includes|diet consists)\b/i;
+        const foodSignal =
+            /\b(?:seeds?|berries|fruits?|insects?|invertebrates?|nectar|fish|prey|grubs|worms|spiders|arthropods|vertebrates|carrion)\b/i;
 
-        const foodSignals = [
-            "seeds", "berries", "fruit", "fruits", "insects",
-            "invertebrates", "nectar", "fish", "prey", "grubs",
-            "worms", "spiders", "arthropods", "vertebrates", "carrion"
-        ];
-
-        const hasStrongDietSignal = strongDietSignals.some(signal =>
-            text.includes(signal)
-        );
-        const hasFoodSignal = foodSignals.some(signal =>
-            text.includes(signal)
-        );
+        const hasStrongDietSignal = strongDietSignal.test(text);
+        const hasFoodSignal = foodSignal.test(text);
 
         if (!hasStrongDietSignal) return false;
 
@@ -3498,6 +3528,11 @@ function isWikipediaNonContentSection(heading) {
     return [
         "references",
         "reference",
+        "subspecies",
+        "taxonomy",
+        "systematics",
+        "classification",
+        "taxonomic history",
         "notes",
         "citations",
         "bibliography",
@@ -3525,13 +3560,13 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
         );
 
         if (isDedicated) {
-            // Dedicated Wikipedia sections are not guaranteed to contain
-            // only the subject named by their heading. "Behavior and ecology"
-            // commonly mixes feeding, habitat, social interactions and
-            // breeding. Classify sentence-by-sentence for every field so a
-            // sentence about flock dominance can never become a diet fact.
+            // Dedicated sections can still mix topics. Classify each clean,
+            // complete prose sentence rather than copying the whole section.
             for (const sentence of splitWikipediaSentences(text)) {
-                if (wikipediaSentenceMatchesCategory(sentence, category)) {
+                if (
+                    isCleanWikipediaStudySentence(sentence) &&
+                    wikipediaSentenceMatchesCategory(sentence, category)
+                ) {
                     values.push(sentence);
                 }
             }
@@ -3553,7 +3588,10 @@ function extractWikipediaCategoryText(sections, category, dedicatedHeadings) {
             continue;
         }
 
-        if (wikipediaSentenceMatchesCategory(item.sentence, category)) {
+        if (
+            isCleanWikipediaStudySentence(item.sentence) &&
+            wikipediaSentenceMatchesCategory(item.sentence, category)
+        ) {
             values.push(item.sentence);
         }
     }
@@ -4171,6 +4209,7 @@ function getWikipediaStudyData(html, wikitext = "", summaryExtract = "") {
     // clues are still available without inventing information for diet,
     // behaviour, or breeding.
     const leadMatches = category => leadSentences.filter(sentence =>
+        isCleanWikipediaStudySentence(sentence) &&
         wikipediaSentenceMatchesCategory(sentence, category)
     );
 
@@ -7217,14 +7256,39 @@ function preloadGenusStudyData(genus) {
     const existing = gameState.genusStudyPreloadCache.get(key);
     if (existing) return existing;
 
-    const pending = fetchWikipediaPageData(
-        name,
-        true,
-        "taxon",
-        "",
-        false,
-        "genus"
-    ).then(getHintStudyFromWikiData).catch(error => {
+    const pending = Promise.allSettled([
+        fetchWikipediaPageData(
+            name,
+            true,
+            "taxon",
+            "",
+            false,
+            "genus"
+        ).then(getHintStudyFromWikiData),
+        fetchExternalGenusStudyData(name)
+    ]).then(results => {
+        const wiki = results[0]?.status === "fulfilled" ? results[0].value : null;
+        const external = results[1]?.status === "fulfilled" ? results[1].value : null;
+        const combine = (...values) => values.filter(Boolean).join(" ");
+        const merged = deduplicateStudyData({
+            description: wiki?.description || "",
+            appearance: combine(wiki?.appearance, external?.appearance),
+            habitatDistribution: combine(wiki?.habitatDistribution, external?.habitatDistribution),
+            diet: combine(wiki?.diet, external?.diet),
+            behavior: combine(wiki?.behavior, external?.behavior),
+            breeding: combine(wiki?.breeding, external?.breeding),
+            conservation: wiki?.conservation || "",
+            sources: external?.sources || []
+        });
+        return [
+            merged.description,
+            merged.appearance,
+            merged.habitatDistribution,
+            merged.diet,
+            merged.behavior,
+            merged.breeding
+        ].some(Boolean) ? merged : null;
+    }).catch(error => {
         console.warn("Genus study preload failed:", name, error);
         return null;
     });
@@ -7420,6 +7484,17 @@ function getBirdHintFallbackTraits(bird, limit = 3) {
 }
 
 
+function cleanGenusEvidenceSentence(value) {
+    return normalizeWikipediaText(value)
+        .replace(/\bmembers of (?:the )?(?:genus )?this genus\b/gi, "These birds")
+        .replace(/\bmembers of (?:the )?genus\s+[A-Z][A-Za-z-]*\b/gi, "These birds")
+        .replace(/\bmembers of this genus\b/gi, "These birds")
+        .replace(/\bspecies of this genus\b/gi, "These birds")
+        .replace(/\bthis genus\b/gi, "these birds")
+        .replace(/\bthe genus\s+[A-Z][A-Za-z-]*\b/gi, "these birds")
+        .replace(/\bgenus\s+[A-Z][A-Za-z-]*\b/gi, "these birds");
+}
+
 function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null) {
     if (!mysteryGenusStudy || !guessedGenusStudy) return [];
 
@@ -7476,7 +7551,7 @@ function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null
     });
 
     const mysterySentences = splitWikipediaSentences(mysterySource)
-        .map(normalizeWikipediaText)
+        .map(cleanGenusEvidenceSentence)
         .filter(Boolean)
         .filter(sentence => !rejected.some(pattern => pattern.test(sentence)))
         .filter(sentence =>
@@ -7760,11 +7835,13 @@ async function showSpeciesHint(guessedBird, anchor) {
                     );
 
                     hintData = fallbackTraits.map(trait => {
-                        const sentence = getSummaryHintEvidenceSentence(
-                            mysteryGenusStudy,
-                            trait,
-                            null,
-                            "the mystery genus"
+                        const sentence = cleanGenusEvidenceSentence(
+                            getSummaryHintEvidenceSentence(
+                                mysteryGenusStudy,
+                                trait,
+                                null,
+                                "the mystery genus"
+                            )
                         );
                         if (!sentence || !isUsableHintSentence(
                             sentence,
@@ -7788,7 +7865,12 @@ async function showSpeciesHint(guessedBird, anchor) {
                 const mysteryCached = getCachedHintStudy(mystery);
                 const guessedCached = getCachedHintStudy(guessedBird);
 
-                const [mysteryStudy, guessedStudy] = await Promise.all([
+                const [
+                    mysteryWikiStudy,
+                    guessedWikiStudy,
+                    mysteryExternalStudy,
+                    guessedExternalStudy
+                ] = await Promise.all([
                     mysteryCached
                         ? Promise.resolve(mysteryCached)
                         : fetchWikipediaPageData(
@@ -7804,8 +7886,23 @@ async function showSpeciesHint(guessedBird, anchor) {
                             true,
                             "bird",
                             guessedBird.scientificName
-                        ).then(getHintStudyFromWikiData)
+                        ).then(getHintStudyFromWikiData),
+                    fetchExternalBirdStudyData(mystery),
+                    fetchExternalBirdStudyData(guessedBird)
                 ]);
+
+                const mysteryStudy = mergeExternalStudyData(
+                    mysteryWikiStudy,
+                    mysteryExternalStudy,
+                    mystery,
+                    mysteryWikiStudy?.description || ""
+                );
+                const guessedStudy = mergeExternalStudyData(
+                    guessedWikiStudy,
+                    guessedExternalStudy,
+                    guessedBird,
+                    guessedWikiStudy?.description || ""
+                );
 
                 if (requestId !== gameState.hintRequestId) return;
 
@@ -7971,6 +8068,8 @@ function renderStudyTaxonomyRows(container, rows) {
 }
 
 function classifyExternalStudySentence(sentence) {
+    if (!isCleanWikipediaStudySentence(sentence)) return "";
+
     // Appearance wins over diet when a sentence describes feeding anatomy,
     // such as a bill or tongue adapted for nectar feeding.
     const externalAppearanceSignal =
@@ -8002,8 +8101,16 @@ function classifyExternalStudySentence(sentence) {
 function classifyExternalStudyText(values) {
     const output = { appearance: [], habitatDistribution: [], diet: [], behavior: [], breeding: [] };
     (Array.isArray(values) ? values : [values]).filter(Boolean).forEach(value => {
-        const cleanText = normalizeWikipediaText(String(value).replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " "));
+        const cleanText = normalizeWikipediaText(
+            String(value)
+                .replace(/<br\s*\/?>/gi, ". ")
+                .replace(/<\/(?:p|li|dd|blockquote|h[1-6]|div)>/gi, ". ")
+                .replace(/<(?:script|style)[^>]*>[\s\S]*?<\/(?:script|style)>/gi, " ")
+                .replace(/<[^>]+>/g, " ")
+                .replace(/&nbsp;/gi, " ")
+        );
         splitWikipediaSentences(cleanText).forEach(sentence => {
+            if (!isCleanWikipediaStudySentence(sentence)) return;
             const category = classifyExternalStudySentence(sentence);
             if (category && output[category].length < 8) output[category].push(sentence);
         });
@@ -8012,6 +8119,112 @@ function classifyExternalStudyText(values) {
         output[category] = [...new Set(output[category])].join(" ");
     });
     return output;
+}
+
+async function fetchGBIFGenusStudyData(genus) {
+    const name = String(genus || "").trim();
+    if (!name) return null;
+
+    try {
+        const matchUrl = "https://api.gbif.org/v1/species/match?" +
+            new URLSearchParams({ name, strict: "true" }).toString();
+        const matchResponse = await fetch(matchUrl, {
+            headers: { Accept: "application/json" }
+        });
+        if (!matchResponse.ok) return null;
+
+        const match = await matchResponse.json();
+        if (
+            !match?.key ||
+            String(match.rank || "").toUpperCase() !== "GENUS" ||
+            String(match.canonicalName || "").toLowerCase() !== name.toLowerCase()
+        ) return null;
+
+        const response = await fetch(
+            "https://api.gbif.org/v1/species/" + match.key + "/descriptions?limit=100",
+            { headers: { Accept: "application/json" } }
+        );
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        const descriptions = (data?.results || [])
+            .filter(item => !item.language || /^(?:en|eng)(?:lish)?$/i.test(item.language))
+            .map(item => item?.description)
+            .filter(Boolean);
+
+        return {
+            descriptions,
+            source: {
+                label: "GBIF",
+                url: "https://www.gbif.org/species/" + match.key
+            }
+        };
+    } catch (error) {
+        console.warn("GBIF genus study lookup failed:", name, error);
+        return null;
+    }
+}
+
+async function fetchINaturalistGenusStudyData(genus) {
+    const name = String(genus || "").trim();
+    if (!name) return null;
+
+    try {
+        const searchUrl = "https://api.inaturalist.org/v1/taxa/autocomplete?" +
+            new URLSearchParams({
+                q: name,
+                rank: "genus",
+                taxon_id: "3",
+                per_page: "10"
+            }).toString();
+        const searchResponse = await fetch(searchUrl, {
+            headers: { Accept: "application/json" }
+        });
+        if (!searchResponse.ok) return null;
+
+        const candidates = await searchResponse.json();
+        const taxon = (Array.isArray(candidates) ? candidates : []).find(item =>
+            String(item?.name || "").toLowerCase() === name.toLowerCase() &&
+            String(item?.rank || "").toLowerCase() === "genus" &&
+            (!item?.iconic_taxon_name || item.iconic_taxon_name === "Aves")
+        );
+        if (!taxon?.id) return null;
+
+        const detailResponse = await fetch(
+            "https://api.inaturalist.org/v1/taxa/" + encodeURIComponent(taxon.id),
+            { headers: { Accept: "application/json" } }
+        );
+        if (!detailResponse.ok) return null;
+
+        const detail = await detailResponse.json();
+        return {
+            descriptions: detail?.description ? [detail.description] : [],
+            source: {
+                label: "iNaturalist",
+                url: "https://www.inaturalist.org/taxa/" + taxon.id
+            }
+        };
+    } catch (error) {
+        console.warn("iNaturalist genus study lookup failed:", name, error);
+        return null;
+    }
+}
+
+async function fetchExternalGenusStudyData(genus) {
+    const results = await Promise.allSettled([
+        fetchGBIFGenusStudyData(genus),
+        fetchINaturalistGenusStudyData(genus)
+    ]);
+    const gbif = results[0]?.status === "fulfilled" ? results[0].value : null;
+    const inat = results[1]?.status === "fulfilled" ? results[1].value : null;
+    const classified = classifyExternalStudyText([
+        ...(gbif?.descriptions || []),
+        ...(inat?.descriptions || [])
+    ]);
+    return {
+        ...classified,
+        sources: [gbif?.source, inat?.source].filter(Boolean)
+    };
 }
 
 async function fetchGBIFStudyData(bird) {
@@ -8642,7 +8855,17 @@ async function startGame() {
             classifyExternalStudySentence,
             classifyExternalStudyText,
             getWikipediaStudyData,
-            isWikipediaTaxonPage
+            isWikipediaTaxonPage,
+            cleanWikipediaNode,
+            isCleanWikipediaStudySentence,
+            buildGenusHint,
+            buildSpeciesHint,
+            getBiologicalSummaryTraits,
+            getSummaryHintEvidenceSentence,
+            extractWikipediaSections,
+            fetchGBIFGenusStudyData,
+            fetchINaturalistGenusStudyData,
+            fetchExternalGenusStudyData
         };
     }
 }
