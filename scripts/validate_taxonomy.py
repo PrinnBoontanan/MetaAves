@@ -126,6 +126,21 @@ def main() -> None:
     for path in family_paths.values():
         collect_paths(path)
 
+    # Membership can legitimately include a documented intermediate clade
+    # that is defined in clades.json but is not part of the current order- or
+    # family-level backbone shortcuts (for example Muscicapida). The clade
+    # registry is the authoritative set of valid named clades; the backbone
+    # paths are only the expected inherited subsets checked below.
+    for clade_id, entry in clades.items():
+        if (
+            isinstance(clade_id, str) and
+            clade_id.startswith("clade:") and
+            isinstance(entry, dict)
+        ):
+            name = str(entry.get("name") or "").strip()
+            if name:
+                known_clades.add(name)
+
     if not known_clades:
         fail("no clades were found in clades.json")
 
