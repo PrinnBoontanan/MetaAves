@@ -936,7 +936,7 @@ test("MetaAves renders all Study Card sections when independent providers return
   }
   assert(/dark crown/.test(result.mergedAppearance), "External/Wikipedia merge lost Appearance evidence: " + result.mergedAppearance);
   assert(/dark crown/.test(result.renderedAppearance), "Game-over renderer did not receive Appearance evidence: " + result.renderedAppearance);
-  assert(result.overlayVisible && result.overlayVisibility === "visible" && result.cardVisibility === "visible", "Study Card overlay/card is not visibly rendered");
+  assert(result.overlayVisible && result.overlayVisibility === "visible" && result.cardVisibility === "visible", "Study Card overlay/card visibility: " + JSON.stringify({classVisible:result.overlayVisible,overlay:result.overlayVisibility,card:result.cardVisibility}));
   assert(/dark crown/.test(result.appearanceText), "Study Card Appearance paragraph was not populated: " + result.appearanceText);
   assert(/dark crown/.test(result.content), "Study Card omitted Appearance evidence: " + result.content);
   assert(/lowland forest/.test(result.content), "Study Card omitted Habitat evidence");
