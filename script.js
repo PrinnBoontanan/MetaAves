@@ -3090,6 +3090,13 @@ function isCleanWikipediaStudySentence(value) {
     return true;
 }
 
+function joinWikipediaBlocks(parts) {
+    return (Array.isArray(parts) ? parts : [])
+        .map(value => String(value || "").trim().replace(/[.!?]+$/g, ""))
+        .filter(Boolean)
+        .join(". ");
+}
+
 function extractWikipediaSections(html) {
     if (!html) return {};
 
@@ -3166,7 +3173,7 @@ function extractWikipediaSections(html) {
             sibling = sibling.nextElementSibling;
         }
 
-        const text = normalizeWikipediaText(parts.join(" "));
+        const text = normalizeWikipediaText(joinWikipediaBlocks(parts));
         if (text) sections[headingText] = text;
     });
 
@@ -3182,7 +3189,7 @@ function extractWikipediaSections(html) {
         leadNode = leadNode.nextElementSibling;
     }
 
-    sections.__lead__ = normalizeWikipediaText(leadParts.join(" "));
+    sections.__lead__ = normalizeWikipediaText(joinWikipediaBlocks(leadParts));
     return sections;
 }
 
@@ -8079,7 +8086,14 @@ function classifyExternalStudySentence(sentence) {
 function classifyExternalStudyText(values) {
     const output = { appearance: [], habitatDistribution: [], diet: [], behavior: [], breeding: [] };
     (Array.isArray(values) ? values : [values]).filter(Boolean).forEach(value => {
-        const cleanText = normalizeWikipediaText(String(value).replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " "));
+        const cleanText = normalizeWikipediaText(
+            String(value)
+                .replace(/<br\s*\/?>/gi, ". ")
+                .replace(/<\/(?:p|li|dd|blockquote|h[1-6]|div)>/gi, ". ")
+                .replace(/<(?:script|style)[^>]*>[\s\S]*?<\/(?:script|style)>/gi, " ")
+                .replace(/<[^>]+>/g, " ")
+                .replace(/&nbsp;/gi, " ")
+        );
         splitWikipediaSentences(cleanText).forEach(sentence => {
             if (!isCleanWikipediaStudySentence(sentence)) return;
             const category = classifyExternalStudySentence(sentence);
