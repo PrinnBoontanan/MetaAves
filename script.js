@@ -3437,25 +3437,15 @@ function wikipediaSentenceMatchesCategory(sentence, category) {
         // Food words by themselves are not enough: an article can mention
         // "insects", "spiders", etc. while discussing habitat, threats, or
         // another subject. Require an actual diet/feeding construction.
-        const strongDietSignals = [
-            "diet", "feeds", "feed on", "feeding", "eats", "eat",
-            "consumes", "consist of", "made up of", "food includes",
-            "foods include", "diet includes", "diet consists",
-            "primarily", "mainly", "mostly"
-        ];
+        // Use whole-word/phrase matching. Substring checks for "eat" or
+        // "feeds" falsely classify unrelated words such as "greater" as diet.
+        const strongDietSignal =
+            /\b(?:diet|feeds?|feed on|feeding|eats?|eat|consumes?|consist of|made up of|food includes|foods include|diet includes|diet consists)\b/i;
+        const foodSignal =
+            /\b(?:seeds?|berries|fruits?|insects?|invertebrates?|nectar|fish|prey|grubs|worms|spiders|arthropods|vertebrates|carrion)\b/i;
 
-        const foodSignals = [
-            "seeds", "berries", "fruit", "fruits", "insects",
-            "invertebrates", "nectar", "fish", "prey", "grubs",
-            "worms", "spiders", "arthropods", "vertebrates", "carrion"
-        ];
-
-        const hasStrongDietSignal = strongDietSignals.some(signal =>
-            text.includes(signal)
-        );
-        const hasFoodSignal = foodSignals.some(signal =>
-            text.includes(signal)
-        );
+        const hasStrongDietSignal = strongDietSignal.test(text);
+        const hasFoodSignal = foodSignal.test(text);
 
         if (!hasStrongDietSignal) return false;
 
