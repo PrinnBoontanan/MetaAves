@@ -869,6 +869,9 @@ test("MetaAves renders all Study Card sections when independent providers return
     const modeOverlay = document.getElementById("mode-overlay");
     modeOverlay?.classList.remove("visible");
     modeOverlay?.setAttribute("aria-hidden", "true");
+    // Let the shared 200 ms modal visibility transition finish before
+    // opening the second overlay.
+    await new Promise(resolve => setTimeout(resolve, 250));
     api.state.mode = "world";
     api.state.mysteryBird = bird;
 
@@ -919,6 +922,8 @@ test("MetaAves renders all Study Card sections when independent providers return
       preloaded.wiki.summary.extract
     );
     const renderedStudy = await api.showGameOverCard("won", preloaded);
+    // The Study Card uses the same 200 ms visibility transition.
+    await new Promise(resolve => setTimeout(resolve, 250));
 
     const details = document.querySelector(".study-card-details");
     const overlay = document.getElementById("game-over-overlay");
