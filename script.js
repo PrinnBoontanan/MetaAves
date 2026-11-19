@@ -7285,7 +7285,14 @@ function preloadGenusStudyData(genus) {
             conservation: wiki?.conservation || "",
             sources: external?.sources || []
         });
-        return Object.values(merged).some(Boolean) ? merged : null;
+        return [
+            merged.description,
+            merged.appearance,
+            merged.habitatDistribution,
+            merged.diet,
+            merged.behavior,
+            merged.breeding
+        ].some(Boolean) ? merged : null;
     }).catch(error => {
         console.warn("Genus study preload failed:", name, error);
         return null;
@@ -7482,6 +7489,17 @@ function getBirdHintFallbackTraits(bird, limit = 3) {
 }
 
 
+function cleanGenusEvidenceSentence(value) {
+    return normalizeWikipediaText(value)
+        .replace(/\bmembers of (?:the )?(?:genus )?this genus\b/gi, "These birds")
+        .replace(/\bmembers of (?:the )?genus\s+[A-Z][A-Za-z-]*\b/gi, "These birds")
+        .replace(/\bmembers of this genus\b/gi, "These birds")
+        .replace(/\bspecies of this genus\b/gi, "These birds")
+        .replace(/\bthis genus\b/gi, "these birds")
+        .replace(/\bthe genus\s+[A-Z][A-Za-z-]*\b/gi, "these birds")
+        .replace(/\bgenus\s+[A-Z][A-Za-z-]*\b/gi, "these birds");
+}
+
 function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null) {
     if (!mysteryGenusStudy || !guessedGenusStudy) return [];
 
@@ -7538,7 +7556,7 @@ function buildGenusHint(mysteryGenusStudy, guessedGenusStudy, guessedBird = null
     });
 
     const mysterySentences = splitWikipediaSentences(mysterySource)
-        .map(normalizeWikipediaText)
+        .map(cleanGenusEvidenceSentence)
         .filter(Boolean)
         .filter(sentence => !rejected.some(pattern => pattern.test(sentence)))
         .filter(sentence =>
@@ -7822,11 +7840,13 @@ async function showSpeciesHint(guessedBird, anchor) {
                     );
 
                     hintData = fallbackTraits.map(trait => {
-                        const sentence = getSummaryHintEvidenceSentence(
-                            mysteryGenusStudy,
-                            trait,
-                            null,
-                            "the mystery genus"
+                        const sentence = cleanGenusEvidenceSentence(
+                            getSummaryHintEvidenceSentence(
+                                mysteryGenusStudy,
+                                trait,
+                                null,
+                                "the mystery genus"
+                            )
                         );
                         if (!sentence || !isUsableHintSentence(
                             sentence,
