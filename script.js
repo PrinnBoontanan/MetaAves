@@ -8818,6 +8818,7 @@ async function showGameOverCard(result, e2ePreloadedData = null) {
         details.appendChild(wikiSection);
     }
     appendStudySources(details, bird, preloaded?.externalStudy || {});
+    return studyData;
 }
 
 function closeGameOverCard() {
@@ -8946,6 +8947,7 @@ async function startGame() {
             showBirdInTaxonCard,
             renderBirdCard,
             showGameOverCard,
+            mergeExternalStudyData,
             renderStudyTaxonomyRows,
             deduplicateStudyData,
             extractWikipediaCategoryText,
