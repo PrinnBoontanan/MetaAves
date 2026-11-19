@@ -113,36 +113,38 @@ def main() -> None:
     if extra_nonpasserine_families:
         fail("stale non-passerine clade mapping for families: " + ", ".join(extra_nonpasserine_families))
 
-    known_clades = set()
-
-    def collect_paths(value):
-        if isinstance(value, list):
-            for name in value:
-                if isinstance(name, str) and name.strip():
-                    known_clades.add(name.strip())
-
-    for path in order_paths.values():
-        collect_paths(path)
-    for path in family_paths.values():
-        collect_paths(path)
-
-    # Membership can legitimately include a documented intermediate clade
-    # that is defined in clades.json but is not part of the current order- or
-    # family-level backbone shortcuts (for example Muscicapida). The clade
-    # registry is the authoritative set of valid named clades; the backbone
-    # paths are only the expected inherited subsets checked below.
-    for clade_id, entry in clades.items():
-        if (
-            isinstance(clade_id, str) and
-            clade_id.startswith("clade:") and
-            isinstance(entry, dict)
-        ):
-            name = str(entry.get("name") or "").strip()
-            if name:
-                known_clades.add(name)
+    # Membership paths may legitimately contain any named clade node in
+    # clades.json, including intermediate clades that are not repeated in the
+    # configured order/family backbone arrays (for example Muscicapida).
+    # Build the valid-name set from the actual clade tree, not only from those
+    # narrower convenience mappings; otherwise valid species paths are
+    # incorrectly rejected by the validator.
+    known_clades = {
+        str(entry.get("name") or "").strip()
+        for clade_id, entry in clades.items()
+        if isinstance(clade_id, str)
+        and clade_id.startswith("clade:")
+        and isinstance(entry, dict)
+        and str(entry.get("name") or "").strip()
+    }
 
     if not known_clades:
         fail("no clades were found in clades.json")
+
+    # The configured backbone mappings must also reference real clade nodes.
+    for mapping_name, mapping in (
+        ("orderCladePaths", order_paths),
+        ("familyCladePaths", family_paths),
+    ):
+        for taxon_name, path in mapping.items():
+            if not isinstance(path, list):
+                fail(f"clades._meta.{mapping_name}[{taxon_name}] is not a list")
+            for clade_name in path:
+                if clade_name not in known_clades:
+                    fail(
+                        f"clades._meta.{mapping_name}[{taxon_name}] "
+                        f"references unknown clade: {clade_name}"
+                    )
 
     for section in MEMBERSHIP_SECTIONS:
         entries = membership.get(section, {})
@@ -188,9 +190,47 @@ def main() -> None:
     if "Feraequornithes" in order_paths.get("Gaviiformes", []):
         fail("Gaviiformes must remain outside Feraequornithes")
 
-    # Membership lists are sets of clades containing a species, not literal
-    # parent-to-child paths. Structural parent relationships are validated
-    # directly from clades.json below.
+    # Every clade membership path must agree with the parent links declared in clades.json.
+    clade_parent_by_name = {}
+    for clade_id, entry in clades.items():
+        if not isinstance(clade_id, str) or not clade_id.startswith("clade:") or not isinstance(entry, dict):
+            continue
+        name = str(entry.get("name") or "").strip()
+        if not name:
+            continue
+        parent = str(entry.get("parent") or "").strip()
+        clade_parent_by_name[name] = parent or None
+
+    def check_clade_path(path, label):
+        for index in range(1, len(path)):
+            child = path[index]
+            expected_parent = path[index - 1]
+            declared_parent = clade_parent_by_name.get(child)
+            if not declared_parent:
+                continue
+
+            # Membership paths intentionally omit ranked taxonomy nodes.
+            # A clade may therefore declare an order as its parent while the
+            # previous item in the compressed path is that order's clade
+            # backbone (e.g. Galloanserae -> order:Anseriformes -> Anhimae).
+            if declared_parent.startswith("clade:"):
+                parent_matches = declared_parent == "clade:" + expected_parent
+            elif declared_parent.startswith("order:"):
+                order_name = declared_parent.split(":", 1)[1]
+                parent_matches = expected_parent in order_paths.get(order_name, [])
+            else:
+                parent_matches = False
+
+            if not parent_matches:
+                fail(
+                    f"{label} has inconsistent clade parent: "
+                    f"{child} declares {declared_parent}, path says {expected_parent}"
+                )
+
+    for section in MEMBERSHIP_SECTIONS:
+        for scientific, path in membership.get(section, {}).items():
+            check_clade_path(path, f"membership.{section}[{scientific}]")
+
     # Parent/children links in clades.json must agree in both directions.
     for clade_id, entry in clades.items():
         if not isinstance(clade_id, str) or not clade_id.startswith("clade:") or not isinstance(entry, dict):
@@ -200,10 +240,16 @@ def main() -> None:
             if parent not in clades:
                 # Some clades intentionally attach directly to a ranked taxon
                 # such as the Passeriformes order rather than to another clade.
+                if parent.startswith("clade:"):
+                    fail(f"{clade_id} references missing parent {parent}")
                 ranked_name = parent.split(":", 1)[1] if ":" in parent else parent
                 if (
                     parent not in taxonomy and
-                    not any(key.endswith(":" + ranked_name) for key in taxonomy if isinstance(key, str))
+                    not any(
+                        key.endswith(":" + ranked_name)
+                        for key in taxonomy
+                        if isinstance(key, str)
+                    )
                 ):
                     fail(f"{clade_id} references missing parent {parent}")
             elif clade_id not in (clades[parent].get("children") or []):
