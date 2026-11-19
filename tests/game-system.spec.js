@@ -863,9 +863,12 @@ test("MetaAves renders all Study Card sections when independent providers return
     const api = window.__METAAVES_E2E__;
     const bird = api.state.allBirds.find(item => item.genus && item.family && item.scientificName);
     if (!bird) throw new Error("Loaded bird dataset has no species suitable for Study Card rendering.");
-    // Follow the real startup flow first; otherwise the initial mode
-    // selector remains above the end-game Study Card in the browser.
-    document.getElementById("world-mode-button")?.click();
+    // The game-over renderer is tested independently of the initial
+    // mode-selection dialog. Close that startup-only dialog just as the
+    // real player does after choosing a mode.
+    const modeOverlay = document.getElementById("mode-overlay");
+    modeOverlay?.classList.remove("visible");
+    modeOverlay?.setAttribute("aria-hidden", "true");
     api.state.mode = "world";
     api.state.mysteryBird = bird;
 
