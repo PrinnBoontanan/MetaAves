@@ -805,7 +805,7 @@ test("MetaAves study taxonomy reads down the first column before the second and 
   assert(!result.deduped.behavior.includes("nests on cliffs"), "Habitat fact was repeated in behavior");
 });
 
-test("MetaAves renders full ecological sections in the normal species card", async ({ page }) => {
+test("MetaAves keeps detailed ecological sections out of the normal species taxon card", async ({ page }) => {
   await page.goto("/?e2e=1");
   await page.waitForFunction(() => !!window.__METAAVES_E2E__);
   const result = await page.evaluate(() => {
@@ -834,26 +834,24 @@ test("MetaAves renders full ecological sections in the normal species card", asy
       }
     );
     const card = document.getElementById("taxon-card");
-    const headings = [...card.querySelectorAll(".taxon-card-study-sections h4")].map(item => item.textContent);
-    const text = card.querySelector(".taxon-card-study-sections")?.innerText || "";
     return {
-      headings,
-      text,
-      sources: [...card.querySelectorAll(".taxon-card-study-sources a")].map(link => link.textContent),
-      contentGridArea: getComputedStyle(card.querySelector(".taxon-card-study-sections")).gridArea
+      headings: [...card.querySelectorAll(".taxon-card-study-sections h4")].map(item => item.textContent),
+      text: card.querySelector(".taxon-card-study-sections")?.innerText || "",
+      taxonomyPresent: Boolean(card.querySelector(".taxon-card-species-taxonomy")),
+      wikipediaLink: card.querySelector(".taxon-card-wikipedia-link")?.getAttribute("href")
     };
   });
 
-  for (const heading of ["Description", "Appearance", "Habitat & Distribution", "Diet", "Behavior", "Breeding", "Conservation"]) {
-    assert(result.headings.includes(heading), "Normal species card is missing the " + heading + " section");
+  assert(
+    JSON.stringify(result.headings) === JSON.stringify(["Description"]),
+    "Species Taxon Card must contain only the Description section: " + JSON.stringify(result.headings)
+  );
+  assert(/forest-dwelling bird species/.test(result.text), "Species description was not rendered");
+  for (const detail of ["dark crown", "lowland forest", "insects", "canopy", "tree cavity", "Least Concern", "GBIF"]) {
+    assert(!result.text.includes(detail), "Study-only detail leaked into Species Taxon Card: " + detail);
   }
-  assert(/dark crown/.test(result.text), "Appearance data did not reach the species card");
-  assert(/lowland forest/.test(result.text), "Habitat data did not reach the species card");
-  assert(/insects/.test(result.text), "Diet data did not reach the species card");
-  assert(/canopy/.test(result.text), "Behavior data did not reach the species card");
-  assert(/tree cavity/.test(result.text), "Breeding data did not reach the species card");
-  assert(result.sources.includes("GBIF"), "The species card did not show its verified source link");
-  assert(result.contentGridArea.includes("description"), "Ecological sections are not placed in the species-card content column");
+  assert(result.taxonomyPresent, "Species taxonomy was removed from the Species Taxon Card");
+  assert(result.wikipediaLink === "https://en.wikipedia.org/wiki/Bird", "Species Taxon Card lost its Wikipedia link");
 });
 
 test("MetaAves renders all Study Card sections when independent providers return usable data", async ({ page }) => {

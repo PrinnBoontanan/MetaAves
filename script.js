@@ -5177,43 +5177,16 @@ function renderBirdCard(
         card.classList.add("taxon-card-no-photo");
     }
 
-    // Use the same category parser and external-source merger as the end-of-
-    // game Study Card. The normal species card previously rendered only the
-    // Wikipedia description and taxonomy, even after full article data loaded.
-    const wikipediaStudy = getWikipediaStudyData(
-        wiki?.html || "",
-        wiki?.wikitext || "",
-        wiki?.summary?.extract || ""
-    );
-    const studyData = mergeExternalStudyData(
-        wikipediaStudy,
-        externalStudy || {},
-        bird,
-        hasWikiSummary
-            ? limitWikipediaSentences(wiki.summary.extract, 6, 1400)
-            : ""
-    );
-
-    const studySections = document.createElement("div");
-    studySections.className = "taxon-card-study-sections";
-
-    const description = studyData.description ||
-        (hasWikiSummary
-            ? limitWikipediaSentences(wiki.summary.extract, 6, 1400)
-            : "No information available on Wikipedia.");
-    appendCardSection(studySections, "Description", description);
-    appendCardSection(studySections, "Appearance", studyData.appearance);
-    appendCardSection(studySections, "Habitat & Distribution", studyData.habitatDistribution);
-    appendCardSection(studySections, "Diet", studyData.diet);
-    appendCardSection(studySections, "Behavior", studyData.behavior);
-    appendCardSection(studySections, "Breeding", studyData.breeding);
-    appendCardSection(
-        studySections,
-        "Conservation",
-        studyData.conservation || bird.conservation || ""
-    );
-    appendTaxonCardSources(studySections, externalStudy);
-    card.appendChild(studySections);
+    // The in-game Species Taxon Card is intentionally concise: it shows
+    // only the Wikipedia lead/description. Detailed ecological sections are
+    // reserved exclusively for the separate end-of-game Bird Study Card.
+    const descriptionSection = document.createElement("div");
+    descriptionSection.className = "taxon-card-study-sections";
+    const description = hasWikiSummary
+        ? limitWikipediaSentences(wiki.summary.extract, 6, 1400)
+        : "No information available on Wikipedia.";
+    appendCardSection(descriptionSection, "Description", description);
+    card.appendChild(descriptionSection);
 
     const taxonomySection = document.createElement("div");
     taxonomySection.className = "taxon-card-wiki-section taxon-card-species-taxonomy";
